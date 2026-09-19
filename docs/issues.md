@@ -662,11 +662,13 @@ Les phases `P0` à `P7` correspondent au plan d’implémentation existant.
 <a id="jg-023"></a>
 ### JG-023 — Finaliser toutes les commandes CLI
 
-**Type :** Implémentation. **Priorité :** Haute. **Phase :** P6. **Statut :** À faire.
+**Type :** Implémentation. **Priorité :** Haute. **Phase :** P6. **Statut :** À faire (surface d’arguments livrée par J, branchement au moteur en attente de JG-022).
 
 **Niveau recommandé :** Junior encadré. **Pilote proposé :** J. **Revue :** M.
 
 **Dépendances :** [JG-007](#jg-007), [JG-010](#jg-010), [JG-014](#jg-014), [JG-018](#jg-018), [JG-022](#jg-022).
+
+**Lot préparatoire J (disponible) :** `src/cli-args.ts` + `tests/cli-args.test.ts` (11 cas) — analyse des arguments des formulaires documentés (`doctor`, `inspect`, `search`, `mcp`, `cache clear` ; `--config`, `--query`, `--query-file`, `--scope` répétable, `--max-context-tokens`, `--json`, `--allow-partial`). Les valeurs par défaut et les bornes viennent du contrat partagé (`CONTRACT_LIMITS` : 4 000 par défaut, 1 024 minimum, 16 000 maximum, portée ≤ 32 entrées et 4 096 octets) et la requête de recherche est validée par `parseSearchRequest` de `src/contracts.ts`, donc la CLI et MCP ne peuvent pas diverger. L’analyse est pure (aucune lecture de configuration, de dépôt ou de réseau) ; option inconnue ou mal placée, valeur manquante, `--config` absent, source de requête absente ou double, budget non entier ou hors bornes, portée absolue ou traversante, sous-commande `cache` absente ou inconnue sont refusés avec un message et le code 2 de la spécification §4.5. Tant que le moteur n’existe pas, une commande valide sort en 69 avec « not implemented in this build; no work was performed ».
 
 **Références :** spécification §2.1 et §4.5 ; exigence R10.
 

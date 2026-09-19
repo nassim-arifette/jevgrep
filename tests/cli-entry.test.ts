@@ -22,10 +22,16 @@ test('the executable entry point implements --help and --version', async () => {
 });
 
 test('the executable entry point rejects planned and unknown commands', async () => {
-  const search = await runCli(sourceEntry, ['search', '--query', 'authorization checks']);
+  const search = await runCli(sourceEntry, ['search', '--config', 'config.json', '--query', 'authorization checks']);
   assert.equal(search.code, EXIT_NOT_IMPLEMENTED);
   assert.equal(search.stdout, '');
   assert.match(search.stderr, /not implemented in this build/);
+
+  // The documented surface requires the trusted configuration: a missing flag is a usage
+  // error, not a "not implemented" answer.
+  const missingConfig = await runCli(sourceEntry, ['search', '--query', 'authorization checks']);
+  assert.equal(missingConfig.code, EXIT_USAGE);
+  assert.match(missingConfig.stderr, /--config/);
 
   const unknown = await runCli(sourceEntry, ['frobnicate']);
   assert.equal(unknown.code, EXIT_USAGE);

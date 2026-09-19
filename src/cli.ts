@@ -11,6 +11,7 @@
 import { readFileSync, realpathSync } from 'node:fs';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
+import { parseCliArguments, type CliCommand } from './cli-args.ts';
 import { CLI_EXIT_CODES } from './search-response.ts';
 
 /** Complete result from the product contract (section 4.5). */
@@ -125,6 +126,30 @@ export function isMainModule(moduleUrl: string = import.meta.url): boolean {
   }
 }
 
+/**
+ * Validate the arguments of a command that is not implemented yet, then refuse it.
+ *
+ * Argument validation is real: a caller gets exit 2 with a usable message instead of
+ * discovering a typo later. The command itself still performs no work, so the refusals of
+ * specification 4.5 (0 complete, 3 partial, 4 fatal, 130 interrupted) stay unused.
+ */
+function plannedCommand(io: CliIo, argv: readonly string[], implementingIssue: string): number {
+  const parsed = parseCliArguments(argv, {
+    readFile: (path: string): string => readFileSync(path, 'utf8'),
+  });
+  if (parsed.kind === 'error') {
+    return usageError(io, parsed.message);
+  }
+  const command: CliCommand = parsed.command;
+  const detail = command.kind === 'search' ? describeSearch(command) : `'${command.kind}'`;
+  io.err(`jevgrep: ${detail} is planned (${implementingIssue}) but not implemented in this build; no work was performed`);
+  return EXIT_NOT_IMPLEMENTED;
+}
+
+function describeSearch(command: Extract<CliCommand, { kind: 'search' }>): string {
+  return `'search' for ${String(command.request.scope.length)} scope entr${command.request.scope.length === 1 ? 'y' : 'ies'}`;
+}
+
 function usageError(io: CliIo, detail: string): number {
   io.err(`jevgrep: ${detail}`);
   io.err("run 'jevgrep --help' for usage");
@@ -180,8 +205,7 @@ export async function main(
 
   const implementingIssue = PLANNED_COMMANDS.get(first);
   if (implementingIssue !== undefined) {
-    io.err(`jevgrep: '${first}' is planned (${implementingIssue}) but not implemented in this build; no work was performed`);
-    return EXIT_NOT_IMPLEMENTED;
+    return plannedCommand(io, argv, implementingIssue);
   }
   return usageError(io, `unknown command '${first}'`);
 }
