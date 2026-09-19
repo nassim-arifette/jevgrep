@@ -4,9 +4,10 @@ Version : 1.1. Date : 19 septembre 2026. **Statut initial de toutes les issues :
 
 Ce document contient 30 issues locales, prêtes à être reprises dans un gestionnaire de projet. Les identifiants `JG-001` à `JG-030` sont stables ; ils ne correspondent pas à des tickets déjà créés sur GitHub.
 
-**Point de reprise du 19 septembre 2026 :** tout le travail est intégré sur `main`.
+**Point de reprise du 20 septembre 2026 :** la base commune est intégrée sur `main`.
 Lire [le passage de relais](handoff.md) pour les modules disponibles, les corrections
-de revue et l’ordre de reprise. JG-002 et JG-003 sont stabilisés. La revue senior du
+de revue et l’ordre de reprise. JG-002 et JG-003 sont stabilisés ; JG-008 est implémenté
+et revu sur Windows/NTFS et Linux, avec clôture administrative liée à JG-007. La revue senior du
 corpus JG-027 est faite ; son isolation opérationnelle reste à prouver. Les autres
 modules intégrés constituent une base de développement testée hors ligne, sans
 clôture automatique de leurs critères. Le transport réel et le benchmark live sont
@@ -282,7 +283,12 @@ Les phases `P0` à `P7` correspondent au plan d’implémentation existant.
 <a id="jg-008"></a>
 ### JG-008 — Garantir le confinement des lectures au dépôt autorisé
 
-**Type :** Implémentation. **Priorité :** Critique. **Phase :** P1. **Statut :** À faire (fixtures de chemins préparées par J, implémentation à faire).
+**Type :** Implémentation. **Priorité :** Critique. **Phase :** P1. **Statut :** Implémenté et revu le 20 septembre 2026 (`e8952c8`, `07d48e1`), contrôles Windows/NTFS et Linux réussis. Clôture administrative suspendue à JG-007. Voir la [revue et ses limites](reviews/jg-008-review.md).
+
+**Décisions S sur les questions du lot préparatoire :** les trois cas initialement
+ouverts sont résolus dans la table : `//` et les deux-points sont refusés sur toutes
+les plateformes ; les antislashs sont normalisés en séparateurs. Les cas de la
+table sont maintenant exercés contre le contrôle réel par `source-authorization.test.ts`.
 
 **Niveau recommandé :** Senior. **Pilote proposé :** S. **Revue :** M.
 
@@ -298,12 +304,12 @@ Les phases `P0` à `P7` correspondent au plan d’implémentation existant.
 
 **Critères d’acceptation :**
 
-- [ ] Une racine `repo` n’autorise pas une lecture dans un répertoire frère `repo-other`.
-- [ ] Chaque forme de chemin interdite est couverte par un test ; aucun contenu hors racine n’est lu ni transmis.
-- [ ] Les liens et jonctions ne sont jamais suivis pendant l’inventaire ou la lecture.
-- [ ] Les chemins qui se recouvrent désignent une seule identité de fichier lorsque la plateforme les considère identiques.
-- [ ] Les instructions présentes dans un fichier et les racines proposées par MCP ne modifient aucune autorisation.
-- [ ] Les limites face aux remplacements concurrents et liens physiques sont documentées sans présenter le contrôle comme une sandbox système.
+- [x] Une racine `repo` n’autorise pas une lecture dans un répertoire frère `repo-other`.
+- [x] Chaque forme de chemin interdite est couverte par un test ; aucun contenu hors racine n’est lu ni transmis dans ces cas.
+- [x] Les liens et jonctions sont refusés pendant l’inventaire et la lecture ; points de réanalyse Windows contrôlés par attribut, sous les limites de concurrence documentées.
+- [x] Les chemins qui se recouvrent désignent une seule identité de fichier lorsque la plateforme les considère identiques.
+- [x] Les instructions présentes dans un fichier et les racines proposées par MCP ne modifient aucune autorisation.
+- [x] Les limites face aux remplacements concurrents et liens physiques sont documentées sans présenter le contrôle comme une sandbox système.
 
 **Livrables :** contrôle d’accès aux chemins et tests Windows/POSIX.
 
