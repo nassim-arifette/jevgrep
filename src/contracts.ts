@@ -347,6 +347,9 @@ function validateResult(value: SearchResult, path: string): void {
     const failedProvider = reasons.some((reason) => ['PROVIDER_RATE_LIMIT', 'PROVIDER_UNAVAILABLE', 'INVALID_PROVIDER_RESPONSE'].includes(reason));
     check(!alwaysFatal && (!failedProvider || executionStopped), 'fatal failure without a successful evaluation requires error status');
   }
+  const earlyRejection = reasons.some((reason) => ['INVALID_REQUEST', 'INVALID_CONFIG', 'UNAUTHORIZED_SCOPE',
+    'REMOTE_DISABLED', 'CREDENTIAL_MISSING', 'BUSY', 'RESPONSE_BUDGET_TOO_SMALL'].includes(reason));
+  check(!earlyRejection || value.status === 'rejected', 'early request or configuration failures must be rejected');
 
   const expectedSelection = value.status === 'rejected' ? 'preflight_rejected'
     : value.excerpts.length > 0 ? 'selected'
@@ -374,6 +377,8 @@ function validateResult(value: SearchResult, path: string): void {
   check(u.provider_input_tokens_reported === (u.attempts_with_unknown_usage === 0 ? u.provider_input_tokens_known_subtotal : null),
     'all-attempt usage must be null if any attempt has unknown usage');
   check(u.provider_input_tokens_estimated >= u.provider_input_tokens_known_subtotal, 'estimate cannot erase known usage');
+  check(u.provider_input_tokens_estimated >= sum([u.provider_input_tokens_known_subtotal, u.attempts_with_unknown_usage], path),
+    'each unknown dispatched attempt must retain a positive token reservation');
   check(u.attempts_with_unknown_usage > 0 || u.provider_input_tokens_estimated === u.provider_input_tokens_known_subtotal,
     'fully known usage must replace token reservations');
   check(u.attempts_with_unknown_usage < u.provider_request_attempts || u.provider_input_tokens_known_subtotal === 0,

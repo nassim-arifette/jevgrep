@@ -168,3 +168,21 @@ test('zero-call and all-unknown cases cannot manufacture reported or incurred us
   unknown.report.usage.provider_input_tokens_known_subtotal = 1;
   assert.throws(() => searchResultSchema.parse(unknown), ContractValidationError);
 });
+
+test('unknown dispatched attempts cannot lose their entire token reservation', () => {
+  const allUnknown = resultFixture('error');
+  allUnknown.report.usage.provider_input_tokens_estimated = 0;
+  assert.throws(() => searchResultSchema.parse(allUnknown), /positive token reservation/);
+  const mixed = resultFixture('unknown_usage');
+  mixed.report.usage.provider_input_tokens_estimated = mixed.report.usage.provider_input_tokens_known_subtotal;
+  assert.throws(() => searchResultSchema.parse(mixed), /positive token reservation/);
+});
+
+test('early input/configuration rejections cannot be misreported as partial successes', () => {
+  for (const reason of ['INVALID_REQUEST', 'INVALID_CONFIG', 'UNAUTHORIZED_SCOPE', 'REMOTE_DISABLED',
+    'CREDENTIAL_MISSING', 'BUSY', 'RESPONSE_BUDGET_TOO_SMALL'] as const) {
+    const result = resultFixture('deadline');
+    result.report.stop_reasons = [reason];
+    assert.throws(() => searchResultSchema.parse(result), /must be rejected/);
+  }
+});

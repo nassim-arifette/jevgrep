@@ -92,6 +92,8 @@ For a reported preflight rejection, remote/cache evaluation and actual usage rem
 
 `provider_input_tokens_reported` equals the known subtotal only when every dispatched attempt has known usage; otherwise it is `null`. Zero attempts give reported/subtotal/estimated tokens and transmitted bytes equal to zero. With all usage unknown, the known subtotal is zero but the total remains unknown. `USAGE_UNKNOWN` records that condition. Fully known usage replaces estimates; otherwise the estimate retains known usage plus conservative reservations. Monetary totals remain nullable: computed price is an estimate, not provider-reported cost. Preflight estimates never become incurred usage on a zero-call rejection.
 
+Every dispatched search request contains input, so an unknown attempt must retain at least one estimated input token. The aggregate schema rejects a zero reservation; only the per-attempt accounting ledger (JG-016/017) can prove that the full conservative estimate was retained. Early request/configuration rejection codes cannot validate as partial successes or fatal runtime reports.
+
 ## Codes and diagnostics
 
 `STOP_REASONS`, `ERROR_CODES`, `EXCLUSION_REASONS` and `DIAGNOSTIC_CODES` are finite public vocabularies. Unknown keys/codes and duplicate stop reasons are rejected. Stop lists contain at most one of each known code.
