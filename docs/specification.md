@@ -25,7 +25,7 @@ An exact known symbol, path, or literal remains a normal text-search use case. J
 | One authorized local repository per process | Multi-repository federation or shared hosted service |
 | Shared engine, local CLI, local stdio MCP server | Browser UI, SaaS, remote MCP hosting |
 | Strong JavaScript/TypeScript syntax chunking | Language-server integration or full semantic graph |
-| Bounded text fallback for common configuration, documentation, and SQL files | Claims of equal support for every language |
+| Bounded UTF-8 text fallback for every other language and text format | Claims of equal syntax awareness for every language |
 | Working-tree contents, including eligible untracked files | Git history or branch comparison searches |
 | Exhaustive evaluation of eligible scoped fragments when limits allow | Grep relevance prefilter, embeddings, vector database |
 | Exact evaluation cache and exact source excerpts | Conversation memory, compaction, generated explanations |
@@ -313,7 +313,7 @@ Parse JavaScript/TypeScript syntax only: `.js`, `.jsx`, `.ts`, `.tsx`, `.mjs`, `
 
 Attach leading comments and decorators when the resulting contiguous range fits. Partition oversized classes and functions into smaller contiguous line-aligned ranges. Cover top-level gaps and statements outside declarations so that configuration, initialization, and registrations remain searchable. Every nonblank source line of an eligible successfully prepared file must appear in at least one fragment. Use bounded overlap only for split windows; structural coverage is more important than pretending every chunk is a self-contained function.
 
-For `.json`, `.jsonc`, `.yaml`, `.yml`, `.toml`, `.ini`, `.md`, `.sql`, and explicitly allowed ordinary text, use bounded line windows. Parser errors in JS/TS also use line-window fallback and are reported. No unsupported syntax should disappear silently.
+For every other valid UTF-8 text file, regardless of extension or language, use bounded line windows. This includes configuration, documentation, SQL, extensionless files, and source languages without a specialized parser. File extensions alone never make text ineligible. Parser errors in JS/TS also use line-window fallback and are reported. No unsupported syntax should disappear silently.
 
 Provisional target fragment size: 800 reference tokens; maximum: 1,600 reference tokens and 8 KiB of UTF-8 source, whichever is reached first. Fallback windows target 80 lines, at most 120 lines, with at most 8 lines of overlap, and must also satisfy byte/token limits. Final limits are tuning values governed by the provider capability spike.
 
