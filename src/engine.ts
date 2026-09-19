@@ -30,7 +30,7 @@ import {
   CRITERION_VERSION, LAYOUT_VERSION, ProviderError, buildRequestPayload, fitsProviderLimits,
 } from './evaluation/jev.ts';
 import type { BatchItem, EvaluationBatch, ProviderClient } from './evaluation/jev.ts';
-import { SearchContext, SearchLogger, isAbortError, runPhase } from './lifecycle.ts';
+import { SearchContext, SearchLogger, isAbortError, runPhase, systemClock } from './lifecycle.ts';
 import type { Clock } from './lifecycle.ts';
 import { excerptBudget, excerptCost, renderSearchResult, ResponseBudgetError } from './response/render.ts';
 import type { ReportInputs, RenderedResponse } from './response/render.ts';
@@ -68,6 +68,8 @@ export type SearchInvocation = {
   /** Client cancellation: after it, no new result is emitted for this call. */
   readonly signal?: AbortSignal;
   readonly searchId?: string;
+  /** Trusted local admission time; never taken from tool arguments. */
+  readonly startedAtMs?: number;
 };
 
 export type SearchOutcomeWithDiagnostics = {
@@ -123,12 +125,17 @@ export class SearchEngine {
     return this.#cache;
   }
 
+  get clock(): Clock {
+    return this.#options.clock ?? systemClock;
+  }
+
   /** Run one search. Never throws for caller input: it returns a contract outcome. */
   async search(request: unknown, invocation: SearchInvocation = {}): Promise<SearchOutcomeWithDiagnostics> {
     const { config } = this.#options.configuration;
     const context = new SearchContext({
       ...(invocation.searchId === undefined ? {} : { searchId: invocation.searchId }),
-      ...(this.#options.clock === undefined ? {} : { clock: this.#options.clock }),
+      clock: this.clock,
+      ...(invocation.startedAtMs === undefined ? {} : { startedAtMs: invocation.startedAtMs }),
       deadlineMs: config.search.deadline_ms,
       ...(invocation.signal === undefined ? {} : { clientSignal: invocation.signal }),
       ...(this.#options.logger === undefined ? {} : { logger: this.#options.logger }),
@@ -253,7 +260,8 @@ export class SearchEngine {
       }
     }
 
-    if (plan.rejected) {
+    if (plan.rejected || (context.stopReasons().includes('PREPARATION_LIMIT')
+      && config.search.require_fit && !request.allow_partial_scan)) {
       context.addStopReason('SCOPE_EXCEEDS_SCAN_BUDGET');
       return this.#render(context, request, prepared, [], usage, plan, available, true);
     }
@@ -409,7 +417,7 @@ export class SearchEngine {
     const remoteEvaluated = scored.filter((entry) => !entry.fromCache).length;
     const cacheReused = evaluated - remoteEvaluated;
     const totalFragments = prepared.complete && prepared.unreadable === 0 ? prepared.fragments.length : null;
-    const notEvaluated = totalFragments === null ? 0 : Math.max(0, totalFragments - evaluated);
+    const notEvaluated = Math.max(0, prepared.fragments.length - evaluated);
     if (notEvaluated > 0 && !plan.capReached && !rejected && context.stop === null
       && !context.stopReasons().includes('SCAN_CAP_REACHED')) {
       context.addStopReason('PROVIDER_UNAVAILABLE');
@@ -451,7 +459,14 @@ export class SearchEngine {
         transmittedBytes: usage.transmittedBytes,
         elapsedMs: context.elapsedMs,
       },
-      preflight: plan.report,
+      preflight: totalFragments !== null ? plan.report : {
+        ...plan.report,
+        plannedRemoteFragments: null,
+        estimatedFirstAttemptTokens: null,
+        estimatedFirstAttemptCostUsd: null,
+        estimatedFirstAttemptRequests: null,
+        estimatedRequiredCaps: Object.fromEntries(Object.keys(plan.report.enabledCaps).map((cap) => [cap, null])),
+      },
       requestedTokens: request.max_context_tokens,
       counterId: REFERENCE_COUNTER_ID,
       stopReasons: orderStopReasons(context.stopReasons()),

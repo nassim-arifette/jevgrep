@@ -9,6 +9,8 @@ import type { SearchOutcome } from '../src/contracts.ts';
 import { searchOutcomeSchema } from '../src/contracts.ts';
 import type { BatchEvaluation, EvaluationBatch, ProviderClient } from '../src/evaluation/jev.ts';
 import { MCP_PROTOCOL_VERSION, TOOL_NAME, runMcpServer } from '../src/mcp.ts';
+import type { Clock } from '../src/lifecycle.ts';
+import { ManualClock } from '../src/testing/manual-clock.ts';
 import { offlineEnv } from './helpers/cli-runner.ts';
 import { createWorkspace, withRemoteEnabled } from './helpers/search-workspace.ts';
 
@@ -64,12 +66,15 @@ type Session = {
   close(): Promise<void>;
 };
 
-function session(provider: ProviderClient = new DeterministicProvider()): Session {
+function session(provider: ProviderClient = new DeterministicProvider(), clock?: Clock): Session {
   const space = workspace();
   const input = new PassThrough();
   const output = new PassThrough();
   const errorOutput = new PassThrough();
-  const engine = createSearchEngine({ configuration: space.loaded, provider, env: space.env });
+  const engine = createSearchEngine({
+    configuration: space.loaded, provider, env: space.env,
+    ...(clock === undefined ? {} : { clock }),
+  });
   const finished = runMcpServer({ engine, input, output, errorOutput, serverVersion: '0.0.0-test' });
 
   const lines: string[] = [];
@@ -274,6 +279,45 @@ test('a cancelled call never produces a later result', async () => {
   const messages = await active.responses();
   assert.equal(messages.some((message) => message['id'] === 11), false,
     'no result is emitted for a cancelled request');
+});
+
+test('time spent in the queue consumes the search deadline before any provider dispatch', async () => {
+  const clock = new ManualClock();
+  let release: () => void = () => {};
+  const blocked = new Promise<void>((resolve) => { release = resolve; });
+  let calls = 0;
+  const provider: ProviderClient = {
+    model: 'jev-1.13.0',
+    async evaluateBatch(batch) {
+      calls += 1;
+      await blocked;
+      return {
+        scores: new Map(batch.items.map((item) => [item.id, 0.9])), invalid: [],
+        usage: { inputTokens: 100, outputTokens: 0 }, requestedModel: this.model,
+        returnedModel: this.model, transmittedBytes: 500, requestId: null,
+      };
+    },
+  };
+  const active = session(provider, clock);
+  for (const id of [1, 2]) active.send({
+    jsonrpc: '2.0', id, method: 'tools/call',
+    params: { name: TOOL_NAME, arguments: { query: `query ${String(id)}` } },
+  });
+  try {
+    await new Promise((resolve) => setImmediate(resolve));
+    assert.equal(calls, 1);
+    clock.advanceBy(60_001);
+  } finally {
+    release();
+  }
+  const messages = await active.responses();
+  const queued = messages.find((message) => message['id'] === 2)?.['result'] as { content: { text: string }[] };
+  const outcome = searchOutcomeSchema.parse(JSON.parse(queued.content[0]?.text ?? '{}'));
+  assert.ok('report' in outcome);
+  assert.equal(outcome.status, 'partial');
+  assert.equal(outcome.report.usage.provider_request_attempts, 0);
+  assert.ok(outcome.report.stop_reasons.includes('DEADLINE'));
+  assert.equal(calls, 1);
 });
 
 test('the subprocess keeps stdout clean and stops when stdin closes', async () => {

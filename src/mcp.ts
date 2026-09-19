@@ -84,6 +84,7 @@ export type McpServerOptions = {
 
 type ActiveCall = {
   readonly id: JsonRpcId;
+  readonly startedAtMs: number;
   readonly controller: AbortController;
   readonly arguments: unknown;
   readonly resolve: () => void;
@@ -122,7 +123,9 @@ export function runMcpServer(options: McpServerOptions): Promise<void> {
   const execute = async (call: ActiveCall): Promise<void> => {
     running = call;
     try {
-      const { outcome } = await engine.search(call.arguments, { signal: call.controller.signal });
+      const { outcome } = await engine.search(call.arguments, {
+        signal: call.controller.signal, startedAtMs: call.startedAtMs,
+      });
       if (!call.controller.signal.aborted) {
         send({ jsonrpc: '2.0', id: call.id, result: toolResult(outcome) });
       }
@@ -164,7 +167,10 @@ export function runMcpServer(options: McpServerOptions): Promise<void> {
       return Promise.resolve();
     }
     return new Promise<void>((resolve) => {
-      const call: ActiveCall = { id, controller: new AbortController(), arguments: record['arguments'] ?? {}, resolve };
+      const call: ActiveCall = {
+        id, startedAtMs: engine.clock.nowMs, controller: new AbortController(),
+        arguments: record['arguments'] ?? {}, resolve,
+      };
       active.set(callKey(id), call);
       if (running === null) void execute(call);
       else queued = call;

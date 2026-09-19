@@ -318,6 +318,25 @@ test('partial scanning stops on a whole-batch prefix without treating the cap as
   assert.deepEqual(provider.seenPaths, Object.keys(files).slice(0, 8));
 });
 
+test('incomplete preparation reports unknown totals and refuses a required full scan', async () => {
+  for (const cap of [{ prepared_source_bytes: 0 }, { candidate_files: 0 }, { fragments: 0 }]) {
+    const space = workspace({ configure: (config) => withRemoteEnabled({
+      ...config, scan_caps: { ...config.scan_caps, ...cap },
+    }) });
+    const provider = new ScriptedProviderClient(() => 0.9);
+    const engine = createSearchEngine({ configuration: space.loaded, provider });
+    for (const allow_partial_scan of [false, true]) {
+      const result = asResult((await engine.search({ query: 'cache', allow_partial_scan })).outcome);
+      assert.equal(result.status, allow_partial_scan ? 'partial' : 'rejected');
+      assert.equal(provider.calls, 0);
+      assert.equal(result.report.fragments.total, null);
+      assert.equal(result.report.preflight.planned_remote_fragments, null);
+      assert.equal(result.report.preflight.estimated_first_attempt_tokens, null);
+      assert.ok(result.report.stop_reasons.includes('PREPARATION_LIMIT'));
+    }
+  }
+});
+
 test('a dispatched cancellation keeps its attempts, body bytes and unknown usage reservation', async () => {
   const space = workspace();
   const controller = new AbortController();

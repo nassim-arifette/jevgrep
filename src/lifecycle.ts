@@ -141,6 +141,8 @@ export class DiagnosticsRecorder {
 export type SearchContextOptions = {
   readonly searchId?: string;
   readonly clock?: Clock;
+  /** Trusted admission time on the same clock, including any queue wait. */
+  readonly startedAtMs?: number;
   readonly deadlineMs?: number;
   /** Client cancellation, for example an MCP cancel notification or SIGINT. */
   readonly clientSignal?: AbortSignal;
@@ -170,7 +172,7 @@ export class SearchContext {
   constructor(options: SearchContextOptions = {}) {
     this.searchId = options.searchId ?? randomUUID();
     this.clock = options.clock ?? systemClock;
-    this.startedAtMs = this.clock.nowMs;
+    this.startedAtMs = options.startedAtMs ?? this.clock.nowMs;
     this.deadlineAtMs = this.startedAtMs + (options.deadlineMs ?? 60_000);
     this.diagnostics = new DiagnosticsRecorder(this.searchId);
     this.logger = options.logger ?? new SearchLogger('silent');
@@ -189,7 +191,7 @@ export class SearchContext {
     // The deadline is a clock sleep, not a wall-clock timer, so a manual clock can
     // fire it in a test without waiting.
     if (this.#stop === null) {
-      void this.clock.sleep(Math.max(0, this.deadlineAtMs - this.startedAtMs), this.#controller.signal)
+      void this.clock.sleep(Math.max(0, this.deadlineAtMs - this.clock.nowMs), this.#controller.signal)
         .then(() => this.#stopNow('deadline'), () => undefined);
     }
   }
