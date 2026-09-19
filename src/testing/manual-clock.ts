@@ -47,6 +47,8 @@ export class ManualClock implements Clock {
 
   sleep(delayMs: number, signal?: AbortSignal): Promise<void> {
     requireDelay(delayMs);
+    const dueAtMs = this.#nowMs + delayMs;
+    requireDelay(dueAtMs);
     if (signal?.aborted === true) {
       return Promise.reject(new AbortError());
     }
@@ -64,7 +66,7 @@ export class ManualClock implements Clock {
           };
       const timer: PendingTimer = {
         id,
-        dueAtMs: this.#nowMs + delayMs,
+        dueAtMs,
         resolve,
         reject,
         signal,

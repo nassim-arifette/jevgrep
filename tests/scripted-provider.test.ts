@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+import './helpers/offline-preload.ts';
 import { AbortError, ManualClock } from '../src/testing/manual-clock.ts';
 import {
   ScriptedHttpResponseError,
@@ -112,4 +113,56 @@ test('the same script yields the same functional trace on every run', async () =
   }
 
   assert.deepEqual(await run(), await run());
+});
+
+test('a Buffer request and returned observations cannot mutate captured dispatch bytes', async () => {
+  const clock = new ManualClock();
+  const provider = new ScriptedProvider(clock, [
+    { kind: 'success', id: 'buffer', delayMs: 0, response: {}, declaredUsage: null },
+  ]);
+  const body = Buffer.from('original');
+  const result = provider.evaluate(body);
+  body.fill(120);
+  provider.attempts[0]!.requestBytes.fill(121);
+  clock.runAll();
+  await result;
+  assert.equal(Buffer.from(provider.attempts[0]!.requestBytes).toString(), 'original');
+});
+
+test('delayed outcomes use the captured script, including malformed scores and unknown usage', async () => {
+  const clock = new ManualClock();
+  const response = { answers: [{ id: 'b', score: NaN }, { id: 'a', score: 0.8 }], missing: undefined };
+  const step = { kind: 'success' as const, id: 'snapshot', delayMs: 5, response, declaredUsage: null };
+  const provider = new ScriptedProvider(clock, [step]);
+  step.id = 'changed';
+  response.answers[1]!.score = 0;
+  const pending = provider.evaluate('{}');
+  clock.advanceBy(5);
+  const result = await pending;
+  assert.deepEqual(result.response, { answers: [{ id: 'b', score: NaN }, { id: 'a', score: 0.8 }], missing: undefined });
+  assert.equal(result.declaredUsage, null);
+  assert.equal(provider.completionOrder[0], 'snapshot');
+});
+
+test('cancellation before dispatch consumes neither a step nor an attempt', async () => {
+  const clock = new ManualClock();
+  const provider = new ScriptedProvider(clock, [
+    { kind: 'success', id: 'unused', delayMs: 0, response: {}, declaredUsage: 0 },
+  ]);
+  const controller = new AbortController();
+  controller.abort();
+  await assert.rejects(provider.evaluate('{}', controller.signal), AbortError);
+  assert.equal(provider.remainingStepCount, 1);
+  assert.deepEqual(provider.attempts, []);
+  assert.equal(clock.pendingTimerCount, 0);
+});
+
+test('scenario tests have an armed network guard', async () => {
+  await assert.rejects(async () => fetch('https://provider.invalid/'), /offline guard blocked a fetch call/);
+});
+
+test('overflowing timer deadlines are rejected before a pending timer is created', () => {
+  const clock = new ManualClock(Number.MAX_VALUE);
+  assert.throws(() => clock.sleep(Number.MAX_VALUE), RangeError);
+  assert.equal(clock.pendingTimerCount, 0);
 });

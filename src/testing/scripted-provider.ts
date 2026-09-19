@@ -98,7 +98,8 @@ export class ScriptedProvider {
       throw new Error('scripted step ids must be unique');
     }
     this.#clock = clock;
-    this.#steps = [...steps];
+    // Scenarios are captured once. Caller edits must not alter delayed responses.
+    this.#steps = structuredClone(steps);
   }
 
   get attempts(): readonly ObservedAttempt[] {
@@ -123,7 +124,7 @@ export class ScriptedProvider {
 
     const requestBytes = typeof request === 'string'
       ? new TextEncoder().encode(request)
-      : request.slice();
+      : Uint8Array.from(request); // Buffer.slice() would retain caller-owned memory.
     this.#attempts.push({
       attempt: this.#nextStep,
       stepId: step.id,
@@ -137,7 +138,7 @@ export class ScriptedProvider {
 
     switch (step.kind) {
       case 'success':
-        return { response: step.response, declaredUsage: step.declaredUsage };
+        return { response: structuredClone(step.response), declaredUsage: step.declaredUsage };
       case 'http-error':
         throw new ScriptedHttpResponseError(step.status, step.body);
       case 'failure':
