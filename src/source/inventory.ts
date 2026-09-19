@@ -17,7 +17,6 @@
  * empty and whitespace-only files) belong to the preparation stage, which is the
  * first stage that is allowed to read bytes.
  */
-import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { AuthorizedRoot, UnauthorizedPathError } from './authorization.ts';
@@ -201,19 +200,24 @@ type Accumulator = {
   complete: boolean;
 };
 
-/** A missing or unreadable ignore file narrows nothing; the walk continues. */
+/** Only absence is optional. An unreadable exclusion policy cannot authorize a scan. */
 function readIgnoreFile(
-  absoluteDirectory: string,
+  root: AuthorizedRoot,
   relativeDirectory: string,
   fileName: string,
   narrowingOnly: boolean,
+  maxBytes: number,
 ): IgnoreFile | null {
+  let entry;
   try {
-    const text = readFileSync(join(absoluteDirectory, fileName), 'utf8');
-    return parseIgnoreFile(text, relativeDirectory, narrowingOnly);
-  } catch {
-    return null;
+    entry = root.resolveEntry(joinRelative(relativeDirectory, fileName));
+  } catch (cause) {
+    if (cause instanceof UnauthorizedPathError && cause.refusal === 'missing') return null;
+    throw cause;
   }
+  // Once observed, a disappearing policy is a failed scan, not an absent policy.
+  const text = root.readFileBytes(entry.absolutePath, maxBytes).toString('utf8');
+  return parseIgnoreFile(text, relativeDirectory, narrowingOnly);
 }
 
 function joinRelative(directory: string, name: string): string {
@@ -251,7 +255,7 @@ export function inventoryScope(
           : cause.refusal === 'outside_root' ? 'outside_root' : 'not_regular_file';
         accumulator.excluded.push({ relativePath: entry, reason, isDirectory: false });
         accumulator.discovered += 1;
-        if (cause.refusal === 'missing') {
+        if (cause.refusal === 'missing' || cause.refusal === 'changed' || cause.refusal === 'unavailable') {
           accumulator.complete = false;
         }
         continue;
@@ -263,7 +267,14 @@ export function inventoryScope(
       const name = resolved.relativePath.slice(resolved.relativePath.lastIndexOf('/') + 1);
       const parent = resolved.relativePath.includes('/')
         ? resolved.relativePath.slice(0, resolved.relativePath.lastIndexOf('/')) : '';
-      const stack = ignoreStackFor(root, parent, options);
+      let stack;
+      try {
+        stack = ignoreStackFor(root, parent, options);
+      } catch {
+        accumulator.complete = false;
+        accumulator.traversalErrors += 1;
+        continue;
+      }
       considerFile(root, accumulator, rules, stack, {
         name, relativePath: resolved.relativePath, absolutePath: resolved.absolutePath, sizeBytes: resolved.sizeBytes,
       });
@@ -271,8 +282,15 @@ export function inventoryScope(
     }
 
     const relativeDirectory = resolved.relativePath === '.' ? '' : resolved.relativePath;
-    walkDirectory(root, accumulator, rules, ignoreStackFor(root, relativeDirectory, options), options,
-      resolved.absolutePath, relativeDirectory);
+    let inherited;
+    try {
+      inherited = ignoreStackFor(root, relativeDirectory, options);
+    } catch {
+      accumulator.complete = false;
+      accumulator.traversalErrors += 1;
+      continue;
+    }
+    walkDirectory(root, accumulator, rules, inherited, options, resolved.absolutePath, relativeDirectory);
   }
 
   accumulator.files.sort((left, right) => (left.relativePath < right.relativePath ? -1 : left.relativePath > right.relativePath ? 1 : 0));
@@ -298,32 +316,30 @@ export function inventoryScope(
 function ignoreStackFor(root: AuthorizedRoot, relativeDirectory: string, options: InventoryOptions): IgnoreFile[] {
   const stack: IgnoreFile[] = [];
   const segments = relativeDirectory === '' ? [] : relativeDirectory.split('/');
-  let absolute = root.path;
   let relative = '';
   for (let index = 0; index <= segments.length; index += 1) {
     if (index > 0) {
       const segment = segments[index - 1] ?? '';
-      absolute = join(absolute, segment);
       relative = joinRelative(relative, segment);
     }
-    stack.push(...directoryIgnoreFiles(absolute, relative, options));
+    stack.push(...directoryIgnoreFiles(root, relative, options));
   }
   return stack;
 }
 
 function directoryIgnoreFiles(
-  absoluteDirectory: string,
+  root: AuthorizedRoot,
   relativeDirectory: string,
   options: InventoryOptions,
 ): IgnoreFile[] {
   const found: IgnoreFile[] = [];
   if (options.respectGitignore) {
-    const gitignore = readIgnoreFile(absoluteDirectory, relativeDirectory, '.gitignore', false);
+    const gitignore = readIgnoreFile(root, relativeDirectory, '.gitignore', false, options.maxFileBytes);
     if (gitignore !== null) {
       found.push(gitignore);
     }
   }
-  const jevgrepignore = readIgnoreFile(absoluteDirectory, relativeDirectory, '.jevgrepignore', true);
+  const jevgrepignore = readIgnoreFile(root, relativeDirectory, '.jevgrepignore', true, options.maxFileBytes);
   if (jevgrepignore !== null) {
     found.push(jevgrepignore);
   }
@@ -337,7 +353,15 @@ function considerFile(
   stack: readonly IgnoreFile[],
   file: { name: string; relativePath: string; absolutePath: string; sizeBytes: number },
 ): void {
-  const identity = root.identityKey(file.absolutePath);
+  let identity;
+  try {
+    identity = root.identityKey(file.absolutePath);
+  } catch {
+    accumulator.discovered += 1;
+    accumulator.complete = false;
+    accumulator.traversalErrors += 1;
+    return;
+  }
   if (accumulator.seen.has(identity)) {
     return;
   }
@@ -379,16 +403,26 @@ function walkDirectory(
 
   let entries;
   try {
-    entries = readdirSync(absoluteDirectory, { withFileTypes: true });
-  } catch {
+    entries = root.readDirectory(relativeDirectory || '.');
+  } catch (cause) {
+    if (cause instanceof UnauthorizedPathError && cause.refusal === 'link') {
+      accumulator.excludedDirectories.push({ relativePath: relativeDirectory, reason: 'link', isDirectory: true });
+      return;
+    }
     accumulator.traversalErrors += 1;
     accumulator.complete = false;
     return;
   }
 
-  const stack = relativeDirectory === ''
-    ? inheritedStack
-    : [...inheritedStack, ...directoryIgnoreFiles(absoluteDirectory, relativeDirectory, options)];
+  let stack;
+  try {
+    stack = relativeDirectory === '' ? inheritedStack
+      : [...inheritedStack, ...directoryIgnoreFiles(root, relativeDirectory, options)];
+  } catch {
+    accumulator.traversalErrors += 1;
+    accumulator.complete = false;
+    return;
+  }
 
   // Deterministic order: the walk does not depend on the filesystem's listing order.
   entries.sort((left, right) => (left.name < right.name ? -1 : left.name > right.name ? 1 : 0));
@@ -434,6 +468,10 @@ function walkDirectory(
       sizeBytes = root.resolveEntry(relativePath).sizeBytes;
     } catch (cause) {
       accumulator.discovered += 1;
+      if (!(cause instanceof UnauthorizedPathError)
+        || cause.refusal === 'missing' || cause.refusal === 'changed' || cause.refusal === 'unavailable') {
+        accumulator.complete = false;
+      }
       const reason: InventoryExclusion = cause instanceof UnauthorizedPathError && cause.refusal === 'link'
         ? 'link' : 'not_regular_file';
       accumulator.excluded.push({ relativePath, reason, isDirectory: false });

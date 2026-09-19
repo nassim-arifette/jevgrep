@@ -10,9 +10,9 @@
  * Nothing here contacts a provider: `doctor` must work offline, without a key.
  */
 import { createHash } from 'node:crypto';
-import { lstatSync, readFileSync, realpathSync, statSync } from 'node:fs';
+import { lstatSync, statSync } from 'node:fs';
 import { homedir } from 'node:os';
-import { isAbsolute, join, resolve, sep } from 'node:path';
+import { basename, dirname, isAbsolute, join, resolve, sep } from 'node:path';
 import process from 'node:process';
 
 import {
@@ -21,6 +21,7 @@ import {
 } from './contracts.ts';
 import type { Configuration, ErrorCode, ScanCap } from './contracts.ts';
 import { REFERENCE_COUNTER_ID } from './response/token-counter.ts';
+import { AuthorizedRoot, assertSafeRelativePath } from './source/authorization.ts';
 
 export { createDefaultConfiguration, CONFIG_SCHEMA_VERSION };
 
@@ -47,6 +48,8 @@ export type LoadedConfiguration = {
   readonly config: Configuration;
   /** Canonical absolute path of the authorized repository root. */
   readonly repositoryRoot: string;
+  /** Retained filesystem authorization; never reopen a replacement root by pathname. */
+  readonly sourceRoot: AuthorizedRoot;
   /** Per-user cache directory for this root and fingerprint; never inside the repository. */
   readonly cacheDirectory: string;
   /** Stable identity of the authorization-relevant configuration, used for cache namespacing. */
@@ -67,28 +70,29 @@ function describeErrno(cause: unknown): string {
   return typeof code === 'string' ? code : 'unreadable';
 }
 
-/** Canonical identity of an existing directory, with links refused rather than followed. */
-function canonicalDirectory(path: string, label: string): string {
-  let stats;
-  try {
-    stats = lstatSync(path);
-  } catch (cause) {
-    throw new ConfigurationError('INVALID_CONFIG', `${label} does not exist: ${path} (${describeErrno(cause)})`);
-  }
-  if (stats.isSymbolicLink()) {
-    throw new ConfigurationError('INVALID_CONFIG', `${label} is a link, which v1 never follows: ${path}`);
-  }
-  if (!stats.isDirectory()) {
-    throw new ConfigurationError('INVALID_CONFIG', `${label} is not a directory: ${path}`);
-  }
-  return realpathSync.native(path);
+/** Inputs have already been canonicalized; preserve case-sensitive Windows names. */
+export function isInsideDirectory(candidate: string, directory: string): boolean {
+  const root = directory.endsWith(sep) ? directory : `${directory}${sep}`;
+  return candidate === directory || candidate.startsWith(root);
 }
 
-/** Case-insensitive containment on Windows, exact segments elsewhere. */
-export function isInsideDirectory(candidate: string, directory: string): boolean {
-  const fold = (value: string): string => (process.platform === 'win32' ? value.toLowerCase() : value);
-  const root = fold(directory.endsWith(sep) ? directory : `${directory}${sep}`);
-  return fold(candidate).startsWith(root);
+/** Validate the existing ancestors of a cache location before it may be created. */
+function futureDirectory(path: string): string {
+  const suffix: string[] = [];
+  let existing = resolve(path);
+  for (;;) {
+    try {
+      lstatSync(existing);
+      break;
+    } catch (cause) {
+      if ((cause as NodeJS.ErrnoException).code !== 'ENOENT') throw cause;
+    }
+    const parent = dirname(existing);
+    if (parent === existing) throw new ConfigurationError('INVALID_CONFIG', 'cache ancestor is unavailable');
+    suffix.unshift(assertSafeRelativePath(basename(existing)));
+    existing = parent;
+  }
+  return join(AuthorizedRoot.open(existing).path, ...suffix);
 }
 
 /** Per-user base directory for local JevGrep data, outside every searched repository. */
@@ -116,7 +120,7 @@ export function userDataDirectory(env: NodeJS.ProcessEnv = process.env): string 
 export function configurationFingerprint(config: Configuration, repositoryRoot: string): string {
   return sha256Hex(JSON.stringify([
     CONFIG_SCHEMA_VERSION,
-    process.platform === 'win32' ? repositoryRoot.toLowerCase() : repositoryRoot,
+    repositoryRoot,
     config.provider.adapter ?? 'typesafe-direct',
     config.provider.base_url.replace(/\/$/, ''),
     config.provider.model,
@@ -136,23 +140,13 @@ export function loadConfiguration(configPath: string, options: LoadOptions = {})
   const cwd = options.cwd ?? process.cwd();
   const absolute = resolve(cwd, configPath);
 
-  let stats;
-  try {
-    stats = lstatSync(absolute);
-  } catch (cause) {
-    throw new ConfigurationError('INVALID_CONFIG',
-      `cannot read the configuration file ${absolute} (${describeErrno(cause)})`);
-  }
-  if (stats.isSymbolicLink()) {
-    throw new ConfigurationError('INVALID_CONFIG', `the configuration path is a link, which v1 never follows: ${absolute}`);
-  }
-  if (!stats.isFile()) {
-    throw new ConfigurationError('INVALID_CONFIG', `the configuration path is not a regular file: ${absolute}`);
-  }
-
   let text: string;
+  let realConfigPath: string;
   try {
-    text = readFileSync(absolute, 'utf8');
+    const parent = AuthorizedRoot.open(dirname(absolute));
+    const entry = parent.resolveEntry(basename(absolute));
+    realConfigPath = entry.absolutePath;
+    text = parent.readFileBytes(realConfigPath, 1_048_576).toString('utf8');
   } catch (cause) {
     throw new ConfigurationError('INVALID_CONFIG',
       `cannot read the configuration file ${absolute} (${describeErrno(cause)})`);
@@ -176,21 +170,28 @@ export function loadConfiguration(configPath: string, options: LoadOptions = {})
     throw cause;
   }
 
-  const repositoryRoot = canonicalDirectory(resolve(config.repository_root), 'repository_root');
-  const realConfigPath = realpathSync.native(absolute);
+  let sourceRoot: AuthorizedRoot;
+  let cacheDirectory: string;
+  try {
+    sourceRoot = AuthorizedRoot.open(config.repository_root);
+    cacheDirectory = futureDirectory(join(userDataDirectory(options.env ?? process.env), 'scores',
+      configurationFingerprint(config, sourceRoot.path)));
+  } catch {
+    throw new ConfigurationError('INVALID_CONFIG', 'repository_root or cache ancestors failed filesystem authorization');
+  }
+  const repositoryRoot = sourceRoot.path;
   if (isInsideDirectory(realConfigPath, repositoryRoot)) {
     throw new ConfigurationError('INVALID_CONFIG',
       'the trusted configuration must live outside the repository it authorizes; a repository-local file cannot grant authorization');
   }
 
   const fingerprint = configurationFingerprint(config, repositoryRoot);
-  const cacheDirectory = join(userDataDirectory(options.env ?? process.env), 'scores', fingerprint);
   if (isInsideDirectory(cacheDirectory, repositoryRoot)) {
     throw new ConfigurationError('INVALID_CONFIG',
       `the cache directory ${cacheDirectory} would sit inside the authorized repository; set JEVGREP_CACHE_HOME elsewhere`);
   }
 
-  return { configPath: realConfigPath, config, repositoryRoot, cacheDirectory, fingerprint };
+  return { configPath: realConfigPath, config, repositoryRoot, sourceRoot, cacheDirectory, fingerprint };
 }
 
 /**
@@ -287,7 +288,7 @@ export function doctorReport(
   }
   let rootReadable = true;
   try {
-    statSync(loaded.repositoryRoot);
+    loaded.sourceRoot.readDirectory('.');
   } catch {
     rootReadable = false;
     problems.push(`the authorized repository root ${loaded.repositoryRoot} is not readable`);

@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { writeFileSync } from 'node:fs';
+import fs, { writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { after, test } from 'node:test';
 
@@ -101,6 +101,57 @@ function asError(outcome: SearchResult | SearchError): SearchError {
   assert.ok('error' in outcome, `expected a compact error, received ${JSON.stringify(outcome)}`);
   return outcome;
 }
+
+test('partial mode never dispatches snapshots after an observed root replacement, even if restored', async (t) => {
+  const space = workspace();
+  const provider = new ScriptedProviderClient(() => 0.9);
+  const engine = createSearchEngine({ configuration: space.loaded, provider, env: space.env });
+  const open = fs.openSync;
+  let openedSecond = false;
+  let observed = false;
+  t.mock.method(fs, 'openSync', (path: fs.PathLike, flags: fs.OpenMode, mode?: fs.Mode) => {
+    const fd = open(path, flags, mode);
+    if (String(path) === join(space.repositoryRoot, 'src', 'handler.ts')) openedSecond = true;
+    return fd;
+  });
+  t.mock.method(fs, 'lstatSync', new Proxy(fs.lstatSync, {
+    apply(target, receiver, args) {
+      const stats = Reflect.apply(target, receiver, args) as fs.BigIntStats;
+      if (openedSecond && !observed && String(args[0]) === space.repositoryRoot) {
+        observed = true;
+        return new Proxy(stats, { get: (value, key) => key === 'ino' ? value.ino + 1n : Reflect.get(value, key) });
+      }
+      return stats;
+    },
+  }));
+  const result = await engine.search({
+    query: 'Where is the cache invalidated?', scope: ['.'], max_context_tokens: 4_000, allow_partial_scan: true,
+  });
+  assert.ok(observed, 'the second file detects an anchor change after the first snapshot was prepared');
+  assert.equal(provider.calls, 0);
+  assert.equal(asError(result.outcome).error.code, 'UNAUTHORIZED_SCOPE');
+});
+
+test('a linked source ancestor introduced after preparation is refused before provider dispatch', async () => {
+  const space = workspace();
+  const provider = new ScriptedProviderClient(() => 0.9);
+  let replaced = false;
+  Object.defineProperty(provider, 'model', { get() {
+    if (!replaced) {
+      replaced = true;
+      const outside = join(space.root, 'prepared-sources');
+      fs.renameSync(join(space.repositoryRoot, 'src'), outside);
+      fs.symlinkSync(outside, join(space.repositoryRoot, 'src'), process.platform === 'win32' ? 'junction' : 'dir');
+    }
+    return 'jev-1.13.0';
+  } });
+  const result = await createSearchEngine({ configuration: space.loaded, provider, env: space.env }).search({
+    query: 'Where is the cache invalidated?', scope: ['.'], max_context_tokens: 4_000, allow_partial_scan: true,
+  });
+  assert.ok(replaced);
+  assert.equal(provider.calls, 0);
+  assert.equal(asError(result.outcome).error.code, 'UNAUTHORIZED_SCOPE');
+});
 
 test('a known fixture produces validated excerpts with path, lines, hash and exact text', async () => {
   const space = workspace();

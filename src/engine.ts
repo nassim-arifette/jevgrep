@@ -38,7 +38,7 @@ import type { ReportInputs, RenderedResponse } from './response/render.ts';
 import { selectRanges } from './response/selection.ts';
 import type { SelectedRange } from './response/selection.ts';
 import { REFERENCE_COUNTER_ID, countReferenceTokens } from './response/token-counter.ts';
-import { AuthorizedRoot, UnauthorizedPathError } from './source/authorization.ts';
+import { UnauthorizedPathError } from './source/authorization.ts';
 import type { PreparedFragment } from './source/chunker.ts';
 import { FreshnessTracker, rootReader } from './source/freshness.ts';
 import { exclusionCounts, prepareScope } from './source/prepare.ts';
@@ -155,7 +155,7 @@ export class SearchEngine {
   }
 
   async #run(rawRequest: unknown, context: SearchContext): Promise<SearchOutcomeWithDiagnostics> {
-    const { config, repositoryRoot } = this.#options.configuration;
+    const { config, sourceRoot } = this.#options.configuration;
     let request;
     try {
       request = parseSearchRequest(rawRequest, {
@@ -176,7 +176,7 @@ export class SearchEngine {
       resolveCredential(this.#options.configuration, this.#options.env ?? process.env),
     );
 
-    const root = AuthorizedRoot.open(repositoryRoot);
+    const root = sourceRoot;
     const prepared = await runPhase(context, 'preparation', async () => prepareScope(root, request.scope, {
       inventory: {
         respectGitignore: config.source.respect_gitignore,
@@ -191,6 +191,10 @@ export class SearchEngine {
       },
       shouldStop: () => !context.canStartWork(),
     }));
+
+    // A lost authorization cannot become permission to send an earlier partial
+    // snapshot. The anchor is retained and invalidation lasts until config reload.
+    root.assertCurrent();
 
     if (!prepared.inventory.complete) {
       context.addStopReason('INVENTORY_INCOMPLETE');
@@ -272,6 +276,14 @@ export class SearchEngine {
         await runEvaluations(provider, plan.batches, context, {
           concurrency: config.search.concurrency,
           onDispatch: (batch) => {
+            root.assertCurrent();
+            // Revalidate each named entry before disclosure, while sending only
+            // the already captured snapshot bytes (never reread replacement text).
+            for (const path of new Set(batch.items.map((item) => item.path))) {
+              if (root.resolveEntry(path).kind !== 'file') {
+                throw new UnauthorizedPathError('not_regular_file', path, 'source type changed before dispatch');
+              }
+            }
             const tokens = Math.max(1, estimateBatchTokens(batch, model));
             const bytes = batchRequestBytes(batch, model);
             const projected: Partial<Record<ScanCap, number | null>> = {
@@ -361,7 +373,7 @@ export class SearchEngine {
       snapshots.set(file.snapshot.relativePath, file.snapshot);
     }
     const freshness = new FreshnessTracker(rootReader(
-      AuthorizedRoot.open(this.#options.configuration.repositoryRoot), config.source.max_file_bytes,
+      this.#options.configuration.sourceRoot, config.source.max_file_bytes,
     ));
 
     const candidates = scored.map(({ fragment, score }) => ({ fragment, score }));

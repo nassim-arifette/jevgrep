@@ -132,7 +132,13 @@ export function prepareScope(
       bytes = root.readFileBytes(entry.absolutePath, options.inventory.maxFileBytes);
     } catch (cause) {
       if (cause instanceof UnauthorizedPathError) {
-        excluded.push({ relativePath: entry.relativePath, reason: cause.refusal === 'link' ? 'link' : 'not_regular_file' });
+        if (cause.refusal === 'changed' || cause.refusal === 'unavailable' || cause.refusal === 'missing') {
+          unreadable += 1;
+          complete = false;
+          continue;
+        }
+        excluded.push({ relativePath: entry.relativePath,
+          reason: cause.refusal === 'link' ? 'link' : cause.refusal === 'too_large' ? 'file_too_large' : 'not_regular_file' });
         continue;
       }
       unreadable += 1;

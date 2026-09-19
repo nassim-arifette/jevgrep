@@ -1,35 +1,20 @@
 /**
- * Containment of every read inside the authorized repository root.
- *
- * JG-008 owns the hardened version of this control and its Windows/POSIX attack
- * fixtures; this module implements the containment contract that the inventory
- * (JG-010) and the snapshot reader (JG-011) consume, so that no stage has to invent
- * its own path rules. Keep the interface narrow: callers ask for a resolved entry or
- * for bytes, never for "is this string fine".
- *
- * Specification section 5.1: the configured root is canonicalized once, every
- * requested path and every discovered entry is validated against it before being
- * opened, links and reparse points are refused rather than followed, and a path
- * comparison is done on segments under platform semantics, never on raw prefixes.
- * This is not an OS sandbox; concurrent replacement of a file between validation and
- * read remains possible and is documented rather than hidden.
+ * Rooted source access (JG-008). All inventory, ignore-file and content reads cross
+ * this interface. A root identity is pinned for the loaded configuration's lifetime.
+ * Checks narrow observable replacement races; they are not an atomic OS sandbox.
  */
-import { closeSync, fstatSync, lstatSync, openSync, readSync, realpathSync } from 'node:fs';
-import { basename, dirname, join, resolve, sep } from 'node:path';
-import process from 'node:process';
+import fs from 'node:fs';
+import type { BigIntStats, Dirent } from 'node:fs';
+import { constants as bufferConstants } from 'node:buffer';
+import { isAbsolute, join, parse, resolve, sep } from 'node:path';
+import { assertNoReparsePoints, AttributeCheckError } from './windows-attributes.ts';
 
-/** Why a path may not be used. These map onto contract exclusion reasons. */
-export type PathRefusal =
-  | 'outside_root'
-  | 'link'
-  | 'not_regular_file'
-  | 'unsupported_path_syntax'
-  | 'missing';
+export type PathRefusal = 'outside_root' | 'link' | 'not_regular_file'
+  | 'unsupported_path_syntax' | 'missing' | 'changed' | 'too_large' | 'unavailable';
 
 export class UnauthorizedPathError extends Error {
   override readonly name = 'UnauthorizedPathError';
   readonly refusal: PathRefusal;
-  /** Repository-relative path when it is known; the raw request otherwise. */
   readonly requestedPath: string;
 
   constructor(refusal: PathRefusal, requestedPath: string, detail: string) {
@@ -39,230 +24,258 @@ export class UnauthorizedPathError extends Error {
   }
 }
 
-export type EntryKind = 'file' | 'directory';
-
 export type ResolvedEntry = {
   readonly relativePath: string;
   readonly absolutePath: string;
-  readonly kind: EntryKind;
+  readonly kind: 'file' | 'directory';
   readonly sizeBytes: number;
 };
 
 const WINDOWS_RESERVED = /^(con|prn|aux|nul|com[1-9¹²³]|lpt[1-9¹²³])(\.|$)/i;
 
-/**
- * Lexical validation of a repository-relative path, before touching the filesystem.
- * Rejects traversal, absolute and drive-relative forms, UNC and device namespaces,
- * NUL, alternate data streams and Windows reserved device names.
- */
+/** Validate before touching the filesystem, using the shared portable path policy. */
 export function assertSafeRelativePath(input: string): string {
-  const fail = (detail: string): never => {
-    throw new UnauthorizedPathError('unsupported_path_syntax', input, detail);
+  const fail = (): never => {
+    throw new UnauthorizedPathError('unsupported_path_syntax', input, 'unsupported relative path syntax');
   };
-  if (input.length === 0) {
-    return fail('empty path');
-  }
-  if (input.includes('\u0000')) {
-    return fail('NUL byte in path');
-  }
+  if (input.length === 0 || /[\u0000-\u001f\u007f<>:"|?*]/.test(input)) return fail();
   const unified = input.replaceAll('\\', '/');
-  if (unified.startsWith('/')) {
-    return fail('absolute, UNC and device paths are forbidden');
-  }
-  if (/^[A-Za-z]:/.test(unified)) {
-    return fail('drive-relative and drive-absolute paths are forbidden');
-  }
-  if (unified.includes(':')) {
-    return fail('alternate data stream syntax is forbidden');
-  }
+  if (unified.startsWith('/')) return fail();
   const segments = unified.split('/').filter((segment) => segment !== '' && segment !== '.');
-  if (segments.includes('..')) {
-    return fail('parent traversal is forbidden');
-  }
-  for (const segment of segments) {
-    if (/[\u0000-\u001f\u007f<>"|?*]/.test(segment)) {
-      return fail('unsupported character in path');
-    }
-    if (/[. ]$/.test(segment)) {
-      return fail('trailing dot or space is ambiguous on Windows');
-    }
-    if (WINDOWS_RESERVED.test(segment)) {
-      return fail('Windows reserved device name');
-    }
-  }
+  if (segments.some((segment) => segment === '..' || /[. ]$/.test(segment) || WINDOWS_RESERVED.test(segment))) return fail();
   return segments.join('/') || '.';
 }
 
-function foldCase(value: string): string {
-  return process.platform === 'win32' ? value.toLowerCase() : value;
+type CheckedEntry = { readonly path: string; readonly stats: BigIntStats };
+type Walk = { readonly entry: ResolvedEntry; readonly chain: readonly CheckedEntry[] };
+
+function fail(reason: PathRefusal, path: string): never {
+  throw new UnauthorizedPathError(reason, path, `source access refused (${reason})`);
 }
 
-/** Split an absolute path into comparable segments. */
-function segmentsOf(absolutePath: string): string[] {
-  return absolutePath.split(/[\\/]+/).filter((segment) => segment.length > 0);
+/** No case folding: Windows also permits case-sensitive directories. */
+function contained(candidate: string, root: string): boolean {
+  return candidate === root || candidate.startsWith(root.endsWith(sep) ? root : `${root}${sep}`);
 }
 
-/**
- * The authorized repository root, and the only door to its contents.
- *
- * Instances are created once per search from the trusted configuration; they never
- * accept a new root from a request, an MCP client or repository text.
- */
+/** Drive-root-first paths; checking them in order never skips an ancestor. */
+function ancestors(absolute: string): string[] {
+  if (!isAbsolute(absolute) || (process.platform === 'win32' && !/^[A-Za-z]:[\\/]/.test(absolute))) {
+    return fail('unsupported_path_syntax', absolute);
+  }
+  const prefix = parse(absolute).root;
+  const paths = [prefix];
+  let current = prefix;
+  for (const part of absolute.slice(prefix.length).split(sep).filter(Boolean)) {
+    if (assertSafeRelativePath(part) !== part) return fail('unsupported_path_syntax', absolute);
+    current = join(current, part);
+    paths.push(current);
+  }
+  return paths;
+}
+
+function checkWindows(paths: readonly string[], requested: string): void {
+  try {
+    assertNoReparsePoints(paths);
+  } catch (cause) {
+    if (cause instanceof AttributeCheckError) return fail(cause.kind, cause.path ?? requested);
+    throw cause;
+  }
+}
+
+function metadata(path: string): BigIntStats {
+  let stats: BigIntStats;
+  try {
+    stats = fs.lstatSync(path, { bigint: true });
+  } catch (cause) {
+    const code = (cause as NodeJS.ErrnoException).code;
+    return fail(code === 'ENOENT' || code === 'ENOTDIR' ? 'missing' : 'unavailable', path);
+  }
+  if (stats.isSymbolicLink()) return fail('link', path);
+  if (!stats.isDirectory() && !stats.isFile()) return fail('not_regular_file', path);
+  return stats;
+}
+
+function sameObject(left: BigIntStats, right: BigIntStats): boolean {
+  return left.dev === right.dev && left.ino === right.ino
+    && left.isDirectory() === right.isDirectory() && left.isFile() === right.isFile();
+}
+
+function unchanged(left: BigIntStats, right: BigIntStats): boolean {
+  return sameObject(left, right) && left.size === right.size
+    && left.mtimeNs === right.mtimeNs && left.ctimeNs === right.ctimeNs;
+}
+
+function checkChain(chain: readonly CheckedEntry[]): void {
+  const paths = chain.map((entry) => entry.path);
+  checkWindows(paths, paths.at(-1) ?? '.');
+  for (const expected of chain) {
+    if (!sameObject(expected.stats, metadata(expected.path))) fail('changed', expected.path);
+  }
+}
+
+function checkedAncestors(absolute: string): CheckedEntry[] {
+  const paths = ancestors(absolute);
+  checkWindows(paths, absolute);
+  return paths.map((path) => {
+    const stats = metadata(path);
+    if (!stats.isDirectory()) return fail('not_regular_file', path);
+    return { path, stats };
+  });
+}
+
 export class AuthorizedRoot {
-  /** Canonical absolute path of the root. */
   readonly path: string;
-  readonly #rootSegments: readonly string[];
+  readonly #anchor: readonly CheckedEntry[];
+  #invalidated = false;
 
-  private constructor(canonicalRoot: string) {
-    this.path = canonicalRoot;
-    this.#rootSegments = segmentsOf(canonicalRoot).map(foldCase);
+  private constructor(path: string, anchor: readonly CheckedEntry[]) {
+    this.path = path;
+    this.#anchor = anchor;
   }
 
-  /** Canonicalize the configured root once. A link as the root itself is refused. */
+  /** Refuse linked ancestors before canonicalization can hide them. */
   static open(rootPath: string): AuthorizedRoot {
-    const absolute = resolve(rootPath);
-    let stats;
-    try {
-      stats = lstatSync(absolute);
-    } catch {
-      throw new UnauthorizedPathError('missing', absolute, `the authorized root does not exist: ${absolute}`);
-    }
-    if (stats.isSymbolicLink()) {
-      throw new UnauthorizedPathError('link', absolute, `the authorized root is a link: ${absolute}`);
-    }
-    if (!stats.isDirectory()) {
-      throw new UnauthorizedPathError('not_regular_file', absolute, `the authorized root is not a directory: ${absolute}`);
-    }
-    return new AuthorizedRoot(realpathSync.native(absolute));
+    const requested = resolve(rootPath);
+    const before = checkedAncestors(requested);
+    const canonical = fs.realpathSync.native(requested);
+    const anchor = checkedAncestors(canonical);
+    if (!sameObject(before.at(-1)!.stats, anchor.at(-1)!.stats)) return fail('changed', requested);
+    checkChain(before);
+    return new AuthorizedRoot(canonical, anchor);
   }
 
-  /**
-   * Segment-wise containment. A sibling directory whose name merely starts with the
-   * root's name (`repo-other` next to `repo`) is not contained.
-   */
+  /** Lexical check only; actual access always revalidates the retained anchor. */
   contains(absolutePath: string): boolean {
-    const candidate = segmentsOf(resolve(absolutePath)).map(foldCase);
-    if (candidate.length < this.#rootSegments.length) {
-      return false;
-    }
-    return this.#rootSegments.every((segment, index) => candidate[index] === segment);
+    return contained(resolve(absolutePath), this.path);
   }
 
-  /** Repository-relative path with '/' separators. Throws when the path is not contained. */
   relativize(absolutePath: string): string {
     const absolute = resolve(absolutePath);
-    if (!this.contains(absolute)) {
-      throw new UnauthorizedPathError('outside_root', absolute, `${absolute} is outside ${this.path}`);
-    }
-    const relative = segmentsOf(absolute).slice(this.#rootSegments.length);
-    return relative.join('/') || '.';
+    if (!this.contains(absolute)) return fail('outside_root', absolute);
+    return absolute.slice(this.path.length).split(sep).filter(Boolean).join('/') || '.';
   }
 
-  /**
-   * Identity used to deduplicate overlapping scope entries. On Windows the folded
-   * path is the identity the platform itself uses; elsewhere the exact path is.
-   */
+  /** Filesystem-resolved spelling merges aliases without merging distinct hard links. */
   identityKey(absolutePath: string): string {
-    return foldCase(resolve(absolutePath));
+    return this.resolveEntry(this.relativize(absolutePath)).absolutePath;
   }
 
-  /**
-   * Resolve a repository-relative path and validate every segment on the way down.
-   * Any link, junction or reparse point in the chain refuses the whole path.
-   */
+  /** A failed anchor stays invalid even if the original directory is later restored. */
+  assertCurrent(): void {
+    if (this.#invalidated) return fail('changed', this.path);
+    try {
+      checkChain(this.#anchor);
+    } catch (cause) {
+      this.#invalidated = true;
+      throw cause;
+    }
+  }
+
+  #checked<T>(operation: () => T): T {
+    try {
+      return operation();
+    } catch (cause) {
+      if (cause instanceof UnauthorizedPathError
+        && this.#anchor.some((entry) => entry.path === cause.requestedPath)) {
+        this.#invalidated = true;
+      } else {
+        // A failed descendant lookup may have crossed a root changed since the
+        // first check. Preserve any anchor failure before returning to a caller
+        // which may legitimately continue a partial scan after a leaf failure.
+        try { this.assertCurrent(); } catch { /* assertCurrent retains the failure */ }
+      }
+      throw cause;
+    }
+  }
+
   resolveEntry(relativePath: string): ResolvedEntry {
-    const normalized = assertSafeRelativePath(relativePath);
-    if (normalized === '.') {
-      const stats = lstatSync(this.path);
-      return { relativePath: '.', absolutePath: this.path, kind: 'directory', sizeBytes: stats.size };
-    }
+    return this.#walk(relativePath).entry;
+  }
 
+  #walk(relativePath: string): Walk {
+    const normalized = assertSafeRelativePath(relativePath);
+    return this.#checked(() => this.#resolveWalk(normalized));
+  }
+
+  #resolveWalk(normalized: string): Walk {
+    this.assertCurrent();
+    const chain = [...this.#anchor];
     let current = this.path;
-    const segments = normalized.split('/');
-    for (const [index, segment] of segments.entries()) {
-      current = join(current, segment);
-      const last = index === segments.length - 1;
-      let stats;
-      try {
-        stats = lstatSync(current);
-      } catch {
-        throw new UnauthorizedPathError('missing', normalized, `${normalized} does not exist inside the authorized root`);
-      }
-      if (stats.isSymbolicLink()) {
-        throw new UnauthorizedPathError('link', normalized, `${normalized} traverses a link, which v1 never follows`);
-      }
-      if (!last && !stats.isDirectory()) {
-        throw new UnauthorizedPathError('not_regular_file', normalized, `${normalized} traverses a non-directory`);
-      }
-      if (last) {
-        if (stats.isDirectory()) {
-          return { relativePath: normalized, absolutePath: current, kind: 'directory', sizeBytes: stats.size };
-        }
-        if (!stats.isFile()) {
-          throw new UnauthorizedPathError('not_regular_file', normalized, `${normalized} is not a regular file`);
-        }
-        if (!this.contains(current)) {
-          throw new UnauthorizedPathError('outside_root', normalized, `${normalized} resolves outside the authorized root`);
-        }
-        return { relativePath: normalized, absolutePath: current, kind: 'file', sizeBytes: stats.size };
-      }
+    const parts = normalized === '.' ? [] : normalized.split('/');
+    const requestedPaths = [...chain.map((entry) => entry.path)];
+    for (const part of parts) {
+      current = join(current, part);
+      requestedPaths.push(current);
     }
-    /* c8 ignore next */
-    throw new UnauthorizedPathError('unsupported_path_syntax', relativePath, 'unreachable path resolution');
+    checkWindows(requestedPaths, normalized);
+    current = this.path;
+    for (const [index, part] of parts.entries()) {
+      const candidate = join(current, part);
+      const stats = metadata(candidate);
+      if (index < parts.length - 1 && !stats.isDirectory()) return fail('not_regular_file', normalized);
+      const canonical = fs.realpathSync.native(candidate);
+      if (!contained(canonical, this.path)) return fail('outside_root', normalized);
+      if (!sameObject(stats, metadata(canonical))) return fail('changed', normalized);
+      current = canonical;
+      chain.push({ path: current, stats });
+    }
+    this.#checked(() => checkChain(chain));
+    const last = chain.at(-1)!;
+    if (last.stats.size > BigInt(Number.MAX_SAFE_INTEGER)) return fail('too_large', normalized);
+    return {
+      entry: {
+        relativePath: this.relativize(current), absolutePath: current,
+        kind: last.stats.isDirectory() ? 'directory' : 'file', sizeBytes: Number(last.stats.size),
+      },
+      chain,
+    };
+  }
+
+  /** No caller performs unchecked readdir or ignore-file reads. */
+  readDirectory(relativePath: string): Dirent[] {
+    const checked = this.#walk(relativePath);
+    if (checked.entry.kind !== 'directory') return fail('not_regular_file', relativePath);
+    const entries = fs.readdirSync(checked.entry.absolutePath, { withFileTypes: true });
+    this.#checked(() => checkChain(checked.chain));
+    return entries;
   }
 
   /**
-   * Read a validated file's original bytes.
-   *
-   * Containment and file type are checked again against the open descriptor, so a
-   * directory entry swapped for a link between listing and reading is refused instead
-   * of read. A concurrent replacement of the file contents themselves is still
-   * possible; the snapshot hash is what identifies the bytes that were used.
+   * Open once, bind fstat identity before any content read, then read to EOF under
+   * an actual byte ceiling. Reject observed growth, truncation and replacements.
    */
   readFileBytes(absolutePath: string, maxBytes: number): Buffer {
-    const absolute = resolve(absolutePath);
-    if (!this.contains(absolute)) {
-      throw new UnauthorizedPathError('outside_root', absolute, `${absolute} is outside ${this.path}`);
+    if (!Number.isSafeInteger(maxBytes) || maxBytes < 0 || maxBytes >= bufferConstants.MAX_LENGTH) {
+      throw new RangeError('maxBytes must be a non-negative supported Buffer length');
     }
-    const linkCheck = lstatSync(absolute);
-    if (linkCheck.isSymbolicLink()) {
-      throw new UnauthorizedPathError('link', absolute, `${absolute} became a link before reading`);
-    }
-    const parent = dirname(absolute);
-    if (parent !== absolute && realpathSync.native(parent) !== parent) {
-      throw new UnauthorizedPathError('link', absolute, `${absolute} sits under a reparse point`);
-    }
-
-    const descriptor = openSync(absolute, 'r');
+    const checked = this.#walk(this.relativize(absolutePath));
+    if (checked.entry.kind !== 'file') return fail('not_regular_file', absolutePath);
+    const flags = fs.constants.O_RDONLY | (fs.constants.O_NOFOLLOW ?? 0) | (fs.constants.O_NONBLOCK ?? 0);
+    const descriptor = fs.openSync(checked.entry.absolutePath, flags);
     try {
-      const stats = fstatSync(descriptor);
-      if (!stats.isFile()) {
-        throw new UnauthorizedPathError('not_regular_file', absolute, `${basename(absolute)} is not a regular file`);
+      const before = fs.fstatSync(descriptor, { bigint: true });
+      if (!before.isFile()) return fail('not_regular_file', absolutePath);
+      if (!unchanged(checked.chain.at(-1)!.stats, before)) return fail('changed', absolutePath);
+      this.#checked(() => checkChain(checked.chain));
+      if (before.size > BigInt(maxBytes)) return fail('too_large', absolutePath);
+      const chunks: Buffer[] = [];
+      let total = 0;
+      for (;;) {
+        const chunk = Buffer.allocUnsafe(Math.min(65_536, maxBytes + 1 - total));
+        const count = fs.readSync(descriptor, chunk, 0, chunk.length, total);
+        if (count === 0) break;
+        total += count;
+        if (total > maxBytes) return fail('too_large', absolutePath);
+        chunks.push(chunk.subarray(0, count));
       }
-      if (stats.size > maxBytes) {
-        throw new UnauthorizedPathError('not_regular_file', absolute,
-          `${basename(absolute)} grew past the configured ${String(maxBytes)} byte limit before reading`);
-      }
-      const buffer = Buffer.allocUnsafe(Number(stats.size));
-      let read = 0;
-      while (read < buffer.length) {
-        const chunk = readSync(descriptor, buffer, read, buffer.length - read, read);
-        if (chunk === 0) {
-          break;
-        }
-        read += chunk;
-      }
-      return read === buffer.length ? buffer : buffer.subarray(0, read);
+      const after = fs.fstatSync(descriptor, { bigint: true });
+      if (!unchanged(before, after) || after.size !== BigInt(total)) return fail('changed', absolutePath);
+      this.#checked(() => checkChain(checked.chain));
+      if (!unchanged(after, metadata(checked.entry.absolutePath))) return fail('changed', absolutePath);
+      return Buffer.concat(chunks, total);
     } finally {
-      closeSync(descriptor);
+      fs.closeSync(descriptor);
     }
-  }
-
-  /** Absolute path of a child entry of an already-validated directory. */
-  child(absoluteDirectory: string, name: string): string {
-    if (name.includes('/') || name.includes('\\') || name === '.' || name === '..') {
-      throw new UnauthorizedPathError('unsupported_path_syntax', name, `unsupported directory entry name: ${name}`);
-    }
-    return join(absoluteDirectory, name) + (absoluteDirectory.endsWith(sep) ? '' : '');
   }
 }

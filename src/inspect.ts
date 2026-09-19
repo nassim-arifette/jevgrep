@@ -10,7 +10,6 @@
  * already hold, what the provider would actually bill — stay explicitly unknown
  * rather than being estimated into a comforting number.
  */
-import { AuthorizedRoot } from './source/authorization.ts';
 import { exclusionCounts, prepareScope } from './source/prepare.ts';
 import type { LoadedConfiguration } from './config.ts';
 import { buildBatches } from './engine.ts';
@@ -62,7 +61,7 @@ const SAMPLE_QUERY = 'Which code handles this behaviour?';
 /** Inventory, prepare and size a scope without contacting the provider. */
 export function inspectScope(configuration: LoadedConfiguration, options: InspectOptions): InspectionReport {
   const { config } = configuration;
-  const root = AuthorizedRoot.open(configuration.repositoryRoot);
+  const root = configuration.sourceRoot;
   const prepared = prepareScope(root, options.scope, {
     inventory: {
       respectGitignore: config.source.respect_gitignore,
