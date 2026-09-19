@@ -678,7 +678,7 @@ Les phases `P0` à `P7` correspondent au plan d’implémentation existant.
 <a id="jg-023"></a>
 ### JG-023 — Finaliser toutes les commandes CLI
 
-**Type :** Implémentation. **Priorité :** Haute. **Phase :** P6. **Statut :** Prêt pour revue M : les quatre commandes locales sont câblées et exercées par la suite ; restent les critères qui exigent un accès fournisseur réel ou la revue du moteur (JG-022).
+**Type :** Implémentation. **Priorité :** Haute. **Phase :** P6. **Statut :** Revue M hors ligne réussie le 20 septembre 2026 ([compte rendu](reviews/jg-023-review.md)) ; les défauts d'aide et de comptabilité de sortie ont été corrigés dans `5bd0f98`. La qualification live reste suspendue à JG-022 et aux gates senior.
 
 **Niveau recommandé :** Junior encadré. **Pilote proposé :** J. **Revue :** M.
 
