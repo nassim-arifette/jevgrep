@@ -58,9 +58,10 @@ export function parseJavaScriptBoundaries(
         }
       }
       const members = ts.isClassLike(node) || ts.isInterfaceDeclaration(node);
+      const memberNodes = new Set<ts.Node>(members ? node.members : []);
       const childDepth = depth + (members || ts.isBlock(node) || ts.isModuleBlock(node) ? 1 : 0);
       ts.forEachChild(node, (child) => {
-        const member = members && node.members.some((entry) => entry === child);
+        const member = memberNodes.has(child);
         stack.push({ node: child, depth: childDepth, member });
       });
     }
