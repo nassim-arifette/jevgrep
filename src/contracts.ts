@@ -185,13 +185,17 @@ export const configurationSchema = refine(object({
   remote_evaluation_enabled: booleanValue,
   provider: object({
     base_url: refine(textValue(256), (value, path) => {
-      requireContract(/^https:\/\/api\.typesafe\.ai\/?$/.test(value), path, 'unsupported provider endpoint');
+      requireContract(/^https:\/\/(?:api\.typesafe\.ai|ai-gateway\.vercel\.sh)\/?$/.test(value), path,
+        'unsupported provider endpoint');
     }),
     api_key_env: refine(textValue(128), (value, path) => {
       requireContract(/^[A-Za-z_][A-Za-z0-9_]*$/.test(value), path, 'expected an environment variable name');
     }),
     model: identifier,
-  }, { pricing: nullable(pricingSchema) }),
+  }, {
+    adapter: enumeration(['typesafe-direct', 'vercel-ai-gateway']),
+    pricing: nullable(pricingSchema),
+  }),
   search: object({
     deadline_ms: positiveCount,
     concurrency: positiveCount,
@@ -216,6 +220,16 @@ export const configurationSchema = refine(object({
   requireContract(pricing == null || pricing.model === value.provider.model, `${path}.provider.pricing`, 'pricing must match the configured model');
   requireContract(value.scan_caps.estimated_cost_usd === null || pricing != null,
     `${path}.scan_caps.estimated_cost_usd`, 'a USD cap requires a dated pricing record for the model');
+  const adapter = value.provider.adapter ?? 'typesafe-direct';
+  if (adapter === 'typesafe-direct') {
+    requireContract(/^https:\/\/api\.typesafe\.ai\/?$/.test(value.provider.base_url), `${path}.provider.base_url`,
+      'typesafe-direct requires https://api.typesafe.ai');
+  } else {
+    requireContract(/^https:\/\/ai-gateway\.vercel\.sh\/?$/.test(value.provider.base_url), `${path}.provider.base_url`,
+      'vercel-ai-gateway requires https://ai-gateway.vercel.sh');
+    requireContract(value.provider.model === 'typesafe-ai/jev', `${path}.provider.model`,
+      'vercel-ai-gateway requires the typesafe-ai/jev model id');
+  }
 });
 export type Configuration = Infer<typeof configurationSchema>;
 
@@ -225,7 +239,10 @@ export function createDefaultConfiguration(repositoryRoot: string, model: string
     schema_version: CONFIG_SCHEMA_VERSION,
     repository_root: repositoryRoot,
     remote_evaluation_enabled: false,
-    provider: { base_url: 'https://api.typesafe.ai', api_key_env: 'TYPESAFE_API_KEY', model },
+    provider: {
+      adapter: 'typesafe-direct', base_url: 'https://api.typesafe.ai',
+      api_key_env: 'TYPESAFE_API_KEY', model,
+    },
     search: { deadline_ms: 60_000, concurrency: 4, require_fit: true, ...defaultResponseLimits, threshold: 0.5 },
     scan_caps: Object.fromEntries(SCAN_CAP_KEYS.map((key) => [key, null])),
     source: { respect_gitignore: true, follow_links: false, max_file_bytes: 1_048_576, extra_deny_globs: [] },

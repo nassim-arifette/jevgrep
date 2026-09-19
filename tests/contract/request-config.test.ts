@@ -140,6 +140,35 @@ test('provider settings accept only the documented endpoint and well-formed rate
   }
 });
 
+test('Vercel AI Gateway requires its explicit adapter, endpoint and Jev model id', () => {
+  const gateway = {
+    ...validConfiguration,
+    provider: {
+      adapter: 'vercel-ai-gateway',
+      base_url: 'https://ai-gateway.vercel.sh',
+      api_key_env: 'AI_GATEWAY_API_KEY',
+      model: 'typesafe-ai/jev',
+    },
+  };
+  assert.deepEqual(configurationSchema.parse(gateway), gateway);
+
+  for (const provider of [
+    { ...gateway.provider, adapter: 'typesafe-direct' },
+    { ...gateway.provider, base_url: 'https://api.typesafe.ai' },
+    { ...gateway.provider, model: 'jev-1.13.0' },
+    { ...gateway.provider, adapter: 'unknown-adapter' },
+  ]) {
+    assert.throws(() => configurationSchema.parse({ ...gateway, provider }), ContractValidationError);
+  }
+
+  const legacyDirect = structuredClone(validConfiguration) as Record<string, unknown>;
+  const legacyProvider = structuredClone(validConfiguration.provider) as Record<string, unknown>;
+  delete legacyProvider['adapter'];
+  legacyDirect['provider'] = legacyProvider;
+  assert.equal(configurationSchema.parse(legacyDirect).provider.adapter, undefined,
+    'an existing direct configuration remains valid without the selector');
+});
+
 test('validators reject executable properties and do not echo unknown keys or values', () => {
   const secret = 'secret-synthetic-123';
   assert.throws(() => searchRequestSchema.parse({ query: 'q', [secret]: secret }), (error: unknown) => {

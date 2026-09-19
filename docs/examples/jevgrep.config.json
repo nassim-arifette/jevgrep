@@ -3,6 +3,7 @@
   "repository_root": "C:/work/example-repository",
   "remote_evaluation_enabled": false,
   "provider": {
+    "adapter": "typesafe-direct",
     "base_url": "https://api.typesafe.ai",
     "api_key_env": "TYPESAFE_API_KEY",
     "model": "jev-1.13.0"
