@@ -9,6 +9,7 @@ import {
   helpText,
   main,
   readPackageVersion,
+  stdoutLine,
 } from '../src/cli.ts';
 import type { CliDependencies, CliIo } from '../src/cli.ts';
 import { repoRoot } from './helpers/cli-runner.ts';
@@ -35,6 +36,11 @@ function capture(): Capture {
     stderr,
   };
 }
+
+test('stdout adds exactly one final newline to plain and already measured output', () => {
+  assert.equal(stdoutLine('plain output'), 'plain output\n');
+  assert.equal(stdoutLine('measured output\n'), 'measured output\n');
+});
 
 /** Run one command with an injected runner, capturing its output and exit code. */
 async function invokeWith(runCommand: () => Promise<number>): Promise<{

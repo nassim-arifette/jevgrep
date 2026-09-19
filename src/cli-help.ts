@@ -61,16 +61,20 @@ export function commandHelp(command: string): string | undefined {
   }
   lines.push('  -h, --help                 show this page and exit 0');
   lines.push('');
-  lines.push(
-    options.includes('--json')
-      ? 'outputs: stdout carries exactly the result that was asked for (canonical JSON with --json,'
-      : 'outputs: stdout carries exactly the result that was asked for,',
-  );
-  lines.push('otherwise the human view or the report); stderr carries diagnostics and measurements, so a');
+  if (options.includes('--json')) {
+    lines.push('outputs: stdout carries exactly the result that was asked for (canonical JSON with --json,');
+    lines.push('otherwise the human view or the report); stderr carries diagnostics and measurements, so a');
+  } else {
+    lines.push('outputs: stdout carries exactly the requested command output or protocol; stderr carries');
+    lines.push('diagnostics and measurements, so a');
+  }
   lines.push('pipeline keeps the evidence even when the exit code is non-zero.');
   if (command === 'search') {
     lines.push('remote evaluation needs the credential named by the trusted configuration; without');
     lines.push('it the search is refused with exit code 2 and no request is sent.');
+  } else if (command === 'mcp') {
+    lines.push('starting the local stdio server performs no scan and no provider call. Tool calls may');
+    lines.push('request remote evaluation only when the trusted configuration allows it and a credential exists.');
   } else {
     lines.push('this command is local: it never needs a credential and never contacts the provider.');
   }
@@ -90,9 +94,9 @@ export function globalHelp(): string {
     'authorized code fragments with a configured remote Jev provider and returns original',
     'excerpts under a response budget.',
     '',
-    'Commands validate their arguments, then run against the shared engine. Only the search',
-    'command contacts the configured remote provider, and only when the trusted configuration',
-    'allows it and the credential is present.',
+    'Commands validate their arguments, then run against the shared engine. Search requests',
+    '(from the CLI or an MCP tool call) may contact the configured remote provider only when',
+    'the trusted configuration allows it and the credential is present.',
     '',
     'options:',
     '  -h, --help      show this help and exit 0',

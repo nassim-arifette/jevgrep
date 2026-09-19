@@ -2,11 +2,9 @@
 /**
  * JevGrep command-line entry point.
  *
- * JG-001 creates the package scaffold: a strict TypeScript package, an executable
- * entry point and offline checks. No search command exists yet, so this file
- * implements `--help` and `--version` only and rejects every other command instead
- * of pretending it works. Planned commands and the eventual exit-code contract are
- * in docs/specification.md (section 4.5) and docs/issues.md.
+ * The entry point validates arguments, handles help/version, and dispatches every
+ * documented command to the shared command layer. Provider activation remains guarded
+ * by the trusted configuration and the qualification gates in the engine.
  */
 import { readFileSync, realpathSync } from 'node:fs';
 import process from 'node:process';
@@ -67,9 +65,14 @@ function interruptionSignal(): AbortSignal {
   return controller.signal;
 }
 
+/** Add one line ending without duplicating one already included in a measured payload. */
+export function stdoutLine(value: string): string {
+  return value.endsWith('\n') ? value : `${value}\n`;
+}
+
 const defaultIo: CliIo = {
   out: (line: string): void => {
-    process.stdout.write(`${line}\n`);
+    process.stdout.write(stdoutLine(line));
   },
   err: (line: string): void => {
     process.stderr.write(`${line}\n`);

@@ -71,3 +71,16 @@ test('the global help lists every command and the whole exit-code contract', () 
   }
   assert.match(help, /credential|provider/i, 'the remote requirement must be stated');
 });
+
+test('the help distinguishes local MCP startup from remote search tool calls', () => {
+  const mcp = commandHelp('mcp');
+  assert.ok(mcp !== undefined);
+  assert.match(mcp, /starting the local stdio server performs no scan and no provider call/i);
+  assert.match(mcp, /tool calls may\s+request remote evaluation/i);
+  assert.doesNotMatch(mcp, /never contacts the provider/i);
+
+  const doctor = commandHelp('doctor');
+  assert.ok(doctor !== undefined);
+  assert.match(doctor, /never contacts the provider/i);
+  assert.match(globalHelp(), /CLI or an MCP tool call/);
+});
