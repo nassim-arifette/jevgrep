@@ -1,124 +1,130 @@
 # JevGrep retrieval corpus (JG-027)
 
-Search questions with annotated reference evidence, used to measure retrieval quality
-(specification §11.2) and to feed the deterministic fixtures of other issues.
+Protocol **v1**, reviewed on 2026-09-19. The frozen corpus has six authored fixtures
+and 54 questions: development contains 30 behavior questions, 10 exact-symbol
+controls and two no-evidence questions; holdout contains 12 questions on three
+different fixtures. Two development questions record ambiguity and one accepts an
+alternative evidence set. See [the senior review](../docs/reviews/jg-027-review.md).
 
-**Status: development and held-out splits in place, protocol draft v0.1, awaiting S review.**
-Three authored fixtures carry 54 questions: 30 behavior questions, 10 exact-symbol
-controls, 2 no-evidence questions, 2 recorded ambiguities, and 12 held-out questions whose
-reference answers live outside the checkout. `npm run corpus:check` prints the counts and
-every remaining note.
+This corpus is synthetic and small. Passing it is not evidence of general retrieval
+quality on third-party repositories. Fixtures are source material, not application
+dependencies or executable tests. Their provenance authorizes the documented
+personal-project experiments; `UNLICENSED` is not a public redistribution grant.
 
-## Layout
+## Layout and revisions
 
-```text
-benchmarks/
-  README.md                     this protocol
-  fixtures/
-    orders-api/                 author-owned JS/TS fixture repository (source material)
-  manifests/
-    development/
-      orders-api.development.json
-    holdout/                    versioned question set without public answers
-  tools/
-    corpus-check.ts             validates fingerprints, ranges and split rules
-```
+- `fixtures/orders-api`, `subscription-cache`, `migration-audit`: development.
+- `fixtures/lease-worker`, `upload-gateway`, `webhook-outbox`: holdout only.
+- `manifests/development/*.json`: public questions and reviewed annotations.
+- `manifests/holdout/*.json`: questions, provenance and an opaque answer-set ID.
+- `tools/check-corpus.ts`: offline validation of both splits.
+- Operator storage, outside every evaluated workspace: held-out reference answers.
 
-## What a corpus entry contains
+The former v0.1 holdout questions were retired before tuning: changing their wording
+did not make them independent of the development questions. Git history retains
+the old draft. Do not score or combine those questions with v1.
 
-A **question** is a search question in the sense of [CONTEXT.md](../CONTEXT.md): an
-information need about behavior, responsibility or concept, not an instruction to modify
-code. Each question records:
+Each manifest pins a `tree-sha256` fingerprint: hash the sorted relative file names,
+a NUL separator, each UTF-8 file's SHA-256 after CRLF normalization, and a newline.
+The final SHA-256 covers that sequence. Any fixture edit invalidates the public and
+private annotations. A release run records the corpus Git commit plus each tree hash;
+changing an annotation requires a new corpus revision even if sources stay unchanged.
 
-| Field | Meaning |
+## Annotation decisions
+
+A search question records its verbatim wording, canonical relative `scope`, stable
+`<fixture>.<split>.<number>` ID, and kind:
+
+| Kind | Use |
 | --- | --- |
-| `id` | `<fixture>.<split>.<number>`, stable and unique across the corpus. |
-| `kind` | `behavior` (a described behavior must be located), `symbol_control` (an exact identifier is already known and the agent should not need a semantic search), or `no_evidence` (the fixture contains no supporting evidence). |
-| `question` | The wording submitted to the tool, kept verbatim. |
-| `scope` | Requested scope for the question, relative to the fixture root. |
-| `expected_evidence` | Reference ranges: `path`, inclusive `start_line`/`end_line`, `role`, and a note. |
-| `alternative_evidence_sets` | Other ranges that would also answer the question, for example a second implementation. |
-| `ambiguous` | `true` when annotators disagree or several implementations exist; requires alternative evidence or review notes. |
-| `review_notes` | Reviewer-facing explanation. Never shown to the evaluated agent. |
+| `behavior` | Locate the implementation of a described behavior or concept. |
+| `symbol_control` | An exact identifier, quoted in backticks, is already known. |
+| `no_evidence` | No source in the requested scope supports the stated behavior. |
 
-Evidence is annotated as **ranges and roles**, never as bare filenames. Roles:
+Reference evidence consists of inclusive, one-based line ranges with a required role:
 
-- `direct` — the range itself carries the answer (definition, registration, migration, decision).
-- `supporting` — a second range needed to complete the answer in cross-file questions.
-- `context` — related material whose absence would mislead (for example a legacy duplicate).
+| Role | Meaning |
+| --- | --- |
+| `direct` | Carries a requested fact or behavior. |
+| `supporting` | Needed to complete the answer, such as its caller or configuration binding. |
+| `context` | Useful qualification; its absence alone does not make an answer incomplete. |
 
-## Verification rules (`npm run corpus:check`)
+The primary set and each `alternative_evidence_sets` entry are complete answer sets,
+not a bag of interchangeable single excerpts. A complete answer must support all
+requested facts through direct/supporting evidence from one acceptable set. Context
+can improve precision but cannot substitute for a missing required fact. Overlap with
+a line range alone does not establish semantic sufficiency; JG-028 records its scoring
+procedure and reviews disputed outputs before reporting success.
 
-The checker is dependency-free and runs in the ordinary offline suite
-(`tests/corpus.test.ts`):
+Ranges remain independent of chunk sizes and engine settings. Keep the smallest
+readable range that establishes the fact; include callers/imports when the question
+asks which surface uses a duplicate helper. A range must be inside the requested
+scope and cannot start or end on a blank line. A second implementation is acceptable
+only if it answers this question in its actual context.
 
-1. Every manifest declares `schema_version`, a fixture with `license` and
-   `authorization`, a `split`, and questions.
-2. `fixture.revision.value` is the fixture fingerprint (`tree-sha256`). The checker
-   recomputes it over sorted relative paths and per-file content hashes with CRLF
-   normalisation. **Any edit to a fixture invalidates its annotations until they are
-   reviewed again**, which is the intended behaviour: `node benchmarks/tools/check-corpus.ts
-   --hash benchmarks/fixtures/<id>` prints the new value.
-3. Every evidence range exists, uses forward slashes, stays inside its fixture, and has
-   `1 <= start_line <= end_line <= line count`. Ranges may not start or end on a blank line.
-4. `no_evidence` questions declare no expected evidence; `behavior` and `symbol_control`
-   questions declare at least one range. A `symbol_control` question must quote the
-   identifier in backticks and the first expected range must contain it.
-5. `ambiguous: true` requires alternative evidence or review notes.
-6. A held-out manifest may not contain `expected_evidence`, `alternative_evidence_sets`
-   or `review_notes`; it points to `answers_ref` instead. Reference answers stay outside
-   the working tree an evaluated agent can read (JG-027 acceptance criterion 5).
-7. Fixture directories without a manifest, and manifests whose file name does not match
-   `<fixture>.<split>.json`, are defects.
+`ambiguous: true` requires reviewed alternatives or an explicit explanation. The
+HTTP money formatter's legacy copy alone is insufficient. The audit scheduler's
+literal expression, duplicate config value and documented UTC timezone must not be
+confused with actual configuration wiring or an implemented timezone guarantee.
 
-Progress towards the JG-027 targets is reported as notes, not as defects, while the issue
-is open.
+For no-evidence questions, curators inspect every file in the stated scope, including
+plausible aliases and indirect routes. Record the reasoning in private/public reviewer
+notes as appropriate. No expected or alternative reference ranges may be supplied.
+The two current negatives are a starting control, not an estimate of hallucination
+rates. Add independently reviewed negatives with future corpus revisions.
 
-## Procedure
+## Separation and evaluation procedure
 
-1. Choose or author a fixture (`fixtures/<id>`). Author-owned fixtures record their
-   provenance in `LICENSE` and in `fixture.license`/`fixture.authorization`; a third-party
-   repository needs its upstream revision, licence and the operator's authorization
-   recorded before any question is annotated.
-2. Write questions from a stated information need, with the scope the asker would
-   plausibly use. Keep the wording verbatim, including imprecision.
-3. Annotate the ranges by reading the fixture, then run
-   `node benchmarks/tools/check-corpus.ts --hash benchmarks/fixtures/<id>` and store the
-   fingerprint.
-4. Run `npm run corpus:check` and `npm test`.
-5. Ask S to review new questions and, at minimum, every `ambiguous` case and every
-   `no_evidence` case. Ambiguity is recorded, never resolved by silently deleting a range.
+1. Curators read source and annotate without tuning retrieval settings. A second
+   reviewer checks every new question, ambiguity and no-evidence judgment.
+2. Freeze the corpus revision before choosing thresholds, fragmentation or batching.
+   Use development questions for those choices. Holdout is for the declared final
+   comparison; if inspected for tuning afterward, retire it from future holdout use.
+3. The operator validates private answers explicitly with `--answers` and
+   `--require-answers` before scoring. CI checks public structure only and reports
+   that private answers were not checked.
+4. The evaluated agent receives a fresh copy of just the target fixture, its question
+   and scope. Never give it this checkout, manifests, reference answers, review notes,
+   Git history, curator conversations or outputs from another condition.
+5. Run the evaluated process with access restricted to that fixture workspace and
+   approved tools. Keep the operator answer store on an unmounted/separate host or
+   behind an enforced filesystem boundary. A sibling directory on the same unrestricted
+   machine is **not** isolation. Before an evaluation, test that a sentinel in operator
+   storage and the curator checkout cannot be read from the agent's actual environment.
+   Fail the run if either check succeeds or cannot be performed.
+6. Score collected outputs in a separate operator process. Do not send scoring feedback
+   or answer paths to the evaluated agent. For paired tasks, use fresh workspaces/caches
+   for each condition and record the isolation checks with the run manifest.
+7. JG-028/JG-029 must implement and exercise those run boundaries; no agent evaluation
+   has yet been executed by this corpus review. Corpus curation on this workstation
+   is not an evaluated trial.
 
-## Open questions for the S review (protocol v0.1)
+Budget, deadline, model, prompt, tool versions, cache state and ordering belong to a
+benchmark-run manifest. Existing manifest-level budget values are draft hints, not
+hidden product limits or evidence of measured runs. The same explicit run settings
+apply to compared conditions. Public third-party fixtures can be added only after
+license, revision and authorization review.
 
-1. **Role vocabulary**: is `direct`/`supporting`/`context` enough, or is a separate
-   "useful but incomplete" role needed for ranges that only expose part of a behavior?
-2. **Granularity**: ranges are line intervals today. Should a reference mark a fragment
-   boundary once the chunker contract (JG-015) exists, or stay independent of chunking as
-   the issue requires ("indépendantes des réglages choisis pour le moteur")?
-3. **Held-out split**: the draft stores questions in the repository and answers in
-   `answers_ref` outside the checkout. Confirm that this satisfies acceptance criterion 5,
-   including for the paired agent tasks of JG-029.
-4. **Third-party fixtures**: do we authorize at least one real public repository (with
-   licence and revision recorded) for realism, or keep all three fixtures author-owned?
-5. **Negative evidence**: are two `no_evidence` questions per fixture enough to detect
-   fabricated answers, and should they be paired with a lexical-search control?
-6. **Budget recording**: question-level `budget` is not part of the manifest yet. Should
-   the response budget and deadline be recorded per question (comparable runs) or per
-   benchmark run by JG-028?
+## Checks and commands
 
-## Held-out split
+The checker uses the public search-request contract for lexical paths. It verifies
+fingerprints, file ranges, roles, scope membership, alternatives, disjoint fixture
+splits, unique IDs within a manifest, exact-symbol controls, and the absence of public
+held-out answers. Symlink/junction entries in fixture trees are rejected. This is a
+curation integrity check, not the product's JG-008 filesystem authorization boundary.
 
-`manifests/holdout/<fixture>.holdout.json` holds question wording, scope and provenance
-only; `answers_ref` points at an operator-side answer file outside the checkout, validated
-when it is readable (missing = note, present = checked, stale fingerprint = defect). See
-[`manifests/holdout/README.md`](manifests/holdout/README.md) for the file format and the
-validation rules. Held-out questions must not repeat development wording, and they target
-the frozen fixture revision.
-
-## Commands
+`answers_ref` is an opaque ID, never a file path. No implicit filesystem lookup is
+allowed. An explicit private answer file must be outside the checkout/corpus and match
+the ID and fixture revision; its ranges obey the same checks as development ranges.
+Missing private answers fail `--require-answers`. Ordinary CI cannot certify private
+semantic annotations, operator isolation or a scored evaluation.
 
 ```bash
-npm run corpus:check                                            # validate the corpus
+npm run corpus:check
+node --test tests/corpus.test.ts
 node benchmarks/tools/check-corpus.ts --hash benchmarks/fixtures/orders-api
+node benchmarks/tools/check-corpus.ts --answers <absolute-operator-file> --require-answers
 ```
+
+The schema and operator file convention are described in
+[the holdout guide](manifests/holdout/README.md).

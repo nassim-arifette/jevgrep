@@ -774,11 +774,11 @@ Les phases `P0` à `P7` correspondent au plan d’implémentation existant.
 <a id="jg-027"></a>
 ### JG-027 — Constituer le corpus de recherche et ses annotations
 
-**Type :** Préparation d’évaluation. **Priorité :** Normale. **Phase :** P0–P7. **Statut :** En cours sur la branche `jg-027-corpus` : trois fixtures et 42 questions annotées, jeu réservé encore à figer ; protocole v0.1 et annotations en attente de revue S.
+**Type :** Préparation d’évaluation. **Priorité :** Normale. **Phase :** P0–P7. **Statut :** Corpus et revue S terminés ; validation opérationnelle de l’isolation réservée à l’exécuteur.
 
-**État au 19 septembre 2026 :** trois fixtures JS/TS écrites pour le projet (`orders-api`, `subscription-cache`, `migration-audit`, licence et autorisation enregistrées dans chaque manifeste) et 54 questions : 30 comportementales, 10 contrôles par identifiant exact, 2 sans preuve, 2 cas ambigus avec preuve alternative, plus 12 questions réservées. Les deux ensembles sont versionnés et distincts (`benchmarks/manifests/development/`, `benchmarks/manifests/holdout/`) ; les réponses de référence du jeu réservé vivent hors du dépôt et ne sont accessibles à aucune session d’évaluation (chemin enregistré dans `answers_ref`). Protocole, empreinte d’arbre, règles de validation et procédure de revue dans `benchmarks/README.md` et `benchmarks/manifests/holdout/README.md` ; contrôleur sans dépendance `benchmarks/tools/check-corpus.ts` (`npm run corpus:check`) exécuté par la suite hors ligne `tests/corpus.test.ts` (13 cas, dont 11 négatifs qui vérifient que le contrôleur refuse un manifeste faux, une empreinte périmée, une plage hors fichier, une réponse manquante ou une réponse orpheline). Les fixtures volontairement invalides placées sous `tests/fixtures/` sont exclues du contrôle de types et ne sont jamais exécutées (glob de test non récursif).
+**État au 19 septembre 2026 :** protocole v1 revu ; six fixtures autorisées, 42 questions de développement (30 comportementales, 10 contrôles exacts, 2 sans preuve) et 12 questions réservées sur trois fixtures distinctes. Huit annotations corrigées après revue indépendante. Le précédent jeu réservé, trop proche du développement, est retiré avant réglage. `answers_ref` est un identifiant opaque ; les réponses privées sont chargées uniquement avec `--answers` et exigées pour scorer via `--require-answers`. Les 35 tests du corpus et le contrôle opérateur des réponses v2 passent. Rapport : [revue JG-027](reviews/jg-027-review.md).
 
-**Reste à faire :** revue S du protocole, des annotations et des deux cas ambigus ; croissance du corpus au fil des phases. **Questions ouvertes pour S :** section « Open questions for the S review » de `benchmarks/README.md`.
+**Reste à prouver lors de JG-028/JG-029 :** exécuter l’agent dans une copie de fixture isolée, sans accès au dépôt des curateurs ni au stockage des réponses ; conserver les contrôles négatifs d’accès. Un fichier hors dépôt ne constitue pas à lui seul une isolation. La préparation du runner peut commencer ; aucun résultat réservé ne doit être publié avant ce contrôle.
 
 **Niveau recommandé :** Junior encadré. **Pilote proposé :** J. **Revue :** S.
 
@@ -792,12 +792,12 @@ Les phases `P0` à `P7` correspondent au plan d’implémentation existant.
 
 **Critères d’acceptation :**
 
-- [ ] Chaque exemple identifie le dépôt, sa révision ou son empreinte, la question, la portée et les preuves attendues.
-- [ ] Les annotations portent sur des plages et leur utilité, pas uniquement sur des noms de fichiers.
-- [ ] Les deux ensembles, développement et évaluation réservée, sont distincts et versionnés.
-- [ ] Les licences et autorisations des contenus utilisés sont enregistrées.
+- [x] Chaque exemple identifie le dépôt, sa révision ou son empreinte, la question, la portée et les preuves attendues.
+- [x] Les annotations portent sur des plages et leur utilité, pas uniquement sur des noms de fichiers.
+- [x] Les deux ensembles, développement et évaluation réservée, sont distincts et versionnés.
+- [x] Les licences et autorisations des contenus utilisés sont enregistrées.
 - [ ] Les réponses de référence et correctifs ne sont pas accessibles à l’agent évalué dans son espace de travail.
-- [ ] Les annotations admettent les preuves alternatives et signalent les cas ambigus.
+- [x] Les annotations admettent les preuves alternatives et signalent les cas ambigus.
 
 **Livrables :** corpus versionné, manifestes, annotations et procédure de revue.
 

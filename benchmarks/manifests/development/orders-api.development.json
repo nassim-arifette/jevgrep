@@ -68,7 +68,7 @@
         {
           "path": "src/services/pricing.ts",
           "start_line": 26,
-          "end_line": 47,
+          "end_line": 38,
           "role": "direct",
           "note": "the requested percent plus the tier bonus is clamped to the configured maximum"
         },
@@ -77,7 +77,7 @@
           "start_line": 7,
           "end_line": 11,
           "role": "supporting",
-          "note": "the default maximum is 30 percent; production.json lowers it to 25"
+          "note": "the default maximum is 30 percent"
         },
         {
           "path": "src/lib/config.ts",
@@ -85,6 +85,20 @@
           "end_line": 59,
           "role": "supporting",
           "note": "an environment variable can override the file value"
+        },
+        {
+          "path": "config/production.json",
+          "start_line": 6,
+          "end_line": 6,
+          "role": "supporting",
+          "note": "production lowers the maximum to 25 percent"
+        },
+        {
+          "path": "src/lib/config.ts",
+          "start_line": 37,
+          "end_line": 48,
+          "role": "supporting",
+          "note": "default, environment and explicit override file precedence"
         }
       ],
       "ambiguous": false,
@@ -184,21 +198,25 @@
           "end_line": 7,
           "role": "direct",
           "note": "fixed two decimals followed by the upper-case currency code"
+        },
+        {
+          "path": "src/routes/orders.ts",
+          "start_line": 5,
+          "end_line": 5,
+          "role": "supporting",
+          "note": "the HTTP route imports the non-legacy formatter"
+        },
+        {
+          "path": "src/routes/orders.ts",
+          "start_line": 11,
+          "end_line": 20,
+          "role": "supporting",
+          "note": "the JSON response calls that formatter for each order total"
         }
       ],
-      "alternative_evidence_sets": [
-        [
-          {
-            "path": "src/utils/format-legacy.ts",
-            "start_line": 4,
-            "end_line": 7,
-            "role": "direct",
-            "note": "a second, byte-identical implementation used by the nightly export"
-          }
-        ]
-      ],
+      "alternative_evidence_sets": [],
       "ambiguous": true,
-      "review_notes": "two implementations format money identically; format.ts serves the HTTP surface, format-legacy.ts only the CSV export. Both are acceptable evidence; returning only the legacy helper is less useful, not wrong."
+      "review_notes": "Both helpers implement equivalent formatting, but only format.ts is connected to this HTTP response. The legacy helper alone is not a sufficient answer to this question. Ambiguity is the presence of duplicate implementations; resolve it through the import and call site."
     },
     {
       "id": "orders-api.development.007",
@@ -211,10 +229,17 @@
       "expected_evidence": [
         {
           "path": "docs/adr/0001-use-postgres.md",
-          "start_line": 12,
-          "end_line": 14,
+          "start_line": 7,
+          "end_line": 10,
           "role": "direct",
-          "note": "the ADR records the decision and the rejected SQLite/ORM prototype"
+          "note": "ORM locking and timeout differences explain the decision"
+        },
+        {
+          "path": "docs/adr/0001-use-postgres.md",
+          "start_line": 14,
+          "end_line": 16,
+          "role": "supporting",
+          "note": "the recorded decision keeps SQL explicit in the service layer"
         },
         {
           "path": "src/lib/db.ts",
@@ -279,7 +304,7 @@
         {
           "path": "src/services/order-service.ts",
           "start_line": 26,
-          "end_line": 69,
+          "end_line": 36,
           "role": "direct",
           "note": "definition of the method"
         },
@@ -305,9 +330,16 @@
         {
           "path": "src/middleware/authenticate.ts",
           "start_line": 7,
-          "end_line": 51,
+          "end_line": 7,
+          "role": "supporting",
+          "note": "the order of role identifiers"
+        },
+        {
+          "path": "src/middleware/authenticate.ts",
+          "start_line": 42,
+          "end_line": 59,
           "role": "direct",
-          "note": "the role order declaration and its only comparison"
+          "note": "the comparison rejects callers below the required role"
         }
       ],
       "ambiguous": false,

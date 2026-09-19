@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "fixture": {
+    "id": "upload-gateway",
+    "title": "Synthetic upload-gateway fixture",
+    "license": "UNLICENSED; authored for this personal project, no third-party content (see fixture LICENSE)",
+    "authorization": "Project-authored synthetic sources authorized for the documented retrieval experiments",
+    "revision": {
+      "kind": "tree-sha256",
+      "value": "23fac01887cf572d3d3df5c11d0bdabef4626dd4058eb9fcffd10c35314be9dc"
+    }
+  },
+  "split": "holdout",
+  "answers_ref": "jevgrep-heldout-v2",
+  "questions": [
+    {
+      "id": "upload-gateway.holdout.001",
+      "kind": "behavior",
+      "question": "Which upload checks run before any bytes are stored in quarantine?",
+      "scope": [
+        "src",
+        "config"
+      ]
+    },
+    {
+      "id": "upload-gateway.holdout.002",
+      "kind": "behavior",
+      "question": "What scan result permits an upload to be published, and what happens if scanning is unavailable?",
+      "scope": [
+        "src"
+      ]
+    },
+    {
+      "id": "upload-gateway.holdout.003",
+      "kind": "behavior",
+      "question": "How is quarantine cleanup triggered when scanning or publication fails?",
+      "scope": [
+        "src"
+      ]
+    },
+    {
+      "id": "upload-gateway.holdout.004",
+      "kind": "symbol_control",
+      "question": "Where is `storageAdapter` implemented?",
+      "scope": [
+        "src"
+      ]
+    }
+  ]
+}

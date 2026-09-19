@@ -11,10 +11,17 @@
  *   node benchmarks/tools/check-corpus.ts --hash <dir>    # print a fixture fingerprint
  */
 import { createHash } from 'node:crypto';
-import { readFileSync, readdirSync, realpathSync } from 'node:fs';
-import { join, relative, resolve, sep } from 'node:path';
+import { lstatSync, readFileSync, readdirSync, realpathSync } from 'node:fs';
+import { isAbsolute, join, relative, resolve, sep } from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
+import { parseSearchRequest } from '../../src/contracts.ts';
+
+export type CorpusOptions = {
+  /** Explicit operator input, never a path taken from a manifest. */
+  readonly answersFile?: string;
+  readonly requireAnswers?: boolean;
+};
 
 export type CorpusProblem = {
   readonly file: string;
@@ -39,6 +46,27 @@ const ROLES: readonly string[] = ['direct', 'supporting', 'context'];
 
 /** Default corpus root: the benchmarks directory that contains this tool. */
 export const defaultCorpusRoot: string = fileURLToPath(new URL('..', import.meta.url));
+const checkoutRoot = fileURLToPath(new URL('../..', import.meta.url));
+
+function contained(candidate: string, root: string): boolean {
+  const rel = relative(root, candidate);
+  return rel === '' || (!isAbsolute(rel) && rel !== '..' && !rel.startsWith(`..${sep}`));
+}
+
+/** Corpus paths are data; never follow a fixture link to read annotation evidence. */
+function fixtureFile(root: string, path: string): string {
+  const normalized = parseSearchRequest({ query: 'fixture path', scope: [path] }).scope[0];
+  if (normalized !== path || path === '.') throw new Error('non-canonical fixture path');
+  const canonicalRoot = realpathSync(root);
+  let current = root;
+  if (lstatSync(current).isSymbolicLink()) throw new Error('linked fixture root');
+  for (const segment of path.split('/')) {
+    current = join(current, segment);
+    if (lstatSync(current).isSymbolicLink()) throw new Error('linked fixture entry');
+  }
+  if (!contained(realpathSync(current), canonicalRoot) || !lstatSync(current).isFile()) throw new Error('not a contained file');
+  return current;
+}
 
 function listJsonFiles(directory: string): string[] {
   const entries = readdirSync(directory, { withFileTypes: true });
@@ -75,6 +103,7 @@ function walkFiles(directory: string, prefix = ''): string[] {
   const found: string[] = [];
   for (const entry of readdirSync(directory, { withFileTypes: true }).sort((a, b) => (a.name < b.name ? -1 : 1))) {
     const relativePath = prefix.length === 0 ? entry.name : `${prefix}/${entry.name}`;
+    if (entry.isSymbolicLink()) throw new Error('fixture trees must not contain links');
     if (entry.isDirectory()) {
       found.push(...walkFiles(join(directory, entry.name), relativePath));
     } else if (entry.isFile()) {
@@ -90,6 +119,8 @@ function walkFiles(directory: string, prefix = ''): string[] {
  * which forces the annotations to be reviewed again.
  */
 export function fixtureTreeHash(fixtureDir: string): string {
+  const root = lstatSync(fixtureDir);
+  if (!root.isDirectory() || root.isSymbolicLink()) throw new Error('fixture root must be an unlinked directory');
   const hash = createHash('sha256');
   for (const relativePath of walkFiles(fixtureDir)) {
     const fileHash = createHash('sha256').update(readText(join(fixtureDir, relativePath))).digest('hex');
@@ -133,7 +164,7 @@ type Range = {
   readonly path: string;
   readonly startLine: number;
   readonly endLine: number;
-  readonly role?: string;
+  readonly role: string;
 };
 
 function readRange(
@@ -164,10 +195,11 @@ function readRange(
     return undefined;
   }
 
-  const absolute = resolve(fixtureDir, path);
-  const inside = relative(fixtureDir, absolute);
-  if (inside.startsWith('..') || inside.startsWith(`..${sep}`) || inside.length === 0) {
-    problems.push({ file, message: `${label}.path escapes the fixture directory: ${path}` });
+  let absolute: string;
+  try {
+    absolute = fixtureFile(fixtureDir, path);
+  } catch {
+    problems.push({ file, message: `${label}.path escapes the fixture directory or is not a canonical contained file` });
     return undefined;
   }
 
@@ -186,12 +218,12 @@ function readRange(
     });
     return undefined;
   }
-  if (role !== undefined && (typeof role !== 'string' || !ROLES.includes(role))) {
+  if (typeof role !== 'string' || !ROLES.includes(role)) {
     problems.push({ file, message: `${label}.role must be one of ${ROLES.join(', ')}` });
     return undefined;
   }
 
-  return role === undefined ? { path, startLine, endLine } : { path, startLine, endLine, role };
+  return { path, startLine, endLine, role };
 }
 
 function readRangeList(
@@ -240,7 +272,10 @@ function checkQuestion(
   requireString(value['question'], `${label}.question`, file, problems);
 
   const scope = value['scope'];
-  if (!Array.isArray(scope) || scope.length === 0 || scope.some((entry) => typeof entry !== 'string')) {
+  let validScope: string[] = [];
+  try {
+    validScope = parseSearchRequest({ query: value['question'], scope }).scope;
+  } catch {
     problems.push({ file, message: `${label}.scope must be a non-empty array of relative paths` });
   }
 
@@ -251,8 +286,8 @@ function checkQuestion(
   }
 
   if (holdout) {
-    for (const forbidden of ['expected_evidence', 'alternative_evidence_sets', 'review_notes']) {
-      if (value[forbidden] !== undefined) {
+    for (const forbidden of Object.keys(value)) {
+      if (!['id', 'kind', 'question', 'scope'].includes(forbidden)) {
         problems.push({
           file,
           message: `${label}.${forbidden} must not appear in a held-out manifest: reference answers stay outside the agent workspace`,
@@ -265,13 +300,20 @@ function checkQuestion(
   const expected = readRangeList(value['expected_evidence'] ?? [], `${label}.expected_evidence`, file, fixtureDir, problems);
 
   const alternativeSets = value['alternative_evidence_sets'] ?? [];
+  const allRanges: Range[] = [...expected];
   if (!Array.isArray(alternativeSets)) {
     problems.push({ file, message: `${label}.alternative_evidence_sets must be an array of sets` });
   } else {
     for (const [setIndex, set] of alternativeSets.entries()) {
       const ranges = readRangeList(set, `${label}.alternative_evidence_sets[${String(setIndex)}]`, file, fixtureDir, problems);
+      allRanges.push(...ranges);
       if (ranges.length === 0) {
         problems.push({ file, message: `${label}.alternative_evidence_sets[${String(setIndex)}] is empty` });
+      } else {
+        counters.alternativeSets += 1;
+        if (ranges.every((range) => range.role === 'context')) {
+          problems.push({ file, message: `${label}.alternative_evidence_sets[${String(setIndex)}] cannot consist only of context` });
+        }
       }
     }
   }
@@ -296,7 +338,7 @@ function checkQuestion(
 
   if (kind === 'no_evidence') {
     counters.noEvidence += 1;
-    if (expected.length > 0) {
+    if (allRanges.length > 0) {
       problems.push({ file, message: `${label} is a no-evidence question but declares expected evidence` });
     }
     return 1;
@@ -304,6 +346,8 @@ function checkQuestion(
 
   if (expected.length === 0) {
     problems.push({ file, message: `${label} (${kind}) must declare at least one expected evidence range` });
+  } else if (expected.every((range) => range.role === 'context')) {
+    problems.push({ file, message: `${label}.expected_evidence cannot consist only of context` });
   }
 
   if (kind === 'symbol_control') {
@@ -333,7 +377,10 @@ function checkQuestion(
   }
 
   // A range must point at real content, not at trailing blank lines.
-  for (const range of expected) {
+  for (const range of allRanges) {
+    if (!validScope.some((scopePath) => scopePath === '.' || range.path === scopePath || range.path.startsWith(`${scopePath}/`))) {
+      problems.push({ file, message: `${label} evidence is outside the requested scope` });
+    }
     const first = lineAt(resolve(fixtureDir, range.path), range.startLine);
     const last = lineAt(resolve(fixtureDir, range.path), range.endLine);
     if (first.trim().length === 0 || last.trim().length === 0) {
@@ -353,6 +400,7 @@ function checkManifest(
   problems: CorpusProblem[],
   counters: { behavior: number; symbolControls: number; noEvidence: number; ambiguous: number; alternativeSets: number; holdoutQuestions: number },
   notes: string[],
+  options: CorpusOptions,
 ): { readonly questions: number; readonly fixtureId: string | undefined } {
   const heldOutIds: string[] = [];
   const manifest = readJson(manifestPath, problems);
@@ -370,6 +418,9 @@ function checkManifest(
     return { questions: 0, fixtureId: undefined };
   }
   const holdout = split === 'holdout';
+  if (relative(join(corpusRoot, 'manifests', split), manifestPath).includes(sep)) {
+    problems.push({ file: manifestPath, message: 'manifest split must match its containing directory' });
+  }
 
   const fixture = manifest['fixture'];
   if (!isRecord(fixture)) {
@@ -378,6 +429,10 @@ function checkManifest(
   }
 
   const fixtureId = requireString(fixture['id'], 'fixture.id', manifestPath, problems);
+  if (fixtureId === undefined || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(fixtureId)) {
+    problems.push({ file: manifestPath, message: 'fixture.id must be a simple lowercase identifier, not a path' });
+    return { questions: 0, fixtureId: undefined };
+  }
   requireString(fixture['title'], 'fixture.title', manifestPath, problems);
   requireString(fixture['license'], 'fixture.license', manifestPath, problems);
   requireString(fixture['authorization'], 'fixture.authorization', manifestPath, problems);
@@ -455,7 +510,7 @@ function checkManifest(
   }
 
   if (holdout && answersRef !== undefined && fixtureDir !== undefined && fixtureId !== undefined) {
-    checkAnswers(answersRef, heldOutIds, fixtureId, fixtureDir, problems, notes);
+    checkAnswers(answersRef, heldOutIds, questions, fixtureId, fixtureDir, corpusRoot, problems, notes, options);
   }
 
   return { questions: counted, fixtureId };
@@ -464,22 +519,48 @@ function checkManifest(
 /**
  * Validate the operator-side answer file of a held-out manifest. The answers deliberately
  * live outside the working tree an evaluated agent can read (specification 11.2, JG-027
- * acceptance criterion 5), so a missing file is reported as a note, not as a defect: CI
- * never has it, a release run does.
+ * acceptance criterion 5). Ordinary CI never opens an answer file. Operators supply
+ * one explicitly and use requireAnswers for scoring, where missing answers are a defect.
  */
 function checkAnswers(
   answersRef: string,
   expectedIds: readonly string[],
+  questions: readonly unknown[],
   fixtureId: string,
   fixtureDir: string,
+  corpusRoot: string,
   problems: CorpusProblem[],
   notes: string[],
+  options: CorpusOptions,
 ): void {
+  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(answersRef)) {
+    problems.push({ file: fixtureId, message: 'answers_ref must be an opaque answer-set identifier, never a filesystem path' });
+    return;
+  }
+  const unavailable = (): void => {
+    const message = `answer set not available: ${answersRef}`;
+    if (options.requireAnswers === true) problems.push({ file: fixtureId, message });
+    else notes.push(message);
+  };
+  if (options.answersFile === undefined) { unavailable(); return; }
+  const answersPath = resolve(options.answersFile);
+  const canonicalCorpus = realpathSync(corpusRoot);
+  const canonicalCheckout = realpathSync(checkoutRoot);
+  const protectedRoots = [canonicalCorpus, canonicalCheckout];
+  if (!isAbsolute(options.answersFile) || protectedRoots.some((root) => contained(answersPath, root))) {
+    problems.push({ file: fixtureId, message: 'operator answers must be explicitly located outside the checkout/corpus' });
+    return;
+  }
   let raw: string;
   try {
-    raw = readFileSync(answersRef, 'utf8');
+    const canonicalAnswers = realpathSync(answersPath);
+    if (protectedRoots.some((root) => contained(canonicalAnswers, root))) {
+      problems.push({ file: fixtureId, message: 'operator answers resolve inside the checkout/corpus' });
+      return;
+    }
+    raw = readFileSync(answersPath, 'utf8');
   } catch {
-    notes.push(`answer file not available in this environment: ${answersRef}`);
+    unavailable();
     return;
   }
 
@@ -487,8 +568,8 @@ function checkAnswers(
   let parsed: unknown;
   try {
     parsed = JSON.parse(raw);
-  } catch (error) {
-    problems.push({ file, message: `unreadable answer file ${answersRef}: ${String(error)}` });
+  } catch {
+    problems.push({ file, message: 'operator answer file is not valid JSON' });
     return;
   }
   if (!isRecord(parsed)) {
@@ -501,6 +582,7 @@ function checkAnswers(
   if (parsed['kind'] !== 'holdout-answers') {
     problems.push({ file, message: "kind must be 'holdout-answers'" });
   }
+  if (parsed['answer_set_id'] !== answersRef) problems.push({ file, message: 'operator answer-set identity does not match answers_ref' });
 
   const fixtures = parsed['fixtures'];
   if (!isRecord(fixtures)) {
@@ -514,6 +596,9 @@ function checkAnswers(
   }
 
   const recorded = isRecord(section['revision']) ? section['revision']['value'] : undefined;
+  if (!isRecord(section['revision']) || section['revision']['kind'] !== 'tree-sha256') {
+    problems.push({ file, message: `fixtures.${fixtureId}.revision.kind must be tree-sha256` });
+  }
   const current = fixtureTreeHash(fixtureDir);
   if (typeof recorded !== 'string') {
     problems.push({ file, message: `fixtures.${fixtureId}.revision.value is required` });
@@ -549,13 +634,12 @@ function checkAnswers(
     }
     answered.add(id);
 
-    const expected = readRangeList(answer['expected_evidence'] ?? [], `${label}.expected_evidence`, file, fixtureDir, problems);
-    if (expected.length === 0) {
-      problems.push({ file, message: `${label} (${id}) must declare at least one reference range` });
-    }
-    const alternatives = answer['alternative_evidence_sets'] ?? [];
-    if (!Array.isArray(alternatives)) {
-      problems.push({ file, message: `${label}.alternative_evidence_sets must be an array of sets` });
+    const question = questions.find((candidate) => isRecord(candidate) && candidate['id'] === id);
+    if (isRecord(question)) {
+      checkQuestion({ ...question, expected_evidence: answer['expected_evidence'],
+        alternative_evidence_sets: answer['alternative_evidence_sets'], ambiguous: answer['ambiguous'], review_notes: answer['review_notes'],
+      }, index, { file, fixtureDir, fixtureId, split: 'holdout', holdout: false }, problems,
+      { behavior: 0, symbolControls: 0, noEvidence: 0, ambiguous: 0, alternativeSets: 0 });
     }
   }
 
@@ -566,7 +650,7 @@ function checkAnswers(
   }
 }
 
-function inspectCorpus(corpusRoot: string): {
+function inspectCorpus(corpusRoot: string, options: CorpusOptions = {}): {
   readonly problems: readonly CorpusProblem[];
   readonly notes: readonly string[];
   readonly summary: CorpusSummary;
@@ -591,6 +675,7 @@ function inspectCorpus(corpusRoot: string): {
 
   let questions = 0;
   const annotatedFixtures = new Set<string>();
+  const fixtureSplits = new Map<string, string>();
 
   for (const split of SPLITS) {
     const splitDir = join(corpusRoot, 'manifests', split);
@@ -602,14 +687,19 @@ function inspectCorpus(corpusRoot: string): {
       continue;
     }
     if (split === 'holdout' && files.length === 0) {
-      notes.push(
-        'manifests/holdout is empty: the held-out question set is part of JG-027 and must be versioned before tuning starts',
-      );
+      const message = 'manifests/holdout is empty: the held-out question set must be versioned before tuning starts';
+      if (options.requireAnswers === true) problems.push({ file: splitDir, message });
+      else notes.push(message);
     }
     for (const manifestPath of files) {
-      const result = checkManifest(manifestPath, corpusRoot, problems, counters, notes);
+      const result = checkManifest(manifestPath, corpusRoot, problems, counters, notes, options);
       questions += result.questions;
       if (result.fixtureId !== undefined) {
+        const previousSplit = fixtureSplits.get(result.fixtureId);
+        if (previousSplit !== undefined && previousSplit !== split) {
+          problems.push({ file: manifestPath, message: 'development and holdout must use disjoint fixtures' });
+        }
+        fixtureSplits.set(result.fixtureId, split);
         annotatedFixtures.add(result.fixtureId);
       }
     }
@@ -652,8 +742,8 @@ function inspectCorpus(corpusRoot: string): {
 }
 
 /** Validate the whole corpus and return every problem found. */
-export function checkCorpus(corpusRoot: string = defaultCorpusRoot): readonly CorpusProblem[] {
-  return inspectCorpus(corpusRoot).problems;
+export function checkCorpus(corpusRoot: string = defaultCorpusRoot, options: CorpusOptions = {}): readonly CorpusProblem[] {
+  return inspectCorpus(corpusRoot, options).problems;
 }
 
 /** Count the questions per kind, for progress reporting. */
@@ -662,12 +752,12 @@ export function summarizeCorpus(corpusRoot: string = defaultCorpusRoot): CorpusS
 }
 
 /** Full report: defects, progress notes towards the JG-027 targets, and counts. */
-export function corpusReport(corpusRoot: string = defaultCorpusRoot): {
+export function corpusReport(corpusRoot: string = defaultCorpusRoot, options: CorpusOptions = {}): {
   readonly problems: readonly CorpusProblem[];
   readonly notes: readonly string[];
   readonly summary: CorpusSummary;
 } {
-  return inspectCorpus(corpusRoot);
+  return inspectCorpus(corpusRoot, options);
 }
 
 function isMainModule(): boolean {
@@ -692,7 +782,15 @@ if (isMainModule()) {
       process.stdout.write(`${fixtureTreeHash(resolve(target))}\n`);
     }
   } else {
-    const { problems, notes, summary } = corpusReport();
+    const args = process.argv.slice(2);
+    const options: { answersFile?: string; requireAnswers?: boolean } = {};
+    for (let index = 0; index < args.length; index += 1) {
+      const argument = args[index];
+      if (argument === '--require-answers') options.requireAnswers = true;
+      else if (argument === '--answers' && args[index + 1] !== undefined) options.answersFile = args[++index]!;
+      else throw new Error('usage: check-corpus.ts [--answers <absolute operator file>] [--require-answers]');
+    }
+    const { problems, notes, summary } = corpusReport(defaultCorpusRoot, options);
     process.stdout.write(
       `corpus: ${String(summary.fixtures)} fixture(s), ${String(summary.questions)} annotated question(s) ` +
         `(behavior ${String(summary.behavior)}, symbol controls ${String(summary.symbolControls)}, ` +
