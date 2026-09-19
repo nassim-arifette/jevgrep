@@ -91,6 +91,22 @@ test('the version lookup does not depend on the entry point location', () => {
   assert.match(fromRepo, /^\d+\.\d+\.\d+$/);
 });
 
+test('--help after a command prints that command help and succeeds', async () => {
+  for (const command of ['search', 'inspect', 'doctor', 'mcp']) {
+    const result = await invoke([command, '--help']);
+    assert.equal(result.code, EXIT_OK, `${command} --help`);
+    assert.match(result.stdout, new RegExp(`^usage: jevgrep ${command}`));
+    assert.equal(result.stderr, '');
+  }
+  const cache = await invoke(['cache', 'clear', '--help']);
+  assert.equal(cache.code, EXIT_OK);
+  assert.match(cache.stdout, /^usage: jevgrep cache clear/);
+
+  const unknown = await invoke(['frobnicate', '--help']);
+  assert.equal(unknown.code, EXIT_USAGE);
+  assert.equal(unknown.stdout, '');
+});
+
 test('no arguments is a usage error', async () => {
   const result = await invoke([]);
   assert.equal(result.code, EXIT_USAGE);

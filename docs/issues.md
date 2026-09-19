@@ -674,6 +674,8 @@ Les phases `P0` à `P7` correspondent au plan d’implémentation existant.
 
 **Rendu humain J (disponible) :** `src/cli-render.ts` + `tests/cli-render.test.ts` (5 cas) — en-tête d’état, ligne de couverture, raisons d’arrêt bornées, extraits affichés **verbatim** (sauts de ligne CRLF compris, aucune réindentation ni reformulation), et mesure de la vue humaine elle-même (tokens du compteur de référence et octets) présentée **séparément** du budget de réponse qui appartient à la charge JSON (spécification §4.5). Un résultat partiel indique explicitement que la couverture est incomplète et qu’une sélection vide n’établit pas l’absence ; un refus ou une erreur affiche le code et le conseil de reprise sans inventer de preuve. Le rendu est pur et déterministe (même sortie mesurée deux fois), prêt à être raccordé au moteur avec JG-014.
 
+**Aide J (disponible) :** `src/cli-help.ts` + `tests/cli-help.test.ts` (5 cas) — page d’aide par commande et aide globale. La liste d’options est générée depuis la table que l’analyseur applique (`allowedOptionsFor`), donc l’aide ne peut ni annoncer une option refusée ni en cacher une acceptée : un test le vérifie dans les deux sens. `jevgrep <commande> --help` (et `jevgrep cache clear --help`) sort en 0 avec la page demandée ; chaque page rappelle l’état « not implemented in this build » et cite la spécification dont elle vient (§2.1, §4.1, §4.5, §7.3).
+
 **Références :** spécification §2.1 et §4.5 ; exigence R10.
 
 **Objectif :** rendre le moteur utilisable directement et fournir les commandes locales d’inspection et de maintenance.
