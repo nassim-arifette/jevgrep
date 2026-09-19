@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { after, test } from 'node:test';
@@ -60,14 +60,12 @@ test('the packed artifact installs into a clean prefix and runs there', { timeou
 
   // 0. `npm test` may run before `npm run build` (that is the order in `verify`), so the test
   // produces the artifact it packs instead of assuming a previous build left dist/ behind.
-  if (!existsSync(join(repoRoot, 'dist', 'cli.js'))) {
-    const built = run(
-      process.execPath,
-      [join(repoRoot, 'node_modules', 'typescript', 'bin', 'tsc'), '-p', join(repoRoot, 'tsconfig.build.json')],
-      repoRoot,
-    );
-    assert.equal(built.code, 0, `the test must be able to build the artifact it packs:\n${built.stdout}${built.stderr}`);
-  }
+  const built = run(
+    process.execPath,
+    [join(repoRoot, 'node_modules', 'typescript', 'bin', 'tsc'), '-p', join(repoRoot, 'tsconfig.build.json')],
+    repoRoot,
+  );
+  assert.equal(built.code, 0, `the test must be able to build the artifact it packs:\n${built.stdout}${built.stderr}`);
 
   // 1. Pack exactly what the manifest publishes.
   const packed = npm(['pack', '--pack-destination', packDir, '--json'], repoRoot);
@@ -77,10 +75,23 @@ test('the packed artifact installs into a clean prefix and runs there', { timeou
   const tarball = join(packDir, tarballs[0] ?? '');
 
   // 2. Install it into an empty prefix, with no repository in sight.
-  // `--offline` keeps the ordinary suite network-free: the pinned runtime dependency is
-  // already in the npm cache, so nothing is fetched from the registry here.
+  // `npm ci` caches tarballs but does not necessarily cache registry metadata. Seed
+  // the installation's dependency graph from the same lockfile, so a clean CI host
+  // can install offline without having run an unrelated `npm install` first.
+  const installation = JSON.parse(readFileSync(join(repoRoot, 'package.json'), 'utf8')) as Record<string, unknown>;
+  installation['name'] = 'jevgrep-artifact-install';
+  delete installation['bin'];
+  delete installation['scripts'];
+  const lock = JSON.parse(readFileSync(join(repoRoot, 'package-lock.json'), 'utf8')) as {
+    name: string; packages: Record<string, Record<string, unknown>>;
+  };
+  lock.name = 'jevgrep-artifact-install';
+  lock.packages['']!['name'] = lock.name;
+  delete lock.packages['']!['bin'];
+  writeFileSync(join(prefix, 'package.json'), JSON.stringify(installation));
+  writeFileSync(join(prefix, 'package-lock.json'), JSON.stringify(lock));
   const installed = npm(
-    ['install', '--prefix', prefix, '--no-audit', '--no-fund', '--ignore-scripts', '--offline', tarball],
+    ['install', '--prefix', prefix, '--omit=dev', '--no-audit', '--no-fund', '--ignore-scripts', '--offline', tarball],
     workspace,
   );
   assert.equal(installed.code, 0, installed.stderr);

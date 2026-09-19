@@ -4,7 +4,7 @@
   "reference": "docs/issues.md#jg-004, docs/research/jev-contract-update.md, specification 6.1 and 6.3",
   "credential_env_var": "TYPESAFE_API_KEY",
   "sanitized_evidence_dir": "docs/reports/jg-004",
-  "raw_capture_dir": "C:/Users/nassi/Desktop/jevgrep-probe-raw",
+  "raw_capture_dir": "../jevgrep-probe-raw",
   "redaction_rules": [
     "never copy a credential value into an artifact, a log or a commit",
     "record error bodies as shape and status only, never verbatim headers",

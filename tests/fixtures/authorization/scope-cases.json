@@ -169,9 +169,10 @@
       "category": "unc",
       "platform": "posix",
       "form": "scope",
-      "expect": "open",
+      "expect": "reject",
       "target": "//server/share/file.ts",
-      "question": "Should a double-slash path be refused on POSIX too, where it is a legal relative path, or normalised?"
+      "reason": "unc_path",
+      "note": "JG-008: leading double slashes are refused on every host; this is not a repository-relative path."
     },
     {
       "id": "device-namespace-windows",
@@ -214,9 +215,10 @@
       "category": "alternate-data-stream",
       "platform": "posix",
       "form": "scope",
-      "expect": "open",
+      "expect": "reject",
       "target": "src/app.ts:secret",
-      "question": "A colon is legal in a POSIX file name: refuse it to keep one rule across platforms, or accept it?"
+      "reason": "alternate_data_stream",
+      "note": "JG-008: colons are refused on every host to keep one portable scope policy."
     },
     {
       "id": "nul-byte",
@@ -280,9 +282,9 @@
       "category": "accepted-form",
       "platform": "windows",
       "form": "scope",
-      "expect": "open",
+      "expect": "accept",
       "target": "src\\app.ts",
-      "question": "Normalise a backslash separator on Windows, or refuse it so scope strings stay platform-independent?"
+      "note": "JG-008: backslashes are normalized to slashes; they do not name literal backslash characters on POSIX."
     },
     {
       "id": "overlap-directory-and-file",

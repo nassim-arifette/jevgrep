@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
+import { dirname, isAbsolute, join, relative, resolve, sep, win32 } from 'node:path';
 import { after, test } from 'node:test';
 import { repoRoot } from './helpers/cli-runner.ts';
 
@@ -173,7 +173,7 @@ test('scope entries rejected for their form really carry that form', () => {
   // location that resolves outside the root. Each case is checked against its own family.
   const forms: Record<string, (value: string) => boolean> = {
     traversal: (value) => value.split(/[\\/]/).includes('..'),
-    absolute_path: (value) => isAbsolute(value) || /^[A-Za-z]:[\\/]/.test(value),
+    absolute_path: (value) => isAbsolute(value) || win32.isAbsolute(value),
     drive_relative: (value) => /^[A-Za-z]:(?![\\/])/.test(value),
     unc_path: (value) => value.startsWith('\\\\') || value.startsWith('//'),
     device_path: (value) => /^(NUL|CON|PRN|AUX|COM[1-9]|LPT[1-9])$/i.test(value) || value.startsWith('\\\\.\\'),
