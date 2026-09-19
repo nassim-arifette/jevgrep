@@ -40,6 +40,9 @@ export const DEFAULT_WINDOW_LIMITS: WindowLimits = Object.freeze({
   overlapLines: 8,
 });
 
+/** Maximum overlap allowed by specification 5.4. */
+export const MAX_WINDOW_OVERLAP_LINES = 8;
+
 /** Chunker identity; part of fragment metadata and of evaluation identity. */
 export const LINE_WINDOW_CHUNKER_VERSION = 'jevgrep-line-windows-1';
 
@@ -239,8 +242,14 @@ export function lineWindows(
   count: TokenCounter = countReferenceTokens,
 ): LineWindowResult {
   if (limits.targetLines < 1 || limits.targetTokens < 1 || limits.maxLines < 1 || limits.maxBytes < 1
-    || limits.maxTokens < 1 || limits.overlapLines < 0) {
-    throw new RangeError('window targets and limits must be positive, and overlap cannot be negative');
+    || limits.maxTokens < 1 || limits.overlapLines < 0 || limits.overlapLines > MAX_WINDOW_OVERLAP_LINES) {
+    throw new RangeError(`window targets and limits must be positive, and overlap must be between 0 and ${String(MAX_WINDOW_OVERLAP_LINES)} lines`);
+  }
+
+  // Inventory normally excludes whitespace-only files, but keep this pure seam correct for
+  // direct callers too. In particular, a very long blank line is not unsupported source.
+  if (isBlank(snapshot.text)) {
+    return { kind: 'windows', windows: [] };
   }
 
   const lines = readLines(snapshot.text);

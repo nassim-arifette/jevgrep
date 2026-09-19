@@ -4,6 +4,7 @@ import { test } from 'node:test';
 import {
   DEFAULT_WINDOW_LIMITS,
   LINE_WINDOW_CHUNKER_VERSION,
+  MAX_WINDOW_OVERLAP_LINES,
   lineWindows,
   type FragmentWindow,
   type SnapshotText,
@@ -174,6 +175,13 @@ test('a blank-only file produces no window and no long-line report', () => {
   assert.deepEqual(result, { kind: 'windows', windows: [] });
 });
 
+test('a blank-only file stays empty even when one whitespace line exceeds the byte ceiling', () => {
+  const result = lineWindows(snapshot(`\n${' '.repeat(DEFAULT_WINDOW_LIMITS.maxBytes + 1)}\n\t\n`), DEFAULT_WINDOW_LIMITS, () => {
+    throw new Error('blank-only source must not be tokenized');
+  });
+  assert.deepEqual(result, { kind: 'windows', windows: [] });
+});
+
 test('the byte ceiling rejects a long line before invoking the tokenizer', () => {
   const result = lineWindows(snapshot('x'.repeat(20_000)), DEFAULT_WINDOW_LIMITS, () => {
     throw new Error('ineligible source must not be tokenized');
@@ -282,6 +290,11 @@ test('the injected counter controls single-line refusal and target validation', 
     ...DEFAULT_WINDOW_LIMITS,
     targetLines: 0,
   }), /targets and limits must be positive/);
+
+  assert.throws(() => lineWindows(snapshot('x'), {
+    ...DEFAULT_WINDOW_LIMITS,
+    overlapLines: MAX_WINDOW_OVERLAP_LINES + 1,
+  }), /overlap must be between 0 and 8 lines/);
 });
 
 test('the window invariants hold across limit profiles and source shapes', () => {
