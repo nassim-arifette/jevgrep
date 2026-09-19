@@ -31,6 +31,7 @@ import {
 } from './evaluation/jev.ts';
 import type { BatchItem, EvaluationBatch, ProviderClient } from './evaluation/jev.ts';
 import { createConfiguredProvider } from './evaluation/provider.ts';
+import { runEvaluations } from './evaluation/scheduler.ts';
 import { SearchContext, SearchLogger, isAbortError, runPhase, systemClock } from './lifecycle.ts';
 import type { Clock } from './lifecycle.ts';
 import { excerptBudget, excerptCost, renderSearchResult, ResponseBudgetError } from './response/render.ts';
@@ -56,7 +57,7 @@ export class RequestValidationError extends Error {
 
 export type EngineOptions = {
   readonly configuration: LoadedConfiguration;
-  /** Inject an offline provider until the live-search qualification gates are closed. */
+  /** Inject a provider adapter for deterministic or offline execution. */
   readonly provider?: ProviderClient;
   readonly cache?: ScoreCache;
   readonly clock?: Clock;
@@ -275,6 +276,7 @@ export class SearchEngine {
       await runPhase(context, 'evaluation', async () => {
         await runEvaluations(provider, plan.batches, context, {
           concurrency: config.search.concurrency,
+          ...(config.search.retry === undefined ? {} : { retry: config.search.retry }),
           onDispatch: (batch) => {
             root.assertCurrent();
             // Revalidate each named entry before disclosure, while sending only
@@ -346,10 +348,10 @@ export class SearchEngine {
               context.diagnostics.record('INVALID_PROVIDER_RESPONSE', context.elapsedMs, { count: evaluation.invalid.length });
             }
           },
-          onFailure: (batch, failure) => {
+          onFailure: (batch, failure, willRetry) => {
             usage.unknownUsageAttempts += 1;
             context.addStopReason('USAGE_UNKNOWN');
-            if (!failure.cancelled || context.stop === null) context.addStopReason(failure.code);
+            if (!willRetry && (!failure.cancelled || context.stop === null)) context.addStopReason(failure.code);
             context.diagnostics.record(failure.code, context.elapsedMs, { count: batch.items.length });
           },
         });
@@ -670,74 +672,7 @@ export function buildBatches(fragments: readonly PreparedFragment[], query: stri
   return batches;
 }
 
-type EvaluationHandlers = {
-  readonly concurrency: number;
-  readonly onDispatch?: (batch: EvaluationBatch) => boolean;
-  readonly onScores: (batch: EvaluationBatch, evaluation: Awaited<ReturnType<ProviderClient['evaluateBatch']>>) => void;
-  readonly onFailure: (batch: EvaluationBatch, failure: ProviderError) => void;
-};
-
-/**
- * Run the planned batches (JG-017 seam).
- *
- * Bounded concurrency, deterministic order, one attempt per batch, and no new
- * dispatch once the deadline passed or the client cancelled. Retry policy,
- * `Retry-After` handling and reservation accounting belong to JG-017; adding them
- * replaces this function's body and nothing else.
- */
-export async function runEvaluations(
-  provider: ProviderClient,
-  batches: readonly EvaluationBatch[],
-  context: SearchContext,
-  handlers: EvaluationHandlers,
-): Promise<void> {
-  const queue = [...batches];
-  const workerCount = Math.max(1, Math.min(handlers.concurrency, queue.length));
-  let terminal = false;
-
-  const worker = async (): Promise<void> => {
-    for (;;) {
-      if (terminal || !context.canStartWork()) {
-        return;
-      }
-      const batch = queue.shift();
-      if (batch === undefined) {
-        return;
-      }
-      if (handlers.onDispatch?.(batch) === false) {
-        terminal = true;
-        return;
-      }
-      try {
-        const evaluation = await provider.evaluateBatch(batch, context.signal);
-        handlers.onScores(batch, evaluation);
-      } catch (cause) {
-        if (isAbortError(cause)) {
-          // Once the provider seam has been entered, cancellation cannot establish
-          // that nothing was sent. Preserve the attempt and its unknown usage.
-          handlers.onFailure(batch, new ProviderError({
-            code: 'PROVIDER_UNAVAILABLE', message: 'evaluation aborted after possible dispatch',
-            retryable: false, ambiguous: true, transmittedBytes: batchRequestBytes(batch, provider.model),
-            cancelled: context.signal.aborted,
-          }));
-          return;
-        }
-        if (cause instanceof ProviderError) {
-          handlers.onFailure(batch, cause);
-          // Authentication, quota and forbidden model stop new dispatch; work already
-          // validated is kept (specification section 6.3).
-          if (cause.code === 'PROVIDER_AUTH' || cause.code === 'PROVIDER_QUOTA') {
-            terminal = true;
-          }
-          continue;
-        }
-        throw cause;
-      }
-    }
-  };
-
-  await Promise.all(Array.from({ length: workerCount }, worker));
-}
+export { runEvaluations } from './evaluation/scheduler.ts';
 
 /** Map an internal failure onto the compact contract error, or null when it is a bug. */
 function errorCodeOf(cause: unknown): ErrorCode | null {

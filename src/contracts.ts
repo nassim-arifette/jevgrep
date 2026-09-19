@@ -203,6 +203,15 @@ export const configurationSchema = refine(object({
     default_response_tokens: responseTokens,
     max_response_tokens: responseTokens,
     threshold: probability,
+  }, {
+    retry: refine(object({
+      max_retries: numberValue(0, 10),
+      base_delay_ms: numberValue(1, 60_000),
+      max_delay_ms: numberValue(1, 60_000),
+      retry_ambiguous: booleanValue,
+    }), (value, path) => {
+      requireContract(value.base_delay_ms <= value.max_delay_ms, path, 'retry base delay exceeds maximum');
+    }),
   }),
   scan_caps: scanCapsSchema,
   source: object({

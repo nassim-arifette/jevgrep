@@ -17,7 +17,7 @@ import type { Diagnostics, ScanCap, StopReason } from './contracts.ts';
 /** Minimal clock seam. `ManualClock` in src/testing satisfies it structurally. */
 export type Clock = {
   readonly nowMs: number;
-  sleep(delayMs: number, signal?: AbortSignal): Promise<void>;
+  sleep(delayMs: number, signal?: AbortSignal, options?: { keepAlive?: boolean }): Promise<void>;
 };
 
 /** Wall-clock implementation. Timers are unref'd: a pending deadline never holds the process open. */
@@ -25,7 +25,7 @@ export const systemClock: Clock = {
   get nowMs(): number {
     return Date.now();
   },
-  sleep(delayMs: number, signal?: AbortSignal): Promise<void> {
+  sleep(delayMs: number, signal?: AbortSignal, options?: { keepAlive?: boolean }): Promise<void> {
     if (signal?.aborted === true) {
       return Promise.reject(new DOMException('operation aborted', 'AbortError'));
     }
@@ -34,7 +34,7 @@ export const systemClock: Clock = {
         signal?.removeEventListener('abort', onAbort);
         resolve();
       }, delayMs);
-      timer.unref?.();
+      if (options?.keepAlive !== true) timer.unref?.();
       const onAbort = (): void => {
         clearTimeout(timer);
         reject(new DOMException('operation aborted', 'AbortError'));
