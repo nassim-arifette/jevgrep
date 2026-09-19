@@ -27,7 +27,7 @@ import type { IgnoreFile } from './ignore-rules.ts';
 export type InventoryExclusion =
   | 'administrative' | 'credential_file' | 'operator_denied' | 'gitignored' | 'jevgrepignored'
   | 'dependency' | 'build_output' | 'generated' | 'minified' | 'file_too_large'
-  | 'unsupported_format' | 'empty' | 'link' | 'outside_root' | 'not_regular_file';
+  | 'empty' | 'link' | 'outside_root' | 'not_regular_file';
 
 export type InventoryEntry = {
   readonly relativePath: string;

@@ -29,7 +29,7 @@ export const EXCLUSION_REASONS = [
   'administrative', 'credential_file', 'operator_denied', 'gitignored',
   'jevgrepignored', 'dependency', 'build_output', 'generated', 'minified',
   'unsupported_encoding', 'binary', 'file_too_large', 'credential_pattern',
-  'empty', 'whitespace_only', 'unsupported_format', 'unsupported_long_line',
+  'empty', 'whitespace_only', 'unsupported_long_line',
   'link', 'outside_root', 'not_regular_file',
 ] as const;
 
