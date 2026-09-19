@@ -95,11 +95,11 @@ Les phases `P0` à `P7` correspondent au plan d’implémentation existant.
 
 **Critères d’acceptation :**
 
-- [ ] Une installation à partir du lockfile suivie de la compilation réussit sur les deux plateformes.
-- [ ] Une erreur de type fait échouer le contrôle de types avec un code de sortie non nul.
-- [ ] Les tests habituels n’exigent aucune clé Jev et n’effectuent aucun appel réseau fournisseur.
-- [ ] Le package contient un point d’entrée exécutable ; aucune commande non implémentée n’est présentée comme disponible.
-- [ ] Les versions de runtime et les commandes de développement sont documentées.
+- [x] Une installation à partir du lockfile suivie de la compilation réussit sur les deux plateformes. *(vérifié Windows + Linux, `npm ci` puis `npm run verify`)*
+- [x] Une erreur de type fait échouer le contrôle de types avec un code de sortie non nul. *(projet témoin hors dépôt + script documenté, `tests/type-check-gate.test.ts`)*
+- [x] Les tests habituels n’exigent aucune clé Jev et n’effectuent aucun appel réseau fournisseur. *(garde-fou in-process + preload dans les processus CLI ; variables retirées)*
+- [x] Le package contient un point d’entrée exécutable ; aucune commande non implémentée n’est présentée comme disponible. *(`bin jevgrep`, aide par commande qui rappelle l’état non implémenté)*
+- [x] Les versions de runtime et les commandes de développement sont documentées. *(README, `.nvmrc`, CI)*
 
 **Livrables :** package TypeScript, lockfile, scripts, configuration CI et instructions de développement.
 
@@ -161,9 +161,11 @@ Les phases `P0` à `P7` correspondent au plan d’implémentation existant.
 <a id="jg-004"></a>
 ### JG-004 — Vérifier le contrat réel Jev et la compatibilité du SDK
 
-**Type :** Étude technique. **Priorité :** Critique. **Phase :** P0. **Statut :** À faire.
+**Type :** Étude technique. **Priorité :** Critique. **Phase :** P0. **Statut :** À faire (cas de sonde préparés par J ; exécution réelle toujours ouverte faute d’accès fournisseur).
 
 **Niveau recommandé :** Senior. **Pilote proposé :** S. **Revue :** M.
+
+**Lot préparatoire J (disponible) :** `tests/fixtures/provider-contract/probe-cases.json` + `tests/provider-probe-cases.test.ts` (5 cas) — 14 cas couvrant les douze domaines à trancher (authentification valide/absente/invalide, corrélation des réponses Noul, forme du score, identité du modèle demandé et retourné, champs d’usage, borne réelle de requête, annulation en sous-processus, reprises du SDK désactivables, réponses malformées, divulgation du contenu synthétique envoyé, relevé de tarif daté, contrôle d’expurgation). Chaque cas porte sa question, son protocole d’observation, les champs à consigner et son statut (`open`/`answered` avec `answer_ref`) ; les cas bloquants sont marqués. Hygiène vérifiée par test : la variable d’environnement `TYPESAFE_API_KEY` est nommée mais aucune valeur, les preuves expurgées vont dans `docs/reports/jg-004` et les captures brutes hors du dépôt. La sonde de référence et les faits déjà sourcés sont dans `docs/research/jev-contract-update.md`.
 
 **Dépendances :** [JG-001](#jg-001), [JG-002](#jg-002), [JG-003](#jg-003).
 
@@ -388,11 +390,11 @@ Les phases `P0` à `P7` correspondent au plan d’implémentation existant.
 
 **Critères d’acceptation :**
 
-- [ ] Chaque ligne non vide d’un fichier préparé est couverte par au moins un fragment.
-- [ ] Un fragment respecte les limites actives sans tronquer une ligne ni un caractère.
-- [ ] Une ligne isolée impossible à représenter est signalée explicitement selon la politique de contenu supporté.
-- [ ] Le même snapshot et les mêmes paramètres produisent les mêmes fragments dans le même ordre.
-- [ ] Les fenêtres contiennent uniquement du texte original ; leur chevauchement ne duplique pas les fichiers inventoriés.
+- [x] Chaque ligne non vide d’un fichier préparé est couverte par au moins un fragment. *(tests unitaires + filet sur le corpus réel)*
+- [x] Un fragment respecte les limites actives sans tronquer une ligne ni un caractère. *(balayage 5 formes × 6 profils ; tranches d’octets vérifiées)*
+- [x] Une ligne isolée impossible à représenter est signalée explicitement selon la politique de contenu supporté. *(`unsupported-long-line`, raison `unsupported_long_line`)*
+- [x] Le même snapshot et les mêmes paramètres produisent les mêmes fragments dans le même ordre. *(déterminisme testé sur entrée générée et sur corpus réel)*
+- [x] Les fenêtres contiennent uniquement du texte original ; leur chevauchement ne duplique pas les fichiers inventoriés. *(texte = tranche exacte ; identité de fichier unique sous recouvrement)*
 
 **Livrables :** découpeur par fenêtres, métadonnées des fragments et tests de couverture.
 
@@ -664,13 +666,17 @@ Les phases `P0` à `P7` correspondent au plan d’implémentation existant.
 <a id="jg-023"></a>
 ### JG-023 — Finaliser toutes les commandes CLI
 
-**Type :** Implémentation. **Priorité :** Haute. **Phase :** P6. **Statut :** À faire (surface d’arguments livrée par J, branchement au moteur en attente de JG-022).
+**Type :** Implémentation. **Priorité :** Haute. **Phase :** P6. **Statut :** En cours (lots J livrés : arguments, rendu humain, aide par commande ; branchement au moteur et commandes finales en attente de JG-014 et JG-022).
 
 **Niveau recommandé :** Junior encadré. **Pilote proposé :** J. **Revue :** M.
 
 **Dépendances :** [JG-007](#jg-007), [JG-010](#jg-010), [JG-014](#jg-014), [JG-018](#jg-018), [JG-022](#jg-022).
 
 **Lot préparatoire J (disponible) :** `src/cli-args.ts` + `tests/cli-args.test.ts` (11 cas) — analyse des arguments des formulaires documentés (`doctor`, `inspect`, `search`, `mcp`, `cache clear` ; `--config`, `--query`, `--query-file`, `--scope` répétable, `--max-context-tokens`, `--json`, `--allow-partial`). Les valeurs par défaut et les bornes viennent du contrat partagé (`CONTRACT_LIMITS` : 4 000 par défaut, 1 024 minimum, 16 000 maximum, portée ≤ 32 entrées et 4 096 octets) et la requête de recherche est validée par `parseSearchRequest` de `src/contracts.ts`, donc la CLI et MCP ne peuvent pas diverger. L’analyse est pure (aucune lecture de configuration, de dépôt ou de réseau) ; option inconnue ou mal placée, valeur manquante, `--config` absent, source de requête absente ou double, budget non entier ou hors bornes, portée absolue ou traversante, sous-commande `cache` absente ou inconnue sont refusés avec un message et le code 2 de la spécification §4.5. Tant que le moteur n’existe pas, une commande valide sort en 69 avec « not implemented in this build; no work was performed ».
+
+**Rendu humain J (disponible) :** `src/cli-render.ts` + `tests/cli-render.test.ts` (5 cas) — en-tête d’état, ligne de couverture, raisons d’arrêt bornées, extraits affichés **verbatim** (sauts de ligne CRLF compris, aucune réindentation ni reformulation), et mesure de la vue humaine elle-même (tokens du compteur de référence et octets) présentée **séparément** du budget de réponse qui appartient à la charge JSON (spécification §4.5). Un résultat partiel indique explicitement que la couverture est incomplète et qu’une sélection vide n’établit pas l’absence ; un refus ou une erreur affiche le code et le conseil de reprise sans inventer de preuve. Le rendu est pur et déterministe (même sortie mesurée deux fois), prêt à être raccordé au moteur avec JG-014.
+
+**Aide J (disponible) :** `src/cli-help.ts` + `tests/cli-help.test.ts` (5 cas) — page d’aide par commande et aide globale. La liste d’options est générée depuis la table que l’analyseur applique (`allowedOptionsFor`), donc l’aide ne peut ni annoncer une option refusée ni en cacher une acceptée : un test le vérifie dans les deux sens. `jevgrep <commande> --help` (et `jevgrep cache clear --help`) sort en 0 avec la page demandée ; chaque page rappelle l’état « not implemented in this build » et cite la spécification dont elle vient (§2.1, §4.1, §4.5, §7.3).
 
 **Références :** spécification §2.1 et §4.5 ; exigence R10.
 
@@ -684,9 +690,9 @@ Les phases `P0` à `P7` correspondent au plan d’implémentation existant.
 - [ ] `inspect` affiche portée, exclusions, fragments et estimations ; une grandeur inconnue reste identifiée comme telle.
 - [ ] `search --json` retourne exactement le contrat canonique du moteur.
 - [ ] Les codes de sortie sont 0 pour complet, 2 pour rejet/entrée invalide, 3 pour partiel, 4 pour échec fatal et 130 pour interruption utilisateur.
-- [ ] Les questions multilignes via fichier sont prises en charge sans interprétation du contenu comme commande shell.
+- [x] Les questions multilignes via fichier sont prises en charge sans interprétation du contenu comme commande shell. *(`--query-file` lu tel quel, testé avec tabulations et sauts de ligne)*
 - [ ] `cache clear` n’efface que le cache configuré ; les commandes n’écrivent pas dans les sources recherchées.
-- [ ] Les exemples d’aide correspondent à des commandes réellement disponibles ; les différences de rendu ne sont pas dissimulées dans la comptabilité.
+- [~] Les exemples d’aide correspondent à des commandes réellement disponibles ; les différences de rendu ne sont pas dissimulées dans la comptabilité. **(partiel : l’aide n’annonce rien qui n’existe et la vue humaine comptabilise sa propre taille, mais aucune commande n’est encore disponible)**
 
 **Livrables :** CLI complète, aide, tests des arguments/sorties et exemples exécutables.
 

@@ -42,6 +42,14 @@ test('the executable entry point rejects planned and unknown commands', async ()
   assert.match(noArgs.stderr, /no command given/);
 });
 
+test('a command documents itself through the executable', async () => {
+  const help = await runCli(sourceEntry, ['doctor', '--help']);
+  assert.equal(help.code, EXIT_OK);
+  assert.match(help.stdout, /^usage: jevgrep doctor --config <path>/);
+  assert.match(help.stdout, /not implemented in this build/);
+  assert.equal(help.stderr, '');
+});
+
 test('the CLI reports the same version from an unrelated working directory', async () => {
   const result = await runCli(sourceEntry, ['--version'], tmpdir());
   assert.equal(result.code, EXIT_OK);

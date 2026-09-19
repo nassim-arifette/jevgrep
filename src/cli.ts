@@ -12,6 +12,7 @@ import { readFileSync, realpathSync } from 'node:fs';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 import { parseCliArguments, type CliCommand } from './cli-args.ts';
+import { commandHelp, globalHelp } from './cli-help.ts';
 import { CLI_EXIT_CODES } from './search-response.ts';
 
 /** Complete result from the product contract (section 4.5). */
@@ -61,41 +62,10 @@ const PLANNED_COMMANDS: ReadonlyMap<string, string> = new Map([
   ['cache', 'JG-018'],
 ]);
 
-const HELP_LINES: readonly string[] = [
-  'usage: jevgrep --help | --version',
-  '',
-  "JevGrep finds evidence in a repository for a coding agent's question. It evaluates",
-  'authorized code fragments with a configured remote Jev provider and returns original',
-  'excerpts under a response budget.',
-  '',
-  'This build is the JG-001 development scaffold. It implements no repository-analysis command:',
-  'running it performs no work, reads no repository and contacts no provider.',
-  '',
-  'options:',
-  '  -h, --help      show this help and exit 0',
-  '  -V, --version   show the package version and exit 0',
-  '',
-  'planned commands, not implemented in this build (each one exits 69 and performs no work):',
-  '  cache clear --config <path>',
-  '  doctor --config <path>',
-  '  inspect --config <path> [--scope <path>]... [--json]',
-  '  mcp --config <path>',
-  '  search --config <path> --query <text> [--scope <path>]... [--max-context-tokens <n>] [--json] [--allow-partial]',
-  '',
-  'exit codes:',
-  '  0    complete result',
-  '  2    invalid request, unknown command or bad arguments',
-  '  4    fatal runtime failure, for example an unreadable package manifest',
-  '  69   command planned but not implemented in this build',
-  '  3    partial result (reserved: arrives with the first search command)',
-  '  130  user interruption (reserved)',
-  '',
-  'documentation: README.md, docs/specification.md, docs/issues.md',
-];
 
-/** Canonical help text; the CLI prints it and tests assert its content. */
+/** Canonical global help text; the CLI prints it and tests assert its content. */
 export function helpText(): string {
-  return HELP_LINES.join('\n');
+  return globalHelp();
 }
 
 /**
@@ -133,7 +103,24 @@ export function isMainModule(moduleUrl: string = import.meta.url): boolean {
  * discovering a typo later. The command itself still performs no work, so the refusals of
  * specification 4.5 (0 complete, 3 partial, 4 fatal, 130 interrupted) stay unused.
  */
+/** Help topic named by argv: the documented command, with `cache clear` as one topic. */
+function helpTopic(argv: readonly string[]): string {
+  const first = argv[0] ?? '';
+  return first === 'cache' ? 'cache clear' : first;
+}
+
 function plannedCommand(io: CliIo, argv: readonly string[], implementingIssue: string): number {
+  // `--help` after a command prints that command's page: the option table is the one the
+  // parser enforces, so the help cannot promise an option that would be refused.
+  if (argv.includes('--help') || argv.includes('-h')) {
+    const help = commandHelp(helpTopic(argv));
+    if (help === undefined) {
+      return usageError(io, `unknown command '${String(argv[0])}'`);
+    }
+    io.out(help);
+    return EXIT_OK;
+  }
+
   const parsed = parseCliArguments(argv, {
     readFile: (path: string): string => readFileSync(path, 'utf8'),
   });

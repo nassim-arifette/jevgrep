@@ -272,8 +272,8 @@ test('the injected counter controls single-line refusal and target validation', 
 
   assert.throws(() => lineWindows(snapshot('x'), {
     ...DEFAULT_WINDOW_LIMITS,
-    targetLines: DEFAULT_WINDOW_LIMITS.maxLines + 1,
-  }), /targets cannot exceed maxima/);
+    targetLines: 0,
+  }), /targets and limits must be positive/);
 });
 
 test('the window invariants hold across limit profiles and source shapes', () => {

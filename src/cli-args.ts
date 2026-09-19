@@ -92,6 +92,11 @@ function scopeError(scope: readonly string[]): string | undefined {
   return undefined;
 }
 
+/** Options a command accepts, in the order the help should document them. */
+export function allowedOptionsFor(command: string): readonly string[] | undefined {
+  return ALLOWED_OPTIONS[command];
+}
+
 function refuse(message: string): CliParseResult {
   return { kind: 'error', message };
 }

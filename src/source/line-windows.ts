@@ -85,7 +85,6 @@ type LineRecord = {
   readonly byteStart: number;
   readonly byteEnd: number;
   readonly byteCount: number;
-  readonly tokenCount: number;
 };
 
 function isBlank(text: string): boolean {
@@ -103,9 +102,8 @@ function readLines(text: string): readonly LineRecord[] {
   let lineByteStart = 0;
   let lineNumber = 0;
 
-  const pushLine = (endOffset: number, contentEndOffset: number, byteEndIncludingEnding: number): void => {
+  const pushLine = (endOffset: number, byteEndIncludingEnding: number): void => {
     lineNumber += 1;
-    const content = text.slice(lineStart, contentEndOffset);
     lines.push({
       number: lineNumber,
       startOffset: lineStart,
@@ -113,7 +111,6 @@ function readLines(text: string): readonly LineRecord[] {
       byteStart: lineByteStart,
       byteEnd: byteEndIncludingEnding,
       byteCount: byteEndIncludingEnding - lineByteStart,
-      tokenCount: countReferenceTokens(content),
     });
   };
 
@@ -124,8 +121,7 @@ function readLines(text: string): readonly LineRecord[] {
     byteOffset += characterBytes;
 
     if (codePoint === 10) {
-      const contentEnd = index > lineStart && text.charCodeAt(index - 1) === 13 ? index - 1 : index;
-      pushLine(index + 1, contentEnd, byteOffset);
+      pushLine(index + 1, byteOffset);
       lineStart = index + 1;
       lineByteStart = byteOffset;
     }
@@ -133,7 +129,7 @@ function readLines(text: string): readonly LineRecord[] {
   }
 
   if (lineStart < text.length) {
-    pushLine(text.length, text.length, byteOffset);
+    pushLine(text.length, byteOffset);
   }
   return lines;
 }
@@ -160,51 +156,41 @@ function buildWindow(
   if (first === undefined) {
     return { window: undefined, oversized: undefined };
   }
-  if (first.byteCount > limits.maxBytes || first.tokenCount > limits.maxTokens) {
+  let candidate = textOf(lines, text, startIndex, startIndex);
+  let tokenCount = count(candidate);
+  if (first.byteCount > limits.maxBytes || tokenCount > limits.maxTokens) {
     return {
       window: undefined,
-      oversized: { kind: 'unsupported-long-line', line: first.number, reason: 'unsupported_long_line', byteCount: first.byteCount, tokenCount: first.tokenCount },
+      oversized: { kind: 'unsupported-long-line', line: first.number, reason: 'unsupported_long_line', byteCount: first.byteCount, tokenCount },
     };
   }
 
   let endIndex = startIndex;
   let bytes = first.byteCount;
-  let estimatedTokens = first.tokenCount;
   while (endIndex + 1 < lines.length) {
     const next = lines[endIndex + 1];
     if (next === undefined) {
       break;
     }
+    const lineCount = endIndex - startIndex + 1;
+    if (lineCount >= limits.targetLines || tokenCount >= limits.targetTokens) {
+      break;
+    }
     if (endIndex + 1 - startIndex + 1 > limits.maxLines) {
       break;
     }
-    if (bytes + next.byteCount > limits.maxBytes || estimatedTokens + next.tokenCount > limits.maxTokens) {
+    if (bytes + next.byteCount > limits.maxBytes) {
+      break;
+    }
+    const expanded = textOf(lines, text, startIndex, endIndex + 1);
+    const expandedTokens = count(expanded);
+    if (expandedTokens > limits.maxTokens) {
       break;
     }
     endIndex += 1;
     bytes += next.byteCount;
-    estimatedTokens += next.tokenCount;
-  }
-
-  let candidate = textOf(lines, text, startIndex, endIndex);
-  let tokenCount = count(candidate);
-  // The line sums are only an upper-bound estimate (whitespace runs merge across a line
-  // ending), so the limits are re-verified on the real text and the window shrinks if
-  // needed. Neither a line nor a character is ever cut.
-  while (tokenCount > limits.maxTokens && endIndex > startIndex) {
-    endIndex -= 1;
-    candidate = textOf(lines, text, startIndex, endIndex);
-    tokenCount = count(candidate);
-  }
-  if (tokenCount > limits.maxTokens) {
-    const only = lines[startIndex];
-    if (only === undefined) {
-      return { window: undefined, oversized: undefined };
-    }
-    return {
-      window: undefined,
-      oversized: { kind: 'unsupported-long-line', line: only.number, reason: 'unsupported_long_line', byteCount: only.byteCount, tokenCount },
-    };
+    candidate = expanded;
+    tokenCount = expandedTokens;
   }
 
   const last = lines[endIndex];
@@ -243,8 +229,9 @@ export function lineWindows(
   limits: WindowLimits = DEFAULT_WINDOW_LIMITS,
   count: TokenCounter = countReferenceTokens,
 ): LineWindowResult {
-  if (limits.maxLines < 1 || limits.maxBytes < 1 || limits.maxTokens < 1 || limits.overlapLines < 0) {
-    throw new RangeError('window limits must be positive, and the overlap cannot be negative');
+  if (limits.targetLines < 1 || limits.targetTokens < 1 || limits.maxLines < 1 || limits.maxBytes < 1
+    || limits.maxTokens < 1 || limits.overlapLines < 0) {
+    throw new RangeError('window targets and limits must be positive, and overlap cannot be negative');
   }
 
   const lines = readLines(snapshot.text);
