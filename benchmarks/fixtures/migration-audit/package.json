@@ -1,0 +1,5 @@
+{
+  "name": "synthetic-migration-audit",
+  "private": true,
+  "type": "module"
+}

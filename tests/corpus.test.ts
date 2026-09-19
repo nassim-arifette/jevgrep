@@ -77,17 +77,23 @@ test('the repository corpus is valid and reports its progress', () => {
   assert.deepEqual(problems, [], problems.map((problem) => `${problem.file}: ${problem.message}`).join('\n'));
 
   const report = corpusReport(defaultCorpusRoot);
-  assert.ok(report.summary.questions >= 13);
-  assert.ok(report.summary.behavior >= 8);
-  assert.ok(report.summary.symbolControls >= 3);
+  // JG-027 targets: at least three fixtures, 30 behavior questions and 10 exact-symbol
+  // controls, plus no-evidence questions and at least one recorded ambiguity.
+  assert.ok(report.summary.fixtures >= 3, `fixtures: ${String(report.summary.fixtures)}`);
+  assert.ok(report.summary.behavior >= 30, `behavior: ${String(report.summary.behavior)}`);
+  assert.ok(report.summary.symbolControls >= 10, `symbol controls: ${String(report.summary.symbolControls)}`);
   assert.ok(report.summary.noEvidence >= 2);
   assert.ok(report.summary.ambiguous >= 1);
-  assert.equal(report.summary.fixtures, 1);
+  assert.ok(report.summary.questions >= 40);
 
-  // The held-out split and the JG-027 targets are still open: they must be reported,
-  // not silently accepted.
-  assert.ok(report.notes.some((note) => note.includes('holdout')));
-  assert.ok(report.notes.some((note) => note.includes('behavior questions')));
+  // Progress must be reported, never silently accepted: an unmet JG-027 target has a
+  // note, a met target does not. The held-out split is still missing (specification
+  // 11.2 requires a frozen held-out corpus), so it must always be reported while it is.
+  const noteFor = (label: string): string | undefined => report.notes.find((note) => note.includes(label));
+  assert.equal(noteFor('behavior questions') !== undefined, report.summary.behavior < 30);
+  assert.equal(noteFor('symbol controls') !== undefined, report.summary.symbolControls < 10);
+  assert.equal(noteFor('annotated fixtures') !== undefined, report.summary.fixtures < 3);
+  assert.equal(noteFor('holdout') !== undefined, report.summary.holdoutQuestions === 0);
 });
 
 test('a valid manifest produces no problem', () => {

@@ -1,0 +1,161 @@
+{
+  "schema_version": 1,
+  "fixture": {
+    "id": "migration-audit",
+    "title": "Synthetic TypeScript audit-retention job (author-owned fixture)",
+    "license": "authored for the JevGrep project; no third-party content (see fixtures/migration-audit/LICENSE)",
+    "authorization": "operator-authored synthetic sources; no secret-bearing or third-party material; safe for remote evaluation of the annotated scope",
+    "revision": { "kind": "tree-sha256", "value": "1f63406eb34293e8487d3b268e2692d3019c66bd03b57166fa99ac44defa8d59" },
+    "line_count": 111,
+    "languages": ["typescript", "sql", "json", "markdown"]
+  },
+  "split": "development",
+  "budget": { "max_context_tokens": 4000, "allow_partial_scan": false },
+  "questions": [
+    {
+      "id": "migration-audit.development.001",
+      "kind": "behavior",
+      "question": "How does retention preserve old audit records that are under legal hold?",
+      "scope": ["src", "tests"],
+      "expected_evidence": [
+        { "path": "src/retention.ts", "start_line": 7, "end_line": 12, "role": "direct", "note": "filters legal holds before selecting expired identifiers" },
+        { "path": "tests/retention.test.ts", "start_line": 5, "end_line": 12, "role": "supporting", "note": "proves that only the unheld record expires" }
+      ],
+      "ambiguous": false,
+      "review_notes": ""
+    },
+    {
+      "id": "migration-audit.development.002",
+      "kind": "behavior",
+      "question": "How is the retention cutoff computed before old records are loaded?",
+      "scope": ["src"],
+      "expected_evidence": [
+        { "path": "src/job.ts", "start_line": 6, "end_line": 13, "role": "direct", "note": "computes a cutoff from auditDays and passes it to the repository" },
+        { "path": "src/repository.ts", "start_line": 3, "end_line": 6, "role": "supporting", "note": "declares the cutoff-based repository query" }
+      ],
+      "ambiguous": false,
+      "review_notes": ""
+    },
+    {
+      "id": "migration-audit.development.003",
+      "kind": "behavior",
+      "question": "How are expired audit identifiers split into bounded deletion calls?",
+      "scope": ["src"],
+      "expected_evidence": [
+        { "path": "src/job.ts", "start_line": 11, "end_line": 17, "role": "direct", "note": "builds groups and invokes one deletion per group" },
+        { "path": "src/retention.ts", "start_line": 15, "end_line": 23, "role": "supporting", "note": "implements contiguous batching" }
+      ],
+      "ambiguous": false,
+      "review_notes": ""
+    },
+    {
+      "id": "migration-audit.development.004",
+      "kind": "behavior",
+      "question": "Where are invalid deletion batch sizes rejected?",
+      "scope": ["src"],
+      "expected_evidence": [{ "path": "src/retention.ts", "start_line": 15, "end_line": 18, "role": "direct", "note": "requires a positive safe integer" }],
+      "ambiguous": false,
+      "review_notes": ""
+    },
+    {
+      "id": "migration-audit.development.005",
+      "kind": "behavior",
+      "question": "How does the repository adapter avoid issuing an empty deletion?",
+      "scope": ["src"],
+      "expected_evidence": [{ "path": "src/repository.ts", "start_line": 8, "end_line": 12, "role": "direct", "note": "returns zero without calling deleteByIds for an empty list" }],
+      "ambiguous": false,
+      "review_notes": ""
+    },
+    {
+      "id": "migration-audit.development.006",
+      "kind": "behavior",
+      "question": "How is the total number of deleted records accumulated across batches?",
+      "scope": ["src"],
+      "expected_evidence": [{ "path": "src/job.ts", "start_line": 14, "end_line": 18, "role": "direct", "note": "adds each adapter result and returns the total" }],
+      "ambiguous": false,
+      "review_notes": ""
+    },
+    {
+      "id": "migration-audit.development.007",
+      "kind": "behavior",
+      "question": "When is the audit retention job scheduled, and what does the scheduled callback run?",
+      "scope": ["src", "config"],
+      "expected_evidence": [
+        { "path": "src/scheduler.ts", "start_line": 6, "end_line": 13, "role": "direct", "note": "registers the cron expression and invokes retention" },
+        { "path": "config/retention.json", "start_line": 4, "end_line": 4, "role": "context", "note": "configuration contains the same schedule" }
+      ],
+      "alternative_evidence_sets": [[
+        { "path": "docs/operations.md", "start_line": 3, "end_line": 5, "role": "direct", "note": "operator documentation states the daily time and behavior" },
+        { "path": "src/scheduler.ts", "start_line": 11, "end_line": 13, "role": "supporting", "note": "implementation uses the documented expression" }
+      ]],
+      "ambiguous": true,
+      "review_notes": "The schedule is duplicated in configuration and source; senior review should decide whether both are required evidence or this is an intentional fixture inconsistency."
+    },
+    {
+      "id": "migration-audit.development.008",
+      "kind": "behavior",
+      "question": "Which migration makes legal hold opt-out by default for new audit rows?",
+      "scope": ["migrations"],
+      "expected_evidence": [{ "path": "migrations/001_create_audit.sql", "start_line": 1, "end_line": 6, "role": "direct", "note": "legal_hold is non-null and defaults to zero" }],
+      "ambiguous": false,
+      "review_notes": ""
+    },
+    {
+      "id": "migration-audit.development.009",
+      "kind": "behavior",
+      "question": "Which database index supports locating audit records by age?",
+      "scope": ["migrations"],
+      "expected_evidence": [{ "path": "migrations/001_create_audit.sql", "start_line": 8, "end_line": 8, "role": "direct", "note": "indexes created_at" }],
+      "ambiguous": false,
+      "review_notes": ""
+    },
+    {
+      "id": "migration-audit.development.010",
+      "kind": "behavior",
+      "question": "Where are the retention duration, deletion batch size and execution schedule configured?",
+      "scope": ["config"],
+      "expected_evidence": [{ "path": "config/retention.json", "start_line": 2, "end_line": 4, "role": "direct", "note": "declares all three operational values" }],
+      "ambiguous": false,
+      "review_notes": ""
+    },
+    {
+      "id": "migration-audit.development.011",
+      "kind": "behavior",
+      "question": "Which tests protect legal-hold filtering and configured batch splitting?",
+      "scope": ["tests"],
+      "expected_evidence": [
+        { "path": "tests/retention.test.ts", "start_line": 5, "end_line": 12, "role": "direct", "note": "legal hold regression case" },
+        { "path": "tests/retention.test.ts", "start_line": 14, "end_line": 16, "role": "direct", "note": "batch splitting regression case" }
+      ],
+      "ambiguous": false,
+      "review_notes": ""
+    },
+    {
+      "id": "migration-audit.development.012",
+      "kind": "symbol_control",
+      "question": "Where is `runRetention` implemented?",
+      "scope": ["src"],
+      "expected_evidence": [{ "path": "src/job.ts", "start_line": 6, "end_line": 19, "role": "direct", "note": "exact job definition" }],
+      "ambiguous": false,
+      "review_notes": ""
+    },
+    {
+      "id": "migration-audit.development.013",
+      "kind": "symbol_control",
+      "question": "What operations are exposed by `AuditRepository`?",
+      "scope": ["src"],
+      "expected_evidence": [{ "path": "src/repository.ts", "start_line": 3, "end_line": 6, "role": "direct", "note": "exact repository contract" }],
+      "ambiguous": false,
+      "review_notes": ""
+    },
+    {
+      "id": "migration-audit.development.014",
+      "kind": "symbol_control",
+      "question": "Where is `registerRetentionJob` defined?",
+      "scope": ["src"],
+      "expected_evidence": [{ "path": "src/scheduler.ts", "start_line": 6, "end_line": 14, "role": "direct", "note": "exact scheduler registration definition" }],
+      "ambiguous": false,
+      "review_notes": ""
+    }
+  ]
+}
