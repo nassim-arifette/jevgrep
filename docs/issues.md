@@ -372,7 +372,7 @@ Les phases `P0` à `P7` correspondent au plan d’implémentation existant.
 <a id="jg-012"></a>
 ### JG-012 — Implémenter le découpage par fenêtres de lignes
 
-**Type :** Implémentation. **Priorité :** Haute. **Phase :** P2. **Statut :** En cours sur la branche `jg-027-corpus` : découpeur par fenêtres livré et testé, intégration au pipeline en attente du contrat de snapshot (JG-011) et du compteur validé (JG-006).
+**Type :** Implémentation. **Priorité :** Haute. **Phase :** P2. **Statut :** Prêt pour revue M : découpeur par fenêtres livré et testé (`src/source/line-windows.ts`, `tests/line-windows.test.ts`, `tests/line-windows-corpus.test.ts`) ; l’interface exportée est volontairement étroite (une fonction pure plus ses types) pour que le découpeur syntaxique de JG-015 la compose sans la modifier, et le retour par repli est signalé par la classification.
 
 **Niveau recommandé :** Junior encadré. **Pilote proposé :** J. **Revue :** M.
 

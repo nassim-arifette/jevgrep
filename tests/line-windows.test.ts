@@ -225,6 +225,57 @@ test('the default limits follow the specification values', () => {
   assert.equal(process.env['JEVG_API_KEY'], undefined);
 });
 
+test('soft line and token targets shape windows before the hard maxima', () => {
+  const text = Array.from({ length: 10 }, (_, index) => `line ${String(index + 1)}\n`).join('');
+  const byLines = lineWindows(snapshot(text), {
+    ...DEFAULT_WINDOW_LIMITS,
+    targetLines: 3,
+    maxLines: 10,
+    overlapLines: 0,
+  }, () => 1);
+  assert.equal(byLines.kind, 'windows');
+  if (byLines.kind === 'windows') {
+    assert.deepEqual(byLines.windows.map((window) => [window.startLine, window.endLine]), [
+      [1, 3], [4, 6], [7, 9], [10, 10],
+    ]);
+  }
+
+  const byTokens = lineWindows(snapshot(text), {
+    ...DEFAULT_WINDOW_LIMITS,
+    targetTokens: 2,
+    maxTokens: 100,
+    targetLines: 10,
+    maxLines: 10,
+    overlapLines: 0,
+  }, (value) => value.split('\n').filter(Boolean).length);
+  assert.equal(byTokens.kind, 'windows');
+  if (byTokens.kind === 'windows') {
+    assert.deepEqual(byTokens.windows.map((window) => [window.startLine, window.endLine]), [
+      [1, 2], [3, 4], [5, 6], [7, 8], [9, 10],
+    ]);
+  }
+});
+
+test('the injected counter controls single-line refusal and target validation', () => {
+  const refused = lineWindows(snapshot('short\n'), {
+    ...DEFAULT_WINDOW_LIMITS,
+    targetTokens: 25,
+    maxTokens: 50,
+  }, () => 51);
+  assert.deepEqual(refused, {
+    kind: 'unsupported-long-line',
+    line: 1,
+    reason: 'unsupported_long_line',
+    byteCount: 6,
+    tokenCount: 51,
+  });
+
+  assert.throws(() => lineWindows(snapshot('x'), {
+    ...DEFAULT_WINDOW_LIMITS,
+    targetLines: DEFAULT_WINDOW_LIMITS.maxLines + 1,
+  }), /targets cannot exceed maxima/);
+});
+
 test('the window invariants hold across limit profiles and source shapes', () => {
   // Deterministic sweep (no randomness): every profile must satisfy the same invariants on
   // every source shape, so a limit interaction cannot regress silently.
@@ -319,4 +370,38 @@ test('the window invariants hold across limit profiles and source shapes', () =>
       }
     }
   }
+});
+
+test('overlapping windows keep one file identity and never repeat a range', () => {
+  // JG-012 acceptance criterion 5: overlap must not duplicate the inventoried file, and the
+  // returned ranges must stay distinct. A caller can therefore group windows by path and
+  // treat the group as one file, whatever the overlap policy did.
+  const text = longSource(240);
+  const limits: WindowLimits = { ...DEFAULT_WINDOW_LIMITS, targetLines: 12, maxLines: 12, overlapLines: 4, maxBytes: 4_096, maxTokens: 400 };
+  const result = lineWindows(snapshot(text, 'src/orders.ts'), limits);
+
+  assert.equal(result.kind, 'windows');
+  if (result.kind !== 'windows') {
+    return;
+  }
+  assert.ok(result.windows.length > 2, 'the file must be split for this check to mean anything');
+
+  const identities = new Set(result.windows.map((window) => `${window.path}\u0000${window.sha256}`));
+  assert.equal(identities.size, 1, 'overlap must not invent a second file identity');
+
+  const ranges = result.windows.map((window) => `${String(window.startLine)}-${String(window.endLine)}`);
+  assert.equal(new Set(ranges).size, ranges.length, 'a window range must not be emitted twice');
+
+  const ids = result.windows.map((window) => window.id);
+  assert.equal(new Set(ids).size, ids.length, 'window identifiers must stay unique under overlap');
+
+  // Grouping by path yields exactly one file, with every window contributing original bytes.
+  const byPath = new Map<string, typeof result.windows>();
+  for (const window of result.windows) {
+    const group = byPath.get(window.path) ?? [];
+    byPath.set(window.path, [...group, window]);
+    assert.equal(Buffer.from(text, 'utf8').subarray(window.byteStart, window.byteEnd).toString('utf8'), window.text);
+  }
+  assert.deepEqual([...byPath.keys()], ['src/orders.ts']);
+  assert.equal(byPath.get('src/orders.ts')?.length, result.windows.length);
 });
