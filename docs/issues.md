@@ -134,7 +134,9 @@ Les phases `P0` à `P7` correspondent au plan d’implémentation existant.
 <a id="jg-003"></a>
 ### JG-003 — Construire le fournisseur simulé et les fixtures de contrat
 
-**Type :** Infrastructure de tests. **Priorité :** Critique. **Phase :** P0–P1. **Statut :** À faire.
+**Type :** Infrastructure de tests. **Priorité :** Critique. **Phase :** P0–P1. **Statut :** Terminé le 19 septembre 2026, après stabilisation de JG-002 et [revue senior](reviews/jg-003-review.md).
+
+**Livré :** simulateur et horloge contrôlable, capture immuable des octets et scénarios, annulation, réponses malformées/usage inconnu, garde réseau et fixtures synthétiques. Les défauts de partage de mémoire et de fixture ignorée non versionnée ont été corrigés. Onze tests passent dans une archive Git vierge ; contrôle de types réussi.
 
 **Niveau recommandé :** Medium. **Pilote proposé :** M. **Revue :** S.
 
@@ -148,11 +150,11 @@ Les phases `P0` à `P7` correspondent au plan d’implémentation existant.
 
 **Critères d’acceptation :**
 
-- [ ] Un scénario peut imposer les réponses, leur ordre, leur délai et leur usage déclaré.
-- [ ] Les tests peuvent observer les octets envoyés et chaque tentative, sans réseau réel.
-- [ ] Le même scénario produit le même résultat fonctionnel d’une exécution à l’autre.
-- [ ] Les fixtures contiennent uniquement des données synthétiques ou autorisées, sans secret réel.
-- [ ] Un appel réseau imprévu fait échouer le scénario hors ligne concerné.
+- [x] Un scénario peut imposer les réponses, leur ordre, leur délai et leur usage déclaré.
+- [x] Les tests peuvent observer les octets envoyés et chaque tentative, sans réseau réel.
+- [x] Le même scénario produit le même résultat fonctionnel d’une exécution à l’autre.
+- [x] Les fixtures contiennent uniquement des données synthétiques ou autorisées, sans secret réel.
+- [x] Un appel réseau imprévu fait échouer le scénario hors ligne concerné.
 
 **Livrables :** adaptateur simulé, utilitaires d’horloge et fixtures réutilisables par les autres issues.
 
