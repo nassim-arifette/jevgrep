@@ -72,7 +72,7 @@ test('administrative, credential, dependency and build entries are excluded with
   });
   const inventory = inventoryOf(space);
   const paths = inventory.files.map((file) => file.relativePath);
-  assert.deepEqual(paths, ['src/app.ts']);
+  assert.deepEqual(paths, ['assets/logo.svg', 'src/app.ts']);
 
   const reasons = new Map(inventory.excluded.map((entry) => [entry.relativePath, entry.reason]));
   assert.equal(reasons.get('.env'), 'credential_file');
@@ -81,7 +81,6 @@ test('administrative, credential, dependency and build entries are excluded with
   assert.equal(reasons.get('deploy/server.pem'), 'credential_file');
   assert.equal(reasons.get('src/app.min.js'), 'minified');
   assert.equal(reasons.get('package-lock.json'), 'generated');
-  assert.equal(reasons.get('assets/logo.svg'), 'unsupported_format');
 
   const directories = new Map(inventory.excludedDirectories.map((entry) => [entry.relativePath, entry.reason]));
   assert.equal(directories.get('node_modules'), 'dependency');
@@ -90,6 +89,40 @@ test('administrative, credential, dependency and build entries are excluded with
   assert.equal(directories.get('vendor'), 'dependency');
   assert.ok(inventory.excluded.every((entry) => !entry.relativePath.startsWith('node_modules')),
     'an unvisited directory contributes no invented descendant counts');
+});
+
+test('every valid UTF-8 language is searchable while only JS and TS use syntax chunking', () => {
+  const space = workspace({
+    'Dockerfile': 'FROM node:24\nRUN npm ci\n',
+    'src/main.go': 'package main\nfunc main() {}\n',
+    'src/main.py': 'def main():\n    return 1\n',
+    'src/lib.rs': 'pub fn run() -> bool { true }\n',
+    'src/Main.java': 'class Main { void run() {} }\n',
+    'src/Program.cs': 'class Program { static void Main() {} }\n',
+    'src/main.cpp': '#include <iostream>\nint main() { return 0; }\n',
+    'src/app.rb': 'def run\n  true\nend\n',
+    'src/index.php': '<?php function run() { return true; }\n',
+    'src/App.swift': 'func run() -> Bool { true }\n',
+    'src/Main.kt': 'fun run(): Boolean = true\n',
+    'src/app.ts': 'export function run(): boolean { return true; }\n',
+    'assets/diagram.svg': '<svg><text>request flow</text></svg>\n',
+  });
+
+  const inventory = inventoryOf(space);
+  assert.deepEqual(inventory.files.map((file) => file.relativePath), [
+    'Dockerfile', 'assets/diagram.svg', 'src/App.swift', 'src/Main.java', 'src/Main.kt',
+    'src/Program.cs', 'src/app.rb', 'src/app.ts', 'src/index.php', 'src/lib.rs',
+    'src/main.cpp', 'src/main.go', 'src/main.py',
+  ]);
+  assert.equal(inventory.excludedByReason['unsupported_format'], undefined);
+
+  const prepared = prepareScope(AuthorizedRoot.open(space.repositoryRoot), ['.'], { inventory: defaultOptions });
+  assert.equal(prepared.files.length, 13);
+  for (const file of prepared.files) {
+    assert.equal(file.strategy, file.snapshot.relativePath.endsWith('.ts') ? 'syntax' : 'line-window',
+      file.snapshot.relativePath);
+    assert.ok(file.fragments.length > 0, `${file.snapshot.relativePath} must be searchable`);
+  }
 });
 
 test('gitignore is hierarchical and .jevgrepignore can only narrow', () => {
@@ -105,7 +138,7 @@ test('gitignore is hierarchical and .jevgrepignore can only narrow', () => {
   });
   const inventory = inventoryOf(space);
   const paths = inventory.files.map((file) => file.relativePath);
-  assert.deepEqual(paths, ['src/keep.ts']);
+  assert.deepEqual(paths, ['.gitignore', '.jevgrepignore', 'src/.gitignore', 'src/keep.ts']);
 
   const reasons = new Map(inventory.excluded.map((entry) => [entry.relativePath, entry.reason]));
   assert.equal(reasons.get('ignored-by-git.ts'), 'gitignored', 'a .jevgrepignore negation cannot widen eligibility');
@@ -169,13 +202,13 @@ test('credential detection covers the documented families', () => {
 
 test('binary content and invalid encodings are excluded, not decoded with replacements', () => {
   const space = workspace({ 'src/app.ts': 'export const app = 1;\n' });
-  writeFileSync(join(space.repositoryRoot, 'src', 'binary.txt'), Buffer.from([0x41, 0x00, 0x42]));
-  writeFileSync(join(space.repositoryRoot, 'src', 'latin1.txt'), Buffer.from([0x63, 0x61, 0x66, 0xe9, 0x0a]));
+  writeFileSync(join(space.repositoryRoot, 'src', 'binary.blob'), Buffer.from([0x41, 0x00, 0x42]));
+  writeFileSync(join(space.repositoryRoot, 'src', 'latin1.data'), Buffer.from([0x63, 0x61, 0x66, 0xe9, 0x0a]));
 
   const prepared = prepareScope(AuthorizedRoot.open(space.repositoryRoot), ['.'], { inventory: defaultOptions });
   const reasons = new Map(prepared.excluded.map((entry) => [entry.relativePath, entry.reason]));
-  assert.equal(reasons.get('src/binary.txt'), 'binary');
-  assert.equal(reasons.get('src/latin1.txt'), 'unsupported_encoding');
+  assert.equal(reasons.get('src/binary.blob'), 'binary');
+  assert.equal(reasons.get('src/latin1.data'), 'unsupported_encoding');
   assert.equal(prepared.complete, true, 'an excluded file is not an incomplete preparation');
 });
 

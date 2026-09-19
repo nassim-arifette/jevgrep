@@ -11,11 +11,11 @@
  *   2. fixed administrative exclusions (`.git`, credential files, key material);
  *   3. operator deny rules from the trusted configuration;
  *   4. the `.gitignore` hierarchy plus the narrowing `.jevgrepignore`;
- *   5. dependencies, build output, generated or minified artifacts, unsupported
- *      formats and the configured size limit.
- * Content-based exclusions (binary bytes, invalid encoding, credential patterns,
- * empty and whitespace-only files) belong to the preparation stage, which is the
- * first stage that is allowed to read bytes.
+ *   5. dependencies, build output, generated or minified artifacts and the
+ *      configured size limit.
+ * File extensions never decide eligibility. Content-based exclusions (binary bytes,
+ * invalid encoding, credential patterns, empty and whitespace-only files) belong to
+ * the preparation stage, which is the first stage that is allowed to read bytes.
  */
 import { join } from 'node:path';
 
@@ -77,16 +77,6 @@ const CREDENTIAL_FILES = new Set([
 ]);
 const CREDENTIAL_EXTENSIONS = new Set(['.pem', '.key', '.pfx', '.p12', '.jks', '.keystore', '.asc', '.ppk']);
 const GENERATED_FILES = new Set(['package-lock.json', 'yarn.lock', 'pnpm-lock.yaml', 'npm-shrinkwrap.json', 'bun.lockb', 'composer.lock']);
-
-/**
- * Extensions the MVP can prepare. Syntax chunking covers the JS/TS family; the rest
- * use bounded line windows. Application configuration is deliberately included:
- * it is frequently the evidence a behaviour question needs.
- */
-export const SUPPORTED_EXTENSIONS = new Set([
-  '.js', '.jsx', '.ts', '.tsx', '.mjs', '.cjs', '.mts', '.cts',
-  '.json', '.jsonc', '.yaml', '.yml', '.toml', '.ini', '.md', '.sql', '.txt',
-]);
 
 function extensionOf(name: string): string {
   const dot = name.lastIndexOf('.');
@@ -176,9 +166,6 @@ export class EligibilityRules {
     }
     if (/\.(generated|gen)\.[A-Za-z0-9]+$/i.test(name) || /\.d\.ts$/i.test(name)) {
       return 'generated';
-    }
-    if (!SUPPORTED_EXTENSIONS.has(extensionOf(name))) {
-      return 'unsupported_format';
     }
     if (sizeBytes === 0) {
       return 'empty';
