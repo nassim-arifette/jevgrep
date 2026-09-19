@@ -58,6 +58,17 @@ test('the packed artifact installs into a clean prefix and runs there', { timeou
   mkdirSync(packDir, { recursive: true });
   mkdirSync(prefix, { recursive: true });
 
+  // 0. `npm test` may run before `npm run build` (that is the order in `verify`), so the test
+  // produces the artifact it packs instead of assuming a previous build left dist/ behind.
+  if (!existsSync(join(repoRoot, 'dist', 'cli.js'))) {
+    const built = run(
+      process.execPath,
+      [join(repoRoot, 'node_modules', 'typescript', 'bin', 'tsc'), '-p', join(repoRoot, 'tsconfig.build.json')],
+      repoRoot,
+    );
+    assert.equal(built.code, 0, `the test must be able to build the artifact it packs:\n${built.stdout}${built.stderr}`);
+  }
+
   // 1. Pack exactly what the manifest publishes.
   const packed = npm(['pack', '--pack-destination', packDir, '--json'], repoRoot);
   assert.equal(packed.code, 0, packed.stderr);
