@@ -153,6 +153,34 @@ test('a linked source ancestor introduced after preparation is refused before pr
   assert.equal(asError(result.outcome).error.code, 'UNAUTHORIZED_SCOPE');
 });
 
+test('a deadline expiring during source revalidation reserves and sends no provider attempt', async (t) => {
+  const space = workspace();
+  const clock = new ManualClock();
+  const provider = new ScriptedProviderClient(() => 0.9);
+  let planned = false;
+  let expired = false;
+  Object.defineProperty(provider, 'model', { get() { planned = true; return 'jev-1.13.0'; } });
+  const root = space.loaded.sourceRoot;
+  const resolve = root.resolveEntry.bind(root);
+  t.mock.method(root, 'resolveEntry', (path: string) => {
+    const entry = resolve(path);
+    if (planned && !expired) {
+      expired = true;
+      clock.advanceBy(space.loaded.config.search.deadline_ms + 1);
+    }
+    return entry;
+  });
+  const { outcome } = await createSearchEngine({ configuration: space.loaded, provider, clock }).search({
+    query: 'Where is the cache invalidated?', scope: ['.'], max_context_tokens: 4_000,
+  });
+  assert.ok(expired);
+  assert.equal(provider.calls, 0);
+  const result = asResult(outcome);
+  assert.equal(result.status, 'partial');
+  assert.equal(result.report.usage.provider_request_attempts, 0);
+  assert.ok(result.report.stop_reasons.includes('DEADLINE'));
+});
+
 test('a known fixture produces validated excerpts with path, lines, hash and exact text', async () => {
   const space = workspace();
   const provider = new ScriptedProviderClient((path) => (path === 'src/cache.ts' ? 0.93 : 0.2));

@@ -300,6 +300,9 @@ export class SearchEngine {
               context.addStopReason('SCAN_CAP_REACHED');
               return false;
             }
+            // Filesystem checks and token accounting are synchronous; the deadline
+            // may have elapsed since the scheduler admitted this batch.
+            if (!context.canStartWork()) return false;
             // Synchronous reservation before awaiting the provider: concurrent
             // workers immediately see spent and in-flight capacity.
             usage.attempts += 1;
