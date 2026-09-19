@@ -11,6 +11,8 @@ Claims here are limited to commands that ran; an unverified integration is label
 | npm | 11.12.1 | `npm --version` |
 | TypeScript | 7.0.2 (pinned, `devDependencies`) | `npm run typecheck`, `npm run build` |
 | Reference tokenizer | `tiktoken` 1.0.22 (pinned runtime dependency) | `npm run verify`; pinned because it is loaded at start-up |
+| Vercel AI SDK | `ai` 7.0.107 (pinned runtime dependency) | offline Gateway adapter and provider-selection tests; no credential or live call |
+| Vercel Gateway provider | `@ai-sdk/gateway` 4.0.87 (pinned runtime dependency) | offline model construction seam; live behaviour remains gated below |
 | Operating system | Windows 11 (drvfs checkout, Windows node) | full suite, `npm run smoke` |
 | Package artifact | `npm pack` → tarball installed into a clean prefix | `tests/install-artifact.test.ts` (pack, install `--offline`, run the installed entry point) |
 
