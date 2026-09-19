@@ -368,11 +368,13 @@ Les phases `P0` à `P7` correspondent au plan d’implémentation existant.
 <a id="jg-012"></a>
 ### JG-012 — Implémenter le découpage par fenêtres de lignes
 
-**Type :** Implémentation. **Priorité :** Haute. **Phase :** P2. **Statut :** À faire.
+**Type :** Implémentation. **Priorité :** Haute. **Phase :** P2. **Statut :** En cours sur la branche `jg-027-corpus` : découpeur par fenêtres livré et testé, intégration au pipeline en attente du contrat de snapshot (JG-011) et du compteur validé (JG-006).
 
 **Niveau recommandé :** Junior encadré. **Pilote proposé :** J. **Revue :** M.
 
 **Dépendances :** [JG-006](#jg-006), [JG-011](#jg-011).
+
+**Livré :** `src/source/line-windows.ts` — fonction pure `lineWindows(snapshot, limites, compteur)` : fenêtres contiguës alignées sur les lignes, limites configurables (cibles 800 tokens / 80 lignes, max 1600 tokens / 8 Kio / 120 lignes, recouvrement ≤ 8 lignes), métadonnées par fragment (identifiant, chemin, hash, décalages d’octets UTF-8, lignes inclusives, texte original, tailles, classification, version du découpeur). Une ligne qu’aucune fenêtre légale ne peut contenir est signalée (`unsupported-long-line`, raison `unsupported_long_line`) au lieu d’être tronquée ; un fichier sans ligne non vide ne produit aucune fenêtre. `tests/line-windows.test.ts` : 11 cas, dont un balayage paramétré (5 formes de source × 6 profils de limites) et une vérification par mutation : cinq mutations du découpeur (recouvrement supprimé, limite d’octets ignorée, limite de lignes ignorée, texte tronqué, garde de fin de fichier retirée) font échouer la suite.
 
 **Références :** spécification §5.4 ; exigences R3 et R4.
 
