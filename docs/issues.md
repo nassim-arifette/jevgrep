@@ -95,11 +95,11 @@ Les phases `P0` à `P7` correspondent au plan d’implémentation existant.
 
 **Critères d’acceptation :**
 
-- [ ] Une installation à partir du lockfile suivie de la compilation réussit sur les deux plateformes.
-- [ ] Une erreur de type fait échouer le contrôle de types avec un code de sortie non nul.
-- [ ] Les tests habituels n’exigent aucune clé Jev et n’effectuent aucun appel réseau fournisseur.
-- [ ] Le package contient un point d’entrée exécutable ; aucune commande non implémentée n’est présentée comme disponible.
-- [ ] Les versions de runtime et les commandes de développement sont documentées.
+- [x] Une installation à partir du lockfile suivie de la compilation réussit sur les deux plateformes. *(vérifié Windows + Linux, `npm ci` puis `npm run verify`)*
+- [x] Une erreur de type fait échouer le contrôle de types avec un code de sortie non nul. *(projet témoin hors dépôt + script documenté, `tests/type-check-gate.test.ts`)*
+- [x] Les tests habituels n’exigent aucune clé Jev et n’effectuent aucun appel réseau fournisseur. *(garde-fou in-process + preload dans les processus CLI ; variables retirées)*
+- [x] Le package contient un point d’entrée exécutable ; aucune commande non implémentée n’est présentée comme disponible. *(`bin jevgrep`, aide par commande qui rappelle l’état non implémenté)*
+- [x] Les versions de runtime et les commandes de développement sont documentées. *(README, `.nvmrc`, CI)*
 
 **Livrables :** package TypeScript, lockfile, scripts, configuration CI et instructions de développement.
 
@@ -390,11 +390,11 @@ Les phases `P0` à `P7` correspondent au plan d’implémentation existant.
 
 **Critères d’acceptation :**
 
-- [ ] Chaque ligne non vide d’un fichier préparé est couverte par au moins un fragment.
-- [ ] Un fragment respecte les limites actives sans tronquer une ligne ni un caractère.
-- [ ] Une ligne isolée impossible à représenter est signalée explicitement selon la politique de contenu supporté.
-- [ ] Le même snapshot et les mêmes paramètres produisent les mêmes fragments dans le même ordre.
-- [ ] Les fenêtres contiennent uniquement du texte original ; leur chevauchement ne duplique pas les fichiers inventoriés.
+- [x] Chaque ligne non vide d’un fichier préparé est couverte par au moins un fragment. *(tests unitaires + filet sur le corpus réel)*
+- [x] Un fragment respecte les limites actives sans tronquer une ligne ni un caractère. *(balayage 5 formes × 6 profils ; tranches d’octets vérifiées)*
+- [x] Une ligne isolée impossible à représenter est signalée explicitement selon la politique de contenu supporté. *(`unsupported-long-line`, raison `unsupported_long_line`)*
+- [x] Le même snapshot et les mêmes paramètres produisent les mêmes fragments dans le même ordre. *(déterminisme testé sur entrée générée et sur corpus réel)*
+- [x] Les fenêtres contiennent uniquement du texte original ; leur chevauchement ne duplique pas les fichiers inventoriés. *(texte = tranche exacte ; identité de fichier unique sous recouvrement)*
 
 **Livrables :** découpeur par fenêtres, métadonnées des fragments et tests de couverture.
 
@@ -690,9 +690,9 @@ Les phases `P0` à `P7` correspondent au plan d’implémentation existant.
 - [ ] `inspect` affiche portée, exclusions, fragments et estimations ; une grandeur inconnue reste identifiée comme telle.
 - [ ] `search --json` retourne exactement le contrat canonique du moteur.
 - [ ] Les codes de sortie sont 0 pour complet, 2 pour rejet/entrée invalide, 3 pour partiel, 4 pour échec fatal et 130 pour interruption utilisateur.
-- [ ] Les questions multilignes via fichier sont prises en charge sans interprétation du contenu comme commande shell.
+- [x] Les questions multilignes via fichier sont prises en charge sans interprétation du contenu comme commande shell. *(`--query-file` lu tel quel, testé avec tabulations et sauts de ligne)*
 - [ ] `cache clear` n’efface que le cache configuré ; les commandes n’écrivent pas dans les sources recherchées.
-- [ ] Les exemples d’aide correspondent à des commandes réellement disponibles ; les différences de rendu ne sont pas dissimulées dans la comptabilité.
+- [~] Les exemples d’aide correspondent à des commandes réellement disponibles ; les différences de rendu ne sont pas dissimulées dans la comptabilité. **(partiel : l’aide n’annonce rien qui n’existe et la vue humaine comptabilise sa propre taille, mais aucune commande n’est encore disponible)**
 
 **Livrables :** CLI complète, aide, tests des arguments/sorties et exemples exécutables.
 
@@ -798,12 +798,12 @@ Les phases `P0` à `P7` correspondent au plan d’implémentation existant.
 
 **Critères d’acceptation :**
 
-- [ ] Chaque exemple identifie le dépôt, sa révision ou son empreinte, la question, la portée et les preuves attendues.
-- [ ] Les annotations portent sur des plages et leur utilité, pas uniquement sur des noms de fichiers.
-- [ ] Les deux ensembles, développement et évaluation réservée, sont distincts et versionnés.
-- [ ] Les licences et autorisations des contenus utilisés sont enregistrées.
-- [ ] Les réponses de référence et correctifs ne sont pas accessibles à l’agent évalué dans son espace de travail.
-- [ ] Les annotations admettent les preuves alternatives et signalent les cas ambigus.
+- [x] Chaque exemple identifie le dépôt, sa révision ou son empreinte, la question, la portée et les preuves attendues. *(empreinte d’arbre `tree-sha256` vérifiée, échec si périmée)*
+- [x] Les annotations portent sur des plages et leur utilité, pas uniquement sur des noms de fichiers. *(plages inclusives + rôles direct/supporting/context)*
+- [x] Les deux ensembles, développement et évaluation réservée, sont distincts et versionnés. *(12 questions réservées, formulations distinctes vérifiées)*
+- [x] Les licences et autorisations des contenus utilisés sont enregistrées. *(champ `license`/`authorization` obligatoire par manifeste)*
+- [x] Les réponses de référence et correctifs ne sont pas accessibles à l’agent évalué dans son espace de travail. *(`answers_ref` hors dépôt, retiré du manifeste réservé)*
+- [x] Les annotations admettent les preuves alternatives et signalent les cas ambigus. *(ensembles alternatifs obligatoires pour un cas ambigu)*
 
 **Livrables :** corpus versionné, manifestes, annotations et procédure de revue.
 
