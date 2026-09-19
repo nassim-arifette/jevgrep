@@ -33,7 +33,11 @@ Runtime: Node.js 24.15.0 LTS, pinned in [`.nvmrc`](.nvmrc); `package.json` accep
 
 Run the CLI from source with `node src/cli.ts --help`. The build emits `dist/cli.js`, which is the `jevgrep` bin entry; `npm link` exposes it locally.
 
-Tests use Node's built-in test runner on `tests/*.test.ts`. The glob is deliberately non-recursive: fixture repositories kept under `tests/fixtures/` are search material, and their own `*.test.ts` files must never run as part of this suite. Node 24 strips TypeScript types natively and `tsconfig.json` enables `erasableSyntaxOnly`, so no transpiler and no test framework are installed.
+Tests use Node's built-in test runner on `tests/*.test.ts` and
+`tests/contract/*.test.ts`. These explicit suite roots keep fixture repositories under
+`tests/fixtures/` as search material: their own `*.test.ts` files never run as part of
+the project suite. Node 24 strips TypeScript types natively and `tsconfig.json` enables
+`erasableSyntaxOnly`, so no transpiler and no test framework are installed.
 
 `.nvmrc` pins the exact patch release used by CI (24.15.0) while `engines` accepts any Node.js 24.x; only the major version is enforced by the test suite. The CI workflow (`.github/workflows/ci.yml`) runs `npm ci` then `npm run verify` on `ubuntu-latest` and `windows-latest`. It has not run yet: this repository has no git remote, so the workflow has only been reproduced locally on both platforms.
 

@@ -60,9 +60,12 @@ test('the development scripts cover compile, type check, test and smoke', () => 
   }
   assert.match(manifest.scripts['typecheck'] ?? '', /^tsc -p tsconfig\.json$/);
   assert.match(manifest.scripts['build'] ?? '', /^tsc -p tsconfig\.build\.json && node scripts\/make-executable\.ts$/);
-  // The test glob stays non-recursive on purpose: fixture repositories under tests/fixtures
-  // are search material, never code to execute (review nit N6).
-  assert.equal(manifest.scripts['test'], 'node --test "tests/*.test.ts"');
+  // Explicit suite roots keep fixture repositories out while still discovering the
+  // shared-contract tests in their dedicated directory (review nit N6).
+  assert.equal(
+    manifest.scripts['test'],
+    'node --test "tests/*.test.ts" "tests/contract/*.test.ts"',
+  );
   assert.match(manifest.scripts['smoke'] ?? '', /^node scripts\/smoke\.ts$/);
   const verify = manifest.scripts['verify'] ?? '';
   for (const step of ['npm run typecheck', 'npm test', 'npm run build', 'npm run smoke']) {
