@@ -1,9 +1,10 @@
 import assert from 'node:assert/strict';
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, resolve, sep } from 'node:path';
 import { after, test } from 'node:test';
 import { checkCorpus, corpusReport, defaultCorpusRoot, fixtureTreeHash } from '../benchmarks/tools/check-corpus.ts';
+import { repoRoot } from './helpers/cli-runner.ts';
 
 /**
  * JG-027 controls: the corpus annotations must stay valid, and the validator must
@@ -198,4 +199,183 @@ test('an unannotated fixture directory is reported', () => {
   writeFileSync(join(root, 'fixtures', 'orphan', 'index.ts'), 'export const orphan = true;\n', 'utf8');
   const problems = checkCorpus(root);
   assert.ok(problems.some((problem) => /has no manifest in either split/.test(problem.message)));
+});
+
+test('the held-out split is versioned, distinct from development and answer-free', () => {
+  const holdoutDir = join(defaultCorpusRoot, 'manifests', 'holdout');
+  const developmentDir = join(defaultCorpusRoot, 'manifests', 'development');
+  const heldOutFiles = readdirSync(holdoutDir)
+    .filter((name) => name.endsWith('.json'))
+    .sort();
+
+  // Specification 11.2: a versioned development corpus AND a held-out corpus.
+  assert.ok(heldOutFiles.length >= 3, `held-out manifests: ${String(heldOutFiles.length)}`);
+
+  const developmentQuestions = new Set<string>();
+  for (const name of readdirSync(developmentDir)) {
+    if (!name.endsWith('.json')) {
+      continue;
+    }
+    const manifest = JSON.parse(readFileSync(join(developmentDir, name), 'utf8')) as {
+      questions: readonly { question: string }[];
+    };
+    for (const question of manifest.questions) {
+      developmentQuestions.add(question.question.trim().toLowerCase());
+    }
+  }
+  assert.ok(developmentQuestions.size >= 30);
+
+  for (const name of heldOutFiles) {
+    const manifest = JSON.parse(readFileSync(join(holdoutDir, name), 'utf8')) as {
+      split: string;
+      answers_ref: string;
+      fixture: { id: string; revision: { value: string } };
+      questions: readonly { id: string; question: string; kind: string }[];
+    };
+    const fixtureId = manifest.fixture.id;
+
+    assert.equal(name, `${fixtureId}.holdout.json`);
+    assert.equal(manifest.split, 'holdout');
+    assert.ok(manifest.questions.length >= 3, `${name}: at least three held-out questions`);
+    assert.equal(
+      manifest.questions.some((question) => question.kind === 'symbol_control'),
+      true,
+      `${name}: the held-out split keeps exact-symbol controls`,
+    );
+
+    const developmentManifest = JSON.parse(
+      readFileSync(join(developmentDir, `${fixtureId}.development.json`), 'utf8'),
+    ) as { fixture: { revision: { value: string } } };
+    assert.equal(
+      manifest.fixture.revision.value,
+      developmentManifest.fixture.revision.value,
+      `${name}: the held-out questions must target the frozen fixture revision`,
+    );
+
+    for (const question of manifest.questions) {
+      assert.equal(
+        developmentQuestions.has(question.question.trim().toLowerCase()),
+        false,
+        `held-out question repeated from development: ${question.question}`,
+      );
+    }
+
+    // Acceptance criterion 5: reference answers are not in the agent's workspace.
+    assert.equal(typeof manifest.answers_ref, 'string');
+    assert.ok(manifest.answers_ref.trim().length > 0, `${name}: answers_ref is required`);
+    assert.equal(
+      resolve(repoRoot, manifest.answers_ref).startsWith(repoRoot + sep) ||
+        manifest.answers_ref === resolve(repoRoot, manifest.answers_ref),
+      false,
+      `${name}: the answer file must live outside the checkout`,
+    );
+  }
+
+  const report = corpusReport(defaultCorpusRoot);
+  assert.ok(report.summary.holdoutQuestions >= 10, `held-out questions: ${String(report.summary.holdoutQuestions)}`);
+  assert.equal(
+    report.notes.some((note) => note.includes('holdout')),
+    false,
+    'a versioned held-out split removes the "holdout is empty" note',
+  );
+});
+
+test('the report says whether the operator-side answers were available', () => {
+  // The report must match reality: a missing answers file is a note, an available one is
+  // validated. This keeps CI (no answers on disk) and a release run (answers present)
+  // honest without pretending either one is the other.
+  const holdoutDir = join(defaultCorpusRoot, 'manifests', 'holdout');
+  const report = corpusReport(defaultCorpusRoot);
+
+  for (const name of readdirSync(holdoutDir).filter((entry) => entry.endsWith('.json'))) {
+    const manifest = JSON.parse(readFileSync(join(holdoutDir, name), 'utf8')) as { answers_ref: string };
+    const referenced = resolve(manifest.answers_ref);
+    const unavailable = report.notes.some((note) => note.includes(`answer file not available: ${manifest.answers_ref}`));
+    assert.equal(
+      unavailable,
+      !existsSync(referenced),
+      `${name}: the note about ${manifest.answers_ref} must match whether that file exists`,
+    );
+  }
+});
+
+test('a broken held-out answer file is rejected, a correct one is accepted', () => {
+  const root = makeTemporaryCorpus();
+  const answersPath = join(root, 'operator-answers.json');
+  const revision = fixtureTreeHash(join(root, 'fixtures', 'tiny'));
+  const question = {
+    id: 'tiny.holdout.001',
+    kind: 'behavior',
+    question: 'Where does alpha return a constant?',
+    scope: ['src'],
+  };
+  writeFileSync(
+    join(root, 'manifests', 'holdout', 'tiny.holdout.json'),
+    JSON.stringify(
+      {
+        schema_version: 1,
+        fixture: {
+          id: 'tiny',
+          title: 'minimal fixture',
+          license: 'authored for the test',
+          authorization: 'synthetic',
+          revision: { kind: 'tree-sha256', value: revision },
+        },
+        split: 'holdout',
+        answers_ref: answersPath,
+        questions: [question],
+      },
+      null,
+      2,
+    ),
+    'utf8',
+  );
+
+  const writeAnswers = (value: unknown): void => {
+    writeFileSync(answersPath, JSON.stringify(value, null, 2), 'utf8');
+  };
+  const defaultAnswers = [
+    {
+      id: 'tiny.holdout.001',
+      expected_evidence: [{ path: 'src/sample.ts', start_line: 1, end_line: 3, role: 'direct' }],
+    },
+  ];
+  const answersFor = (
+    recordedRevision: string,
+    answers: readonly unknown[],
+  ): Record<string, unknown> => ({
+    schema_version: 1,
+    kind: 'holdout-answers',
+    fixtures: { tiny: { revision: { kind: 'tree-sha256', value: recordedRevision }, answers } },
+  });
+
+  // Correct answers: accepted, and the file is not reported as missing.
+  writeAnswers(answersFor(revision, defaultAnswers));
+  let report = corpusReport(root);
+  assert.deepEqual(report.problems, [], report.problems.map((problem) => problem.message).join('\n'));
+  assert.deepEqual(report.notes.filter((note) => note.includes('not available')), []);
+
+  // Stale fingerprint: rejected.
+  writeAnswers(answersFor('deadbeef'.repeat(8), defaultAnswers));
+  report = corpusReport(root);
+  assert.ok(report.problems.some((problem) => /stale for fixture tiny/.test(problem.message)));
+
+  // Answer for a question the manifest does not contain: rejected.
+  writeAnswers(answersFor(revision, [{ id: 'tiny.holdout.999', expected_evidence: [] }]));
+  report = corpusReport(root);
+  assert.ok(report.problems.some((problem) => /is not a question of the held-out manifest/.test(problem.message)));
+
+  // A held-out question without any answer: rejected.
+  writeAnswers(answersFor(revision, []));
+  report = corpusReport(root);
+  assert.ok(report.problems.some((problem) => /no answer recorded for held-out question/.test(problem.message)));
+
+  // Out-of-range evidence in an answer: rejected.
+  writeAnswers(
+    answersFor(revision, [
+      { id: 'tiny.holdout.001', expected_evidence: [{ path: 'src/sample.ts', start_line: 1, end_line: 99, role: 'direct' }] },
+    ]),
+  );
+  report = corpusReport(root);
+  assert.ok(report.problems.some((problem) => /outside the file/.test(problem.message)));
 });

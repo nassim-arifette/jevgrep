@@ -352,7 +352,9 @@ function checkManifest(
   corpusRoot: string,
   problems: CorpusProblem[],
   counters: { behavior: number; symbolControls: number; noEvidence: number; ambiguous: number; alternativeSets: number; holdoutQuestions: number },
+  notes: string[],
 ): { readonly questions: number; readonly fixtureId: string | undefined } {
+  const heldOutIds: string[] = [];
   const manifest = readJson(manifestPath, problems);
   if (manifest === undefined) {
     return { questions: 0, fixtureId: undefined };
@@ -413,8 +415,9 @@ function checkManifest(
     }
   }
 
+  let answersRef: string | undefined;
   if (holdout) {
-    requireString(manifest['answers_ref'], 'answers_ref', manifestPath, problems);
+    answersRef = requireString(manifest['answers_ref'], 'answers_ref', manifestPath, problems);
   }
 
   const questions = manifest['questions'];
@@ -426,6 +429,9 @@ function checkManifest(
   const seen = new Set<string>();
   let counted = 0;
   for (const [index, question] of questions.entries()) {
+    if (holdout && isRecord(question) && typeof question['id'] === 'string') {
+      heldOutIds.push(question['id']);
+    }
     if (isRecord(question)) {
       const id = question['id'];
       if (typeof id === 'string') {
@@ -448,7 +454,116 @@ function checkManifest(
     }
   }
 
+  if (holdout && answersRef !== undefined && fixtureDir !== undefined && fixtureId !== undefined) {
+    checkAnswers(answersRef, heldOutIds, fixtureId, fixtureDir, problems, notes);
+  }
+
   return { questions: counted, fixtureId };
+}
+
+/**
+ * Validate the operator-side answer file of a held-out manifest. The answers deliberately
+ * live outside the working tree an evaluated agent can read (specification 11.2, JG-027
+ * acceptance criterion 5), so a missing file is reported as a note, not as a defect: CI
+ * never has it, a release run does.
+ */
+function checkAnswers(
+  answersRef: string,
+  expectedIds: readonly string[],
+  fixtureId: string,
+  fixtureDir: string,
+  problems: CorpusProblem[],
+  notes: string[],
+): void {
+  let raw: string;
+  try {
+    raw = readFileSync(answersRef, 'utf8');
+  } catch {
+    notes.push(`answer file not available in this environment: ${answersRef}`);
+    return;
+  }
+
+  const file = `answers:${fixtureId}`;
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch (error) {
+    problems.push({ file, message: `unreadable answer file ${answersRef}: ${String(error)}` });
+    return;
+  }
+  if (!isRecord(parsed)) {
+    problems.push({ file, message: `the answer file must be a JSON object: ${answersRef}` });
+    return;
+  }
+  if (parsed['schema_version'] !== SCHEMA_VERSION) {
+    problems.push({ file, message: `schema_version must be ${String(SCHEMA_VERSION)}` });
+  }
+  if (parsed['kind'] !== 'holdout-answers') {
+    problems.push({ file, message: "kind must be 'holdout-answers'" });
+  }
+
+  const fixtures = parsed['fixtures'];
+  if (!isRecord(fixtures)) {
+    problems.push({ file, message: 'fixtures must map every fixture id to its revision and answers' });
+    return;
+  }
+  const section = fixtures[fixtureId];
+  if (!isRecord(section)) {
+    problems.push({ file, message: `fixtures.${fixtureId} is missing: this file must answer the question of every fixture` });
+    return;
+  }
+
+  const recorded = isRecord(section['revision']) ? section['revision']['value'] : undefined;
+  const current = fixtureTreeHash(fixtureDir);
+  if (typeof recorded !== 'string') {
+    problems.push({ file, message: `fixtures.${fixtureId}.revision.value is required` });
+  } else if (recorded !== current) {
+    problems.push({
+      file,
+      message: `the answer file is stale for fixture ${fixtureId}: it records ${recorded.slice(0, 12)}... but the tree is ${current.slice(0, 12)}...`,
+    });
+  }
+
+  const answers = section['answers'];
+  if (!Array.isArray(answers)) {
+    problems.push({ file, message: `fixtures.${fixtureId}.answers must be an array` });
+    return;
+  }
+
+  const answered = new Set<string>();
+  for (const [index, answer] of answers.entries()) {
+    const label = `answers[${String(index)}]`;
+    if (!isRecord(answer)) {
+      problems.push({ file, message: `${label} must be an object` });
+      continue;
+    }
+    const id = requireString(answer['id'], `${label}.id`, file, problems);
+    if (id === undefined) {
+      continue;
+    }
+    if (!expectedIds.includes(id)) {
+      problems.push({ file, message: `${label}.id '${id}' is not a question of the held-out manifest` });
+    }
+    if (answered.has(id)) {
+      problems.push({ file, message: `duplicate answer for question '${id}'` });
+    }
+    answered.add(id);
+
+    const expected = readRangeList(answer['expected_evidence'] ?? [], `${label}.expected_evidence`, file, fixtureDir, problems);
+    if (expected.length === 0) {
+      problems.push({ file, message: `${label} (${id}) must declare at least one reference range` });
+    }
+    const alternatives = answer['alternative_evidence_sets'] ?? [];
+    if (!Array.isArray(alternatives)) {
+      problems.push({ file, message: `${label}.alternative_evidence_sets must be an array of sets` });
+    }
+  }
+
+  for (const id of expectedIds) {
+    if (!answered.has(id)) {
+      problems.push({ file, message: `no answer recorded for held-out question '${id}'` });
+    }
+  }
 }
 
 function inspectCorpus(corpusRoot: string): {
@@ -492,7 +607,7 @@ function inspectCorpus(corpusRoot: string): {
       );
     }
     for (const manifestPath of files) {
-      const result = checkManifest(manifestPath, corpusRoot, problems, counters);
+      const result = checkManifest(manifestPath, corpusRoot, problems, counters, notes);
       questions += result.questions;
       if (result.fixtureId !== undefined) {
         annotatedFixtures.add(result.fixtureId);

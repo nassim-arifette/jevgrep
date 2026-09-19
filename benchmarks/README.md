@@ -3,10 +3,11 @@
 Search questions with annotated reference evidence, used to measure retrieval quality
 (specification §11.2) and to feed the deterministic fixtures of other issues.
 
-**Status: first slice, protocol draft v0.1, awaiting S review.** One fixture
-(`orders-api`) is annotated with 13 questions. The closure targets of JG-027 — at least
-three JS/TS fixtures, 30 behavior questions, 10 exact-symbol controls, and a versioned
-held-out split — are not reached yet; `npm run corpus:check` prints the remaining counts.
+**Status: development and held-out splits in place, protocol draft v0.1, awaiting S review.**
+Three authored fixtures carry 54 questions: 30 behavior questions, 10 exact-symbol
+controls, 2 no-evidence questions, 2 recorded ambiguities, and 12 held-out questions whose
+reference answers live outside the checkout. `npm run corpus:check` prints the counts and
+every remaining note.
 
 ## Layout
 
@@ -105,6 +106,15 @@ is open.
 6. **Budget recording**: question-level `budget` is not part of the manifest yet. Should
    the response budget and deadline be recorded per question (comparable runs) or per
    benchmark run by JG-028?
+
+## Held-out split
+
+`manifests/holdout/<fixture>.holdout.json` holds question wording, scope and provenance
+only; `answers_ref` points at an operator-side answer file outside the checkout, validated
+when it is readable (missing = note, present = checked, stale fingerprint = defect). See
+[`manifests/holdout/README.md`](manifests/holdout/README.md) for the file format and the
+validation rules. Held-out questions must not repeat development wording, and they target
+the frozen fixture revision.
 
 ## Commands
 

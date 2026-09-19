@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "fixture": {
+    "id": "migration-audit",
+    "title": "Synthetic TypeScript audit-retention job (author-owned fixture)",
+    "license": "authored for the JevGrep project; no third-party content (see fixtures/migration-audit/LICENSE)",
+    "authorization": "operator-authored synthetic sources; no secret-bearing or third-party material; safe for remote evaluation of the annotated scope",
+    "revision": {
+      "kind": "tree-sha256",
+      "value": "1f63406eb34293e8487d3b268e2692d3019c66bd03b57166fa99ac44defa8d59"
+    }
+  },
+  "split": "holdout",
+  "answers_ref": "C:/Users/nassi/Desktop/jevgrep-holdout-answers/holdout.answers.json",
+  "questions": [
+    {
+      "id": "migration-audit.holdout.001",
+      "kind": "behavior",
+      "question": "Which filter keeps records under legal hold out of the deletion candidates?",
+      "scope": [
+        "src"
+      ]
+    },
+    {
+      "id": "migration-audit.holdout.002",
+      "kind": "behavior",
+      "question": "How many identifiers does each deletion call carry, and where does that bound come from?",
+      "scope": [
+        "src",
+        "config"
+      ]
+    },
+    {
+      "id": "migration-audit.holdout.003",
+      "kind": "behavior",
+      "question": "How is the recurring retention run triggered, and at what time?",
+      "scope": [
+        "src",
+        "config"
+      ]
+    },
+    {
+      "id": "migration-audit.holdout.004",
+      "kind": "symbol_control",
+      "question": "Where is `deleteBatch` defined?",
+      "scope": [
+        "src"
+      ]
+    }
+  ]
+}

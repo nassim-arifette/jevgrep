@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "fixture": {
+    "id": "subscription-cache",
+    "title": "Synthetic TypeScript subscription cache (author-owned fixture)",
+    "license": "authored for the JevGrep project; no third-party content (see fixtures/subscription-cache/LICENSE)",
+    "authorization": "operator-authored synthetic sources; no secret-bearing or third-party material; safe for remote evaluation of the annotated scope",
+    "revision": {
+      "kind": "tree-sha256",
+      "value": "a31d2a8ffaa8a0853a4414edbc6fb857cea87ed3eb80cbe9ec1ea640290e3f18"
+    }
+  },
+  "split": "holdout",
+  "answers_ref": "C:/Users/nassi/Desktop/jevgrep-holdout-answers/holdout.answers.json",
+  "questions": [
+    {
+      "id": "subscription-cache.holdout.001",
+      "kind": "behavior",
+      "question": "Which code path turns an incoming subscription change into an invalidation of that user cache entry?",
+      "scope": [
+        "src"
+      ]
+    },
+    {
+      "id": "subscription-cache.holdout.002",
+      "kind": "behavior",
+      "question": "What does a read return once a cache entry has passed its expiry, and does the stale value survive?",
+      "scope": [
+        "src"
+      ]
+    },
+    {
+      "id": "subscription-cache.holdout.003",
+      "kind": "behavior",
+      "question": "How is a webhook body rejected when it carries no user identifier?",
+      "scope": [
+        "src"
+      ]
+    },
+    {
+      "id": "subscription-cache.holdout.004",
+      "kind": "symbol_control",
+      "question": "Where is `scheduleRefresh` defined?",
+      "scope": [
+        "src"
+      ]
+    }
+  ]
+}
