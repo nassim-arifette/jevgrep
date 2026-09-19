@@ -1,0 +1,4 @@
+{
+  "admin": { "role": "administrator", "audit": true },
+  "profile": { "role": "member", "audit": false }
+}
