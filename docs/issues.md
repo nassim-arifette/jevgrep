@@ -386,13 +386,13 @@ Les phases `P0` à `P7` correspondent au plan d’implémentation existant.
 <a id="jg-012"></a>
 ### JG-012 — Implémenter le découpage par fenêtres de lignes
 
-**Type :** Implémentation. **Priorité :** Haute. **Phase :** P2. **Statut :** Prêt pour revue M : découpeur par fenêtres livré et testé (`src/source/line-windows.ts`, `tests/line-windows.test.ts`, `tests/line-windows-corpus.test.ts`) ; l’interface exportée est volontairement étroite (une fonction pure plus ses types) pour que le découpeur syntaxique de JG-015 la compose sans la modifier, et le retour par repli est signalé par la classification.
+**Type :** Implémentation. **Priorité :** Haute. **Phase :** P2. **Statut :** Revue M réussie le 20 septembre 2026 ([compte rendu](reviews/jg-012-review.md)) : les deux écarts relevés ont été corrigés dans `28d4552` et les critères propres au découpeur sont validés. La clôture administrative reste suspendue aux dépendances JG-006 et JG-011.
 
 **Niveau recommandé :** Junior encadré. **Pilote proposé :** J. **Revue :** M.
 
 **Dépendances :** [JG-006](#jg-006), [JG-011](#jg-011).
 
-**Livré :** `src/source/line-windows.ts` — fonction pure `lineWindows(snapshot, limites, compteur)` : fenêtres contiguës alignées sur les lignes, limites configurables (cibles 800 tokens / 80 lignes, max 1600 tokens / 8 Kio / 120 lignes, recouvrement ≤ 8 lignes), métadonnées par fragment (identifiant, chemin, hash, décalages d’octets UTF-8, lignes inclusives, texte original, tailles, classification, version du découpeur). Une ligne qu’aucune fenêtre légale ne peut contenir est signalée (`unsupported-long-line`, raison `unsupported_long_line`) au lieu d’être tronquée ; un fichier sans ligne non vide ne produit aucune fenêtre. `tests/line-windows.test.ts` : 11 cas, dont un balayage paramétré (5 formes de source × 6 profils de limites) et une vérification par mutation : cinq mutations du découpeur (recouvrement supprimé, limite d’octets ignorée, limite de lignes ignorée, texte tronqué, garde de fin de fichier retirée) font échouer la suite.
+**Livré :** `src/source/line-windows.ts` — fonction pure `lineWindows(snapshot, limites, compteur)` : fenêtres contiguës alignées sur les lignes, limites configurables (cibles 800 tokens / 80 lignes, max 1600 tokens / 8 Kio / 120 lignes, recouvrement ≤ 8 lignes), métadonnées par fragment (identifiant, chemin, hash, décalages d’octets UTF-8, lignes inclusives, texte original, tailles, classification, version du découpeur). Une ligne qu’aucune fenêtre légale ne peut contenir est signalée (`unsupported-long-line`, raison `unsupported_long_line`) au lieu d’être tronquée ; un fichier sans ligne non vide ne produit aucune fenêtre, même si sa représentation dépasse la limite d’octets. `tests/line-windows.test.ts` contient 16 cas, dont un balayage paramétré (6 formes de source × 5 profils de limites) ; `tests/line-windows-corpus.test.ts` ajoute le filet sur le corpus réel.
 
 **Références :** spécification §5.4 ; exigences R3 et R4.
 
@@ -403,7 +403,7 @@ Les phases `P0` à `P7` correspondent au plan d’implémentation existant.
 **Critères d’acceptation :**
 
 - [x] Chaque ligne non vide d’un fichier préparé est couverte par au moins un fragment. *(tests unitaires + filet sur le corpus réel)*
-- [x] Un fragment respecte les limites actives sans tronquer une ligne ni un caractère. *(balayage 5 formes × 6 profils ; tranches d’octets vérifiées)*
+- [x] Un fragment respecte les limites actives sans tronquer une ligne ni un caractère. *(balayage 6 formes × 5 profils ; tranches d’octets vérifiées)*
 - [x] Une ligne isolée impossible à représenter est signalée explicitement selon la politique de contenu supporté. *(`unsupported-long-line`, raison `unsupported_long_line`)*
 - [x] Le même snapshot et les mêmes paramètres produisent les mêmes fragments dans le même ordre. *(déterminisme testé sur entrée générée et sur corpus réel)*
 - [x] Les fenêtres contiennent uniquement du texte original ; leur chevauchement ne duplique pas les fichiers inventoriés. *(texte = tranche exacte ; identité de fichier unique sous recouvrement)*
@@ -678,7 +678,7 @@ Les phases `P0` à `P7` correspondent au plan d’implémentation existant.
 <a id="jg-023"></a>
 ### JG-023 — Finaliser toutes les commandes CLI
 
-**Type :** Implémentation. **Priorité :** Haute. **Phase :** P6. **Statut :** En cours (lots J livrés : arguments, rendu humain, aide par commande ; branchement au moteur et commandes finales en attente de JG-014 et JG-022).
+**Type :** Implémentation. **Priorité :** Haute. **Phase :** P6. **Statut :** Prêt pour revue M : les quatre commandes locales sont câblées et exercées par la suite ; restent les critères qui exigent un accès fournisseur réel ou la revue du moteur (JG-022).
 
 **Niveau recommandé :** Junior encadré. **Pilote proposé :** J. **Revue :** M.
 
@@ -700,12 +700,12 @@ Les phases `P0` à `P7` correspondent au plan d’implémentation existant.
 
 **Critères d’acceptation :**
 
-- [ ] `doctor` et `inspect` fonctionnent sans clé ni autorisation d’envoi et effectuent zéro appel fournisseur.
-- [ ] `inspect` affiche portée, exclusions, fragments et estimations ; une grandeur inconnue reste identifiée comme telle.
-- [ ] `search --json` retourne exactement le contrat canonique du moteur.
-- [ ] Les codes de sortie sont 0 pour complet, 2 pour rejet/entrée invalide, 3 pour partiel, 4 pour échec fatal et 130 pour interruption utilisateur.
+- [x] `doctor` et `inspect` fonctionnent sans clé ni autorisation d’envoi et effectuent zéro appel fournisseur. *(dépêche réelle, `tests/cli-dispatch.test.ts`)*
+- [~] `inspect` affiche portée, exclusions, fragments et estimations ; une grandeur inconnue reste identifiée comme telle. **(partiel : la portée et le décompte des fichiers sont prouvés par le test de dépêche ; le reste vient de la couche de commandes et attend la revue)**
+- [~] `search --json` retourne exactement le contrat canonique du moteur. **(partiel : la charge de refus canonique est prouvée hors ligne ; le chemin d’un succès réel attend un accès fournisseur)**
+- [~] Les codes de sortie sont 0 pour complet, 2 pour rejet/entrée invalide, 3 pour partiel, 4 pour échec fatal et 130 pour interruption utilisateur. **(partiel : 0, 2 et 4 sont exercés par la suite ; 3 et 130 sont câblés et testés côté moteur/MCP)**
 - [x] Les questions multilignes via fichier sont prises en charge sans interprétation du contenu comme commande shell. *(`--query-file` lu tel quel, testé avec tabulations et sauts de ligne)*
-- [ ] `cache clear` n’efface que le cache configuré ; les commandes n’écrivent pas dans les sources recherchées.
+- [x] `cache clear` n’efface que le cache configuré ; les commandes n’écrivent pas dans les sources recherchées. *(empreinte des sources et fichier voisin du cache comparés avant/après)*
 - [~] Les exemples d’aide correspondent à des commandes réellement disponibles ; les différences de rendu ne sont pas dissimulées dans la comptabilité. **(partiel : l’aide n’annonce rien qui n’existe et la vue humaine comptabilise sa propre taille, mais aucune commande n’est encore disponible)**
 
 **Livrables :** CLI complète, aide, tests des arguments/sorties et exemples exécutables.

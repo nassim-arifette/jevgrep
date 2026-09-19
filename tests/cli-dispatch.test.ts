@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { join } from 'node:path';
 import { after, test } from 'node:test';
 import { main } from '../src/cli.ts';
 import { EXIT_FATAL, EXIT_OK, EXIT_USAGE } from '../src/cli.ts';
@@ -126,6 +127,37 @@ test('help and version keep working, and an unknown command stays a usage error'
 
   const badOption = capture();
   assert.equal(await main(['doctor', '--config', 'x.json', '--json'], badOption.io), EXIT_USAGE);
+});
+
+test('cache clear touches only the configured cache, never the searched sources', async () => {
+  const workspace = createWorkspace({
+    files: { 'src/app.ts': 'export const app = 1;\n', 'src/cache.ts': 'export const cache = 2;\n' },
+  });
+  workspaces.push(workspace);
+
+  const { mkdirSync, readFileSync, existsSync, writeFileSync } = await import('node:fs');
+  const { createHash } = await import('node:crypto');
+  const cacheHome = workspace.env['JEVGREP_CACHE_HOME'] ?? '';
+  assert.ok(cacheHome.length > 0, 'the workspace must configure a cache home');
+  // The configured cache lives under the cache home; a neighbour file is not part of it and
+  // must survive, which is what "only the configured cache" means.
+  mkdirSync(cacheHome, { recursive: true });
+  writeFileSync(join(cacheHome, 'not-a-cache-file.txt'), 'keep me\n', 'utf8');
+  const sourcePath = join(workspace.repositoryRoot, 'src', 'app.ts');
+  const before = createHash('sha256').update(readFileSync(sourcePath)).digest('hex');
+
+  const captured = capture();
+  const code = await main(['cache', 'clear', '--config', workspace.configPath], captured.io);
+
+  assert.equal(code, EXIT_OK, captured.stderr.join('\n'));
+  assert.match(captured.stdout.join('\n'), /removed \d+ cached/i, 'the operator is told what was removed');
+  assert.match(captured.stderr.join('\n'), /only the cache configured/i, 'the scope of the deletion is stated');
+  assert.equal(
+    createHash('sha256').update(readFileSync(sourcePath)).digest('hex'),
+    before,
+    'a search source must never be written to',
+  );
+  assert.equal(existsSync(join(cacheHome, 'not-a-cache-file.txt')), true, 'a file outside the cache survives');
 });
 
 test('a command-layer failure is fatal and prints no stack trace', async () => {
