@@ -767,7 +767,7 @@ Les phases `P0` à `P7` correspondent au plan d’implémentation existant.
 <a id="jg-026"></a>
 ### JG-026 — Rendre l’installation et la configuration reproductibles
 
-**Type :** Livraison. **Priorité :** Haute. **Phase :** P6. **Statut :** À faire.
+**Type :** Livraison. **Priorité :** Haute. **Phase :** P6. **Statut :** En cours (artefact installable, matrice de compatibilité et parcours automatisé livrés par J ; restent la preuve d’intégration Codex réelle et la validation S des affirmations de divulgation).
 
 **Niveau recommandé :** Junior encadré. **Pilote proposé :** J. **Revue :** M.
 
@@ -790,6 +790,8 @@ Les phases `P0` à `P7` correspondent au plan d’implémentation existant.
 - [ ] La matrice runtime/SDK/Codex réellement testée est jointe ; aucune publication publique n’est nécessaire à cette issue.
 
 **Livrables :** artefact installable, guide d’installation/utilisation et preuve d’intégration Codex. **Jalon M3.**
+
+**Lot J (disponible) :** `tests/install-artifact.test.ts` — l’artefact est réellement empaqueté (`npm pack`), installé dans un préfixe vierge hors dépôt (`--offline`) et **exécuté depuis là** : `--version` annonce la version du manifeste, `--help` imprime l’usage et `doctor` atteint la couche de commandes (sortie 2 sur une configuration absente). Le test vérifie aussi le contenu publié (dist + manifeste, aucune source, aucun test, aucune fixture) et que chaque dépendance déclarée est **figée exactement**, donc aucun démarrage ne résout une version flottante. `docs/compatibility.md` — matrice de compatibilité limitée à ce qui a été exécuté (Node 24.15.0, npm 11.12.1, TypeScript 7.0.2, tiktoken 1.0.22, Windows et Linux) avec les zones **non vérifiées** explicitement étiquetées : Codex réel, comportement du compte fournisseur, SDK MCP (le transport stdio est implémenté directement), Node d’une distribution Linux, macOS, taille réellement acceptée par le client. `tests/compatibility-matrix.test.ts` empêche la matrice de dériver : les versions citées sont comparées à `.nvmrc` et `package.json`, et l’absence de preuve Codex doit rester annoncée.
 
 <a id="jg-027"></a>
 ### JG-027 — Constituer le corpus de recherche et ses annotations
