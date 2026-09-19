@@ -1,6 +1,6 @@
 # JevGrep product and technical specification
 
-Version: 0.1 implementation baseline. Prepared 2026-09-19. Product choices and the technical baseline have been accepted; provider feasibility and tuning remain implementation gates. No application has been implemented.
+Version: 0.1 implementation baseline. Prepared 2026-09-19. Product choices and the technical baseline have been accepted; provider feasibility and tuning remain implementation gates. The CLI scaffold and JG-002 public contracts are implemented; the search engine and MCP integration remain planned. The [v1 contract reference](contracts.md) documents executable schemas, finite code lists, bounds and the optional dated pricing record.
 
 The project brief establishes the product direction. The user has confirmed a **personal MVP**, **TypeScript**, **small and medium repositories up to approximately 100,000 lines**, **require-fit preflight when configured limits apply**, **optional spending/total-scan caps disabled by default**, and the **recommended technical baseline**. Choices and alternatives are recorded in [decisions.md](decisions.md). Numerical tuning values remain provisional. Terminology is defined in [CONTEXT.md](../CONTEXT.md), execution order in [implementation-plan.md](implementation-plan.md), and external facts in [research](research/jev.md).
 

@@ -11,13 +11,14 @@
 import { readFileSync, realpathSync } from 'node:fs';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
+import { CLI_EXIT_CODES } from './search-response.ts';
 
 /** Complete result from the product contract (section 4.5). */
-export const EXIT_OK = 0;
+export const EXIT_OK = CLI_EXIT_CODES.complete;
 /** Invalid request, unknown command or bad arguments (product contract section 4.5). */
-export const EXIT_USAGE = 2;
+export const EXIT_USAGE = CLI_EXIT_CODES.rejected;
 /** Fatal runtime failure, for example an unreadable or malformed package manifest. */
-export const EXIT_FATAL = 4;
+export const EXIT_FATAL = CLI_EXIT_CODES.error;
 /**
  * Scaffold-only code: the command exists in the product contract but not in this
  * build. It is deliberately outside the reserved set {0, 2, 3, 4, 130} so a caller

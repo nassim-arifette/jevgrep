@@ -2,11 +2,12 @@
 
 JevGrep is a planned semantic code-search tool for coding agents. The agent asks a question; JevGrep evaluates authorized code fragments with Jev and returns original excerpts under a response budget; the agent continues its investigation.
 
-**Project status:** implementation has started. The TypeScript/CLI scaffold and the
-first offline test infrastructure exist, but repository inspection, search, provider
+**Project status:** implementation has started. The TypeScript/CLI scaffold, shared
+public contracts and first offline test infrastructure exist, but repository inspection, search, provider
 integration, cache and MCP are not implemented yet.
 
 - [Full product and technical specification](docs/specification.md) — scope, interfaces, source handling, evaluation, budgets, caching, failure behavior, and acceptance criteria.
+- [Public contracts v1](docs/contracts.md) — executable schemas, units, defaults, status/error codes, counter invariants and shared CLI/MCP serialization.
 - [Implementation plan](docs/implementation-plan.md) — phases, dependencies, deliverables, tests, and benchmark/release gates.
 - [Implementation issues (French)](docs/issues.md) — 30 actionable issues with recommended experience levels, owners, reviewers, dependencies, and acceptance criteria.
 - [Three-person workflow (French)](docs/workflow-equipe.md) — junior, intermediate, and senior responsibilities; parallel work, handoffs, reviews, and integration gates.
@@ -17,6 +18,8 @@ integration, cache and MCP are not implemented yet.
 Confirmed direction: personal MVP, TypeScript, JS/TS-first, repositories up to approximately 100,000 lines as the target workload, and complete-scan preflight when configured limits apply. Optional spending and total-scan caps are disabled by default; response budgets and execution timeouts are adjustable. JevGrep runs locally and sends eligible excerpts to a configured remote Jev provider.
 
 The specification is authoritative for proposed behavior. Research notes contain dated observations and design alternatives, not additional product requirements. Performance improvements remain to be measured.
+
+Shared contracts live in `src/contracts.ts`; their types are inferred from executable schemas. `parseSearchRequest` preserves the original query and validates scope/budgets, while `createDefaultConfiguration` disables remote evaluation and optional caps. `src/search-response.ts` supplies the common validated JSON serialization and status mapping for CLI/MCP integration. Contract tests use synthetic data and a test counter; no live provider or production tokenizer is implied.
 
 ## Development
 

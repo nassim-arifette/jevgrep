@@ -106,7 +106,9 @@ Les phases `P0` à `P7` correspondent au plan d’implémentation existant.
 <a id="jg-002"></a>
 ### JG-002 — Définir et valider les contrats publics
 
-**Type :** Implémentation. **Priorité :** Critique. **Phase :** P0. **Statut :** À faire.
+**Type :** Implémentation. **Priorité :** Critique. **Phase :** P0. **Statut :** En revue (implémentation et critères vérifiés ; revue M à effectuer).
+
+**Livré :** schémas exécutables et types déduits dans `src/contracts.ts`, validation stricte des requêtes/configurations/résultats/erreurs/diagnostics, codes bornés, unités et identités des compteurs, conservation de la question originale, plafonds `null`/zéro et usage inconnu. `src/search-response.ts` centralise la sérialisation validée et les correspondances CLI/MCP. [Contrats v1](contracts.md), exemples valides/invalides dans `tests/fixtures/contracts.ts` et tests dans `tests/contract/`. Le raccordement des commandes reste JG-014/JG-024 ; le compteur de production reste JG-006. Vérification locale Windows : `npm run verify` réussi (types, tests, compilation et smoke).
 
 **Niveau recommandé :** Senior. **Pilote proposé :** S. **Revue :** M.
 
@@ -120,12 +122,12 @@ Les phases `P0` à `P7` correspondent au plan d’implémentation existant.
 
 **Critères d’acceptation :**
 
-- [ ] Les clés inconnues, questions vides, budgets invalides et types incorrects sont refusés.
-- [ ] Les contrats distinguent résultat complet, partiel, rejet et erreur fatale.
-- [ ] Un usage inconnu est représenté explicitement ; il n’est pas converti en zéro.
-- [ ] Les plafonds facultatifs acceptent `null` ; zéro n’est pas interprété comme « illimité ».
-- [ ] Des exemples valides et invalides couvrent chaque contrat ; la version de schéma est présente.
-- [ ] Les sorties CLI et MCP utilisent les mêmes définitions sans duplication de schéma.
+- [x] Les clés inconnues, questions vides, budgets invalides et types incorrects sont refusés.
+- [x] Les contrats distinguent résultat complet, partiel, rejet et erreur fatale.
+- [x] Un usage inconnu est représenté explicitement ; il n’est pas converti en zéro.
+- [x] Les plafonds facultatifs acceptent `null` ; zéro n’est pas interprété comme « illimité ».
+- [x] Des exemples valides et invalides couvrent chaque contrat ; la version de schéma est présente.
+- [x] Les sorties CLI et MCP utilisent les mêmes définitions sans duplication de schéma (sérialisation et correspondances partagées testées ; raccordement dans les issues dédiées).
 
 **Livrables :** contrats partagés, validateurs et tests de contrat.
 
