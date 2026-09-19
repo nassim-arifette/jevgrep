@@ -664,7 +664,7 @@ Les phases `P0` à `P7` correspondent au plan d’implémentation existant.
 <a id="jg-023"></a>
 ### JG-023 — Finaliser toutes les commandes CLI
 
-**Type :** Implémentation. **Priorité :** Haute. **Phase :** P6. **Statut :** À faire (surface d’arguments livrée par J, branchement au moteur en attente de JG-022).
+**Type :** Implémentation. **Priorité :** Haute. **Phase :** P6. **Statut :** En cours (lots J livrés : arguments, rendu humain, aide par commande ; branchement au moteur et commandes finales en attente de JG-014 et JG-022).
 
 **Niveau recommandé :** Junior encadré. **Pilote proposé :** J. **Revue :** M.
 
