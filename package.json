@@ -15,8 +15,8 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.build.json && node scripts/make-executable.ts",
-    "typecheck": "tsc -p tsconfig.json",
+    "build": "node node_modules/typescript/bin/tsc -p tsconfig.build.json && node scripts/make-executable.ts",
+    "typecheck": "node node_modules/typescript/bin/tsc -p tsconfig.json",
     "test": "node --test \"tests/*.test.ts\" \"tests/contract/*.test.ts\"",
     "smoke": "node scripts/smoke.ts",
     "corpus:check": "node benchmarks/tools/check-corpus.ts",
@@ -29,6 +29,7 @@
   "dependencies": {
     "@ai-sdk/gateway": "4.0.87",
     "ai": "7.0.107",
-    "tiktoken": "1.0.22"
+    "tiktoken": "1.0.22",
+    "typescript-parser": "npm:typescript@6.0.2"
   }
 }

@@ -4,7 +4,7 @@
  * The line-window chunker (JG-012, `line-windows.ts`) stays the reference and the
  * fallback; this module only improves *where* JS/TS fragments begin and end. It
  * produces the same fragment shape, so nothing downstream has to know which chunker
- * ran. A file this module cannot read lexically falls back to line windows with an
+ * ran. A file this module cannot parse falls back to line windows with an
  * explicit reason instead of disappearing (specification section 5.4).
  *
  * Guarantees kept here:
@@ -15,7 +15,7 @@
  * - nothing from the repository is imported, executed, compiled or type-checked.
  */
 import { countReferenceTokens } from '../response/token-counter.ts';
-import { scanJavaScriptBoundaries } from './javascript-boundaries.ts';
+import { parseJavaScriptBoundaries } from './javascript-boundaries.ts';
 import type { Boundary } from './javascript-boundaries.ts';
 import { DEFAULT_WINDOW_LIMITS, LINE_WINDOW_CHUNKER_VERSION, lineWindows } from './line-windows.ts';
 import type { FragmentWindow, UnsupportedLongLine, WindowLimits } from './line-windows.ts';
@@ -25,7 +25,7 @@ export { DEFAULT_WINDOW_LIMITS, LINE_WINDOW_CHUNKER_VERSION };
 export type { WindowLimits };
 
 /** Bumped when syntax boundaries change; part of evaluation identity (JG-018). */
-export const SYNTAX_CHUNKER_VERSION = 'jevgrep-syntax-1';
+export const SYNTAX_CHUNKER_VERSION = 'jevgrep-typescript-6.0.2-2';
 
 /**
  * A prepared fragment from either chunker.
@@ -52,7 +52,6 @@ export type ChunkResult =
   | UnsupportedLongLine;
 
 const SYNTAX_EXTENSIONS = new Set(['.js', '.jsx', '.ts', '.tsx', '.mjs', '.cjs', '.mts', '.cts']);
-const JSX_EXTENSIONS = new Set(['.jsx', '.tsx']);
 
 export function extensionOf(path: string): string {
   const name = path.slice(path.lastIndexOf('/') + 1);
@@ -240,8 +239,8 @@ function fallbackWindows(snapshot: SourceSnapshot, limits: WindowLimits): ChunkR
 /**
  * Prepare every fragment of one snapshot.
  *
- * Non-JS/TS text uses JG-012 directly. JS/TS text is scanned for statement
- * boundaries; if the scanner refuses the file, the same JG-012 windows are returned
+ * Non-JS/TS text uses JG-012 directly. JS/TS text is parsed for statement
+ * boundaries; if the parser refuses the file, the same JG-012 windows are returned
  * with `fallback: 'parse_failure'` so the caller can report it.
  */
 export function chunkSnapshot(
@@ -252,10 +251,10 @@ export function chunkSnapshot(
     return fallbackWindows(snapshot, limits);
   }
 
-  const scan = scanJavaScriptBoundaries(
+  const scan = parseJavaScriptBoundaries(
     snapshot.text,
     (offset) => snapshot.lineOfUtf16(offset),
-    { jsx: JSX_EXTENSIONS.has(extensionOf(snapshot.relativePath)) },
+    snapshot.relativePath,
   );
   if (!scan.ok) {
     const windows = fallbackWindows(snapshot, limits);

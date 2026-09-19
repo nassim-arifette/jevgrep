@@ -117,7 +117,7 @@ test('the packed artifact installs into a clean prefix and runs there', { timeou
   assert.equal(manifest.bin?.['jevgrep'], './dist/cli.js');
   // Start-up must never resolve an unpinned version: every declared dependency is exact.
   for (const [name, range] of Object.entries(manifest.dependencies ?? {})) {
-    assert.match(range, /^\d+\.\d+\.\d+$/, `${name} is not pinned: ${range}`);
+    assert.match(range, /^(?:npm:typescript@)?\d+\.\d+\.\d+$/, `${name} is not pinned: ${range}`);
   }
 
   // 3. Drive the installed executable, not the repository copy.

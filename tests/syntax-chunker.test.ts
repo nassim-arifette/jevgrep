@@ -128,7 +128,7 @@ test('a malformed source falls back to line windows with a reported reason', () 
   assert.deepEqual(uncoveredNonBlankLines(snapshot, result.fragments), []);
 });
 
-test('regular expressions, template literals and JSX do not derail the scanner', () => {
+test('regular expressions, template literals and JSX parse without fallback', () => {
   const tricky = `const pattern = /\\/(?:a|b)[/]c/g;
 const template = \`user:\${userId}/\${pattern.source}\`;
 export function render(userId) {
@@ -156,6 +156,38 @@ export function render(userId) {
   }
   assert.deepEqual(uncoveredNonBlankLines(jsxSnapshot, jsxResult.fragments), []);
   assert.ok(jsxResult.fragments.some((fragment) => fragment.text.includes("it's a list of")));
+});
+
+test('balanced but grammatically malformed sources are diagnosed and windowed', () => {
+  for (const text of ['const = 1;\n', 'function f(a,,b) {}\n', 'const node = <A></B>;\n']) {
+    const snapshot = snapshotOf('src/broken.tsx', text);
+    const result = chunkSnapshot(snapshot);
+    assert.ok(result.kind === 'fragments');
+    assert.equal(result.fallback, 'parse_failure');
+    assert.deepEqual(uncoveredNonBlankLines(snapshot, result.fragments), []);
+  }
+});
+
+test('decorators, Unicode comments and CRLF retain original source around methods', () => {
+  const text = '\uFEFFconst before = "😀";\r\n/** état */\r\n@sealed\r\nexport class Café {\r\n  /** méthode */\r\n  @trace\r\n  handle<T>(value: T) { return value; }\r\n}\r\n';
+  const snapshot = snapshotOf('src/café.ts', text);
+  const result = chunkSnapshot(snapshot, { ...DEFAULT_WINDOW_LIMITS, targetTokens: 20, maxTokens: 100 });
+  assert.ok(result.kind === 'fragments');
+  assert.equal(result.fallback, null);
+  assert.deepEqual(uncoveredNonBlankLines(snapshot, result.fragments), []);
+  for (const fragment of result.fragments) {
+    assert.equal(fragment.text, snapshot.sliceLines(fragment.startLine, fragment.endLine).text);
+    assert.equal(fragment.byteCount, Buffer.byteLength(fragment.text));
+  }
+  assert.ok(result.fragments.some((f) => f.text.includes('/** état */\r\n@sealed\r\nexport class Café')));
+});
+
+test('imports and repository configuration stay inert during syntax preparation', () => {
+  const text = 'import "./missing-module-that-must-not-be-resolved";\nthrow new Error("must not execute");\n';
+  const result = chunkSnapshot(snapshotOf('src/inert.mts', text));
+  assert.ok(result.kind === 'fragments');
+  assert.equal(result.fallback, null);
+  assert.ok(result.fragments.some((f) => f.text.includes('throw new Error')));
 });
 
 test('a line no legal fragment can hold is reported, never truncated', () => {

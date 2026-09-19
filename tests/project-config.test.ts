@@ -45,7 +45,7 @@ test('every declared dependency is pinned to an exact version', () => {
   ];
   for (const [group, entries] of groups) {
     for (const [name, version] of Object.entries(entries ?? {})) {
-      assert.match(version, /^\d+\.\d+\.\d+$/, `${group}.${name} must be an exact pinned version`);
+      assert.match(version, /^(?:npm:typescript@)?\d+\.\d+\.\d+$/, `${group}.${name} must be an exact pinned version`);
     }
   }
   // The runtime dependency list is an allowlist, not a free-for-all: each entry is a
@@ -53,7 +53,7 @@ test('every declared dependency is pinned to an exact version', () => {
   // pinned by JG-006; the Vercel adapter uses the official AI SDK evaluation API.
   assert.deepEqual(
     Object.keys(manifest.dependencies ?? {}).sort(),
-    ['@ai-sdk/gateway', 'ai', 'tiktoken'],
+    ['@ai-sdk/gateway', 'ai', 'tiktoken', 'typescript-parser'],
     'a new runtime dependency needs its own recorded decision before it is added here',
   );
 });
@@ -62,8 +62,8 @@ test('the development scripts cover compile, type check, test and smoke', () => 
   for (const script of ['build', 'typecheck', 'test', 'smoke', 'verify']) {
     assert.ok(manifest.scripts[script] !== undefined, `missing npm script '${script}'`);
   }
-  assert.match(manifest.scripts['typecheck'] ?? '', /^tsc -p tsconfig\.json$/);
-  assert.match(manifest.scripts['build'] ?? '', /^tsc -p tsconfig\.build\.json && node scripts\/make-executable\.ts$/);
+  assert.equal(manifest.scripts['typecheck'], 'node node_modules/typescript/bin/tsc -p tsconfig.json');
+  assert.equal(manifest.scripts['build'], 'node node_modules/typescript/bin/tsc -p tsconfig.build.json && node scripts/make-executable.ts');
   // Explicit suite roots keep fixture repositories out while still discovering the
   // shared-contract tests in their dedicated directory (review nit N6).
   assert.equal(
