@@ -1,10 +1,18 @@
 import assert from 'node:assert/strict';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join, resolve, sep } from 'node:path';
+import { isAbsolute, join, resolve, sep } from 'node:path';
 import { after, test } from 'node:test';
 import { checkCorpus, corpusReport, defaultCorpusRoot, fixtureTreeHash } from '../benchmarks/tools/check-corpus.ts';
-import { repoRoot } from './helpers/cli-runner.ts';
+import { repoRoot as rawRepoRoot } from './helpers/cli-runner.ts';
+
+/** `fileURLToPath` keeps a trailing separator; normalise it before comparing paths. */
+const repoRoot = resolve(rawRepoRoot);
+
+function isInsideRepository(path: string): boolean {
+  const absolute = isAbsolute(path) ? resolve(path) : resolve(repoRoot, path);
+  return absolute === repoRoot || absolute.startsWith(`${repoRoot}${sep}`);
+}
 
 /**
  * JG-027 controls: the corpus annotations must stay valid, and the validator must
@@ -260,12 +268,14 @@ test('the held-out split is versioned, distinct from development and answer-free
       );
     }
 
-    // Acceptance criterion 5: reference answers are not in the agent's workspace.
+    // Acceptance criterion 5: reference answers are not in the agent's workspace. The
+    // containment helper is asserted both ways, because `repoRoot` keeps a trailing
+    // separator and a naive `startsWith(root + sep)` comparison could never fail.
     assert.equal(typeof manifest.answers_ref, 'string');
     assert.ok(manifest.answers_ref.trim().length > 0, `${name}: answers_ref is required`);
+    assert.equal(isInsideRepository('docs/specification.md'), true, 'the helper must detect an inside path');
     assert.equal(
-      resolve(repoRoot, manifest.answers_ref).startsWith(repoRoot + sep) ||
-        manifest.answers_ref === resolve(repoRoot, manifest.answers_ref),
+      isInsideRepository(manifest.answers_ref),
       false,
       `${name}: the answer file must live outside the checkout`,
     );

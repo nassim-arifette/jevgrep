@@ -1,0 +1,230 @@
+{
+  "schema_version": 1,
+  "kind": "provider-probe-cases",
+  "reference": "docs/issues.md#jg-004, docs/research/jev-contract-update.md, specification 6.1 and 6.3",
+  "credential_env_var": "TYPESAFE_API_KEY",
+  "sanitized_evidence_dir": "docs/reports/jg-004",
+  "raw_capture_dir": "C:/Users/nassi/Desktop/jevgrep-probe-raw",
+  "redaction_rules": [
+    "never copy a credential value into an artifact, a log or a commit",
+    "record error bodies as shape and status only, never verbatim headers",
+    "send only authored synthetic fixture text; never authorized repository content",
+    "keep unexpurgated captures outside the checkout in raw_capture_dir and mark them unshared"
+  ],
+  "required_areas": [
+    "authentication",
+    "correlation",
+    "noul-shape",
+    "model-identity",
+    "usage",
+    "request-limits",
+    "cancellation",
+    "sdk-retries",
+    "malformed-response",
+    "disclosure",
+    "pricing",
+    "redaction"
+  ],
+  "cases": [
+    {
+      "id": "auth-valid-key",
+      "area": "authentication",
+      "question": "Does a valid account key accept one synthetic evaluation request?",
+      "observation": "POST one request with the synthetic fixture excerpt and two keyed questions from a fresh directory outside the repository.",
+      "record": [
+        "http status",
+        "response model string",
+        "answer keys returned",
+        "usage fields returned"
+      ],
+      "live": true,
+      "blocking": true,
+      "status": "open"
+    },
+    {
+      "id": "auth-missing-key",
+      "area": "authentication",
+      "question": "What does the provider return when no credential is sent?",
+      "observation": "Repeat the same request with the credential variable unset; never print the environment.",
+      "record": [
+        "http status",
+        "error body shape (redacted)",
+        "whether any usage is charged"
+      ],
+      "live": true,
+      "blocking": true,
+      "status": "open"
+    },
+    {
+      "id": "auth-invalid-key",
+      "area": "authentication",
+      "question": "What does the provider return for a malformed key?",
+      "observation": "Repeat with a syntactically invalid key generated for the probe only.",
+      "record": [
+        "http status",
+        "error code string",
+        "whether the failure is retried by the SDK"
+      ],
+      "live": true,
+      "blocking": true,
+      "status": "open"
+    },
+    {
+      "id": "correlation-two-questions",
+      "area": "correlation",
+      "question": "Are Noul answers keyed by the question identifiers that were sent?",
+      "observation": "Send two questions with distinct keys over one shared state and compare answer keys with request keys.",
+      "record": [
+        "answer keys",
+        "key order",
+        "whether an answer is missing for one key"
+      ],
+      "live": true,
+      "blocking": true,
+      "status": "open"
+    },
+    {
+      "id": "noul-shape",
+      "area": "noul-shape",
+      "question": "Is a Noul answer a numeric affirmative probability in [0,1] with no second score?",
+      "observation": "Inspect the answer objects of the same request; record the exact JSON shape (expurgated).",
+      "record": [
+        "answer type strings",
+        "numeric range observed",
+        "presence of any confidence field"
+      ],
+      "live": true,
+      "blocking": false,
+      "status": "open"
+    },
+    {
+      "id": "model-identity",
+      "area": "model-identity",
+      "question": "Which model string does the account actually return, and does it differ from the requested one?",
+      "observation": "Record the requested model, the returned model and the response id from the same request.",
+      "record": [
+        "requested model",
+        "returned model",
+        "response id string",
+        "date and SDK version"
+      ],
+      "live": true,
+      "blocking": true,
+      "status": "open"
+    },
+    {
+      "id": "usage-fields",
+      "area": "usage",
+      "question": "Which usage fields are present, and what does the account report when usage is unavailable?",
+      "observation": "Read usage from a successful response and from a response produced with an intentionally aborted stream.",
+      "record": [
+        "usage field names",
+        "values for one synthetic call",
+        "behaviour when absent"
+      ],
+      "live": true,
+      "blocking": true,
+      "status": "open"
+    },
+    {
+      "id": "request-limit-boundary",
+      "area": "request-limits",
+      "question": "Where does the account actually reject a request that the published limits say fits?",
+      "observation": "Increase state plus question size in bounded steps and record the first rejection; stop at the documented ceiling.",
+      "record": [
+        "accepted size",
+        "first rejected size",
+        "http status at rejection",
+        "estimated tokens spent"
+      ],
+      "live": true,
+      "blocking": true,
+      "status": "open"
+    },
+    {
+      "id": "cancellation-subprocess",
+      "area": "cancellation",
+      "question": "Does an abort stop the request, and is usage still incurred?",
+      "observation": "Run the probe in a child process, abort after the first response byte or after a fixed delay, and inspect pending handles.",
+      "record": [
+        "abort observed at the transport",
+        "usage reported after abort",
+        "process exit code",
+        "leftover timers or sockets"
+      ],
+      "live": true,
+      "blocking": true,
+      "status": "open"
+    },
+    {
+      "id": "sdk-retries-disabled",
+      "area": "sdk-retries",
+      "question": "Can the SDK retries and request logging be disabled from the caller side?",
+      "observation": "Trigger a retryable status with a forced failure and count the transport attempts; inspect the default logging.",
+      "record": [
+        "attempt count with retries disabled",
+        "attempt count with defaults",
+        "log lines that mention request bodies"
+      ],
+      "live": true,
+      "blocking": false,
+      "status": "open"
+    },
+    {
+      "id": "malformed-response",
+      "area": "malformed-response",
+      "question": "How is a response normalized when an answer is missing or mistyped?",
+      "observation": "Feed a recorded response variant with a missing answer and with a string where a number is expected.",
+      "record": [
+        "normalized status",
+        "whether a score of zero is invented",
+        "diagnostic code emitted"
+      ],
+      "live": true,
+      "blocking": false,
+      "status": "open"
+    },
+    {
+      "id": "synthetic-fixture-disclosure",
+      "area": "disclosure",
+      "question": "What exactly leaves the machine during the probe?",
+      "observation": "Capture the request body of the synthetic probe and confirm it contains only authored fixture text.",
+      "record": [
+        "transmitted fields",
+        "confirmation that no repository content is included",
+        "destination host"
+      ],
+      "live": true,
+      "blocking": false,
+      "status": "open"
+    },
+    {
+      "id": "pricing-record",
+      "area": "pricing",
+      "question": "Which dated price record applies to the account, and what remains unknown?",
+      "observation": "Record the published rate with its date and, if the account console shows it, the account-specific basis.",
+      "record": [
+        "published rate and date",
+        "account-specific information if visible",
+        "explicitly unknown billing behaviours"
+      ],
+      "live": true,
+      "blocking": false,
+      "status": "open"
+    },
+    {
+      "id": "redaction-check",
+      "area": "redaction",
+      "question": "Do all recorded artifacts pass the redaction rules before they are committed?",
+      "observation": "Run the redaction rules over every artifact destined for docs/reports and refuse any credential-shaped string.",
+      "record": [
+        "artifacts checked",
+        "rules applied",
+        "files withheld from the repository"
+      ],
+      "live": true,
+      "blocking": false,
+      "status": "open"
+    }
+  ]
+}
