@@ -218,11 +218,13 @@ Les phases `P0` à `P7` correspondent au plan d’implémentation existant.
 <a id="jg-006"></a>
 ### JG-006 — Valider le compteur de tokens et l’interopérabilité MCP/Codex
 
-**Type :** Étude technique. **Priorité :** Critique. **Phase :** P0. **Statut :** À faire.
+**Type :** Étude technique. **Priorité :** Critique. **Phase :** P0. **Statut :** Compteur local stabilisé ; compatibilité réelle Codex/MCP encore à vérifier.
 
 **Niveau recommandé :** Medium. **Pilote proposé :** M. **Revue :** S.
 
 **Dépendances :** [JG-001](#jg-001), [JG-002](#jg-002), [JG-003](#jg-003).
+
+**Avancement senior :** tokenizer `tiktoken@1.0.22`, encodage `cl100k_base`, données locales et compteur identifié dans les réponses. Tests Unicode/JSON/marqueurs spéciaux hors ligne, adaptateurs et découpage validés. Refus des lignes trop grandes avant tokenisation ; aucune hypothèse de monotonie BPE. [Rapport du compteur](reports/jg-006-response-counter.md).
 
 **Prérequis externe :** environnement Codex disponible pour le test d’intégration réel.
 
@@ -234,8 +236,8 @@ Les phases `P0` à `P7` correspondent au plan d’implémentation existant.
 
 **Critères d’acceptation :**
 
-- [ ] Le nom, la version et l’encodage du compteur sont enregistrés ; son calcul ne nécessite aucun service distant.
-- [ ] La garantie documentée porte sur le payload JevGrep sérialisé, sans prétendre mesurer la facturation interne de Codex.
+- [x] Le nom, la version et l’encodage du compteur sont enregistrés ; son calcul ne nécessite aucun service distant.
+- [x] La garantie documentée porte sur le payload JevGrep sérialisé, sans prétendre mesurer la facturation interne de Codex.
 - [ ] Codex reçoit une seule copie complète des extraits dans le mode retenu.
 - [ ] Le processus démarre hors ligne, garde stdout propre et se termine à la fermeture de stdin.
 - [ ] Une annulation empêche l’émission d’un nouveau résultat pour l’appel annulé.

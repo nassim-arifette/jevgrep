@@ -68,7 +68,8 @@ export type UnsupportedLongLine = {
   readonly line: number;
   readonly reason: 'unsupported_long_line';
   readonly byteCount: number;
-  readonly tokenCount: number;
+  /** Not measured when the byte ceiling already makes this line ineligible. */
+  readonly tokenCount: number | null;
 };
 
 export type LineWindowResult =
@@ -156,9 +157,17 @@ function buildWindow(
   if (first === undefined) {
     return { window: undefined, oversized: undefined };
   }
+  // Tokenizing an arbitrarily long word can be expensive. Apply the byte limit before
+  // invoking BPE, and report an unmeasured token count rather than inventing a value.
+  if (first.byteCount > limits.maxBytes) {
+    return {
+      window: undefined,
+      oversized: { kind: 'unsupported-long-line', line: first.number, reason: 'unsupported_long_line', byteCount: first.byteCount, tokenCount: null },
+    };
+  }
   let candidate = textOf(lines, text, startIndex, startIndex);
   let tokenCount = count(candidate);
-  if (first.byteCount > limits.maxBytes || tokenCount > limits.maxTokens) {
+  if (tokenCount > limits.maxTokens) {
     return {
       window: undefined,
       oversized: { kind: 'unsupported-long-line', line: first.number, reason: 'unsupported_long_line', byteCount: first.byteCount, tokenCount },

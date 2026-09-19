@@ -25,5 +25,8 @@
   "devDependencies": {
     "@types/node": "24.13.6",
     "typescript": "7.0.2"
+  },
+  "dependencies": {
+    "tiktoken": "1.0.22"
   }
 }

@@ -174,6 +174,14 @@ test('a blank-only file produces no window and no long-line report', () => {
   assert.deepEqual(result, { kind: 'windows', windows: [] });
 });
 
+test('the byte ceiling rejects a long line before invoking the tokenizer', () => {
+  const result = lineWindows(snapshot('x'.repeat(20_000)), DEFAULT_WINDOW_LIMITS, () => {
+    throw new Error('ineligible source must not be tokenized');
+  });
+  assert.equal(result.kind, 'unsupported-long-line');
+  if (result.kind === 'unsupported-long-line') assert.equal(result.tokenCount, null);
+});
+
 test('line endings are preserved exactly and CRLF counts as one ending', () => {
   const text = 'first\r\nsecond\r\n\r\nthird\r\n';
   const result = lineWindows(snapshot(text, 'config/default.json'));
@@ -221,7 +229,7 @@ test('the default limits follow the specification values', () => {
     maxLines: 120,
     overlapLines: 8,
   });
-  // The pinned counter is local and offline: no dependency and no network on this path.
+  // The pinned vocabulary is installed locally; counting needs no provider credential.
   assert.equal(process.env['JEVG_API_KEY'], undefined);
 });
 
