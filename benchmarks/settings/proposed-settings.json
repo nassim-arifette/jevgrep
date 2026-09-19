@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "status": "proposed",
+  "frozen": false,
+  "why_not_frozen": "No development measurement has run against a real provider (JG-004 and JG-005 are open). Freezing settings on offline-scorer numbers would freeze a plumbing check, not retrieval quality.",
+  "freeze_rule": "Tune only on benchmarks/manifests/development. Record frozen=true, a UTC timestamp and supporting run ids before held-out evaluation. That evaluation additionally requires a separate executor with verified isolation from questions and answers (JG-027/JG-029); the current runner refuses holdout and live modes.",
+  "settings": {
+    "search.threshold": 0.5,
+    "search.concurrency": 4,
+    "search.deadline_ms": 60000,
+    "response.max_context_tokens": 4000,
+    "chunker.targetTokens": 800,
+    "chunker.maxTokens": 1600,
+    "chunker.maxBytes": 8192,
+    "chunker.targetLines": 80,
+    "chunker.maxLines": 120,
+    "chunker.overlapLines": 8,
+    "batch.maxItems": 8
+  },
+  "provenance": {
+    "source": "specification.md sections 5.4 and 7.3, provisional values",
+    "counter": "tiktoken@1.0.22/cl100k_base",
+    "criterion_version": "criterion-1",
+    "layout_version": "layout-a-1",
+    "chunkers": ["jevgrep-syntax-1", "jevgrep-line-windows-1"]
+  },
+  "open_questions": [
+    "Batch width: 1, 8 and 16 items are to be compared once the provider layout decision (JG-005) exists.",
+    "Threshold: 0.5 is an experimental baseline, not a calibrated value; Noul scores are an uncalibrated retrieval signal.",
+    "Fragment size: the 800/1600-token target is untested against retrieval quality."
+  ]
+}

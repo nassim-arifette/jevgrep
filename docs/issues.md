@@ -4,6 +4,14 @@ Version : 1.1. Date : 19 septembre 2026. **Statut initial de toutes les issues :
 
 Ce document contient 30 issues locales, prêtes à être reprises dans un gestionnaire de projet. Les identifiants `JG-001` à `JG-030` sont stables ; ils ne correspondent pas à des tickets déjà créés sur GitHub.
 
+**Point de reprise du 19 septembre 2026 :** tout le travail est intégré sur `main`.
+Lire [le passage de relais](handoff.md) pour les modules disponibles, les corrections
+de revue et l’ordre de reprise. JG-002 et JG-003 sont stabilisés. La revue senior du
+corpus JG-027 est faite ; son isolation opérationnelle reste à prouver. Les autres
+modules intégrés constituent une base de développement testée hors ligne, sans
+clôture automatique de leurs critères. Le transport réel et le benchmark live sont
+bloqués dans le code tant que les gates senior restent ouverts.
+
 Sources de référence : [spécification v0.1](specification.md), [plan d’implémentation](implementation-plan.md), [décisions validées](decisions.md) et [vocabulaire](../CONTEXT.md). La spécification reste la référence pour les contrats et les valeurs de configuration.
 
 ## Règles communes
@@ -79,7 +87,7 @@ Les phases `P0` à `P7` correspondent au plan d’implémentation existant.
 <a id="jg-001"></a>
 ### JG-001 — Initialiser le package TypeScript et les contrôles hors ligne
 
-**Type :** Infrastructure. **Priorité :** Critique. **Phase :** P0–P1. **Statut :** Terminé le 19 septembre 2026 (branche `jg-001-typescript-package`). **Revue :** M — `docs/reviews/jg-001-review.md`, cinq critères PASS, aucun défaut bloquant ; défauts D1 (artefact de test laissé dans `src/` après un arrêt brutal), D3 (`--version` sortait 1 avec une trace) et nits N1–N9 corrigés dans le même commit.
+**Type :** Infrastructure. **Priorité :** Critique. **Phase :** P0–P1. **Statut :** Terminé le 19 septembre 2026 (commit `4bba8e8`, intégré sur `main`). **Revue :** M — `docs/reviews/jg-001-review.md`, cinq critères PASS, aucun défaut bloquant ; défauts D1 (artefact de test laissé dans `src/` après un arrêt brutal), D3 (`--version` sortait 1 avec une trace) et nits N1–N9 corrigés dans le même commit.
 
 **Livré :** package unique TypeScript (`src/cli.ts`, `dist/cli.js` comme point d’entrée `jevgrep`), lockfile, `tsconfig.json` strict, scripts `typecheck`/`test`/`build`/`smoke`/`verify`, suite hors ligne sur `node --test` (23 tests, dont un contrôle hors réseau et un contrôle qui échoue sur erreur de type), CI Windows/Linux (`.github/workflows/ci.yml`) et commandes documentées dans le README. Vérifié sur Node.js 24.15.0 sous Windows et sous Linux (`npm ci` depuis le lockfile, `npm run verify`).
 

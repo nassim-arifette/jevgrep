@@ -2,9 +2,12 @@
 
 JevGrep is a planned semantic code-search tool for coding agents. The agent asks a question; JevGrep evaluates authorized code fragments with Jev and returns original excerpts under a response budget; the agent continues its investigation.
 
-**Project status:** implementation has started. The TypeScript/CLI scaffold, shared
-public contracts and first offline test infrastructure exist, but repository inspection, search, provider
-integration, cache and MCP are not implemented yet.
+**Project status:** the work is consolidated on `main`. Public contracts and the
+scripted provider are reviewed; the engine, source preparation, cache, CLI command
+layer and MCP transport are integrated and tested offline. Live search is blocked by
+an explicit qualification gate. The executable still exposes the CLI scaffold.
+
+- [Current handoff and remaining gates (French)](docs/handoff.md) — start here to resume work from `main`.
 
 - [Full product and technical specification](docs/specification.md) — scope, interfaces, source handling, evaluation, budgets, caching, failure behavior, and acceptance criteria.
 - [Public contracts v1](docs/contracts.md) — executable schemas, units, defaults, status/error codes, counter invariants and shared CLI/MCP serialization.
@@ -19,11 +22,11 @@ Confirmed direction: personal MVP, TypeScript, JS/TS-first, repositories up to a
 
 The specification is authoritative for proposed behavior. Research notes contain dated observations and design alternatives, not additional product requirements. Performance improvements remain to be measured.
 
-Shared contracts live in `src/contracts.ts`; their types are inferred from executable schemas. `parseSearchRequest` preserves the original query and validates scope/budgets, while `createDefaultConfiguration` disables remote evaluation and optional caps. `src/search-response.ts` supplies the common validated JSON serialization and status mapping for CLI/MCP integration. Contract tests use synthetic data and a test counter; no live provider or production tokenizer is implied.
+Shared contracts live in `src/contracts.ts`; their types are inferred from executable schemas. `parseSearchRequest` preserves the original query and validates scope/budgets, while `createDefaultConfiguration` disables remote evaluation and optional caps. `src/search-response.ts` supplies common validated JSON serialization and status mapping. The reference tokenizer is `tiktoken@1.0.22/cl100k_base`; its vocabulary is bundled and requires no runtime download.
 
 ## Development
 
-Runtime: Node.js 24.15.0 LTS, pinned in [`.nvmrc`](.nvmrc); `package.json` accepts `>=24.0.0 <25.0.0`. One package, no monorepo framework. TypeScript and Node type definitions are the only dependencies, both pinned exactly and both in `devDependencies`.
+Runtime: Node.js 24.15.0 LTS, pinned in [`.nvmrc`](.nvmrc); `package.json` accepts `>=24.0.0 <25.0.0`. TypeScript and Node type definitions are pinned development dependencies. `tiktoken@1.0.22` is the pinned runtime dependency; retain its WASM asset when packaging.
 
 | Command | Purpose |
 | --- | --- |
@@ -42,10 +45,10 @@ Tests use Node's built-in test runner on `tests/*.test.ts` and
 the project suite. Node 24 strips TypeScript types natively and `tsconfig.json` enables
 `erasableSyntaxOnly`, so no transpiler and no test framework are installed.
 
-`.nvmrc` pins the exact patch release used by CI (24.15.0) while `engines` accepts any Node.js 24.x; only the major version is enforced by the test suite. The CI workflow (`.github/workflows/ci.yml`) runs `npm ci` then `npm run verify` on `ubuntu-latest` and `windows-latest`. It has not run yet: this repository has no git remote, so the workflow has only been reproduced locally on both platforms.
+`.nvmrc` pins the exact patch release used by CI (24.15.0) while `engines` accepts any Node.js 24.x; only the major version is enforced by the test suite. The CI workflow (`.github/workflows/ci.yml`) is configured for Ubuntu and Windows. No remote is configured and CI has not run. The consolidated implementation was verified locally on Windows; the earlier JG-001 Linux check does not qualify the new modules.
 
 Spawned CLI processes run with an offline preload (`tests/helpers/offline-preload.ts`), which turns any provider call into a loud failure. `NODE_OPTIONS` does not survive the WSL-to-Windows boundary, so probe it from Node, not from a WSL shell.
 
 The gate artifact of `tests/type-check-gate.test.ts` is `tests/__type_check_gate__.ts`: it holds one deliberate type error while the check runs, is deleted again (also at the start of the next run) and is not gitignored, so an interrupted run leaves something visible and harmless rather than a broken `src/` file.
 
-Current CLI surface: `jevgrep --help` and `jevgrep --version` work. `search`, `inspect`, `doctor`, `mcp` and `cache` are part of the specification but are not implemented yet: each one exits 69 with an explicit "not implemented in this build" message and performs no work. Exit codes follow specification §4.5: 0 complete, 2 invalid request or bad arguments, 4 fatal runtime failure (used today for an unreadable package manifest). Codes 3 (partial result) and 130 (interruption) stay reserved for the real commands.
+Current executable: `jevgrep --help` and `jevgrep --version` work. `search`, `inspect`, `doctor`, `mcp` and `cache` still exit 69 with an explicit "not implemented in this build" message. Their implementation is available in `src/cli-commands.ts` for offline tests. Wiring it into `src/cli.ts` awaits the gates listed in the handoff; passing unit tests alone does not authorize live repository disclosure.

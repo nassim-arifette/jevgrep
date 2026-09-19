@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "repository_root": "C:/work/example-repository",
+  "remote_evaluation_enabled": false,
+  "provider": {
+    "base_url": "https://api.typesafe.ai",
+    "api_key_env": "TYPESAFE_API_KEY",
+    "model": "jev-1.13.0"
+  },
+  "search": {
+    "deadline_ms": 60000,
+    "concurrency": 4,
+    "require_fit": true,
+    "default_response_tokens": 4000,
+    "max_response_tokens": 16000,
+    "threshold": 0.5
+  },
+  "scan_caps": {
+    "estimated_cost_usd": null,
+    "estimated_input_tokens": null,
+    "transmitted_bytes": null,
+    "request_attempts": null,
+    "prepared_source_bytes": null,
+    "candidate_files": null,
+    "fragments": null
+  },
+  "source": {
+    "respect_gitignore": true,
+    "follow_links": false,
+    "max_file_bytes": 1048576,
+    "extra_deny_globs": []
+  },
+  "cache": {
+    "enabled": true,
+    "ttl_seconds": 604800,
+    "max_bytes": 104857600
+  },
+  "logging": {
+    "level": "info",
+    "include_source": false
+  }
+}

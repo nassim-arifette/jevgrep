@@ -141,11 +141,9 @@ export type TransportResponse = {
 export type ProviderTransport = (request: TransportRequest, signal?: AbortSignal) => Promise<TransportResponse>;
 
 /**
- * Default transport.
- *
- * Redirects are never followed: a credential-bearing request must not be replayed
- * against another host (specification section 7.4). Response bodies are read for
- * validation and error classification but are never logged.
+ * Live transport placeholder. Qualification must add bounded response reading,
+ * refuse redirects and preserve raw JSON without logging it (JG-004/JG-013).
+ * The separately pinned experiment exercises SDK/fetch behaviour on loopback.
  */
 export const fetchTransport: ProviderTransport = async () => {
   return requireQualifiedLiveSearch();

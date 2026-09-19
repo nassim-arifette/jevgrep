@@ -2,6 +2,11 @@
 
 Version : 1.0. Cette organisation est une proposition pour **une personne junior, une personne intermédiaire (« medium ») et une personne senior**, travaillant sur le [backlog de 30 issues](issues.md).
 
+**Reprise actuelle :** la branche commune est `main`, dans le dossier `jevgrep`.
+Les travaux intermédiaires sont consolidés ; reprendre depuis ce HEAD, pas depuis
+les anciennes branches JG. Le [passage de relais](handoff.md) indique les validations
+terminées, les modules encore provisoires et les gates d’activation.
+
 Le niveau indique l’autonomie recommandée pour piloter l’issue entière. Il dépend des compétences réelles de la personne, pas uniquement de son ancienneté. Un junior peut contribuer aux tests d’une issue senior sans porter la décision technique ni sa clôture.
 
 ## 1. Les trois rôles
@@ -124,7 +129,7 @@ Pour chaque sous-lot, le pilote précise **le fichier ou répertoire concerné, 
 
 ## 5. Réduire les conflits dans le dépôt
 
-La répartition s’applique à la future arborescence du plan. Aucune branche ni application n’est créée par ce document.
+La répartition s’applique à l’arborescence intégrée sur `main`.
 
 | Zone | Référent | Règle pratique |
 | --- | --- | --- |
@@ -132,10 +137,14 @@ La répartition s’applique à la future arborescence du plan. Aucune branche n
 | Autorisation, comptabilité, ordonnanceur, garantie de rendu | S | J et M contribuent sur des fichiers de tests ou sous-lots identifiés |
 | Inventaire, snapshots, découpage syntaxique, Jev, cache, sélection, MCP | M | S revoit les invariants transversaux avant intégration |
 | Découpage par fenêtres, commandes CLI, documentation, manifestes de corpus | J | M fournit les contrats et revoit l’implémentation ; S valide les annotations de référence |
-| `package.json` et lockfile | Un éditeur désigné à la fois | L’ajout de dépendance est coordonné ; aucune modification simultanée par trois branches |
+| `package.json` et lockfile | Un éditeur désigné à la fois | L’ajout de dépendance est coordonné ; aucune modification simultanée par plusieurs contributeurs |
 | Fixtures et tests | L’auteur du sous-lot | Répartir par fichier/scénario pour éviter de modifier le même test en parallèle |
 
-Après l’initialisation Git, utiliser une branche courte par issue, par exemple `jg-012-line-windows`. Si une même issue comporte plusieurs contributions, le pilote attribue des sous-branches/fichiers distincts et assemble les changements. Les autres personnes repartent des contrats intégrés, plutôt que de maintenir chacune une copie locale divergente.
+À la demande de l’opérateur, conserver une seule branche commune : `main`. Le pilote
+attribue des fichiers distincts pour les travaux simultanés, coordonne les modifications
+des contrats et vérifie l’état Git avant chaque commit. Committer chaque incrément
+significatif après ses contrôles. Tous les contributeurs reprennent les contrats et
+modules intégrés sur cette branche ; ne pas recréer les anciennes branches JG.
 
 Un changement d’interface nécessaire est proposé tôt avec un exemple avant/après, ses consommateurs et ses effets sur les tests. S décide de la cohérence technique et l’autre implémenteur concerné revoit la compatibilité. Un changement de périmètre produit revient à l’utilisateur.
 
