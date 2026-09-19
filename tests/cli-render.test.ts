@@ -67,3 +67,22 @@ test('the rendered text is deterministic and its size is not under-reported', ()
   assert.ok(first.tokenCount > 0);
   assert.equal(first.byteCount, Buffer.byteLength(first.text, 'utf8'));
 });
+
+test('an unknown fragment total stays unknown in the human report', () => {
+  const outcome = resultFixture('partial');
+  outcome.report.fragments.total = null;
+  assert.match(renderHumanOutcome(outcome, referenceCounter).text, /unknown total fragments/);
+});
+
+test('the human budget removes whole excerpts and measures every byte of the final rendering', () => {
+  const outcome = resultFixture('complete');
+  const excerpt = outcome.excerpts[0];
+  assert.ok(excerpt);
+  excerpt.code = 'unchanged source line\n'.repeat(1_000);
+  const rendered = renderHumanOutcome(outcome, referenceCounter, 200);
+  assert.equal(rendered.excerptCount, 0);
+  assert.ok(rendered.tokenCount <= 200);
+  assert.equal(rendered.tokenCount, referenceCounter.count(rendered.text));
+  assert.match(rendered.text, /omitted to fit/);
+  assert.ok(!rendered.text.includes('unchanged source line'));
+});

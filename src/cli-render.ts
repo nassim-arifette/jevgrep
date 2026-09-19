@@ -6,9 +6,8 @@
  * 1. The excerpt block is the original source slice. Nothing is re-indented, wrapped,
  *    summarized or re-ordered, so a reader can trust that the lines shown are the lines in
  *    the file.
- * 2. The human view measures its own complete representation. That count is reported
- *    separately and never mixed into the response budget, which belongs to the canonical
- *    JSON payload the caller asked for.
+ * 2. The human view budgets its own complete representation. Whole excerpts are
+ *    removed and the complete text is recounted until it fits its independent limit.
  *
  * The renderer is pure: it returns text plus its measurements and writes nothing.
  *
@@ -59,7 +58,7 @@ function coverageLine(result: SearchResult): string {
   const parts = [
     `scope ${report.scope.join(', ') || '.'}`,
     `files ${String(report.files.eligible)}/${String(report.files.discovered)} eligible`,
-    `${String(report.fragments.total ?? 0)} fragments`,
+    `${report.fragments.total === null ? 'unknown total' : String(report.fragments.total)} fragments`,
     `coverage ${report.scope_fully_scanned ? 'complete' : 'incomplete'}`,
   ];
   return `coverage: ${parts.join(' | ')}`;
@@ -88,7 +87,11 @@ function failureLines(failure: FailureView): string[] {
  * Render one outcome for a human reader. The text is stable for a given outcome and counter,
  * so it can be compared and measured.
  */
-export function renderHumanOutcome(outcome: SearchOutcome, counter: ResponseTokenCounter): RenderedHumanOutcome {
+export function renderHumanOutcome(
+  outcome: SearchOutcome,
+  counter: ResponseTokenCounter,
+  maxTokens = asResult(outcome)?.report.response_budget.requested_tokens ?? 1_024,
+): RenderedHumanOutcome {
   const lines: string[] = [];
   const result = asResult(outcome);
 
@@ -106,31 +109,24 @@ export function renderHumanOutcome(outcome: SearchOutcome, counter: ResponseToke
     }
   }
 
-  const excerpts = result?.excerpts ?? [];
-  if (excerpts.length > 0) {
-    lines.push('');
-    lines.push(plural(excerpts.length, 'excerpt', 'excerpts'));
-    for (const excerpt of excerpts) {
-      lines.push('');
-      lines.push(excerptHeading(excerpt));
-      lines.push(excerpt.code);
+  const excerpts = [...(result?.excerpts ?? [])];
+  const originalCount = excerpts.length;
+  for (;;) {
+    const body = [...lines, '', plural(excerpts.length, 'excerpt', 'excerpts')];
+    if (excerpts.length < originalCount) {
+      body.push(`${String(originalCount - excerpts.length)} excerpt(s) omitted to fit the human view budget`);
     }
-  } else {
-    lines.push('');
-    lines.push('excerpts: none');
+    for (const excerpt of excerpts) body.push('', excerptHeading(excerpt), excerpt.code);
+    body.push('', `human view: limit ${String(maxTokens)} reference tokens (${counter.id}); JSON is measured separately`);
+    const text = `${body.join('\n')}\n`;
+    const tokenCount = counter.count(text);
+    if (tokenCount <= maxTokens) {
+      return { text, excerptCount: excerpts.length, tokenCount, byteCount: Buffer.byteLength(text), counter: counter.id };
+    }
+    if (excerpts.length === 0) {
+      throw new RangeError('RESPONSE_BUDGET_TOO_SMALL: the human report cannot fit its response budget');
+    }
+    excerpts.pop();
+    // BPE token counts need not shrink monotonically: measure the whole text again.
   }
-
-  const body = lines.join('\n');
-  const footer =
-    `human view: ${String(counter.count(body))} reference tokens (${counter.id}), ` +
-    `${String(Buffer.byteLength(body, 'utf8'))} bytes; the response budget applies to the JSON payload`;
-  const text = `${body}\n\n${footer}\n`;
-
-  return {
-    text,
-    excerptCount: excerpts.length,
-    tokenCount: counter.count(text),
-    byteCount: Buffer.byteLength(text, 'utf8'),
-    counter: counter.id,
-  };
 }

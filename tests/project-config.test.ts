@@ -48,9 +48,13 @@ test('every declared dependency is pinned to an exact version', () => {
       assert.match(version, /^\d+\.\d+\.\d+$/, `${group}.${name} must be an exact pinned version`);
     }
   }
-  assert.ok(
-    Object.keys(manifest.dependencies ?? {}).length === 0,
-    'this scaffold has no runtime dependency; the Jev and MCP SDK versions are pinned in JG-004 and JG-006',
+  // The runtime dependency list is an allowlist, not a free-for-all: each entry is a
+  // decision recorded in an issue report. `tiktoken` is the reference response counter
+  // pinned by JG-006; the Jev and MCP transports are deliberately dependency-free.
+  assert.deepEqual(
+    Object.keys(manifest.dependencies ?? {}).sort(),
+    ['tiktoken'],
+    'a new runtime dependency needs its own recorded decision before it is added here',
   );
 });
 
