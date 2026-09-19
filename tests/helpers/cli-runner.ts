@@ -1,4 +1,7 @@
 import { spawn } from 'node:child_process';
+import { randomUUID } from 'node:crypto';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 /** Repository root, derived from this file's location. */
@@ -32,6 +35,9 @@ export function offlineEnv(): NodeJS.ProcessEnv {
       delete env[key];
     }
   }
+  // Automatic profile discovery must never load the operator's settings/secrets.
+  // This fresh path does not need to exist; commands requiring a profile reject it.
+  env['JEVGREP_CONFIG_HOME'] = join(tmpdir(), `jevgrep-cli-config-${randomUUID()}`);
   const preload = `--import ${offlinePreloadUrl}`;
   env['NODE_OPTIONS'] = env['NODE_OPTIONS'] === undefined ? preload : `${env['NODE_OPTIONS']} ${preload}`;
   return env;
