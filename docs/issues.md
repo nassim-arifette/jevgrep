@@ -266,11 +266,13 @@ Les phases `P0` à `P7` correspondent au plan d’implémentation existant.
 <a id="jg-008"></a>
 ### JG-008 — Garantir le confinement des lectures au dépôt autorisé
 
-**Type :** Implémentation. **Priorité :** Critique. **Phase :** P1. **Statut :** À faire.
+**Type :** Implémentation. **Priorité :** Critique. **Phase :** P1. **Statut :** À faire (fixtures de chemins préparées par J, implémentation à faire).
 
 **Niveau recommandé :** Senior. **Pilote proposé :** S. **Revue :** M.
 
 **Dépendances :** [JG-003](#jg-003), [JG-007](#jg-007).
+
+**Lot préparatoire J (disponible) :** `tests/fixtures/authorization/scope-cases.json` — 37 cas (`schema_version` 1, `kind: authorization-scope-cases`) couvrant quinze catégories : préfixe partagé avec un répertoire frère, traversée, chemins absolus POSIX/Windows, chemin relatif à un lecteur, UNC, noms de périphériques, flux de données alternatifs, octet NUL, formulaires acceptés, portées qui se recouvrent, liens symboliques et jonctions (y compris dans un segment parent), racines proposées par l’appelant, instructions présentes dans un fichier, entrées vides. Chaque cas porte plateforme, formulaire (`scope` ou `layout`), attendu (`accept`/`reject`/`open`) et raison documentée ; les cas `open` posent une question explicite à S (double barre oblique sur POSIX, deux-points dans un nom POSIX, normalisation des antislashs Windows). `tests/authorization-cases.test.ts` (8 cas) valide la table, vérifie que chaque formulaire interdit est représenté, matérialise la disposition déclarée (répertoires, fichiers, liens) dans un répertoire temporaire et contrôle que chaque cible résolue tombe du bon côté de la racine et que chaque lien déclaré s’échappe réellement de la racine autorisée.
 
 **Références :** spécification §4.1 et §5.1 ; exigences R1 et R11.
 

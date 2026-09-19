@@ -1,0 +1,399 @@
+{
+  "schema_version": 1,
+  "kind": "authorization-scope-cases",
+  "reference": "docs/issues.md#jg-008, specification 4.1 and 5.1, requirements R1 and R11",
+  "reasons": [
+    "outside_root",
+    "traversal",
+    "absolute_path",
+    "drive_relative",
+    "unc_path",
+    "device_path",
+    "alternate_data_stream",
+    "nul_byte",
+    "link",
+    "not_regular_file",
+    "invalid_scope_path"
+  ],
+  "required_categories": [
+    "sibling-prefix",
+    "traversal",
+    "absolute-path",
+    "drive-relative",
+    "unc",
+    "device",
+    "alternate-data-stream",
+    "nul-byte",
+    "accepted-form",
+    "overlapping-scope",
+    "link",
+    "junction",
+    "mcp-proposed-root",
+    "instruction-in-file",
+    "invalid-scope-entry"
+  ],
+  "layout": {
+    "directories": [
+      "authorized/src",
+      "authorized/src/deep/nested",
+      "authorized/config",
+      "authorized/docs",
+      "authorized-other/src",
+      "outside"
+    ],
+    "files": [
+      "authorized/src/app.ts",
+      "authorized/src/deep/nested/file.ts",
+      "authorized/config/default.json",
+      "authorized/docs/untrusted-note.md",
+      "authorized-other/src/app.ts",
+      "outside/secret.env"
+    ],
+    "links": [
+      {
+        "path": "authorized/link-to-outside",
+        "target": "../outside/secret.env",
+        "kind": "file"
+      },
+      {
+        "path": "authorized/junction-to-outside",
+        "target": "../outside",
+        "kind": "junction"
+      }
+    ]
+  },
+  "cases": [
+    {
+      "id": "sibling-prefix-directory",
+      "category": "sibling-prefix",
+      "platform": "both",
+      "form": "layout",
+      "expect": "reject",
+      "target": "authorized-other/src/app.ts",
+      "reason": "outside_root",
+      "note": "a raw prefix comparison accepts this path; containment must be canonical"
+    },
+    {
+      "id": "sibling-prefix-relative",
+      "category": "sibling-prefix",
+      "platform": "both",
+      "form": "scope",
+      "expect": "reject",
+      "target": "../authorized-other/src/app.ts",
+      "reason": "traversal"
+    },
+    {
+      "id": "traversal-parent",
+      "category": "traversal",
+      "platform": "both",
+      "form": "scope",
+      "expect": "reject",
+      "target": "..",
+      "reason": "traversal"
+    },
+    {
+      "id": "traversal-out-of-root",
+      "category": "traversal",
+      "platform": "both",
+      "form": "scope",
+      "expect": "reject",
+      "target": "src/../../outside/secret.env",
+      "reason": "traversal"
+    },
+    {
+      "id": "traversal-inside-root",
+      "category": "traversal",
+      "platform": "both",
+      "form": "scope",
+      "expect": "reject",
+      "target": "src/../config",
+      "reason": "traversal",
+      "note": "rejected for its form even though it would normalise inside the root"
+    },
+    {
+      "id": "absolute-posix",
+      "category": "absolute-path",
+      "platform": "posix",
+      "form": "scope",
+      "expect": "reject",
+      "target": "/etc/passwd",
+      "reason": "absolute_path"
+    },
+    {
+      "id": "absolute-windows",
+      "category": "absolute-path",
+      "platform": "windows",
+      "form": "scope",
+      "expect": "reject",
+      "target": "C:/Windows/win.ini",
+      "reason": "absolute_path"
+    },
+    {
+      "id": "absolute-backslash-windows",
+      "category": "absolute-path",
+      "platform": "windows",
+      "form": "scope",
+      "expect": "reject",
+      "target": "\\\\Windows\\\\win.ini",
+      "reason": "absolute_path"
+    },
+    {
+      "id": "drive-relative-windows",
+      "category": "drive-relative",
+      "platform": "windows",
+      "form": "scope",
+      "expect": "reject",
+      "target": "C:secret.env",
+      "reason": "drive_relative"
+    },
+    {
+      "id": "drive-only-windows",
+      "category": "drive-relative",
+      "platform": "windows",
+      "form": "scope",
+      "expect": "reject",
+      "target": "D:",
+      "reason": "drive_relative"
+    },
+    {
+      "id": "unc-windows",
+      "category": "unc",
+      "platform": "windows",
+      "form": "scope",
+      "expect": "reject",
+      "target": "\\\\server\\share\\file.ts",
+      "reason": "unc_path"
+    },
+    {
+      "id": "unc-posix-slash",
+      "category": "unc",
+      "platform": "posix",
+      "form": "scope",
+      "expect": "open",
+      "target": "//server/share/file.ts",
+      "question": "Should a double-slash path be refused on POSIX too, where it is a legal relative path, or normalised?"
+    },
+    {
+      "id": "device-namespace-windows",
+      "category": "device",
+      "platform": "windows",
+      "form": "scope",
+      "expect": "reject",
+      "target": "\\\\.\\C:",
+      "reason": "device_path"
+    },
+    {
+      "id": "device-nul-windows",
+      "category": "device",
+      "platform": "windows",
+      "form": "scope",
+      "expect": "reject",
+      "target": "NUL",
+      "reason": "device_path"
+    },
+    {
+      "id": "device-com1-windows",
+      "category": "device",
+      "platform": "windows",
+      "form": "scope",
+      "expect": "reject",
+      "target": "COM1",
+      "reason": "device_path"
+    },
+    {
+      "id": "ads-windows",
+      "category": "alternate-data-stream",
+      "platform": "windows",
+      "form": "scope",
+      "expect": "reject",
+      "target": "src/app.ts:secret",
+      "reason": "alternate_data_stream"
+    },
+    {
+      "id": "ads-posix-colon",
+      "category": "alternate-data-stream",
+      "platform": "posix",
+      "form": "scope",
+      "expect": "open",
+      "target": "src/app.ts:secret",
+      "question": "A colon is legal in a POSIX file name: refuse it to keep one rule across platforms, or accept it?"
+    },
+    {
+      "id": "nul-byte",
+      "category": "nul-byte",
+      "platform": "both",
+      "form": "scope",
+      "expect": "reject",
+      "target": "src/app\u0000.ts",
+      "reason": "nul_byte"
+    },
+    {
+      "id": "root-dot",
+      "category": "accepted-form",
+      "platform": "both",
+      "form": "scope",
+      "expect": "accept",
+      "target": "."
+    },
+    {
+      "id": "root-dot-slash",
+      "category": "accepted-form",
+      "platform": "both",
+      "form": "scope",
+      "expect": "accept",
+      "target": "./"
+    },
+    {
+      "id": "relative-directory",
+      "category": "accepted-form",
+      "platform": "both",
+      "form": "scope",
+      "expect": "accept",
+      "target": "src"
+    },
+    {
+      "id": "relative-file-inside",
+      "category": "accepted-form",
+      "platform": "both",
+      "form": "layout",
+      "expect": "accept",
+      "target": "authorized/src/app.ts"
+    },
+    {
+      "id": "interior-dot-path",
+      "category": "accepted-form",
+      "platform": "both",
+      "form": "scope",
+      "expect": "accept",
+      "target": "./src/./app.ts"
+    },
+    {
+      "id": "nested-directory",
+      "category": "accepted-form",
+      "platform": "both",
+      "form": "layout",
+      "expect": "accept",
+      "target": "authorized/src/deep/nested/file.ts"
+    },
+    {
+      "id": "backslash-separator-windows",
+      "category": "accepted-form",
+      "platform": "windows",
+      "form": "scope",
+      "expect": "open",
+      "target": "src\\app.ts",
+      "question": "Normalise a backslash separator on Windows, or refuse it so scope strings stay platform-independent?"
+    },
+    {
+      "id": "overlap-directory-and-file",
+      "category": "overlapping-scope",
+      "platform": "both",
+      "form": "scope",
+      "expect": "accept",
+      "target": "src",
+      "note": "combined with src/app.ts this names the same file twice: one identity, no duplicate inventory"
+    },
+    {
+      "id": "overlap-dot-prefixed",
+      "category": "overlapping-scope",
+      "platform": "both",
+      "form": "scope",
+      "expect": "accept",
+      "target": "./src"
+    },
+    {
+      "id": "overlap-file-twice",
+      "category": "overlapping-scope",
+      "platform": "both",
+      "form": "layout",
+      "expect": "accept",
+      "target": "authorized/src/app.ts",
+      "note": "inventory deduplicates by canonical path; the corpus never lists a file twice"
+    },
+    {
+      "id": "link-to-outside",
+      "category": "link",
+      "platform": "both",
+      "form": "layout",
+      "expect": "reject",
+      "target": "authorized/link-to-outside",
+      "reason": "link",
+      "note": "a symbolic link is never followed, even when its name looks harmless"
+    },
+    {
+      "id": "junction-to-outside",
+      "category": "junction",
+      "platform": "both",
+      "form": "layout",
+      "expect": "reject",
+      "target": "authorized/junction-to-outside",
+      "reason": "link"
+    },
+    {
+      "id": "link-in-parent-segment",
+      "category": "link",
+      "platform": "both",
+      "form": "scope",
+      "expect": "reject",
+      "target": "junction-to-outside/src/app.ts",
+      "reason": "link",
+      "note": "a link in a parent segment must be refused, not canonicalised silently"
+    },
+    {
+      "id": "mcp-proposed-second-root",
+      "category": "mcp-proposed-root",
+      "platform": "both",
+      "form": "scope",
+      "expect": "reject",
+      "target": "../outside",
+      "reason": "traversal",
+      "note": "the MCP caller can narrow the scope but never add an authorized root"
+    },
+    {
+      "id": "mcp-proposed-absolute-root",
+      "category": "mcp-proposed-root",
+      "platform": "posix",
+      "form": "scope",
+      "expect": "reject",
+      "target": "/tmp",
+      "reason": "absolute_path"
+    },
+    {
+      "id": "instruction-in-file-stays-inert",
+      "category": "instruction-in-file",
+      "platform": "both",
+      "form": "layout",
+      "expect": "accept",
+      "target": "authorized/docs/untrusted-note.md",
+      "note": "repository text that tries to give orders stays inert content; see tests/fixtures/repositories/access-gateway/docs/untrusted-note.md"
+    },
+    {
+      "id": "empty-scope-entry",
+      "category": "invalid-scope-entry",
+      "platform": "both",
+      "form": "scope",
+      "expect": "reject",
+      "target": "",
+      "reason": "invalid_scope_path"
+    },
+    {
+      "id": "whitespace-scope-entry",
+      "category": "invalid-scope-entry",
+      "platform": "both",
+      "form": "scope",
+      "expect": "reject",
+      "target": "   ",
+      "reason": "invalid_scope_path"
+    },
+    {
+      "id": "sibling-prefix-absolute-windows",
+      "category": "sibling-prefix",
+      "platform": "windows",
+      "form": "scope",
+      "expect": "reject",
+      "target": "C:/work/authorized-other/src/app.ts",
+      "reason": "absolute_path",
+      "note": "an absolute path that names the sibling directory with the shared prefix"
+    }
+  ]
+}
