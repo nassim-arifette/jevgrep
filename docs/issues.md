@@ -764,7 +764,11 @@ Les phases `P0` à `P7` correspondent au plan d’implémentation existant.
 <a id="jg-027"></a>
 ### JG-027 — Constituer le corpus de recherche et ses annotations
 
-**Type :** Préparation d’évaluation. **Priorité :** Normale. **Phase :** P0–P7. **Statut :** À faire.
+**Type :** Préparation d’évaluation. **Priorité :** Normale. **Phase :** P0–P7. **Statut :** En cours (première tranche sur la branche `jg-027-corpus` ; protocole v0.1 et annotations en attente de revue S).
+
+**Première tranche livrée :** fixture `orders-api` (service TypeScript synthétique écrit pour le projet, 30 fichiers, 804 lignes, licence et autorisation enregistrées dans le manifeste) annotée de 13 questions (8 comportementales, 3 contrôles par identifiant exact, 2 sans preuve, 1 cas ambigu avec preuve alternative) dans `benchmarks/manifests/development/orders-api.development.json` ; protocole du corpus, empreinte d’arbre, règles de validation et procédure de revue dans `benchmarks/README.md` ; contrôleur sans dépendance `benchmarks/tools/check-corpus.ts` (script `npm run corpus:check`) exécuté par la suite hors ligne `tests/corpus.test.ts` (10 cas, dont 8 négatifs qui vérifient que le contrôleur refuse réellement un manifeste faux).
+
+**Reste à faire :** deux fixtures supplémentaires, 30 questions comportementales, 10 contrôles, jeu réservé versionné. **Questions ouvertes pour S :** section « Open questions for the S review » de `benchmarks/README.md` (vocabulaire des rôles, granularité des plages, stockage du jeu réservé, fixtures tierces, cas sans preuve, enregistrement des budgets).
 
 **Niveau recommandé :** Junior encadré. **Pilote proposé :** J. **Revue :** S.
 

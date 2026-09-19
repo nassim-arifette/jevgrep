@@ -1,0 +1,14 @@
+{
+  "http": {
+    "request_timeout_ms": 10000
+  },
+  "orders": {
+    "max_discount_percent": 25
+  },
+  "database": {
+    "pool_size": 25
+  },
+  "logging": {
+    "level": "warn"
+  }
+}

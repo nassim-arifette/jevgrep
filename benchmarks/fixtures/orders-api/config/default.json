@@ -1,0 +1,20 @@
+{
+  "http": {
+    "port": 8080,
+    "body_limit_bytes": 262144,
+    "request_timeout_ms": 15000
+  },
+  "orders": {
+    "max_line_items": 50,
+    "max_discount_percent": 30,
+    "cancel_window_hours": 48,
+    "reservation_ttl_seconds": 900
+  },
+  "database": {
+    "pool_size": 10,
+    "statement_timeout_ms": 5000
+  },
+  "logging": {
+    "level": "info"
+  }
+}

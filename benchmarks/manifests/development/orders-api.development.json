@@ -1,0 +1,336 @@
+{
+  "schema_version": 1,
+  "fixture": {
+    "id": "orders-api",
+    "title": "Synthetic TypeScript order service (author-owned fixture)",
+    "license": "authored for the JevGrep project; no third-party content (see fixtures/orders-api/LICENSE)",
+    "authorization": "operator-authored synthetic sources; no secret-bearing or third-party material; safe for remote evaluation of the annotated scope",
+    "revision": {
+      "kind": "tree-sha256",
+      "value": "f26ec0fcdbd6c3c085d7bc4406bed54809e84576e889f764d7592e34b2e9f802"
+    },
+    "line_count": 804,
+    "languages": [
+      "typescript",
+      "sql",
+      "json",
+      "markdown"
+    ]
+  },
+  "split": "development",
+  "budget": {
+    "max_context_tokens": 4000,
+    "allow_partial_scan": false
+  },
+  "questions": [
+    {
+      "id": "orders-api.development.001",
+      "kind": "behavior",
+      "question": "Where is a caller's role checked before a privileged endpoint runs?",
+      "scope": [
+        "src"
+      ],
+      "expected_evidence": [
+        {
+          "path": "src/middleware/authenticate.ts",
+          "start_line": 42,
+          "end_line": 59,
+          "role": "direct",
+          "note": "the role comparison and the 403 response live here"
+        },
+        {
+          "path": "src/routes/orders.ts",
+          "start_line": 23,
+          "end_line": 23,
+          "role": "supporting",
+          "note": "the cancel endpoint declares the agent role it requires"
+        },
+        {
+          "path": "src/routes/admin.ts",
+          "start_line": 10,
+          "end_line": 10,
+          "role": "supporting",
+          "note": "an admin-only endpoint uses the same middleware"
+        }
+      ],
+      "ambiguous": false,
+      "review_notes": ""
+    },
+    {
+      "id": "orders-api.development.002",
+      "kind": "behavior",
+      "question": "How is the maximum discount percentage configured and then enforced?",
+      "scope": [
+        "src",
+        "config"
+      ],
+      "expected_evidence": [
+        {
+          "path": "src/services/pricing.ts",
+          "start_line": 26,
+          "end_line": 47,
+          "role": "direct",
+          "note": "the requested percent plus the tier bonus is clamped to the configured maximum"
+        },
+        {
+          "path": "config/default.json",
+          "start_line": 7,
+          "end_line": 11,
+          "role": "supporting",
+          "note": "the default maximum is 30 percent; production.json lowers it to 25"
+        },
+        {
+          "path": "src/lib/config.ts",
+          "start_line": 59,
+          "end_line": 59,
+          "role": "supporting",
+          "note": "an environment variable can override the file value"
+        }
+      ],
+      "ambiguous": false,
+      "review_notes": ""
+    },
+    {
+      "id": "orders-api.development.003",
+      "kind": "behavior",
+      "question": "Which migration adds discount support to the orders table?",
+      "scope": [
+        "migrations"
+      ],
+      "expected_evidence": [
+        {
+          "path": "migrations/0002_add_discounts.sql",
+          "start_line": 1,
+          "end_line": 13,
+          "role": "direct",
+          "note": "adds discount_code and discount_cents to orders and creates discount_codes"
+        }
+      ],
+      "ambiguous": false,
+      "review_notes": ""
+    },
+    {
+      "id": "orders-api.development.004",
+      "kind": "behavior",
+      "question": "How long after placement can an order still be cancelled, and where is that decided?",
+      "scope": [
+        "src",
+        "config",
+        "tests"
+      ],
+      "expected_evidence": [
+        {
+          "path": "src/services/order-service.ts",
+          "start_line": 65,
+          "end_line": 69,
+          "role": "direct",
+          "note": "the window is computed from the configured number of hours"
+        },
+        {
+          "path": "config/default.json",
+          "start_line": 10,
+          "end_line": 10,
+          "role": "supporting",
+          "note": "the configured window is 48 hours"
+        },
+        {
+          "path": "tests/order-service.test.ts",
+          "start_line": 27,
+          "end_line": 35,
+          "role": "supporting",
+          "note": "a test places the order 72 hours in the past and expects window_closed"
+        }
+      ],
+      "ambiguous": false,
+      "review_notes": ""
+    },
+    {
+      "id": "orders-api.development.005",
+      "kind": "behavior",
+      "question": "Where is the HTTP route that cancels an order registered?",
+      "scope": [
+        "src"
+      ],
+      "expected_evidence": [
+        {
+          "path": "src/routes/index.ts",
+          "start_line": 11,
+          "end_line": 15,
+          "role": "direct",
+          "note": "every API router is mounted in this function"
+        },
+        {
+          "path": "src/routes/orders.ts",
+          "start_line": 23,
+          "end_line": 23,
+          "role": "supporting",
+          "note": "the mounted path and method are declared in the orders router"
+        }
+      ],
+      "ambiguous": false,
+      "review_notes": ""
+    },
+    {
+      "id": "orders-api.development.006",
+      "kind": "behavior",
+      "question": "How is a monetary amount formatted for an API response?",
+      "scope": [
+        "src"
+      ],
+      "expected_evidence": [
+        {
+          "path": "src/utils/format.ts",
+          "start_line": 4,
+          "end_line": 7,
+          "role": "direct",
+          "note": "fixed two decimals followed by the upper-case currency code"
+        }
+      ],
+      "alternative_evidence_sets": [
+        [
+          {
+            "path": "src/utils/format-legacy.ts",
+            "start_line": 4,
+            "end_line": 7,
+            "role": "direct",
+            "note": "a second, byte-identical implementation used by the nightly export"
+          }
+        ]
+      ],
+      "ambiguous": true,
+      "review_notes": "two implementations format money identically; format.ts serves the HTTP surface, format-legacy.ts only the CSV export. Both are acceptable evidence; returning only the legacy helper is less useful, not wrong."
+    },
+    {
+      "id": "orders-api.development.007",
+      "kind": "behavior",
+      "question": "Why does this service use hand-written SQL instead of an ORM?",
+      "scope": [
+        "docs",
+        "src"
+      ],
+      "expected_evidence": [
+        {
+          "path": "docs/adr/0001-use-postgres.md",
+          "start_line": 12,
+          "end_line": 14,
+          "role": "direct",
+          "note": "the ADR records the decision and the rejected SQLite/ORM prototype"
+        },
+        {
+          "path": "src/lib/db.ts",
+          "start_line": 9,
+          "end_line": 16,
+          "role": "context",
+          "note": "the pool every service receives"
+        }
+      ],
+      "ambiguous": false,
+      "review_notes": ""
+    },
+    {
+      "id": "orders-api.development.008",
+      "kind": "behavior",
+      "question": "Which test locks the rule that an already cancelled order cannot be cancelled again?",
+      "scope": [
+        "tests"
+      ],
+      "expected_evidence": [
+        {
+          "path": "tests/order-service.test.ts",
+          "start_line": 18,
+          "end_line": 25,
+          "role": "direct",
+          "note": "the regression test for this rule"
+        }
+      ],
+      "ambiguous": false,
+      "review_notes": ""
+    },
+    {
+      "id": "orders-api.development.009",
+      "kind": "no_evidence",
+      "question": "Where is a Stripe webhook signature verified before a payment is recorded?",
+      "scope": [
+        "src"
+      ],
+      "expected_evidence": [],
+      "ambiguous": false,
+      "review_notes": "no payment-provider integration exists in this fixture: a lexical search for stripe, webhook or signature finds nothing, and no handler records payments."
+    },
+    {
+      "id": "orders-api.development.010",
+      "kind": "no_evidence",
+      "question": "Which module sends a transactional email when an order is shipped?",
+      "scope": [
+        "src"
+      ],
+      "expected_evidence": [],
+      "ambiguous": false,
+      "review_notes": "the fixture has no email transport and no shipping transition; \"shipped\" only appears in the order status union. Returning that union as evidence is guessing."
+    },
+    {
+      "id": "orders-api.development.011",
+      "kind": "symbol_control",
+      "question": "Where is `listOrdersForCustomer` defined, and which surface calls it?",
+      "scope": [
+        "src"
+      ],
+      "expected_evidence": [
+        {
+          "path": "src/services/order-service.ts",
+          "start_line": 26,
+          "end_line": 69,
+          "role": "direct",
+          "note": "definition of the method"
+        },
+        {
+          "path": "src/routes/orders.ts",
+          "start_line": 13,
+          "end_line": 13,
+          "role": "supporting",
+          "note": "the HTTP list handler calls it"
+        }
+      ],
+      "ambiguous": false,
+      "review_notes": ""
+    },
+    {
+      "id": "orders-api.development.012",
+      "kind": "symbol_control",
+      "question": "Where is `ROLE_ORDER` used to compare roles?",
+      "scope": [
+        "src"
+      ],
+      "expected_evidence": [
+        {
+          "path": "src/middleware/authenticate.ts",
+          "start_line": 7,
+          "end_line": 51,
+          "role": "direct",
+          "note": "the role order declaration and its only comparison"
+        }
+      ],
+      "ambiguous": false,
+      "review_notes": ""
+    },
+    {
+      "id": "orders-api.development.013",
+      "kind": "symbol_control",
+      "question": "Where is the `discount_code` column defined?",
+      "scope": [
+        "migrations"
+      ],
+      "expected_evidence": [
+        {
+          "path": "migrations/0002_add_discounts.sql",
+          "start_line": 2,
+          "end_line": 4,
+          "role": "direct",
+          "note": "the alter table statement adds discount_code and discount_cents"
+        }
+      ],
+      "ambiguous": false,
+      "review_notes": ""
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "name": "orders-api",
+  "version": "2.4.1",
+  "private": true,
+  "description": "Synthetic order-management service used as JevGrep corpus material.",
+  "license": "UNLICENSED",
+  "scripts": {
+    "start": "node dist/index.js",
+    "test": "node --test tests/*.test.ts",
+    "migrate": "node scripts/migrate.ts"
+  },
+  "dependencies": {
+    "express": "4.21.2",
+    "pg": "8.13.1",
+    "pino": "9.5.0"
+  },
+  "devDependencies": {
+    "@types/express": "5.0.0",
+    "typescript": "5.7.2"
+  }
+}
