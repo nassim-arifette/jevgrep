@@ -79,7 +79,9 @@ Les phases `P0` à `P7` correspondent au plan d’implémentation existant.
 <a id="jg-001"></a>
 ### JG-001 — Initialiser le package TypeScript et les contrôles hors ligne
 
-**Type :** Infrastructure. **Priorité :** Critique. **Phase :** P0–P1. **Statut :** À faire.
+**Type :** Infrastructure. **Priorité :** Critique. **Phase :** P0–P1. **Statut :** Terminé le 19 septembre 2026 (branche `jg-001-typescript-package`). **Revue :** M — `docs/reviews/jg-001-review.md`, cinq critères PASS, aucun défaut bloquant ; défauts D1 (artefact de test laissé dans `src/` après un arrêt brutal), D3 (`--version` sortait 1 avec une trace) et nits N1–N9 corrigés dans le même commit.
+
+**Livré :** package unique TypeScript (`src/cli.ts`, `dist/cli.js` comme point d’entrée `jevgrep`), lockfile, `tsconfig.json` strict, scripts `typecheck`/`test`/`build`/`smoke`/`verify`, suite hors ligne sur `node --test` (23 tests, dont un contrôle hors réseau et un contrôle qui échoue sur erreur de type), CI Windows/Linux (`.github/workflows/ci.yml`) et commandes documentées dans le README. Vérifié sur Node.js 24.15.0 sous Windows et sous Linux (`npm ci` depuis le lockfile, `npm run verify`).
 
 **Niveau recommandé :** Junior encadré. **Pilote proposé :** J. **Revue :** M.
 

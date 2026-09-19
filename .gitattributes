@@ -1,0 +1,7 @@
+# One line-ending policy for the whole repository: LF in the index and in the
+# working tree, so Windows and Linux checkouts stay byte-identical.
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.gif binary
+*.ico binary

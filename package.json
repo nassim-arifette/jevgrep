@@ -1,0 +1,28 @@
+{
+  "name": "jevgrep",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Semantic code search for coding agents: evaluates authorized repository fragments with Jev and returns original excerpts under a response budget.",
+  "type": "module",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=24.0.0 <25.0.0"
+  },
+  "bin": {
+    "jevgrep": "./dist/cli.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json && node scripts/make-executable.ts",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "node --test \"tests/*.test.ts\"",
+    "smoke": "node scripts/smoke.ts",
+    "verify": "npm run typecheck && npm test && npm run build && npm run smoke"
+  },
+  "devDependencies": {
+    "@types/node": "24.13.6",
+    "typescript": "7.0.2"
+  }
+}
