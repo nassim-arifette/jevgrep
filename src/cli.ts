@@ -12,7 +12,8 @@ import { readFileSync, realpathSync } from 'node:fs';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 import { parseCliArguments, type CliCommand } from './cli-args.ts';
-import { commandHelp, globalHelp } from './cli-help.ts';
+import { executeCommand } from './cli-commands.ts';
+import { commandHelp, documentedCommands, globalHelp } from './cli-help.ts';
 import { CLI_EXIT_CODES } from './search-response.ts';
 
 /** Complete result from the product contract (section 4.5). */
@@ -21,13 +22,14 @@ export const EXIT_OK = CLI_EXIT_CODES.complete;
 export const EXIT_USAGE = CLI_EXIT_CODES.rejected;
 /** Fatal runtime failure, for example an unreadable or malformed package manifest. */
 export const EXIT_FATAL = CLI_EXIT_CODES.error;
-/**
- * Scaffold-only code: the command exists in the product contract but not in this
- * build. It is deliberately outside the reserved set {0, 2, 3, 4, 130} so a caller
- * can never mistake it for a complete, partial or failed search. It disappears when
- * JG-014, JG-007, JG-018 and JG-024 implement those commands.
- */
-export const EXIT_NOT_IMPLEMENTED = 69;
+/** Integer exit codes the process adapter may propagate from the command layer. */
+const EXIT_CODES_IN_USE: ReadonlySet<number> = new Set([
+  EXIT_OK,
+  EXIT_USAGE,
+  EXIT_FATAL,
+  CLI_EXIT_CODES.partial,
+  CLI_EXIT_CODES.interrupted,
+]);
 
 /** Minimal output seam: tests capture the CLI without spawning a child process. */
 export type CliIo = {
@@ -38,11 +40,32 @@ export type CliIo = {
 /** Replaceable collaborators, so tests can force the failure paths. */
 export type CliDependencies = {
   readonly readVersion: () => string;
+  /**
+   * Dispatch a command whose arguments were validated. The default runner is the shared
+   * command layer (`cli-commands.ts`); a test injects its own to drive one command without a
+   * workspace or a provider.
+   */
+  readonly runCommand?: (command: CliCommand) => Promise<number>;
 };
 
 const defaultDependencies: CliDependencies = {
   readVersion: () => readPackageVersion(),
 };
+
+/**
+ * The process adapter: one interruption signal shared by the dispatched command, wired to
+ * SIGINT and SIGTERM so a cancelled run reports the documented interrupted code instead of
+ * dying silently.
+ */
+function interruptionSignal(): AbortSignal {
+  const controller = new AbortController();
+  for (const signal of ['SIGINT', 'SIGTERM'] as const) {
+    process.once(signal, () => {
+      controller.abort();
+    });
+  }
+  return controller.signal;
+}
 
 const defaultIo: CliIo = {
   out: (line: string): void => {
@@ -53,14 +76,10 @@ const defaultIo: CliIo = {
   },
 };
 
-/** Commands promised by the specification, with the issue that will implement each one. */
-const PLANNED_COMMANDS: ReadonlyMap<string, string> = new Map([
-  ['search', 'JG-014'],
-  ['inspect', 'JG-014'],
-  ['doctor', 'JG-007'],
-  ['mcp', 'JG-024'],
-  ['cache', 'JG-018'],
-]);
+/** First word of every documented command, used to tell a command from a typo. */
+const COMMAND_WORDS: ReadonlySet<string> = new Set(
+  documentedCommands().map((command) => command.split(' ')[0] ?? command),
+);
 
 
 /** Canonical global help text; the CLI prints it and tests assert its content. */
@@ -97,11 +116,13 @@ export function isMainModule(moduleUrl: string = import.meta.url): boolean {
 }
 
 /**
- * Validate the arguments of a command that is not implemented yet, then refuse it.
+ * Validate the arguments of a documented command, then run it.
  *
- * Argument validation is real: a caller gets exit 2 with a usable message instead of
- * discovering a typo later. The command itself still performs no work, so the refusals of
- * specification 4.5 (0 complete, 3 partial, 4 fatal, 130 interrupted) stay unused.
+ * Validation happens before any work: a caller gets exit 2 with a usable message instead of
+ * discovering a typo after a scan started. `--help` is answered here too, from the same
+ * option table the parser enforces, so the help cannot promise an option that would be
+ * refused. Once validated, the command goes to the shared command layer and its exit code is
+ * propagated unchanged.
  */
 /** Help topic named by argv: the documented command, with `cache clear` as one topic. */
 function helpTopic(argv: readonly string[]): string {
@@ -109,7 +130,20 @@ function helpTopic(argv: readonly string[]): string {
   return first === 'cache' ? 'cache clear' : first;
 }
 
-function plannedCommand(io: CliIo, argv: readonly string[], implementingIssue: string): number {
+/** A short, upper-case error code is safe to show; a message or a path is not. */
+function safeCodeOf(error: unknown): string | undefined {
+  if (typeof error !== 'object' || error === null) {
+    return undefined;
+  }
+  const code = (error as { readonly code?: unknown }).code;
+  return typeof code === 'string' && /^[A-Z][A-Z0-9_]{2,39}$/.test(code) ? code : undefined;
+}
+
+async function dispatchCommand(
+  io: CliIo,
+  argv: readonly string[],
+  dependencies: CliDependencies,
+): Promise<number> {
   // `--help` after a command prints that command's page: the option table is the one the
   // parser enforces, so the help cannot promise an option that would be refused.
   if (argv.includes('--help') || argv.includes('-h')) {
@@ -128,13 +162,26 @@ function plannedCommand(io: CliIo, argv: readonly string[], implementingIssue: s
     return usageError(io, parsed.message);
   }
   const command: CliCommand = parsed.command;
-  const detail = command.kind === 'search' ? describeSearch(command) : `'${command.kind}'`;
-  io.err(`jevgrep: ${detail} is planned (${implementingIssue}) but not implemented in this build; no work was performed`);
-  return EXIT_NOT_IMPLEMENTED;
-}
+  // The command layer is the only implementation; the injectable runner exists so a test can
+  // drive one command without a workspace or a provider.
+  const runner =
+    dependencies.runCommand ??
+    ((dispatched: CliCommand): Promise<number> =>
+      executeCommand(dispatched, io, { signal: interruptionSignal() }));
 
-function describeSearch(command: Extract<CliCommand, { kind: 'search' }>): string {
-  return `'search' for ${String(command.request.scope.length)} scope entr${command.request.scope.length === 1 ? 'y' : 'ies'}`;
+  try {
+    const code = await runner(command);
+    if (!Number.isInteger(code) || !EXIT_CODES_IN_USE.has(code)) {
+      io.err('jevgrep: command failed; no result was produced');
+      return EXIT_FATAL;
+    }
+    return code;
+  } catch (error) {
+    const code = safeCodeOf(error);
+    const detail = code === undefined ? '' : ` (${code})`;
+    io.err(`jevgrep: command failed${detail}; no result was produced`);
+    return EXIT_FATAL;
+  }
 }
 
 function usageError(io: CliIo, detail: string): number {
@@ -190,9 +237,8 @@ export async function main(
     return usageError(io, `unknown option '${first}'`);
   }
 
-  const implementingIssue = PLANNED_COMMANDS.get(first);
-  if (implementingIssue !== undefined) {
-    return plannedCommand(io, argv, implementingIssue);
+  if (COMMAND_WORDS.has(first)) {
+    return await dispatchCommand(io, argv, dependencies);
   }
   return usageError(io, `unknown command '${first}'`);
 }

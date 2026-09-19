@@ -2,9 +2,8 @@
  * Help text for the documented CLI surface (JG-023, specification 2.1, 4.1, 4.5 and 7.3).
  *
  * The help is generated from the same option table the parser enforces, so it can neither
- * advertise an option the parser refuses nor hide one it accepts. Nothing here claims a
- * command runs: every page says what is not implemented yet, because the engine arrives
- * with JG-014 and JG-022.
+ * advertise an option the parser refuses nor hide one it accepts. Each page also states what
+ * the command does with the provider, and the exit-code contract it obeys.
  */
 import { allowedOptionsFor } from './cli-args.ts';
 
@@ -62,10 +61,23 @@ export function commandHelp(command: string): string | undefined {
   }
   lines.push('  -h, --help                 show this page and exit 0');
   lines.push('');
-  lines.push(`not implemented in this build: '${command}' validates its arguments and then exits 69`);
-  lines.push('without touching a repository, a provider or the cache. The behaviour above is the');
-  lines.push('contract of docs/specification.md (sections 2.1, 4.1, 4.5 and 7.3), implemented with');
-  lines.push('JG-014 for the first CLI path and JG-022/JG-023 for the final commands.');
+  lines.push(
+    options.includes('--json')
+      ? 'outputs: stdout carries exactly the result that was asked for (canonical JSON with --json,'
+      : 'outputs: stdout carries exactly the result that was asked for,',
+  );
+  lines.push('otherwise the human view or the report); stderr carries diagnostics and measurements, so a');
+  lines.push('pipeline keeps the evidence even when the exit code is non-zero.');
+  if (command === 'search') {
+    lines.push('remote evaluation needs the credential named by the trusted configuration; without');
+    lines.push('it the search is refused with exit code 2 and no request is sent.');
+  } else {
+    lines.push('this command is local: it never needs a credential and never contacts the provider.');
+  }
+  lines.push('');
+  lines.push('exit codes: 0 complete, 2 rejected request or configuration, 3 partial result,');
+  lines.push('4 fatal runtime failure, 130 interrupted. See docs/specification.md sections 2.1,');
+  lines.push('4.1, 4.5 and 7.3.');
   return lines.join('\n');
 }
 
@@ -78,15 +90,15 @@ export function globalHelp(): string {
     'authorized code fragments with a configured remote Jev provider and returns original',
     'excerpts under a response budget.',
     '',
-    'This build is the development scaffold: argument validation, offline checks and the corpus',
-    'exist, and no search command runs yet. Every command below validates its arguments, then',
-    'exits 69 without performing any work, so nothing unimplemented is presented as available.',
+    'Commands validate their arguments, then run against the shared engine. Only the search',
+    'command contacts the configured remote provider, and only when the trusted configuration',
+    'allows it and the credential is present.',
     '',
     'options:',
     '  -h, --help      show this help and exit 0',
     '  -V, --version   show the package version and exit 0',
     '',
-    'documented commands, not implemented in this build (each one exits 69 and performs no work):',
+    'commands:',
   ];
   for (const command of documentedCommands()) {
     lines.push(`  ${command}`);
@@ -96,11 +108,10 @@ export function globalHelp(): string {
   lines.push('');
   lines.push('exit codes:');
   lines.push('  0    complete result');
-  lines.push('  2    invalid request, unknown command or bad arguments');
+  lines.push('  2    rejected request, configuration or credential');
+  lines.push('  3    partial result: the scan or the response is incomplete, and the report says so');
   lines.push('  4    fatal runtime failure, for example an unreadable package manifest');
-  lines.push('  69   command planned but not implemented in this build');
-  lines.push('  3    partial result (reserved: arrives with the first search command)');
-  lines.push('  130  user interruption (reserved)');
+  lines.push('  130  user interruption');
   lines.push('');
   lines.push('documentation: README.md, docs/specification.md, docs/issues.md');
   return lines.join('\n');

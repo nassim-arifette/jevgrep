@@ -53,8 +53,11 @@ if (!existsSync(entry)) {
   const fromElsewhere = run(['--version'], tmpdir());
   record('--version works outside the repository', fromElsewhere.code === 0 && fromElsewhere.stdout === version.stdout, `code=${String(fromElsewhere.code)}`);
 
-  const search = run(['search', '--config', 'config.json', '--query', 'authorization']);
-  record('search is rejected as not implemented', search.code === 69 && /not implemented in this build/.test(search.stderr) && search.stdout === '', `code=${String(search.code)}`);
+  const search = run(['search', '--config', 'missing-config.json', '--query', 'authorization']);
+  record('a missing configuration is refused with exit code 2', search.code === 2 && /config/i.test(search.stderr), `code=${String(search.code)}`);
+
+  const doctor = run(['doctor', '--config', 'missing-config.json']);
+  record('doctor answers through the command layer', doctor.code === 2 && doctor.stderr.length > 0, `code=${String(doctor.code)}`);
 
   const unknown = run(['frobnicate']);
   record('an unknown command exits 2', unknown.code === 2 && /unknown command/.test(unknown.stderr), `code=${String(unknown.code)}`);

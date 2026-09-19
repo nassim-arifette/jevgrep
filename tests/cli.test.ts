@@ -4,7 +4,6 @@ import { join } from 'node:path';
 import { test } from 'node:test';
 import {
   EXIT_FATAL,
-  EXIT_NOT_IMPLEMENTED,
   EXIT_OK,
   EXIT_USAGE,
   helpText,
@@ -35,6 +34,20 @@ function capture(): Capture {
     stdout,
     stderr,
   };
+}
+
+/** Run one command with an injected runner, capturing its output and exit code. */
+async function invokeWith(runCommand: () => Promise<number>): Promise<{
+  readonly code: number;
+  readonly stdout: string;
+  readonly stderr: string;
+}> {
+  const captured = capture();
+  const code = await main(['doctor', '--config', 'config.json'], captured.io, {
+    readVersion: () => '0.0.0',
+    runCommand: (): Promise<number> => runCommand(),
+  });
+  return { code, stdout: captured.stdout.join('\n'), stderr: captured.stderr.join('\n') };
 }
 
 async function invoke(
@@ -137,52 +150,120 @@ test('extra arguments after --help or --version are rejected', async () => {
   }
 });
 
-test('planned but unimplemented commands exit non-zero and claim no work', async () => {
-  const planned: readonly (readonly string[])[] = [
-    ['search', '--config', 'config.json', '--query', 'where is authorization enforced'],
-    ['inspect', '--config', 'config.json', '--json'],
-    ['doctor', '--config', 'config.json'],
-    ['mcp', '--config', 'config.json'],
-    ['cache', 'clear', '--config', 'config.json'],
+test('every documented command dispatches instead of being refused', async () => {
+  // A missing configuration file is the cheapest real dispatch: the command layer owns the
+  // rejection and reports it, which proves the process adapter is wired.
+  const commands: readonly (readonly string[])[] = [
+    ['search', '--config', 'missing-config.json', '--query', 'where is authorization enforced'],
+    ['inspect', '--config', 'missing-config.json', '--json'],
+    ['doctor', '--config', 'missing-config.json'],
+    ['mcp', '--config', 'missing-config.json'],
+    ['cache', 'clear', '--config', 'missing-config.json'],
   ];
-  for (const argv of planned) {
+  for (const argv of commands) {
     const result = await invoke(argv);
-    assert.equal(result.code, EXIT_NOT_IMPLEMENTED, `unexpected exit code for ${argv.join(' ')}`);
-    assert.notEqual(result.code, EXIT_OK);
-    assert.equal(result.stdout, '');
-    assert.match(result.stderr, /not implemented in this build/);
-    assert.match(result.stderr, /no work was performed/);
+    assert.equal(result.code, EXIT_USAGE, `unexpected exit code for ${argv.join(' ')}`);
+    assert.doesNotMatch(result.stderr, /not implemented/, 'no command is a stub any more');
+    assert.match(result.stderr, /config/i, `the configuration failure must be explained for ${argv.join(' ')}`);
   }
 });
 
-test('the not-implemented exit code is outside the reserved product codes', () => {
-  for (const reserved of [EXIT_OK, 3, 4, 130]) {
-    assert.notEqual(EXIT_NOT_IMPLEMENTED, reserved);
-  }
-});
-
-test('the help text presents planned commands only as unavailable', () => {
+test('the help text lists the documented commands and the exit-code contract', () => {
   const text = helpText();
-  const disclaimer = text.indexOf('not implemented in this build');
-  assert.notEqual(disclaimer, -1, 'the help text must state that planned commands are unavailable');
-
+  assert.match(text, /^usage: jevgrep/);
   for (const command of ['search', 'inspect', 'doctor', 'mcp', 'cache']) {
-    const commandLine = new RegExp(`^ {2}${command}\\b`, 'm').exec(text);
-    assert.notEqual(commandLine, null, `${command} is not documented in the help text`);
-    assert.ok(
-      (commandLine?.index ?? 0) > disclaimer,
-      `'${command}' is presented as a command before the not-implemented disclaimer`,
-    );
+    assert.match(text, new RegExp(`^ {2}${command}\\b`, 'm'), `${command} is not listed`);
   }
+  assert.doesNotMatch(text, /not implemented/, 'the scaffold disclaimer is gone once the commands exist');
+  for (const code of ['0', '2', '3', '4', '130']) {
+    assert.match(text, new RegExp(`^ {2}${code}\\s`, 'm'), `exit code ${code} is not documented`);
+  }
+});
 
-  const optionsSection = text.slice(text.indexOf('options:'), disclaimer);
-  assert.match(optionsSection, /-h, --help/);
-  assert.match(optionsSection, /-V, --version/);
-  for (const command of ['search', 'inspect', 'doctor', 'mcp', 'cache']) {
-    assert.doesNotMatch(
-      optionsSection,
-      new RegExp(`\\b${command}\\b`),
-      `the available-options section must not advertise '${command}'`,
-    );
-  }
+test('a validated command is dispatched to the injected runner', async () => {
+  const seen: unknown[] = [];
+  const captured = capture();
+  const code = await main(['inspect', '--config', 'config.json', '--scope', 'src', '--json'], captured.io, {
+    readVersion: () => '0.0.0',
+    runCommand: (command: unknown) => {
+      seen.push(command);
+      return Promise.resolve(0);
+    },
+  });
+
+  assert.equal(code, EXIT_OK);
+  assert.equal(seen.length, 1, 'the runner must be called exactly once');
+  assert.deepEqual(seen[0], { kind: 'inspect', config: 'config.json', scope: ['src'], json: true });
+});
+
+test('a search command reaches the runner with its validated request', async () => {
+  const seen: { readonly request?: { readonly query: string; readonly scope: readonly string[] } }[] = [];
+  const captured = capture();
+  const code = await main(['search', '--config', 'config.json', '--query', 'where is auth', '--scope', 'src'], captured.io, {
+    readVersion: () => '0.0.0',
+    runCommand: (command: unknown) => {
+      seen.push(command as { request?: { query: string; scope: readonly string[] } });
+      return Promise.resolve(0);
+    },
+  });
+
+  assert.equal(code, EXIT_OK);
+  assert.equal(seen[0]?.request?.query, 'where is auth');
+  assert.deepEqual(seen[0]?.request?.scope, ['src']);
+});
+
+test('the runner decides the exit code, and its failure is a fatal code without a stack trace', async () => {
+  const partial = await invokeWith(() => Promise.resolve(3));
+  assert.equal(partial.code, 3, 'the product contract reserves 3 for a partial result');
+
+  const failed = await invokeWith(() => {
+    throw new Error('provider exploded at C:/secret/path');
+  });
+  assert.equal(failed.code, EXIT_FATAL);
+  assert.equal(failed.stdout, '');
+  assert.match(failed.stderr, /command failed/);
+  assert.doesNotMatch(failed.stderr, /secret\/path|\\n\\s+at /, 'no path or stack trace may reach the caller');
+});
+
+test('an invalid command never reaches the runner', async () => {
+  let called = false;
+  const captured = capture();
+  const code = await main(['search', '--config', 'config.json'], captured.io, {
+    readVersion: () => '0.0.0',
+    runCommand: () => {
+      called = true;
+      return Promise.resolve(0);
+    },
+  });
+
+  assert.equal(code, EXIT_USAGE);
+  assert.equal(called, false, 'arguments must be validated before any work is dispatched');
+});
+
+test('without an injected runner the command layer executes the command', async () => {
+  const result = await invoke(['doctor', '--config', 'missing-config.json']);
+  assert.equal(result.code, EXIT_USAGE, 'the real command owns the outcome, not a stub message');
+  assert.match(result.stderr, /config/i);
+});
+
+test('a short error code is shown, a message or a path is not', async () => {
+  const withCode = await invokeWith(() => {
+    const failure = Object.assign(new Error('boom at C:/secret/path'), { code: 'PROVIDER_UNAVAILABLE' });
+    throw failure;
+  });
+  assert.equal(withCode.code, EXIT_FATAL);
+  assert.match(withCode.stderr, /PROVIDER_UNAVAILABLE/);
+  assert.doesNotMatch(withCode.stderr, /secret/, 'an error message may carry paths or source and stays hidden');
+
+  const withJunkCode = await invokeWith(() => {
+    const failure = Object.assign(new Error('boom'), { code: 'not-a-code with spaces' });
+    throw failure;
+  });
+  assert.doesNotMatch(withJunkCode.stderr, /not-a-code/);
+});
+
+test('a runner that returns a non-integer exit code is a fatal failure', async () => {
+  const result = await invokeWith(() => Promise.resolve(Number.NaN));
+  assert.equal(result.code, EXIT_FATAL);
+  assert.match(result.stderr, /command failed/);
 });

@@ -7,9 +7,12 @@ such as Codex, and the failures you are most likely to hit.
 > **Status of this guide (2026-09-19).** The engine, the CLI command layer and the MCP
 > server exist and are covered by the offline suite. This is a development guide;
 > the operational commands below describe the future qualified installation.
-> The executable still uses the scaffold (exit 69), live search is explicitly blocked
-> in `src/readiness.ts`, and no real Codex interoperability run has been performed.
-> See [the current handoff](handoff.md) before attempting activation.
+> The executable now dispatches real commands: `doctor`, `inspect` and `cache clear`
+> run locally without a credential, and `search` is refused with exit code 2 until the
+> trusted configuration enables remote evaluation and the credential is present. Live
+> search is still explicitly blocked in `src/readiness.ts`, and no real Codex
+> interoperability run has been performed. See [the current handoff](handoff.md)
+> before attempting activation.
 
 ## 1. What leaves your machine
 

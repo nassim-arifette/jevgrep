@@ -80,7 +80,7 @@ Les phases `P0` à `P7` correspondent au plan d’implémentation existant.
 | [JG-027](#jg-027) | Constituer le corpus de recherche et ses annotations | P0–P7 | Normale Junior encadré | S |
 | [JG-028](#jg-028) | Mesurer la qualité de recherche et figer les réglages | P7 | Normale Medium | S |
 | [JG-029](#jg-029) | Comparer les tâches Codex avec et sans JevGrep | P7 | Normale Senior | M |
-| [JG-030](#jg-030) | Livrer le MVP personnel et son bilan | P7 | Haute Senior | M |
+| [JG-030](#jg-030) | Livrer le MVP open source expérimental et son bilan | P7 | Haute Senior | M |
 
 ## Issues détaillées
 
@@ -684,9 +684,11 @@ Les phases `P0` à `P7` correspondent au plan d’implémentation existant.
 
 **Dépendances :** [JG-007](#jg-007), [JG-010](#jg-010), [JG-014](#jg-014), [JG-018](#jg-018), [JG-022](#jg-022).
 
-**Lot préparatoire J (disponible) :** `src/cli-args.ts` + `tests/cli-args.test.ts` (11 cas) — analyse des arguments des formulaires documentés (`doctor`, `inspect`, `search`, `mcp`, `cache clear` ; `--config`, `--query`, `--query-file`, `--scope` répétable, `--max-context-tokens`, `--json`, `--allow-partial`). Les valeurs par défaut et les bornes viennent du contrat partagé (`CONTRACT_LIMITS` : 4 000 par défaut, 1 024 minimum, 16 000 maximum, portée ≤ 32 entrées et 4 096 octets) et la requête de recherche est validée par `parseSearchRequest` de `src/contracts.ts`, donc la CLI et MCP ne peuvent pas diverger. L’analyse est pure (aucune lecture de configuration, de dépôt ou de réseau) ; option inconnue ou mal placée, valeur manquante, `--config` absent, source de requête absente ou double, budget non entier ou hors bornes, portée absolue ou traversante, sous-commande `cache` absente ou inconnue sont refusés avec un message et le code 2 de la spécification §4.5. Tant que le moteur n’existe pas, une commande valide sort en 69 avec « not implemented in this build; no work was performed ».
+**Lot préparatoire J (disponible) :** `src/cli-args.ts` + `tests/cli-args.test.ts` (11 cas) — analyse des arguments des formulaires documentés (`doctor`, `inspect`, `search`, `mcp`, `cache clear` ; `--config`, `--query`, `--query-file`, `--scope` répétable, `--max-context-tokens`, `--json`, `--allow-partial`). Les valeurs par défaut et les bornes viennent du contrat partagé (`CONTRACT_LIMITS` : 4 000 par défaut, 1 024 minimum, 16 000 maximum, portée ≤ 32 entrées et 4 096 octets) et la requête de recherche est validée par `parseSearchRequest` de `src/contracts.ts`, donc la CLI et MCP ne peuvent pas diverger. L’analyse est pure (aucune lecture de configuration, de dépôt ou de réseau) ; option inconnue ou mal placée, valeur manquante, `--config` absent, source de requête absente ou double, budget non entier ou hors bornes, portée absolue ou traversante, sous-commande `cache` absente ou inconnue sont refusés avec un message et le code 2 de la spécification §4.5. **Branchement au moteur (J, livré) :** `src/cli.ts` transmet une commande validée à la couche de commandes partagée (`executeCommand`) ; le code de sortie de la commande est propagé tel quel et validé contre l’ensemble {0, 2, 3, 4, 130}. Un signal d’interruption unique (SIGINT/SIGTERM) est transmis à la commande. `doctor`, `inspect` et `cache clear` fonctionnent donc réellement hors ligne, sans clé et sans appel fournisseur ; une recherche sans clé sort en 2 avec la charge canonique `CREDENTIAL_MISSING` sur stdout et aucune requête envoyée. Le code d’échafaudage 69 a disparu avec la dernière commande non implémentée : plus rien n’est annoncé comme indisponible.
 
 **Rendu humain J (disponible) :** `src/cli-render.ts` + `tests/cli-render.test.ts` (5 cas) — en-tête d’état, ligne de couverture, raisons d’arrêt bornées, extraits affichés **verbatim** (sauts de ligne CRLF compris, aucune réindentation ni reformulation), et mesure de la vue humaine elle-même (tokens du compteur de référence et octets) présentée **séparément** du budget de réponse qui appartient à la charge JSON (spécification §4.5). Un résultat partiel indique explicitement que la couverture est incomplète et qu’une sélection vide n’établit pas l’absence ; un refus ou une erreur affiche le code et le conseil de reprise sans inventer de preuve. Le rendu est pur et déterministe (même sortie mesurée deux fois), prêt à être raccordé au moteur avec JG-014.
+
+**Branchement J (prêt) :** `src/cli.ts` accepte désormais un exécuteur injecté (`CliDependencies.runCommand`). Une commande validée est transmise telle quelle (type, config, portée, requête résolue, `--json`) et le code de sortie de l’exécuteur est propagé ; sans exécuteur, la commande reste refusée en 69 après validation, donc rien d’inexistant n’est présenté comme disponible. Un échec de l’exécuteur sort en 4 avec une ligne de diagnostic : seul un code court en majuscules est repris, jamais le message (qui peut contenir un chemin ou du code), et un code de sortie non entier est traité comme fatal. `tests/cli.test.ts` couvre les cinq transitions, y compris par mutation (faire fuiter le message fait échouer la suite).
 
 **Aide J (disponible) :** `src/cli-help.ts` + `tests/cli-help.test.ts` (5 cas) — page d’aide par commande et aide globale. La liste d’options est générée depuis la table que l’analyseur applique (`allowedOptionsFor`), donc l’aide ne peut ni annoncer une option refusée ni en cacher une acceptée : un test le vérifie dans les deux sens. `jevgrep <commande> --help` (et `jevgrep cache clear --help`) sort en 0 avec la page demandée ; chaque page rappelle l’état « not implemented in this build » et cite la spécification dont elle vient (§2.1, §4.1, §4.5, §7.3).
 
@@ -875,7 +877,7 @@ Les phases `P0` à `P7` correspondent au plan d’implémentation existant.
 **Livrables :** tâches appariées, procédure d’exécution, traces expurgées et comparaison A/B.
 
 <a id="jg-030"></a>
-### JG-030 — Livrer le MVP personnel et son bilan
+### JG-030 — Livrer le MVP open source expérimental et son bilan
 
 **Type :** Livraison et décision. **Priorité :** Haute. **Phase :** P7. **Statut :** À faire.
 
@@ -885,7 +887,7 @@ Les phases `P0` à `P7` correspondent au plan d’implémentation existant.
 
 **Références :** spécification §12 ; plan §12–13 ; exigences R1–R12.
 
-**Objectif :** remettre une version personnelle exploitable avec un état exact de ses garanties, de ses résultats et de ses limites.
+**Objectif :** publier une version open source expérimentale exploitable avec un état exact de ses garanties, de ses résultats et de ses limites.
 
 **Travaux :** consolider l’artefact versionné, les contrôles, la documentation et les rapports. Vérifier les décisions du MVP et les fonctionnalités réellement livrées. Documenter les cas où la recherche aide, les régressions, les limitations connues et les suites justifiées par les mesures. Distinguer disponibilité fonctionnelle et bénéfice démontré.
 
@@ -896,9 +898,9 @@ Les phases `P0` à `P7` correspondent au plan d’implémentation existant.
 - [ ] Les plafonds facultatifs sont toujours désactivés par défaut ; les réglages d’expérimentation ne sont pas devenus des restrictions cachées.
 - [ ] Le bilan contient aussi les résultats défavorables et les usages inconnus, avec les versions et paramètres évalués.
 - [ ] Le statut expérimental est maintenu lorsque les gains ne sont pas établis ; un résultat défavorable peut conduire à restreindre ou suspendre l’usage.
-- [ ] Les fonctionnalités hors MVP restent différées : SaaS, mémoire de conversation, embeddings, multi-dépôts et publication publique.
+- [ ] Les fonctionnalités hors MVP restent différées : SaaS, mémoire de conversation, embeddings, multi-dépôts et distribution de production.
 
-**Livrables :** version personnelle du MVP, notes de version, bilan et décision de suite. **Jalon M4.**
+**Livrables :** version open source expérimentale du MVP, licence publique, notes de version, bilan et décision de suite. **Jalon M4.**
 
 ## Ordre de réalisation et validations intermédiaires
 

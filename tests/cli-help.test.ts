@@ -15,7 +15,7 @@ test('every documented command has a help page', () => {
     assert.ok(help !== undefined, `${command} has no help`);
     assert.match(help, new RegExp(command.split(' ')[0] ?? '', 'i'));
     assert.match(help, /--config/);
-    assert.match(help, /not implemented/i);
+    assert.match(help, /exit codes/i, `${command}: the page must state the exit-code contract`);
   }
   assert.equal(commandHelp('frobnicate'), undefined);
 });
@@ -58,20 +58,16 @@ test('the search help documents the response budget bounds and the query sources
   assert.match(help, /\bspecification\b/i, 'the help should cite the authority it comes from');
 });
 
-test('the global help lists the commands without advertising them as available', () => {
+test('the global help lists every command and the whole exit-code contract', () => {
   const help = globalHelp();
   assert.match(help, /^usage: jevgrep/);
-  for (const command of documentedCommands()) {
-    assert.ok(help.includes(command.split(' ')[0] ?? ''), `the global help omits ${command}`);
-  }
-  const disclaimer = help.search(/not implemented/i);
-  assert.notEqual(disclaimer, -1);
+  assert.doesNotMatch(help, /not implemented/i, 'the commands exist, so no page may claim otherwise');
   for (const command of documentedCommands()) {
     const listing = new RegExp(`^ {2}${command}$`, 'm').exec(help);
     assert.notEqual(listing, null, `${command} is not listed as a command`);
-    assert.ok(
-      (listing?.index ?? 0) > disclaimer,
-      `${command} is listed before the not-implemented disclaimer`,
-    );
   }
+  for (const code of ['0', '2', '3', '4', '130']) {
+    assert.match(help, new RegExp(`^ {2}${code}\\s`, 'm'), `exit code ${code} is missing`);
+  }
+  assert.match(help, /credential|provider/i, 'the remote requirement must be stated');
 });
