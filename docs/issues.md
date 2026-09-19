@@ -161,13 +161,15 @@ Les phases `P0` à `P7` correspondent au plan d’implémentation existant.
 <a id="jg-004"></a>
 ### JG-004 — Vérifier le contrat réel Jev et la compatibilité du SDK
 
-**Type :** Étude technique. **Priorité :** Critique. **Phase :** P0. **Statut :** À faire (cas de sonde préparés par J ; exécution réelle toujours ouverte faute d’accès fournisseur).
+**Type :** Étude technique. **Priorité :** Critique. **Phase :** P0. **Statut :** En cours : recherche SDK actualisée, sonde reproductible et 14 contrôles locaux exécutés ; validation réelle toujours ouverte faute d’accès fournisseur.
 
 **Niveau recommandé :** Senior. **Pilote proposé :** S. **Revue :** M.
 
 **Lot préparatoire J (disponible) :** `tests/fixtures/provider-contract/probe-cases.json` + `tests/provider-probe-cases.test.ts` (5 cas) — 14 cas couvrant les douze domaines à trancher (authentification valide/absente/invalide, corrélation des réponses Noul, forme du score, identité du modèle demandé et retourné, champs d’usage, borne réelle de requête, annulation en sous-processus, reprises du SDK désactivables, réponses malformées, divulgation du contenu synthétique envoyé, relevé de tarif daté, contrôle d’expurgation). Chaque cas porte sa question, son protocole d’observation, les champs à consigner et son statut (`open`/`answered` avec `answer_ref`) ; les cas bloquants sont marqués. Hygiène vérifiée par test : la variable d’environnement `TYPESAFE_API_KEY` est nommée mais aucune valeur, les preuves expurgées vont dans `docs/reports/jg-004` et les captures brutes hors du dépôt. La sonde de référence et les faits déjà sourcés sont dans `docs/research/jev-contract-update.md`.
 
 **Dépendances :** [JG-001](#jg-001), [JG-002](#jg-002), [JG-003](#jg-003).
+
+**Avancement senior :** SDK `@typesafe-ai/sdk@0.6.0` épinglé dans un paquet expérimental séparé, annulation en sous-processus et comparaison HTTP native vérifiées sous Node 24.15.0, reprises désactivées et journaux de corps absents dans les scénarios testés. [Rapport exécuté](reports/jg-004-offline-sdk.md), [sonde et commandes](../experiments/jev-contract/README.md). Aucun résultat fournisseur réel ni tarif de compte n’est revendiqué.
 
 **Prérequis externe :** identifiant fournisseur opérationnel et accès au modèle testé.
 
