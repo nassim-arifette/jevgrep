@@ -50,10 +50,10 @@ test('every declared dependency is pinned to an exact version', () => {
   }
   // The runtime dependency list is an allowlist, not a free-for-all: each entry is a
   // decision recorded in an issue report. `tiktoken` is the reference response counter
-  // pinned by JG-006; the Jev and MCP transports are deliberately dependency-free.
+  // pinned by JG-006; the Vercel adapter uses the official AI SDK evaluation API.
   assert.deepEqual(
     Object.keys(manifest.dependencies ?? {}).sort(),
-    ['tiktoken'],
+    ['@ai-sdk/gateway', 'ai', 'tiktoken'],
     'a new runtime dependency needs its own recorded decision before it is added here',
   );
 });
