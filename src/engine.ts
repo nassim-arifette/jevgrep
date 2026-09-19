@@ -30,6 +30,7 @@ import {
   CRITERION_VERSION, LAYOUT_VERSION, ProviderError, buildRequestPayload, fitsProviderLimits,
 } from './evaluation/jev.ts';
 import type { BatchItem, EvaluationBatch, ProviderClient } from './evaluation/jev.ts';
+import { createConfiguredProvider } from './evaluation/provider.ts';
 import { SearchContext, SearchLogger, isAbortError, runPhase, systemClock } from './lifecycle.ts';
 import type { Clock } from './lifecycle.ts';
 import { excerptBudget, excerptCost, renderSearchResult, ResponseBudgetError } from './response/render.ts';
@@ -37,7 +38,6 @@ import type { ReportInputs, RenderedResponse } from './response/render.ts';
 import { selectRanges } from './response/selection.ts';
 import type { SelectedRange } from './response/selection.ts';
 import { REFERENCE_COUNTER_ID, countReferenceTokens } from './response/token-counter.ts';
-import { requireQualifiedLiveSearch } from './readiness.ts';
 import { AuthorizedRoot, UnauthorizedPathError } from './source/authorization.ts';
 import type { PreparedFragment } from './source/chunker.ts';
 import { FreshnessTracker, rootReader } from './source/freshness.ts';
@@ -171,10 +171,10 @@ export class SearchEngine {
     // The mandatory report envelope is reserved before any work that could cost money.
     const available = excerptBudget(context.searchId, request.scope, REFERENCE_COUNTER_ID, request.max_context_tokens);
 
-    if (this.#options.provider === undefined) {
-      resolveCredential(this.#options.configuration, this.#options.env ?? process.env);
-      requireQualifiedLiveSearch();
-    }
+    const provider = this.#options.provider ?? createConfiguredProvider(
+      config,
+      resolveCredential(this.#options.configuration, this.#options.env ?? process.env),
+    );
 
     const root = AuthorizedRoot.open(repositoryRoot);
     const prepared = await runPhase(context, 'preparation', async () => prepareScope(root, request.scope, {
@@ -206,7 +206,7 @@ export class SearchEngine {
     }
 
     // Cache lookup precedes planning and scheduling (specification section 6.3).
-    const model = this.#options.provider?.model ?? config.provider.model;
+    const model = provider.model;
     const identityOf = (fragment: PreparedFragment): string => evaluationIdentity({
       query: request.query,
       path: fragment.path,
@@ -268,7 +268,6 @@ export class SearchEngine {
     if (plan.capReached) context.addStopReason('SCAN_CAP_REACHED');
 
     if (plan.batches.length > 0) {
-      const provider = this.#provider();
       await runPhase(context, 'evaluation', async () => {
         await runEvaluations(provider, plan.batches, context, {
           concurrency: config.search.concurrency,
@@ -343,13 +342,6 @@ export class SearchEngine {
     }
 
     return this.#render(context, request, prepared, scored, usage, plan, available, false);
-  }
-
-  #provider(): ProviderClient {
-    if (this.#options.provider !== undefined) {
-      return this.#options.provider;
-    }
-    return requireQualifiedLiveSearch();
   }
 
   /** Selection, freshness and the measured rendering, in that order. */

@@ -117,6 +117,7 @@ export function configurationFingerprint(config: Configuration, repositoryRoot: 
   return sha256Hex(JSON.stringify([
     CONFIG_SCHEMA_VERSION,
     process.platform === 'win32' ? repositoryRoot.toLowerCase() : repositoryRoot,
+    config.provider.adapter ?? 'typesafe-direct',
     config.provider.base_url.replace(/\/$/, ''),
     config.provider.model,
     config.source.respect_gitignore,
@@ -221,6 +222,7 @@ export type DoctorReport = {
   readonly repository_root_readable: boolean;
   readonly remote_evaluation_enabled: boolean;
   readonly provider: {
+    readonly adapter: 'typesafe-direct' | 'vercel-ai-gateway';
     readonly base_url: string; readonly model: string;
     readonly api_key_env: string; readonly credential: CredentialState;
   };
@@ -301,6 +303,7 @@ export function doctorReport(
     repository_root_readable: rootReadable,
     remote_evaluation_enabled: config.remote_evaluation_enabled,
     provider: {
+      adapter: config.provider.adapter ?? 'typesafe-direct',
       base_url: config.provider.base_url, model: config.provider.model,
       api_key_env: config.provider.api_key_env, credential,
     },
@@ -335,7 +338,7 @@ export function renderDoctorReport(report: DoctorReport): string[] {
     `configuration      ${report.config_path} (schema ${String(report.config_schema_version)})`,
     `repository root    ${report.repository_root}${report.repository_root_readable ? '' : ' (unreadable)'}`,
     `remote evaluation  ${remote}`,
-    `provider           ${report.provider.base_url} model=${report.provider.model}`,
+    `provider           ${report.provider.adapter} ${report.provider.base_url} model=${report.provider.model}`,
     `credential         ${report.provider.api_key_env} (${report.provider.credential}; value never printed)`,
     `pricing record     ${pricing}`,
     `response budget    default ${String(report.search.default_response_tokens)}, maximum ${String(report.search.max_response_tokens)} tokens, counter ${report.response_counter}`,

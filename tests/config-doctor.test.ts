@@ -104,6 +104,8 @@ test('doctor reports the useful state without a key and without printing the sec
   const text = renderDoctorReport(report).join('\n');
 
   assert.equal(report.provider.credential, 'present');
+  assert.equal(report.provider.adapter, 'typesafe-direct');
+  assert.ok(text.includes('typesafe-direct'));
   assert.ok(!text.includes('super-secret-value'), 'doctor must never print the credential value');
   assert.ok(text.includes('TYPESAFE_API_KEY'), 'doctor names the variable it reads');
   assert.ok(text.includes(space.repositoryRoot), 'doctor states the authorized root');
@@ -115,6 +117,27 @@ test('doctor reports the useful state without a key and without printing the sec
   const withoutKey = doctorReport(space.loaded, {});
   assert.equal(withoutKey.provider.credential, 'missing');
   assert.ok(withoutKey.problems.some((problem) => problem.includes('TYPESAFE_API_KEY')));
+});
+
+test('doctor identifies Vercel AI Gateway and its credential without contacting it', () => {
+  const space = workspace({
+    files: { 'src/a.ts': 'export const a = 1;\n' },
+    configure: (config) => ({
+      ...config,
+      provider: {
+        adapter: 'vercel-ai-gateway',
+        base_url: 'https://ai-gateway.vercel.sh',
+        api_key_env: 'AI_GATEWAY_API_KEY',
+        model: 'typesafe-ai/jev',
+      },
+    }),
+  });
+  const report = doctorReport(space.loaded, { AI_GATEWAY_API_KEY: 'synthetic-gateway-secret' });
+  const text = renderDoctorReport(report).join('\n');
+  assert.equal(report.provider.adapter, 'vercel-ai-gateway');
+  assert.equal(report.provider.credential, 'not_required');
+  assert.match(text, /vercel-ai-gateway.*ai-gateway\.vercel\.sh.*typesafe-ai\/jev/);
+  assert.equal(text.includes('synthetic-gateway-secret'), false);
 });
 
 test('doctor explains a disabled disclosure rather than reporting a missing key', () => {
