@@ -1,5 +1,5 @@
 # JevGrep
-
+`n[![npm version](https://img.shields.io/npm/v/%40nassim-arifette%2Fjevgrep?logo=npm&label=npm)](https://www.npmjs.com/package/@nassim-arifette/jevgrep)`n[![Node.js 24+](https://img.shields.io/badge/node-%3E%3D24-339933?logo=nodedotjs&logoColor=white)](https://nodejs.org/)`n[![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)`n[![MCP](https://img.shields.io/badge/MCP-compatible-7C3AED?logo=modelcontextprotocol&logoColor=white)](https://modelcontextprotocol.io/)`n[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)`n
 **Find code by what it does.** JevGrep helps coding agents find relevant code when
 they do not know the file name or symbol to search for.
 
