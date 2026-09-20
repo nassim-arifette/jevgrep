@@ -7,6 +7,7 @@ import { after, test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { AuthorizedRoot, UnauthorizedPathError, assertSafeRelativePath } from '../src/source/authorization.ts';
 import { assertNoReparsePoints, AttributeCheckError } from '../src/source/windows-attributes.ts';
+import { ATTRIBUTE_STARTUP_TIMEOUT_MS, ATTRIBUTE_WORKER_GRACE_MS } from '../src/source/windows-attributes-timeouts.ts';
 import { inventoryScope } from '../src/source/inventory.ts';
 import { createDefaultConfiguration, loadConfiguration } from '../src/config.ts';
 
@@ -394,7 +395,8 @@ test('an unavailable Windows attribute helper refuses access and exits without r
     try { assertNoReparsePoints([process.argv[1]]); process.exitCode=2; }
     catch(e) { if(e.kind !== 'unavailable') throw e; }`;
   const child = spawnSync(process.execPath, ['--input-type=module', '-e', script, space.root, join(space.directory, 'missing-windows')], {
-    windowsHide: true, encoding: 'utf8', timeout: 15_000,
+    windowsHide: true, encoding: 'utf8',
+    timeout: ATTRIBUTE_STARTUP_TIMEOUT_MS + ATTRIBUTE_WORKER_GRACE_MS + 5_000,
     cwd: fileURLToPath(new URL('../', import.meta.url)),
   });
   assert.equal(child.status, 0, child.stderr);

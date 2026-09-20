@@ -1,4 +1,5 @@
 import { Worker } from 'node:worker_threads';
+import { ATTRIBUTE_REQUEST_TIMEOUT_MS, ATTRIBUTE_STARTUP_TIMEOUT_MS, ATTRIBUTE_WORKER_GRACE_MS } from './windows-attributes-timeouts.ts';
 
 /** Windows attributes unavailable through Node Stats; paths are always data. */
 export class AttributeCheckError extends Error {
@@ -27,6 +28,7 @@ export function assertNoReparsePoints(paths: readonly string[]): void {
     || Buffer.byteLength(JSON.stringify(paths)) > 1_048_576) {
     throw new AttributeCheckError('unavailable');
   }
+  const starting = worker === undefined;
   if (worker === undefined) {
     const extension = import.meta.url.endsWith('.ts') ? 'ts' : 'js';
     worker = new Worker(new URL(`./windows-attributes-worker.${extension}`, import.meta.url), {
@@ -42,7 +44,8 @@ export function assertNoReparsePoints(paths: readonly string[]): void {
   // Status plus offending component index; paths never appear in helper output.
   const state = new Int32Array(new SharedArrayBuffer(8));
   worker.postMessage({ paths, state: state.buffer });
-  const waited = Atomics.wait(state, 0, 0, 10_000);
+  const timeout = starting ? ATTRIBUTE_STARTUP_TIMEOUT_MS : ATTRIBUTE_REQUEST_TIMEOUT_MS;
+  const waited = Atomics.wait(state, 0, 0, timeout + ATTRIBUTE_WORKER_GRACE_MS);
   const status = Atomics.load(state, 0);
   const index = Atomics.load(state, 1);
   const refusedPath = index >= 0 && index < paths.length ? paths[index] : undefined;

@@ -1,6 +1,7 @@
 import { spawn } from 'node:child_process';
 import { join } from 'node:path';
 import { parentPort } from 'node:worker_threads';
+import { ATTRIBUTE_REQUEST_TIMEOUT_MS, ATTRIBUTE_STARTUP_TIMEOUT_MS } from './windows-attributes-timeouts.ts';
 
 // Fixed program, no profiles or interpolated paths. Only status/index are returned.
 // GetAttributes examines the entry itself, including any reparse tag (bit 0x400).
@@ -46,6 +47,7 @@ const child = spawn(executable, ['-NoLogo', '-NoProfile', '-NonInteractive', '-C
 let pending: Int32Array | null = null;
 let timer: NodeJS.Timeout | undefined;
 let closed = false;
+let initialized = false;
 let buffer = '';
 
 function answer(status: number, index = -1): void {
@@ -84,6 +86,7 @@ child.stdout.on('data', (chunk: string) => {
   buffer = buffer.slice(newline + 1);
   const reply = /^([1-4]) (-1|[0-9]{1,3})$/.exec(line);
   if (pending === null || reply === null || buffer.length > 0 || Number(reply[2]) >= 512) { close(); return; }
+  initialized = true;
   answer(Number(reply[1]), Number(reply[2]));
 });
 port.on('message', (message: { paths?: readonly string[]; state?: SharedArrayBuffer; close?: boolean }) => {
@@ -97,7 +100,7 @@ port.on('message', (message: { paths?: readonly string[]; state?: SharedArrayBuf
     return;
   }
   pending = new Int32Array(message.state);
-  timer = setTimeout(close, 8_000);
+  timer = setTimeout(close, initialized ? ATTRIBUTE_REQUEST_TIMEOUT_MS : ATTRIBUTE_STARTUP_TIMEOUT_MS);
   child.stdin.write(`${JSON.stringify(message.paths)}\n`);
 });
 port.on('close', close);
