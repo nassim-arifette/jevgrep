@@ -9,6 +9,14 @@ import { AuthorizedRoot } from './source/authorization.ts';
 
 export type InitProvider = 'typesafe' | 'vercel';
 
+export const DEFAULT_JEVGREPIGNORE = `# JevGrep already respects .gitignore.
+#
+# The following are also excluded automatically for security:
+# credentials, dependencies, build outputs, binaries, and oversized files.
+#
+# Add versioned content that is not useful for search below.
+`;
+
 export function configurationHome(env: NodeJS.ProcessEnv = process.env): string {
   const override = env['JEVGREP_CONFIG_HOME'];
   if (override && isAbsolute(override)) return resolve(override);
@@ -132,6 +140,18 @@ export function buildInitialConfiguration(root: string, provider: InitProvider):
 }
 
 export type CreatedProfile = { readonly configPath: string; readonly secretsPath: string; readonly variable: string };
+
+function createDefaultIgnoreFile(root: AuthorizedRoot): boolean {
+  const repository = new LocalDirectory(root.path);
+  try { root.resolveEntry('.jevgrepignore'); return false; }
+  catch (cause) { if (!isMissing(cause)) throw cause; }
+  try { repository.write('.jevgrepignore', DEFAULT_JEVGREPIGNORE, true); return true; }
+  catch (cause) {
+    try { root.resolveEntry('.jevgrepignore'); return false; }
+    catch { throw cause; }
+  }
+}
+
 export function createProfile(options: {
   readonly root: string; readonly provider: InitProvider; readonly apiKey?: string; readonly env?: NodeJS.ProcessEnv;
   readonly replaceProvider?: boolean;
@@ -154,8 +174,16 @@ export function createProfile(options: {
   }
   if (options.apiKey !== undefined && readOptional(storage, 'secrets.env', 32_768) !== undefined) throw new Error(`a profile already exists at ${storage.path}`);
   root.assertCurrent(); storage.write('config.json', `${JSON.stringify(desired, null, 2)}\n`, true);
-  try { if (options.apiKey !== undefined) storage.write('secrets.env', `${desired.provider.api_key_env}=${options.apiKey.trim()}\n`, true); }
-  catch (cause) { storage.remove('config.json'); throw cause; }
+  let ignoreCreated = false;
+  try {
+    if (options.apiKey !== undefined) storage.write('secrets.env', `${desired.provider.api_key_env}=${options.apiKey.trim()}\n`, true);
+    ignoreCreated = createDefaultIgnoreFile(root);
+  } catch (cause) {
+    storage.remove('config.json');
+    if (options.apiKey !== undefined) storage.remove('secrets.env');
+    if (ignoreCreated) new LocalDirectory(root.path).remove('.jevgrepignore');
+    throw cause;
+  }
   return { configPath, secretsPath, variable: desired.provider.api_key_env };
 }
 

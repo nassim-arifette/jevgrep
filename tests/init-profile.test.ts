@@ -6,7 +6,7 @@ import test, { after } from 'node:test';
 import { executeCommand } from '../src/cli-commands.ts';
 
 import {
-  configuredGlobalProvider, createGlobalProfile, createProfile, discoverProjectConfiguration,
+  configuredGlobalProvider, createGlobalProfile, createProfile, DEFAULT_JEVGREPIGNORE, discoverProjectConfiguration,
   environmentWithProfileSecrets, updateGlobalProfile,
 } from '../src/init.ts';
 
@@ -71,6 +71,17 @@ test('init creates a TypeSafe-first trusted profile outside the repository', () 
   assert.equal(provider['api_key_env'], 'TYPESAFE_API_KEY');
   assert.ok(!readFileSync(profile.configPath, 'utf8').includes('secret-value'));
   assert.equal(environmentWithProfileSecrets(profile.configPath, {})['TYPESAFE_API_KEY'], 'secret-value');
+  assert.equal(readFileSync(join(repository, '.jevgrepignore'), 'utf8'), DEFAULT_JEVGREPIGNORE);
+});
+
+test('init preserves an existing repository .jevgrepignore', () => {
+  const space = temporary('jevgrep-init-ignore-');
+  const repository = join(space, 'repository');
+  const configHome = join(space, 'configuration');
+  mkdirSync(repository);
+  writeFileSync(join(repository, '.jevgrepignore'), 'public/generated/\n');
+  createProfile({ root: repository, provider: 'typesafe', env: { JEVGREP_CONFIG_HOME: configHome } });
+  assert.equal(readFileSync(join(repository, '.jevgrepignore'), 'utf8'), 'public/generated/\n');
 });
 
 test('an explicit provider choice can replace the global provider and credential', () => {
