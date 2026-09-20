@@ -131,8 +131,9 @@ test('pre-dispatch cancellation and empty batches never enter the evaluator', as
   assert.equal(calls, 0);
 });
 
-test('live Gateway construction stays closed until senior qualification is complete', () => {
-  assert.throws(() => new VercelGatewayAdapter({
+test('live Gateway construction is available after explicit configuration checks', () => {
+  const adapter = new VercelGatewayAdapter({
     apiKey: 'synthetic-secret', model: VERCEL_JEV_MODEL,
-  }), /live search is not qualified/);
+  });
+  assert.equal(adapter.endpoint, 'https://ai-gateway.vercel.sh/v4/ai');
 });

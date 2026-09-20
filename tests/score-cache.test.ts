@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, readdirSync, renameSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { after, test } from 'node:test';
@@ -130,6 +130,9 @@ test('a model whose revision cannot be identified is never persisted', () => {
   assert.equal(isPinnedModelRevision('jev-1.13.0'), true);
   assert.equal(isPinnedModelRevision('jev-latest'), false);
   assert.equal(isPinnedModelRevision('jev-preview'), false);
+  for (const alias of ['jev-2', 'jev-1.13.0-latest', 'typesafe-ai/jev', 'something-2026']) {
+    assert.equal(isPinnedModelRevision(alias), false);
+  }
 
   const cache = newCache();
   const identity = evaluationIdentity({ ...BASE, modelRevision: 'jev-latest' });
@@ -180,4 +183,61 @@ test('a disabled cache never reads or writes', () => {
   assert.equal(cache.write(identity, 0.5, META), false);
   assert.equal(cache.read(identity), null);
   assert.equal(cache.stats.writes, 0);
+});
+
+test('cache identities cannot address paths and clearing never follows a linked shard', () => {
+  const directory = cacheDirectory();
+  const outside = cacheDirectory();
+  const identity = evaluationIdentity(BASE);
+  const sentinel = join(outside, `${identity}.json`);
+  writeFileSync(sentinel, 'outside');
+  symlinkSync(outside, join(directory, identity.slice(0, 2)), process.platform === 'win32' ? 'junction' : 'dir');
+  const cache = newCache({ directory });
+  assert.equal(cache.write('../outside', 0.8, META), false);
+  assert.equal(cache.read('../outside'), null);
+  assert.equal(cache.write(identity, 0.8, META), false);
+  assert.equal(cache.read(identity), null);
+  assert.equal(cache.clear(), 0);
+  assert.equal(readFileSync(sentinel, 'utf8'), 'outside');
+});
+
+test('a replaced cache root is never reauthorized and unknown files survive clear', () => {
+  const directory = cacheDirectory(); const cache = newCache({ directory });
+  const identity = evaluationIdentity(BASE);
+  cache.write(identity, 0.8, META);
+  writeFileSync(join(directory, 'operator-note.txt'), 'keep');
+  assert.equal(cache.clear(), 1);
+  assert.equal(readFileSync(join(directory, 'operator-note.txt'), 'utf8'), 'keep');
+  const moved = `${directory}-original`;
+  renameSync(directory, moved); directories.push(moved);
+  mkdirSync(directory);
+  assert.equal(cache.write(identity, 0.9, META), false);
+  assert.equal(cache.read(identity), null);
+  assert.equal(cache.clear(), 0);
+  assert.deepEqual(readdirSync(directory), []);
+});
+
+test('oversized corrupt entries are bounded misses and a tiny cache does not exceed its cap', () => {
+  const directory = cacheDirectory(); const identity = evaluationIdentity(BASE);
+  mkdirSync(join(directory, identity.slice(0, 2)));
+  writeFileSync(join(directory, identity.slice(0, 2), `${identity}.json`), 'x'.repeat(20_000));
+  const cache = newCache({ directory, maxBytes: 1 });
+  assert.equal(cache.read(identity), null);
+  assert.equal(cache.write(identity, 0.8, META), false);
+  cache.enforceSizeLimit();
+  assert.equal(cache.clear(), 0);
+});
+
+test('writers sharing a directory reconcile eviction and disabled caches can be explicitly cleared', () => {
+  const directory = cacheDirectory();
+  const first = newCache({ directory, maxBytes: 450 });
+  const second = newCache({ directory, maxBytes: 450 });
+  first.write(evaluationIdentity(BASE), 0.1, META);
+  second.write(evaluationIdentity({ ...BASE, query: 'second' }), 0.2, META);
+  first.write(evaluationIdentity({ ...BASE, query: 'third' }), 0.3, META);
+  const sizes = readdirSync(directory).filter((name) => /^[a-f0-9]{2}$/.test(name)).flatMap((shard) =>
+    readdirSync(join(directory, shard)).map((name) => Buffer.byteLength(readFileSync(join(directory, shard, name)))));
+  assert.ok(sizes.reduce((a, b) => a + b, 0) <= 450);
+  const disabled = newCache({ directory, enabled: false });
+  assert.equal(disabled.clear(), 1);
 });

@@ -16,13 +16,12 @@
  * that produced it. A corrupt, expired or incomplete entry is a miss, and a cache
  * failure disables reuse for that operation instead of failing a valid search.
  */
-import { createHash, randomUUID } from 'node:crypto';
-import {
-  mkdirSync, readFileSync, readdirSync, renameSync, rmSync, statSync, writeFileSync,
-} from 'node:fs';
+import { createHash } from 'node:crypto';
+import { lstatSync } from 'node:fs';
 import { join } from 'node:path';
+import { LocalDirectory, isMissing } from '../local-directory.ts';
 
-export const CACHE_SCHEMA_VERSION = 1;
+export const CACHE_SCHEMA_VERSION = 2;
 
 /** Everything that can change a provider judgment. */
 export type EvaluationIdentityInput = {
@@ -41,8 +40,8 @@ export type EvaluationIdentityInput = {
   /** Extra provider evaluation options, if the adapter ever sends any. */
   readonly providerOptions?: Readonly<Record<string, string | number | boolean>>;
   /**
-   * Ordered ids of the whole batch, for layouts whose question independence is not
-   * verified. Layout A keeps this empty: its shared state holds no other excerpt.
+   * Ordered hashes of the full serialized batch. Required until question
+   * independence has been qualified for the selected provider and layout.
    */
   readonly batchComposition?: readonly string[];
 };
@@ -56,7 +55,7 @@ export function evaluationIdentity(input: EvaluationIdentityInput): string {
     input.startLine,
     input.endLine,
     input.text,
-    input.label ?? '',
+    input.label,
     input.criterionVersion,
     input.layoutVersion,
     input.chunkerVersion,
@@ -73,7 +72,7 @@ export function evaluationIdentity(input: EvaluationIdentityInput): string {
  * alias can answer with a different revision tomorrow (specification section 9).
  */
 export function isPinnedModelRevision(model: string): boolean {
-  return /\d/.test(model) && !/(?:^|[-_])latest$/i.test(model) && !/(?:^|[-_])preview$/i.test(model);
+  return /^jev-\d+\.\d+\.\d+$/.test(model);
 }
 
 export type CacheEntry = {
@@ -116,12 +115,13 @@ function isCacheEntry(value: unknown): value is CacheEntry {
     && typeof entry['identity'] === 'string'
     && typeof entry['score'] === 'number' && Number.isFinite(entry['score'])
     && entry['score'] >= 0 && entry['score'] <= 1
-    && typeof entry['model_revision'] === 'string'
+    && typeof entry['model_revision'] === 'string' && isPinnedModelRevision(entry['model_revision'])
     && typeof entry['layout'] === 'string'
     && typeof entry['criterion'] === 'string'
     && typeof entry['chunker'] === 'string'
-    && typeof entry['created_at_ms'] === 'number'
-    && typeof entry['expires_at_ms'] === 'number';
+    && Number.isSafeInteger(entry['created_at_ms']) && Number.isSafeInteger(entry['expires_at_ms'])
+    && (entry['created_at_ms'] as number) >= 0
+    && (entry['expires_at_ms'] as number) > (entry['created_at_ms'] as number);
 }
 
 /**
@@ -131,208 +131,157 @@ function isCacheEntry(value: unknown): value is CacheEntry {
  * revisit the format if profiling justifies it (specification section 9).
  */
 export class ScoreCache {
-  readonly #directory: string;
-  readonly #enabled: boolean;
-  readonly #ttlMs: number;
-  readonly #maxBytes: number;
+  readonly #options: CacheOptions;
+  readonly #storage: LocalDirectory | null;
   readonly #now: () => number;
   readonly stats: CacheStats = { hits: 0, misses: 0, writes: 0, failures: 0, expired: 0, corrupt: 0 };
-  #writesSinceSweep = 0;
+  #sizes: Map<string, { size: number; created: number }> | null = null;
+  #totalBytes = 0;
+  readonly #shardStamps = new Map<string, string>();
 
   constructor(options: CacheOptions) {
-    this.#directory = options.directory;
-    this.#enabled = options.enabled;
-    this.#ttlMs = options.ttlSeconds * 1_000;
-    this.#maxBytes = options.maxBytes;
+    this.#options = options;
     this.#now = options.now ?? Date.now;
+    try { this.#storage = new LocalDirectory(options.directory); }
+    catch { this.#storage = null; this.stats.failures++; }
   }
 
-  get enabled(): boolean {
-    return this.#enabled;
-  }
+  get enabled(): boolean { return this.#options.enabled && this.#storage !== null; }
+  get directory(): string { return this.#options.directory; }
+  #name(identity: string): string { return `${identity.slice(0, 2)}/${identity}.json`; }
 
-  get directory(): string {
-    return this.#directory;
-  }
-
-  #pathOf(identity: string): string {
-    return join(this.#directory, identity.slice(0, 2), `${identity}.json`);
-  }
-
-  /** Validated score for an identity, or null for any kind of miss. */
   read(identity: string): number | null {
-    if (!this.#enabled) {
-      return null;
-    }
-    const file = this.#pathOf(identity);
+    if (!this.enabled || !/^[a-f0-9]{64}$/.test(identity)) return null;
+    const name = this.#name(identity);
     let raw: string;
-    try {
-      raw = readFileSync(file, 'utf8');
-    } catch (cause) {
-      const code = (cause as { code?: string }).code;
-      if (code !== 'ENOENT') {
-        this.stats.failures += 1;
-      }
-      this.stats.misses += 1;
-      return null;
+    try { raw = this.#storage!.read(name, 16_384).toString('utf8'); }
+    catch (cause) {
+      if (!isMissing(cause)) this.stats.failures++;
+      this.stats.misses++; return null;
     }
-
-    let parsed: unknown;
-    try {
-      parsed = JSON.parse(raw);
-    } catch {
-      this.stats.corrupt += 1;
-      this.stats.misses += 1;
-      this.#discard(file);
-      return null;
+    let entry: unknown;
+    try { entry = JSON.parse(raw); } catch { entry = null; }
+    if (!isCacheEntry(entry) || entry.identity !== identity || entry.created_at_ms > this.#now()) {
+      this.stats.corrupt++; this.stats.misses++; this.#discard(name); return null;
     }
-    if (!isCacheEntry(parsed) || parsed.identity !== identity) {
-      this.stats.corrupt += 1;
-      this.stats.misses += 1;
-      this.#discard(file);
-      return null;
+    if (entry.expires_at_ms <= this.#now()) {
+      this.stats.expired++; this.stats.misses++; this.#discard(name); return null;
     }
-    if (parsed.expires_at_ms <= this.#now()) {
-      this.stats.expired += 1;
-      this.stats.misses += 1;
-      this.#discard(file);
-      return null;
-    }
-    this.stats.hits += 1;
-    return parsed.score;
+    this.stats.hits++; return entry.score;
   }
 
-  /**
-   * Store one validated score.
-   *
-   * A model whose revision is not identifiable is never persisted: the entry could
-   * not be trusted in a later session.
-   */
   write(identity: string, score: number, meta: {
-    readonly modelRevision: string; readonly layout: string;
-    readonly criterion: string; readonly chunker: string;
+    readonly modelRevision: string; readonly layout: string; readonly criterion: string; readonly chunker: string;
   }): boolean {
-    if (!this.#enabled || !Number.isFinite(score) || score < 0 || score > 1) {
-      return false;
-    }
-    if (!isPinnedModelRevision(meta.modelRevision)) {
-      return false;
-    }
+    if (!this.enabled || !/^[a-f0-9]{64}$/.test(identity) || !Number.isFinite(score) || score < 0 || score > 1
+      || !isPinnedModelRevision(meta.modelRevision)) return false;
     const now = this.#now();
     const entry: CacheEntry = {
-      schema_version: CACHE_SCHEMA_VERSION,
-      identity,
-      score,
-      model_revision: meta.modelRevision,
-      layout: meta.layout,
-      criterion: meta.criterion,
-      chunker: meta.chunker,
-      created_at_ms: now,
-      expires_at_ms: now + this.#ttlMs,
+      schema_version: CACHE_SCHEMA_VERSION, identity, score, model_revision: meta.modelRevision,
+      layout: meta.layout, criterion: meta.criterion, chunker: meta.chunker,
+      created_at_ms: now, expires_at_ms: now + this.#options.ttlSeconds * 1_000,
     };
-    const file = this.#pathOf(identity);
-    const temporary = `${file}.${randomUUID()}.tmp`;
+    const raw = `${JSON.stringify(entry)}\n`;
+    const size = Buffer.byteLength(raw);
+    if (!isCacheEntry(entry) || size > Math.min(16_384, this.#options.maxBytes)) return false;
     try {
-      mkdirSync(join(this.#directory, identity.slice(0, 2)), { recursive: true });
-      writeFileSync(temporary, `${JSON.stringify(entry)}\n`, { encoding: 'utf8', mode: 0o600 });
-      renameSync(temporary, file);
-      this.stats.writes += 1;
-      this.#writesSinceSweep += 1;
-      if (this.#writesSinceSweep >= 64) {
-        this.enforceSizeLimit();
-      }
+      return this.#storage!.withLock(() => {
+      this.#loadSizes();
+      const name = this.#name(identity);
+      this.#storage!.write(name, raw);
+      this.#totalBytes += size - (this.#sizes!.get(name)?.size ?? 0);
+      this.#sizes!.set(name, { size, created: now });
+      this.#shardStamps.set(identity.slice(0, 2), this.#stamp(identity.slice(0, 2)));
+      this.stats.writes++;
+      this.#evict();
       return true;
-    } catch {
-      this.stats.failures += 1;
-      this.#discard(temporary);
-      return false;
-    }
+      });
+    } catch { this.stats.failures++; this.#sizes = null; return false; }
   }
 
-  /** Drop the oldest entries until the directory fits its configured size. */
   enforceSizeLimit(): void {
-    this.#writesSinceSweep = 0;
-    let entries: { path: string; size: number; created: number }[];
-    try {
-      entries = this.#listEntries();
-    } catch {
-      this.stats.failures += 1;
-      return;
-    }
-    let total = entries.reduce((sum, entry) => sum + entry.size, 0);
-    if (total <= this.#maxBytes) {
-      return;
-    }
-    entries.sort((left, right) => left.created - right.created);
-    for (const entry of entries) {
-      if (total <= this.#maxBytes) {
-        break;
-      }
-      this.#discard(entry.path);
-      total -= entry.size;
+    if (!this.enabled) return;
+    try { this.#storage!.withLock(() => { this.#shardStamps.clear(); this.#loadSizes(); this.#evict(); }); }
+    catch { this.stats.failures++; this.#sizes = null; }
+  }
+
+  #evict(): void {
+    const sizes = this.#sizes!;
+    if (this.#totalBytes <= this.#options.maxBytes) return;
+    const oldest = [...sizes].sort(([a, left], [b, right]) => left.created - right.created || a.localeCompare(b));
+    for (const [name] of oldest) {
+      if (this.#totalBytes <= this.#options.maxBytes) break;
+      this.#discard(name);
     }
   }
 
-  /** Remove every entry of this configured cache, and nothing else. */
+  #loadSizes(): void {
+    this.#sizes = this.#listEntries();
+    this.#totalBytes = [...this.#sizes.values()].reduce((sum, entry) => sum + entry.size, 0);
+  }
+
+  #stamp(shard: string): string {
+    const stat = lstatSync(join(this.#storage!.path, shard), { bigint: true });
+    return `${stat.dev}:${stat.ino}:${stat.mtimeNs}:${stat.ctimeNs}`;
+  }
+
+  /** Only valid entry names are removed; never traverse links or recursively delete a directory. */
   clear(): number {
-    let removed = 0;
-    let entries: { path: string; size: number; created: number }[];
+    if (this.#storage === null) return 0;
     try {
-      entries = this.#listEntries();
-    } catch {
-      return 0;
-    }
-    for (const entry of entries) {
-      this.#discard(entry.path);
-      removed += 1;
-    }
-    try {
-      rmSync(this.#directory, { recursive: true, force: true });
-    } catch {
-      this.stats.failures += 1;
-    }
-    return removed;
+      return this.#storage.withLock(() => {
+      this.#shardStamps.clear();
+      const entries = this.#listEntries();
+      let removed = 0;
+      for (const name of entries.keys()) if (this.#discard(name)) removed++;
+      this.#sizes = null;
+      return removed;
+      });
+    } catch { this.stats.failures++; return 0; }
   }
 
-  #listEntries(): { path: string; size: number; created: number }[] {
-    const found: { path: string; size: number; created: number }[] = [];
-    let shards: string[];
-    try {
-      shards = readdirSync(this.#directory);
-    } catch (cause) {
-      if ((cause as { code?: string }).code === 'ENOENT') {
-        return found;
-      }
-      throw cause;
-    }
-    for (const shard of shards) {
-      const shardPath = join(this.#directory, shard);
-      let names: string[];
+  #listEntries(): Map<string, { size: number; created: number }> {
+    if (this.#sizes === null) this.#shardStamps.clear();
+    const entries = this.#sizes ?? new Map<string, { size: number; created: number }>();
+    let root;
+    try { root = this.#storage!.root(); }
+    catch (cause) { if (isMissing(cause)) return entries; throw cause; }
+    const seenShards = new Set<string>();
+    for (const shard of root.readDirectory('.')) {
+      if (!/^[a-f0-9]{2}$/.test(shard.name)) continue;
+      seenShards.add(shard.name);
       try {
-        names = readdirSync(shardPath);
-      } catch {
-        continue;
-      }
-      for (const name of names) {
-        const file = join(shardPath, name);
-        try {
-          const stats = statSync(file);
-          if (stats.isFile()) {
-            found.push({ path: file, size: stats.size, created: stats.mtimeMs });
-          }
-        } catch {
-          // Concurrent removal: nothing to account for.
+        const stamp = this.#stamp(shard.name);
+        if (this.#shardStamps.get(shard.name) === stamp) continue;
+        for (const name of entries.keys()) if (name.startsWith(`${shard.name}/`)) entries.delete(name);
+        for (const file of root.readDirectory(shard.name)) {
+          if (!/^[a-f0-9]{64}\.json$/.test(file.name) || !file.name.startsWith(shard.name)) continue;
+          const name = `${shard.name}/${file.name}`;
+          try {
+          const entry = root.resolveEntry(name);
+          if (entry.kind !== 'file') continue;
+          let created = 0;
+          try {
+            const parsed: unknown = JSON.parse(this.#storage!.read(name, 16_384).toString('utf8'));
+            if (isCacheEntry(parsed)) created = parsed.created_at_ms;
+          } catch { /* corrupt/oversized entries are evicted first, without unbounded reads */ }
+          entries.set(name, { size: entry.sizeBytes, created });
+          } catch (cause) { if (!isMissing(cause)) this.stats.failures++; }
         }
-      }
+        this.#shardStamps.set(shard.name, stamp);
+      } catch (cause) { if (!isMissing(cause)) this.stats.failures++; }
     }
-    return found;
+    for (const name of entries.keys()) if (!seenShards.has(name.slice(0, 2))) entries.delete(name);
+    root.assertCurrent();
+    return entries;
   }
 
-  #discard(file: string): void {
+  #discard(name: string): boolean {
     try {
-      rmSync(file, { force: true });
-    } catch {
-      this.stats.failures += 1;
-    }
+      const removed = this.#storage!.remove(name);
+      this.#totalBytes -= this.#sizes?.get(name)?.size ?? 0;
+      this.#sizes?.delete(name);
+      return removed;
+    } catch { this.stats.failures++; return false; }
   }
 }

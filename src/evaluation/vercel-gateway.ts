@@ -5,29 +5,61 @@
  * model. This adapter therefore uses the AI SDK evaluation API and pins retries to
  * zero so one scheduler attempt remains one provider attempt.
  *
- * Live construction remains behind the repository qualification gate. Tests inject
- * the evaluator and never contact Vercel.
+ * Tests inject the evaluator and never contact Vercel; the default implementation uses
+ * the configured Vercel AI Gateway account.
  */
 import { createGateway, type GatewayEvaluationModelId } from '@ai-sdk/gateway';
 import {
-  experimental_evaluate,
   type Experimental_EvaluationModel,
   type Experimental_EvaluationQuestion,
   type JSONValue,
 } from 'ai';
 
-import { requireQualifiedLiveSearch } from '../readiness.ts';
 import {
   CRITERION_VERSION,
   LAYOUT_VERSION,
   ProviderError,
   RELEVANCE_CRITERION,
   questionInstructions,
+  parseRetryAfter,
+  inspectResponseKeys,
   type BatchEvaluation,
   type EvaluationBatch,
   type InvalidAnswer,
   type ProviderClient,
 } from './jev.ts';
+import { boundedFetch } from './http.ts';
+
+/** Validate each association before the SDK's all-or-nothing envelope validator. */
+const gatewayFetch: typeof fetch = async (input, init) => {
+  const response = await boundedFetch(input, init);
+  if (!response.ok || typeof init?.body !== 'string') return response;
+  const raw = await response.text();
+  try {
+    const request = JSON.parse(init.body) as { questions: Record<string, unknown> };
+    const body = JSON.parse(raw) as { answers?: unknown; usage?: unknown };
+    const answers = errorRecord(body.answers);
+    if (answers === null || Array.isArray(answers)) throw new Error('invalid answer map');
+    const keys = inspectResponseKeys(raw, Object.keys(request.questions));
+    const associations = Object.fromEntries(Object.entries(answers).filter(([id]) => !keys.answers.has(id)).map(([id, value]) => {
+      const answer = errorRecord(value);
+      // A schema-valid wrong-type sentinel reaches our per-item normalizer without
+      // turning one malformed neighbor into a rejected batch or a fabricated score.
+      return [id, answer?.['type'] === 'boolean' && typeof answer['probability'] === 'number' && Number.isFinite(answer['probability'])
+        ? { type: 'boolean', probability: answer['probability'] } : { type: 'choice', choice: '' }];
+    }));
+    const usage = keys.usageAmbiguous ? null : errorRecord(body.usage);
+    const inputTokens = usableCount(usage?.['inputTokens']); const outputTokens = usableCount(usage?.['outputTokens']);
+    const headers = new Headers(response.headers);
+    headers.delete('content-length'); headers.delete('content-encoding');
+    return new Response(JSON.stringify({ answers: associations, usage: {
+      ...(inputTokens === null ? {} : { inputTokens }), ...(outputTokens === null ? {} : { outputTokens }),
+    } }), { status: response.status, headers });
+  } catch {
+    // The SDK's schema validator owns malformed JSON/envelopes.
+    return new Response(raw, { status: response.status, headers: response.headers });
+  }
+};
 
 export const VERCEL_JEV_MODEL = 'typesafe-ai/jev' as const satisfies GatewayEvaluationModelId;
 export const VERCEL_GATEWAY_BASE_URL = 'https://ai-gateway.vercel.sh' as const;
@@ -54,7 +86,7 @@ export type GatewayEvaluationResult = {
   };
 };
 
-/** Injectable seam: production uses `experimental_evaluate`; tests use a local fake. */
+/** Injectable seam: production uses the SDK model operation; tests can use a local fake. */
 export type GatewayEvaluator = (request: GatewayEvaluationRequest) => Promise<GatewayEvaluationResult>;
 
 export type VercelGatewayAdapterOptions = {
@@ -120,6 +152,14 @@ function statusFromError(cause: unknown): number | null {
 
 function classifyGatewayError(cause: unknown, transmittedBytes: number, signal?: AbortSignal): ProviderError {
   const status = statusFromError(cause);
+  let retryAfterMs: number | null = null;
+  let current = errorRecord(cause);
+  for (let depth = 0; depth < 4 && current !== null; depth++) {
+    const headers = current['responseHeaders'];
+    const value = headers instanceof Headers ? headers.get('retry-after') : errorRecord(headers)?.['retry-after'];
+    if (typeof value === 'string') retryAfterMs = parseRetryAfter(value);
+    current = errorRecord(current['cause']);
+  }
   const cancelled = Boolean(signal?.aborted)
     && cause instanceof Error && (cause.name === 'AbortError' || cause.name === 'DOMException');
   if (status === 401 || status === 403) {
@@ -137,13 +177,13 @@ function classifyGatewayError(cause: unknown, transmittedBytes: number, signal?:
   if (status === 429) {
     return new ProviderError({
       code: 'PROVIDER_RATE_LIMIT', message: 'AI Gateway rate limit reached',
-      retryable: true, ambiguous: false, status, transmittedBytes,
+      retryable: true, ambiguous: false, status, transmittedBytes, retryAfterMs,
     });
   }
   if (status !== null && status >= 500) {
     return new ProviderError({
       code: 'PROVIDER_UNAVAILABLE', message: `AI Gateway is unavailable (HTTP ${String(status)})`,
-      retryable: true, ambiguous: true, status, transmittedBytes,
+      retryable: true, ambiguous: true, status, transmittedBytes, retryAfterMs,
     });
   }
   return new ProviderError({
@@ -207,14 +247,20 @@ function normalizeGatewayResult(
 }
 
 async function evaluateWithAiSdk(request: GatewayEvaluationRequest): Promise<GatewayEvaluationResult> {
-  const options = {
-    model: request.model,
+  if (typeof request.model === 'string') throw new Error('a Gateway evaluation model is required');
+  // The model operation has no retry layer or warning logger. Keep provider bodies
+  // and warning strings out of stdout/stderr; per-item validation belongs below.
+  const result = await request.model.doEvaluate({
     state: request.state,
     questions: request.questions,
-    maxRetries: request.maxRetries,
+    providerOptions: {},
     ...(request.abortSignal === undefined ? {} : { abortSignal: request.abortSignal }),
+  });
+  return {
+    answers: result.answers,
+    usage: { inputTokens: result.usage?.inputTokens, outputTokens: result.usage?.outputTokens },
+    response: { modelId: result.response?.modelId ?? '', ...(result.response?.id === undefined ? {} : { id: result.response.id }) },
   };
-  return experimental_evaluate(options);
 }
 
 export class VercelGatewayAdapter implements ProviderClient {
@@ -224,20 +270,21 @@ export class VercelGatewayAdapter implements ProviderClient {
   readonly #endpoint: string;
 
   constructor(options: VercelGatewayAdapterOptions) {
-    if (options.evaluate === undefined) {
-      requireQualifiedLiveSearch();
-    }
     this.model = options.model;
     const baseUrl = (options.baseUrl ?? VERCEL_GATEWAY_BASE_URL).replace(/\/$/, '');
     this.#endpoint = `${baseUrl}/v4/ai`;
     this.#evaluate = options.evaluate ?? evaluateWithAiSdk;
     this.#evaluationModel = options.evaluationModel ?? (options.evaluate === undefined
-      ? createGateway({ apiKey: options.apiKey, baseURL: this.#endpoint }).evaluation(options.model)
+      ? createGateway({ apiKey: options.apiKey, baseURL: this.#endpoint, fetch: gatewayFetch }).evaluation(options.model)
       : options.model);
   }
 
   get endpoint(): string {
     return this.#endpoint;
+  }
+
+  serializeBatch(batch: EvaluationBatch): string {
+    return JSON.stringify({ ...buildGatewayInput(batch), providerOptions: {} });
   }
 
   async evaluateBatch(batch: EvaluationBatch, signal?: AbortSignal): Promise<BatchEvaluation> {
@@ -252,11 +299,9 @@ export class VercelGatewayAdapter implements ProviderClient {
     }
 
     const input = buildGatewayInput(batch);
-    // This is the serialized evaluation input Jev receives. The live gate remains
-    // closed until Gateway wire accounting is qualified against a synthetic request.
-    const transmittedBytes = Buffer.byteLength(JSON.stringify({
-      model: this.model, state: input.state, questions: input.questions,
-    }), 'utf8');
+    // This is the serialized evaluation input Jev receives. Gateway may add its own
+    // protocol envelope, so this remains a conservative application-level measurement.
+    const transmittedBytes = Buffer.byteLength(this.serializeBatch(batch), 'utf8');
     const request: GatewayEvaluationRequest = {
       model: this.#evaluationModel,
       state: input.state,

@@ -129,6 +129,9 @@ test('every configuration nesting rejects unknown keys and unsafe or unsupported
 });
 
 test('provider settings accept only the documented endpoint and well-formed rate cards', () => {
+  assert.throws(() => configurationSchema.parse({ ...validConfiguration, provider: { ...validConfiguration.provider,
+    pricing: { model: validConfiguration.provider.model, verified_at: '2026-09-20', input_usd_per_million_tokens: 0.042, output_usd_per_million_tokens: 1 },
+  } }), /free-output/);
   for (const base_url of ['http://api.typesafe.ai', 'https://api.typesafe.ai.evil.test', 'https://key@api.typesafe.ai',
     'https://api.typesafe.ai?key=secret', 'https://api.typesafe.ai:444', 'https://custom.test']) {
     assert.throws(() => configurationSchema.parse({ ...validConfiguration, provider: { ...validConfiguration.provider, base_url } }), ContractValidationError);

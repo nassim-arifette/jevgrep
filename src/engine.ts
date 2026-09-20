@@ -19,13 +19,14 @@
  * - `scope_fully_scanned` is asserted only when preparation finished and every
  *   fragment has a validated evaluation.
  */
+import { createHash } from 'node:crypto';
 import {
   ContractValidationError, createSearchError, parseSearchRequest,
 } from './contracts.ts';
 import type { ErrorCode, ScanCap, SearchOutcome, StopReason } from './contracts.ts';
 import { ConfigurationError, resolveCredential } from './config.ts';
 import type { LoadedConfiguration } from './config.ts';
-import { ScoreCache, evaluationIdentity } from './evaluation/cache.ts';
+import { ScoreCache, evaluationIdentity, isPinnedModelRevision } from './evaluation/cache.ts';
 import {
   CRITERION_VERSION, LAYOUT_VERSION, ProviderError, buildRequestPayload, fitsProviderLimits,
 } from './evaluation/jev.ts';
@@ -92,12 +93,12 @@ type UsageAccount = {
 };
 
 /** Estimated provider input tokens for a batch; a local estimate, never a bill. */
-function estimateBatchTokens(batch: EvaluationBatch, model: string): number {
-  return countReferenceTokens(JSON.stringify(buildRequestPayload(batch, model)));
+function estimateBatchTokens(batch: EvaluationBatch, model: string, serialize?: (batch: EvaluationBatch) => string): number {
+  return countReferenceTokens(serialize?.(batch) ?? JSON.stringify(buildRequestPayload(batch, model)));
 }
 
-function batchRequestBytes(batch: EvaluationBatch, model: string): number {
-  return Buffer.byteLength(JSON.stringify(buildRequestPayload(batch, model)), 'utf8');
+function batchRequestBytes(batch: EvaluationBatch, model: string, serialize?: (batch: EvaluationBatch) => string): number {
+  return Buffer.byteLength(serialize?.(batch) ?? JSON.stringify(buildRequestPayload(batch, model)), 'utf8');
 }
 
 /** Round up to the contract's integer nanodollar unit, including sub-unit costs. */
@@ -212,7 +213,8 @@ export class SearchEngine {
 
     // Cache lookup precedes planning and scheduling (specification section 6.3).
     const model = provider.model;
-    const identityOf = (fragment: PreparedFragment): string => evaluationIdentity({
+    const serialize = (batch: EvaluationBatch): string => provider.serializeBatch?.(batch) ?? JSON.stringify(buildRequestPayload(batch, model));
+    const identityOf = (fragment: PreparedFragment, batchHash: string): string => evaluationIdentity({
       query: request.query,
       path: fragment.path,
       startLine: fragment.startLine,
@@ -224,16 +226,32 @@ export class SearchEngine {
       chunkerVersion: fragment.chunker,
       endpoint: config.provider.base_url,
       modelRevision: model,
+      providerOptions: { adapter: config.provider.adapter ?? 'typesafe-direct' },
+      batchComposition: [batchHash],
     });
 
     const cached = new Map<string, number>();
     const pending: PreparedFragment[] = [];
-    for (const fragment of prepared.fragments) {
-      const hit = this.#cache.read(identityOf(fragment));
-      if (hit === null) {
-        pending.push(fragment);
+    const pendingBatches: EvaluationBatch[] = [];
+    const identities = new Map<string, string>();
+    const fragmentsById = new Map(prepared.fragments.map((fragment) => [fragment.id, fragment]));
+    // Form stable full batches before lookup. An incomplete cache hit does not
+    // regroup the remaining questions and thereby change their model-visible input.
+    for (const batch of buildBatches(prepared.fragments, request.query)) {
+      const batchHash = createHash('sha256').update(serialize(batch)).digest('hex');
+      const hits = new Map<string, number>();
+      for (const item of batch.items) {
+        const fragment = fragmentsById.get(item.id)!;
+        const identity = identityOf(fragment, batchHash);
+        identities.set(item.id, identity);
+        const hit = isPinnedModelRevision(model) ? this.#cache.read(identity) : null;
+        if (hit !== null) hits.set(item.id, hit);
+      }
+      if (hits.size === batch.items.length) {
+        for (const [id, score] of hits) cached.set(id, score);
       } else {
-        cached.set(fragment.id, hit);
+        pendingBatches.push(batch);
+        for (const item of batch.items) pending.push(fragmentsById.get(item.id)!);
       }
     }
     if (this.#cache.stats.corrupt > 0 || this.#cache.stats.failures > 0) {
@@ -244,6 +262,8 @@ export class SearchEngine {
     const enabledCaps = enabledCapsOf(config.scan_caps);
     const plan = planScan(pending, request.query, {
       model,
+      batches: pendingBatches,
+      serialize,
       enabledCaps,
       allowPartial: request.allow_partial_scan,
       requireFit: config.search.require_fit,
@@ -286,8 +306,8 @@ export class SearchEngine {
                 throw new UnauthorizedPathError('not_regular_file', path, 'source type changed before dispatch');
               }
             }
-            const tokens = Math.max(1, estimateBatchTokens(batch, model));
-            const bytes = batchRequestBytes(batch, model);
+            const tokens = Math.max(1, estimateBatchTokens(batch, model, serialize));
+            const bytes = batchRequestBytes(batch, model, serialize);
             const projected: Partial<Record<ScanCap, number | null>> = {
               request_attempts: usage.attempts + 1,
               transmitted_bytes: usage.transmittedBytes + bytes,
@@ -323,10 +343,13 @@ export class SearchEngine {
                 continue;
               }
               scored.push({ fragment, score, fromCache: false });
-              this.#cache.write(identityOf(fragment), score, {
-                modelRevision: evaluation.returnedModel ?? model,
-                layout: LAYOUT_VERSION, criterion: CRITERION_VERSION, chunker: fragment.chunker,
-              });
+              if (isPinnedModelRevision(model) && evaluation.requestedModel === model
+                && (evaluation.returnedModel === null || evaluation.returnedModel === model)) {
+                this.#cache.write(identities.get(fragment.id)!, score, {
+                  modelRevision: model,
+                  layout: LAYOUT_VERSION, criterion: CRITERION_VERSION, chunker: fragment.chunker,
+                });
+              }
             }
             if (evaluation.usage.inputTokens === null) {
               // The reservation survives: an attempt whose usage never resolved is
@@ -334,7 +357,7 @@ export class SearchEngine {
               usage.unknownUsageAttempts += 1;
               context.addStopReason('USAGE_UNKNOWN');
             } else {
-              usage.reservedInputTokens -= Math.max(1, estimateBatchTokens(batch, model));
+              usage.reservedInputTokens -= Math.max(1, estimateBatchTokens(batch, model, serialize));
               usage.knownInputTokens += evaluation.usage.inputTokens;
               const usedTokens = usage.knownInputTokens + usage.reservedInputTokens;
               const usedCost = estimateCost(usedTokens, config.provider.pricing?.input_usd_per_million_tokens ?? null);
@@ -553,6 +576,8 @@ export type ScanPlan = {
 
 type PlanOptions = {
   readonly model: string;
+  readonly serialize?: (batch: EvaluationBatch) => string;
+  readonly batches?: readonly EvaluationBatch[];
   readonly enabledCaps: Partial<Record<ScanCap, number>>;
   readonly allowPartial: boolean;
   readonly requireFit: boolean;
@@ -575,9 +600,9 @@ export function planScan(
   query: string,
   options: PlanOptions,
 ): ScanPlan {
-  const batches = buildBatches(fragments, query);
-  const estimatedTokens = batches.reduce((sum, batch) => sum + estimateBatchTokens(batch, options.model), 0);
-  const estimatedBytes = batches.reduce((sum, batch) => sum + batchRequestBytes(batch, options.model), 0);
+  const batches = options.batches ?? buildBatches(fragments, query);
+  const estimatedTokens = batches.reduce((sum, batch) => sum + estimateBatchTokens(batch, options.model, options.serialize), 0);
+  const estimatedBytes = batches.reduce((sum, batch) => sum + batchRequestBytes(batch, options.model, options.serialize), 0);
   const estimatedCost = estimateCost(estimatedTokens, options.pricePerMillionInputTokens);
   if (options.enabledCaps.estimated_cost_usd !== undefined && estimatedCost === null) {
     throw new ConfigurationError('INVALID_CONFIG', 'a USD cap requires a qualified pricing record');
@@ -609,8 +634,8 @@ export function planScan(
   let tokens = 0;
   let bytes = 0;
   for (const batch of batches) {
-    const nextTokens = tokens + estimateBatchTokens(batch, options.model);
-    const nextBytes = bytes + batchRequestBytes(batch, options.model);
+    const nextTokens = tokens + estimateBatchTokens(batch, options.model, options.serialize);
+    const nextBytes = bytes + batchRequestBytes(batch, options.model, options.serialize);
     const needs: Partial<Record<ScanCap, number | null>> = {
       estimated_input_tokens: nextTokens,
       transmitted_bytes: nextBytes,
@@ -663,6 +688,9 @@ export function buildBatches(fragments: readonly PreparedFragment[], query: stri
       text: fragment.text, label: fragment.label ?? null,
     };
     const candidate = { query, items: [...items, item] };
+    if (!fitsProviderLimits({ query, items: [item] }, 'estimate')) {
+      throw new ConfigurationError('INVALID_REQUEST', 'one question exceeds the provider context estimate');
+    }
     if (items.length >= maxItems || (items.length > 0 && !fitsProviderLimits(candidate, 'estimate'))) {
       flush();
     }

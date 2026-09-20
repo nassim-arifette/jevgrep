@@ -1,4 +1,4 @@
-/** Select the configured Jev transport without weakening either adapter's live gate. */
+/** Select the configured Jev transport after configuration and credential validation. */
 import { ConfigurationError } from '../config.ts';
 import type { Configuration } from '../contracts.ts';
 import { JevAdapter, type JevAdapterOptions, type ProviderClient } from './jev.ts';

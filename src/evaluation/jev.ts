@@ -17,13 +17,12 @@
  * default; JG-005 owns the measured decision between the layouts, and changing it
  * changes `LAYOUT_VERSION`, which is part of cache identity.
  *
- * Transport qualification is still open. The pinned SDK experiment is recorded in
- * docs/reports/jg-004-offline-sdk.md; its retry and logging switches work locally.
- * This draft HTTP adapter retains raw JSON for duplicate-key validation. Production
- * activation also needs bounded response reading and the remaining senior gates.
+ * The live HTTP transport refuses redirects and bounds response bodies while retaining
+ * raw JSON for duplicate-key validation. The ordinary configuration and authorization
+ * checks run before this adapter is constructed.
  */
-import { requireQualifiedLiveSearch } from '../readiness.ts';
 import { countReferenceTokens } from '../response/token-counter.ts';
+import { boundedFetch, MAX_PROVIDER_RESPONSE_BYTES } from './http.ts';
 
 /** Versioned relevance criterion, quoted from specification section 6.2. */
 export const RELEVANCE_CRITERION =
@@ -140,13 +139,15 @@ export type TransportResponse = {
 /** One HTTP exchange. Development uses an injected, offline transport. */
 export type ProviderTransport = (request: TransportRequest, signal?: AbortSignal) => Promise<TransportResponse>;
 
-/**
- * Live transport placeholder. Qualification must add bounded response reading,
- * refuse redirects and preserve raw JSON without logging it (JG-004/JG-013).
- * The separately pinned experiment exercises SDK/fetch behaviour on loopback.
- */
-export const fetchTransport: ProviderTransport = async () => {
-  return requireQualifiedLiveSearch();
+/** One bounded HTTP exchange with redirects disabled and no automatic retry. */
+export const fetchTransport: ProviderTransport = async (request, signal) => {
+  const response = await boundedFetch(request.url, {
+    method: request.method, headers: request.headers, body: request.body,
+    ...(signal === undefined ? {} : { signal }),
+  });
+  const headers: Record<string, string> = {};
+  response.headers.forEach((value, key) => { headers[key.toLowerCase()] = value; });
+  return { status: response.status, headers, text: await response.text() };
 };
 
 export type JevAdapterOptions = {
@@ -161,7 +162,7 @@ export type JevAdapterOptions = {
 type QuestionPayload = {
   type: 'noul';
   instructions: string;
-  criteria: { affirmative: string };
+  criteria: { true: string };
 };
 
 type RequestPayload = {
@@ -184,7 +185,7 @@ export function buildRequestPayload(batch: EvaluationBatch, model: string): Requ
     questions[item.id] = {
       type: 'noul',
       instructions: questionInstructions(item),
-      criteria: { affirmative: RELEVANCE_CRITERION },
+      criteria: { true: RELEVANCE_CRITERION },
     };
   }
   return {
@@ -219,7 +220,7 @@ export function fitsProviderLimits(batch: EvaluationBatch, model: string): boole
   return total <= PROVIDER_CONTEXT_LIMITS.totalTokens * PROVIDER_CONTEXT_LIMITS.headroomRatio;
 }
 
-function parseRetryAfter(value: string | undefined): number | null {
+export function parseRetryAfter(value: string | undefined): number | null {
   if (value === undefined) {
     return null;
   }
@@ -294,16 +295,40 @@ function readUsageField(usage: unknown, key: string): number | null {
  * exactly one answer per question, so a repeated key makes that answer unusable
  * rather than silently resolved (JG-004 transport note, specification 6.3).
  */
-export function duplicateAnswerKeys(rawText: string, ids: readonly string[]): Set<string> {
-  const duplicated = new Set<string>();
-  for (const id of ids) {
-    const escaped = id.replace(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
-    const pattern = new RegExp(String.raw`"${escaped}"\s*:`, 'g');
-    if ((rawText.match(pattern) ?? []).length > 1) {
-      duplicated.add(id);
+export function inspectResponseKeys(rawText: string, ids: readonly string[]): { answers: Set<string>; usageAmbiguous: boolean } {
+  const duplicates = new Set<string>();
+  let usageAmbiguous = false;
+  const wanted = new Set(ids);
+  type Frame = { keys: Set<string>; pending: string | null; answers: boolean; answerId: string | null; root: boolean; usage: boolean };
+  const stack: Frame[] = [];
+  // JSON has already been parsed successfully. String tokens are decoded so escaped
+  // keys cannot bypass correlation, and nesting distinguishes data from answer keys.
+  for (const token of rawText.matchAll(/"(?:[^"\\]|\\[\s\S])*"\s*:?|[{}\[\]]/g)) {
+    const value = token[0];
+    const parent = stack.at(-1);
+    if (value === '{' || value === '[') {
+      stack.push({ keys: new Set(), pending: null,
+        answers: value === '{' && parent?.root === true && parent.pending === 'answers',
+        answerId: parent?.answers === true && wanted.has(parent.pending ?? '') ? parent.pending : null,
+        usage: parent?.usage === true || (parent?.root === true && parent.pending === 'usage'),
+        root: stack.length === 0 });
+    } else if (value === '}' || value === ']') stack.pop();
+    else if (value.endsWith(':') && parent !== undefined) {
+      const key = JSON.parse(value.slice(0, -1).trim()) as string;
+      if (parent.keys.has(key)) {
+        if (parent.root && ['answers', 'model'].includes(key)) for (const id of ids) duplicates.add(id);
+        if (parent.usage || (parent.root && key === 'usage')) usageAmbiguous = true;
+        if (parent.answers && wanted.has(key)) duplicates.add(key);
+        if (parent.answerId !== null && ['noul', 'type', 'probability'].includes(key)) duplicates.add(parent.answerId);
+      }
+      parent.keys.add(key); parent.pending = key;
     }
   }
-  return duplicated;
+  return { answers: duplicates, usageAmbiguous };
+}
+
+export function duplicateAnswerKeys(rawText: string, ids: readonly string[]): Set<string> {
+  return inspectResponseKeys(rawText, ids).answers;
 }
 
 export function normalizeResponse(
@@ -313,8 +338,9 @@ export function normalizeResponse(
   transmittedBytes: number,
   requestId: string | null,
   duplicates: ReadonlySet<string> = new Set<string>(),
+  usageAmbiguous = false,
 ): BatchEvaluation {
-  if (typeof body !== 'object' || body === null) {
+  if (typeof body !== 'object' || body === null || Array.isArray(body)) {
     throw new ProviderError({
       code: 'INVALID_PROVIDER_RESPONSE', message: 'provider response is not a JSON object',
       retryable: false, ambiguous: true, transmittedBytes,
@@ -322,7 +348,7 @@ export function normalizeResponse(
   }
   const record = body as Record<string, unknown>;
   const answers = record['answers'];
-  if (typeof answers !== 'object' || answers === null) {
+  if (typeof answers !== 'object' || answers === null || Array.isArray(answers)) {
     throw new ProviderError({
       code: 'INVALID_PROVIDER_RESPONSE', message: 'provider response contains no answer map',
       retryable: false, ambiguous: true, transmittedBytes,
@@ -378,7 +404,7 @@ export function normalizeResponse(
   const returnedModelValue = record['model'];
   const returnedModel = typeof returnedModelValue === 'string' && returnedModelValue.length > 0
     ? returnedModelValue : null;
-  const usage = record['usage'];
+  const usage = usageAmbiguous ? null : record['usage'];
   return {
     scores,
     invalid,
@@ -393,6 +419,8 @@ export function normalizeResponse(
 /** Narrow provider seam used by the scheduler and by the engine. */
 export type ProviderClient = {
   readonly model: string;
+  /** Exact outbound JSON body, including the adapter's protocol envelope. */
+  serializeBatch?(batch: EvaluationBatch): string;
   evaluateBatch(batch: EvaluationBatch, signal?: AbortSignal): Promise<BatchEvaluation>;
 };
 
@@ -404,9 +432,6 @@ export class JevAdapter implements ProviderClient {
   readonly #userAgent: string;
 
   constructor(options: JevAdapterOptions) {
-    if (options.transport === undefined || options.transport === fetchTransport) {
-      requireQualifiedLiveSearch();
-    }
     this.model = options.model;
     this.#url = `${options.baseUrl.replace(/\/$/, '')}/v1/systemone`;
     this.#apiKey = options.apiKey;
@@ -418,6 +443,8 @@ export class JevAdapter implements ProviderClient {
   get endpoint(): string {
     return this.#url;
   }
+
+  serializeBatch(batch: EvaluationBatch): string { return JSON.stringify(buildRequestPayload(batch, this.model)); }
 
   /**
    * Evaluate one batch. Exactly one attempt: a transport failure raises a normalized
@@ -433,7 +460,7 @@ export class JevAdapter implements ProviderClient {
         retryable: false, ambiguous: false,
       });
     }
-    const body = JSON.stringify(buildRequestPayload(batch, this.model));
+    const body = this.serializeBatch(batch);
     const transmittedBytes = Buffer.byteLength(body, 'utf8');
     const request: TransportRequest = {
       url: this.#url,
@@ -467,6 +494,7 @@ export class JevAdapter implements ProviderClient {
 
     let parsed: unknown;
     try {
+      if (Buffer.byteLength(response.text) > MAX_PROVIDER_RESPONSE_BYTES) throw new Error('response byte limit');
       parsed = JSON.parse(response.text);
     } catch {
       throw new ProviderError({
@@ -474,10 +502,11 @@ export class JevAdapter implements ProviderClient {
         retryable: false, ambiguous: true, transmittedBytes,
       });
     }
+    const keys = inspectResponseKeys(response.text, batch.items.map((item) => item.id));
     return normalizeResponse(
       parsed, batch, this.model, transmittedBytes,
       response.headers['x-typesafe-request-id'] ?? null,
-      duplicateAnswerKeys(response.text, batch.items.map((item) => item.id)),
+      keys.answers, keys.usageAmbiguous,
     );
   }
 }

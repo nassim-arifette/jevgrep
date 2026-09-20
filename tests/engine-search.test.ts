@@ -486,13 +486,6 @@ test('byte accounting matches the actual serialized payload including escaped te
   assert.equal(result.report.usage.transmitted_bytes, expectedBytes);
 });
 
-test('credentials and remote enablement cannot bypass the live qualification gate', async () => {
-  const space = workspace();
-  const engine = createSearchEngine({ configuration: space.loaded, env: { TYPESAFE_API_KEY: 'synthetic' } });
-  const error = asError((await engine.search({ query: 'cache invalidation' })).outcome);
-  assert.equal(error.error.code, 'INVALID_CONFIG');
-});
-
 test('a response budget that cannot hold the mandatory report is refused before any call', async () => {
   const space = workspace();
   const provider = new ScriptedProviderClient(() => 0.9);

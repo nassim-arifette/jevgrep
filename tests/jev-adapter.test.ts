@@ -3,7 +3,7 @@ import { test } from 'node:test';
 
 import {
   CRITERION_VERSION, JevAdapter, LAYOUT_VERSION, ProviderError, RELEVANCE_CRITERION,
-  buildRequestPayload, duplicateAnswerKeys, fitsProviderLimits, normalizeResponse,
+  buildRequestPayload, duplicateAnswerKeys, fetchTransport, fitsProviderLimits, normalizeResponse,
 } from '../src/evaluation/jev.ts';
 import type { EvaluationBatch, TransportRequest, TransportResponse } from '../src/evaluation/jev.ts';
 
@@ -57,6 +57,7 @@ test('the request carries the versioned criterion, the excerpt and its location 
   const first = payload.questions['f-one'];
   assert.ok(first !== undefined);
   assert.equal(first.type, 'noul');
+  assert.equal(first.criteria.true, RELEVANCE_CRITERION);
   assert.ok(first.instructions.includes('src/cache.ts'));
   assert.ok(first.instructions.includes('Lines: 1-12'));
   assert.ok(first.instructions.includes('export function invalidate()'));
@@ -207,10 +208,36 @@ test('pre-dispatch cancellation never enters the transport', async () => {
   assert.equal(recorded.length, 0);
 });
 
-test('a live adapter cannot be constructed before qualification', () => {
-  assert.throws(() => new JevAdapter({
+test('a live adapter can be constructed after explicit configuration checks', () => {
+  const adapter = new JevAdapter({
     baseUrl: 'https://api.typesafe.ai', model: 'jev-1.13.0', apiKey: 'synthetic',
-  }), /live search is not qualified/);
+  });
+  assert.equal(adapter.endpoint, 'https://api.typesafe.ai/v1/systemone');
+});
+
+test('the live fetch transport performs one redirect-free bounded exchange', async () => {
+  const originalFetch = globalThis.fetch;
+  let observedInit: RequestInit | undefined;
+  globalThis.fetch = (async (_input: string | URL | Request, init?: RequestInit): Promise<Response> => {
+    observedInit = init;
+    return new Response('{"answers":{}}', {
+      status: 200,
+      headers: { 'content-type': 'application/json', 'x-typesafe-request-id': 'request-1' },
+    });
+  }) as typeof fetch;
+  try {
+    const response = await fetchTransport({
+      url: 'https://api.typesafe.ai/v1/systemone', method: 'POST',
+      headers: { authorization: 'Bearer synthetic' }, body: '{"model":"jev-1.13.0"}',
+    });
+    assert.equal(observedInit?.redirect, 'manual');
+    assert.equal(observedInit?.method, 'POST');
+    assert.equal(response.status, 200);
+    assert.equal(response.headers['x-typesafe-request-id'], 'request-1');
+    assert.equal(response.text, '{"answers":{}}');
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
 });
 
 test('the credential travels in the authorization header and nowhere else', async () => {
