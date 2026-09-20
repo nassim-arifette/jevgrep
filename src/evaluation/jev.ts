@@ -21,7 +21,7 @@
  * raw JSON for duplicate-key validation. The ordinary configuration and authorization
  * checks run before this adapter is constructed.
  */
-import { countReferenceTokens } from '../response/token-counter.ts';
+import { batchLimits, fitsSerializedBatch } from './policy.ts';
 import { boundedFetch, MAX_PROVIDER_RESPONSE_BYTES } from './http.ts';
 
 /** Versioned relevance criterion, quoted from specification section 6.2. */
@@ -36,12 +36,7 @@ export const CRITERION_VERSION = 'criterion-1';
 export const LAYOUT_VERSION = 'layout-a-1';
 
 /** Documented model limits; local estimates only, never presented as billing truth. */
-export const PROVIDER_CONTEXT_LIMITS = Object.freeze({
-  totalTokens: 64_000,
-  perQuestionTokens: 32_000,
-  /** Headroom kept because the provider tokenizer is not public (research/jev.md). */
-  headroomRatio: 0.7,
-});
+export const PROVIDER_CONTEXT_LIMITS = Object.freeze(batchLimits());
 
 export type BatchItem = {
   /** Correlation key; the provider returns answers under this id. */
@@ -207,17 +202,7 @@ export function buildRequestPayload(batch: EvaluationBatch, model: string): Requ
  * exists; it bounds local work and is never reported as a billing guarantee.
  */
 export function fitsProviderLimits(batch: EvaluationBatch, model: string): boolean {
-  const payload = buildRequestPayload(batch, model);
-  const stateTokens = countReferenceTokens(JSON.stringify(payload.state));
-  let total = stateTokens;
-  for (const question of Object.values(payload.questions)) {
-    const questionTokens = countReferenceTokens(JSON.stringify(question));
-    if (stateTokens + questionTokens > PROVIDER_CONTEXT_LIMITS.perQuestionTokens * PROVIDER_CONTEXT_LIMITS.headroomRatio) {
-      return false;
-    }
-    total += questionTokens;
-  }
-  return total <= PROVIDER_CONTEXT_LIMITS.totalTokens * PROVIDER_CONTEXT_LIMITS.headroomRatio;
+  return fitsSerializedBatch(JSON.stringify(buildRequestPayload(batch, model)), PROVIDER_CONTEXT_LIMITS);
 }
 
 export function parseRetryAfter(value: string | undefined): number | null {

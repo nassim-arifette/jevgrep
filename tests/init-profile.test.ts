@@ -150,7 +150,7 @@ test('a Vercel profile records the dated Jev rate used for cost estimates', () =
   assert.deepEqual(config.provider.pricing, {
     model: 'typesafe-ai/jev',
     verified_at: '2026-09-20',
-    input_usd_per_million_tokens: 0.04,
+    input_usd_per_million_tokens: 0.042,
     output_usd_per_million_tokens: 0,
   });
 });

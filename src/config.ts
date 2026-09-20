@@ -21,6 +21,7 @@ import {
 } from './contracts.ts';
 import type { Configuration, ErrorCode, ScanCap } from './contracts.ts';
 import { REFERENCE_COUNTER_ID } from './response/token-counter.ts';
+import { scoreCachePolicy } from './evaluation/policy.ts';
 import { AuthorizedRoot, assertSafeRelativePath } from './source/authorization.ts';
 
 export { createDefaultConfiguration, CONFIG_SCHEMA_VERSION };
@@ -241,6 +242,7 @@ export type DoctorReport = {
   };
   readonly cache: {
     readonly enabled: boolean; readonly directory: string; readonly ttl_seconds: number;
+    readonly policy: 'pinned' | 'rolling' | 'disabled'; readonly effective_ttl_seconds: number;
     readonly max_bytes: number; readonly present: boolean;
   };
   readonly problems: readonly string[];
@@ -320,6 +322,8 @@ export function doctorReport(
     cache: {
       enabled: config.cache.enabled, directory: loaded.cacheDirectory,
       ttl_seconds: config.cache.ttl_seconds, max_bytes: config.cache.max_bytes,
+      policy: scoreCachePolicy(config.provider.adapter ?? 'typesafe-direct', config.provider.model, config.cache).mode,
+      effective_ttl_seconds: scoreCachePolicy(config.provider.adapter ?? 'typesafe-direct', config.provider.model, config.cache).ttlSeconds,
       present: directoryExists(loaded.cacheDirectory),
     },
     problems,
@@ -349,6 +353,7 @@ export function renderDoctorReport(report: DoctorReport): string[] {
     `                   disabled: ${report.disabled_scan_caps.join(', ') || 'none'}`,
     `source rules       gitignore ${String(report.source.respect_gitignore)}, links never followed, max file ${String(report.source.max_file_bytes)} bytes, ${String(report.source.extra_deny_globs.length)} operator deny rule(s)`,
     `score cache        ${report.cache.enabled ? 'enabled' : 'disabled'} ${report.cache.directory} (${report.cache.present ? 'present' : 'not created yet'}), ttl ${String(report.cache.ttl_seconds)} s, max ${String(report.cache.max_bytes)} bytes`,
+    `cache policy       ${report.cache.policy}, effective ttl ${String(report.cache.effective_ttl_seconds)} s${report.cache.policy === 'rolling' ? '; model revision unverified, scores may be stale within this window' : ''}`,
   ];
   if (report.problems.length > 0) {
     lines.push('problems:');

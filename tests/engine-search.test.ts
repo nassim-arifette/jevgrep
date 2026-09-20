@@ -380,7 +380,7 @@ test('partial mode keeps zero caps and includes the full serialized request in b
 });
 
 test('partial scanning stops on a whole-batch prefix without treating the cap as a provider failure', async () => {
-  const files = Object.fromEntries(Array.from({ length: 20 }, (_, index) => [
+  const files = Object.fromEntries(Array.from({ length: 70 }, (_, index) => [
     `src/file-${String(index).padStart(2, '0')}.ts`, `export const value${String(index)} = ${String(index)};\n`,
   ]));
   const space = workspace({ files, configure: (config) => withRemoteEnabled({
@@ -391,10 +391,10 @@ test('partial scanning stops on a whole-batch prefix without treating the cap as
   const result = asResult((await engine.search({ query: 'values', allow_partial_scan: true })).outcome);
   assert.equal(provider.calls, 1);
   assert.equal(result.status, 'partial');
-  assert.equal(result.report.fragments.not_evaluated, 12);
+  assert.equal(result.report.fragments.not_evaluated, 6);
   assert.ok(result.report.stop_reasons.includes('SCAN_CAP_REACHED'));
   assert.ok(!result.report.stop_reasons.includes('PROVIDER_UNAVAILABLE'));
-  assert.deepEqual(provider.seenPaths, Object.keys(files).slice(0, 8));
+  assert.deepEqual(provider.seenPaths, Object.keys(files).slice(0, 64));
 });
 
 test('incomplete preparation reports unknown totals and refuses a required full scan', async () => {
@@ -439,7 +439,7 @@ test('a dispatched cancellation keeps its attempts, body bytes and unknown usage
 });
 
 test('reported usage over an enabled estimate cap stops subsequent dispatch', async () => {
-  const files = Object.fromEntries(Array.from({ length: 20 }, (_, index) => [
+  const files = Object.fromEntries(Array.from({ length: 70 }, (_, index) => [
     `src/file-${String(index)}.ts`, `export const value${String(index)} = ${String(index)};\n`,
   ]));
   const space = workspace({ files, configure: (config) => withRemoteEnabled({

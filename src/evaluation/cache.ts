@@ -1,10 +1,12 @@
 /**
- * Exact evaluation cache (JG-018).
+ * Per-question evaluation cache (JG-018).
  *
- * The cache exists to avoid paying twice for *the same* judgment, never to reuse a
- * judgment whose inputs moved. Its identity therefore hashes everything the model can
+ * The cache avoids repeating a judgment whose explicit inputs have not changed.
+ * Pinned revisions use the configured TTL; known rolling aliases require an explicit
+ * short TTL and may reuse a score from a previous model revision within that window.
+ * Its identity therefore hashes everything the model can
  * see — the exact query, the criterion and its version, the request layout, the
- * provider endpoint, the pinned model revision, the transmitted path and line range,
+ * provider endpoint, the model id and reuse policy, the transmitted path and line range,
  * the chunker version and the excerpt text itself (specification section 9).
  *
  * What deliberately does *not* belong to identity: selection threshold, response
@@ -20,8 +22,10 @@ import { createHash } from 'node:crypto';
 import { lstatSync } from 'node:fs';
 import { join } from 'node:path';
 import { LocalDirectory, isMissing } from '../local-directory.ts';
+import { isPinnedModelRevision, isRollingModel, MAX_ROLLING_TTL_SECONDS } from './policy.ts';
+export { isPinnedModelRevision } from './policy.ts';
 
-export const CACHE_SCHEMA_VERSION = 2;
+export const CACHE_SCHEMA_VERSION = 3;
 
 /** Everything that can change a provider judgment. */
 export type EvaluationIdentityInput = {
@@ -35,13 +39,13 @@ export type EvaluationIdentityInput = {
   readonly layoutVersion: string;
   readonly chunkerVersion: string;
   readonly endpoint: string;
-  /** The model revision that answered, or the configured id when it is already pinned. */
+  /** Configured immutable revision or known rolling alias, isolated by reuse policy. */
   readonly modelRevision: string;
   /** Extra provider evaluation options, if the adapter ever sends any. */
   readonly providerOptions?: Readonly<Record<string, string | number | boolean>>;
   /**
-   * Ordered hashes of the full serialized batch. Required until question
-   * independence has been qualified for the selected provider and layout.
+   * Hashes of model-visible evaluation inputs. Layout A questions are independent:
+   * the engine hashes the singleton envelope, not neighboring questions.
    */
   readonly batchComposition?: readonly string[];
 };
@@ -67,14 +71,6 @@ export function evaluationIdentity(input: EvaluationIdentityInput): string {
   return createHash('sha256').update(canonical, 'utf8').digest('hex');
 }
 
-/**
- * A model alias such as `jev-latest` cannot anchor a cross-session reuse: the same
- * alias can answer with a different revision tomorrow (specification section 9).
- */
-export function isPinnedModelRevision(model: string): boolean {
-  return /^jev-\d+\.\d+\.\d+$/.test(model);
-}
-
 export type CacheEntry = {
   readonly schema_version: number;
   readonly identity: string;
@@ -92,6 +88,8 @@ export type CacheOptions = {
   readonly enabled: boolean;
   readonly ttlSeconds: number;
   readonly maxBytes: number;
+  /** Explicit bounded-staleness reuse for known aliases; disabled for standalone caches. */
+  readonly rollingTtlSeconds?: number;
   /** Injectable clock so TTL and eviction are testable without waiting. */
   readonly now?: () => number;
 };
@@ -115,7 +113,8 @@ function isCacheEntry(value: unknown): value is CacheEntry {
     && typeof entry['identity'] === 'string'
     && typeof entry['score'] === 'number' && Number.isFinite(entry['score'])
     && entry['score'] >= 0 && entry['score'] <= 1
-    && typeof entry['model_revision'] === 'string' && isPinnedModelRevision(entry['model_revision'])
+    && typeof entry['model_revision'] === 'string'
+    && (isPinnedModelRevision(entry['model_revision']) || isRollingModel(entry['model_revision']))
     && typeof entry['layout'] === 'string'
     && typeof entry['criterion'] === 'string'
     && typeof entry['chunker'] === 'string'
@@ -148,6 +147,11 @@ export class ScoreCache {
 
   get enabled(): boolean { return this.#options.enabled && this.#storage !== null; }
   get directory(): string { return this.#options.directory; }
+  #ttl(model: string): number {
+    if (isPinnedModelRevision(model)) return this.#options.ttlSeconds;
+    return isRollingModel(model)
+      ? Math.max(0, Math.min(this.#options.ttlSeconds, this.#options.rollingTtlSeconds ?? 0, MAX_ROLLING_TTL_SECONDS)) : 0;
+  }
   #name(identity: string): string { return `${identity.slice(0, 2)}/${identity}.json`; }
 
   read(identity: string): number | null {
@@ -164,7 +168,10 @@ export class ScoreCache {
     if (!isCacheEntry(entry) || entry.identity !== identity || entry.created_at_ms > this.#now()) {
       this.stats.corrupt++; this.stats.misses++; this.#discard(name); return null;
     }
-    if (entry.expires_at_ms <= this.#now()) {
+    // Enforce today's policy too: shortening/turning off the TTL must take effect
+    // even for an entry created under a more permissive configuration.
+    const ttl = this.#ttl(entry.model_revision);
+    if (ttl <= 0 || Math.min(entry.expires_at_ms, entry.created_at_ms + ttl * 1_000) <= this.#now()) {
       this.stats.expired++; this.stats.misses++; this.#discard(name); return null;
     }
     this.stats.hits++; return entry.score;
@@ -174,12 +181,12 @@ export class ScoreCache {
     readonly modelRevision: string; readonly layout: string; readonly criterion: string; readonly chunker: string;
   }): boolean {
     if (!this.enabled || !/^[a-f0-9]{64}$/.test(identity) || !Number.isFinite(score) || score < 0 || score > 1
-      || !isPinnedModelRevision(meta.modelRevision)) return false;
+      || this.#ttl(meta.modelRevision) <= 0) return false;
     const now = this.#now();
     const entry: CacheEntry = {
       schema_version: CACHE_SCHEMA_VERSION, identity, score, model_revision: meta.modelRevision,
       layout: meta.layout, criterion: meta.criterion, chunker: meta.chunker,
-      created_at_ms: now, expires_at_ms: now + this.#options.ttlSeconds * 1_000,
+      created_at_ms: now, expires_at_ms: now + this.#ttl(meta.modelRevision) * 1_000,
     };
     const raw = `${JSON.stringify(entry)}\n`;
     const size = Buffer.byteLength(raw);

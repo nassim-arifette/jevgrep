@@ -5,6 +5,7 @@ import process from 'node:process';
 
 import { configurationSchema, createDefaultConfiguration, type Configuration } from './contracts.ts';
 import { LocalDirectory, isMissing } from './local-directory.ts';
+import { DEFAULT_DIRECT_MODEL } from './evaluation/policy.ts';
 import { AuthorizedRoot } from './source/authorization.ts';
 
 export type InitProvider = 'typesafe' | 'vercel';
@@ -126,7 +127,7 @@ export function discoverProjectConfiguration(cwd: string, env: NodeJS.ProcessEnv
 }
 
 export function buildInitialConfiguration(root: string, provider: InitProvider): Configuration {
-  const config = createDefaultConfiguration(root, provider === 'typesafe' ? 'jev-latest' : 'typesafe-ai/jev');
+  const config = createDefaultConfiguration(root, provider === 'typesafe' ? DEFAULT_DIRECT_MODEL : 'typesafe-ai/jev');
   return configurationSchema.parse({
     ...config,
     provider: provider === 'typesafe'
@@ -134,7 +135,7 @@ export function buildInitialConfiguration(root: string, provider: InitProvider):
       : {
         ...config.provider, adapter: 'vercel-ai-gateway', base_url: 'https://ai-gateway.vercel.sh',
         api_key_env: 'AI_GATEWAY_API_KEY', model: 'typesafe-ai/jev',
-        pricing: { model: 'typesafe-ai/jev', verified_at: '2026-09-20', input_usd_per_million_tokens: 0.04, output_usd_per_million_tokens: 0 },
+        pricing: { model: 'typesafe-ai/jev', verified_at: '2026-09-20', input_usd_per_million_tokens: 0.042, output_usd_per_million_tokens: 0 },
       },
   });
 }

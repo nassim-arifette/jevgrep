@@ -61,6 +61,27 @@ test('an identical repetition reuses the score without a new evaluation', () => 
   assert.equal(cache.stats.hits, 1);
 });
 
+test('rolling aliases expire within 15 minutes, including across sessions and policy changes', () => {
+  const directory = cacheDirectory();
+  let now = 1_000;
+  const options = { directory, enabled: true, ttlSeconds: 604_800, maxBytes: 1_000_000,
+    rollingTtlSeconds: 900, now: () => now };
+  const identity = evaluationIdentity({ ...BASE, modelRevision: 'typesafe-ai/jev' });
+  const meta = { ...META, modelRevision: 'typesafe-ai/jev' };
+  assert.equal(new ScoreCache(options).write(identity, 0.9, meta), true);
+  now += 899_999;
+  assert.equal(new ScoreCache(options).read(identity), 0.9);
+  now += 1;
+  assert.equal(new ScoreCache(options).read(identity), null);
+  const cache = new ScoreCache(options);
+  assert.equal(cache.write(identity, 0.9, meta), true);
+  assert.equal(new ScoreCache({ ...options, rollingTtlSeconds: 0 }).read(identity), null);
+  assert.equal(cache.write(identity, 0.9, meta), true);
+  now += 61_000;
+  assert.equal(new ScoreCache({ ...options, rollingTtlSeconds: 60 }).read(identity), null);
+  assert.equal(new ScoreCache({ ...options, rollingTtlSeconds: 0 }).write(identity, 0.9, meta), false);
+});
+
 test('any change the model can see prevents reuse', () => {
   const changes: [string, Partial<EvaluationIdentityInput>][] = [
     ['query', { query: 'Which handler refreshes cached user data?' }],

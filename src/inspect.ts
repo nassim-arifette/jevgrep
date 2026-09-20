@@ -13,7 +13,9 @@
 import { exclusionCounts, prepareScope } from './source/prepare.ts';
 import type { LoadedConfiguration } from './config.ts';
 import { buildBatches } from './engine.ts';
-import { PROVIDER_CONTEXT_LIMITS } from './evaluation/jev.ts';
+import type { EvaluationBatch } from './evaluation/jev.ts';
+import { batchLimits } from './evaluation/policy.ts';
+import { configuredAdapter, serializeConfiguredBatch } from './evaluation/provider.ts';
 import { countReferenceTokens } from './response/token-counter.ts';
 
 export type InspectionReport = {
@@ -92,8 +94,11 @@ export function inspectScope(configuration: LoadedConfiguration, options: Inspec
   }
 
   const query = options.sampleQuery ?? SAMPLE_QUERY;
-  const batches = buildBatches(prepared.fragments, query);
-  const estimatedInputTokens = referenceTokens + batches.length * (countReferenceTokens(query) + 160);
+  const adapter = configuredAdapter(config);
+  const limits = batchLimits(adapter);
+  const serialize = (batch: EvaluationBatch): string => serializeConfiguredBatch(config, batch);
+  const batches = buildBatches(prepared.fragments, query, { limits, serialize });
+  const estimatedInputTokens = batches.reduce((total, batch) => total + countReferenceTokens(serialize(batch)), 0);
   const pricing = config.provider.pricing;
   const estimatedCost = pricing == null
     ? null
@@ -116,6 +121,10 @@ export function inspectScope(configuration: LoadedConfiguration, options: Inspec
     notes.push('remote evaluation is disabled: a search would be refused before any excerpt leaves this machine');
   }
   notes.push('token and cost figures are local estimates under the pinned reference counter, not provider billing');
+  notes.push(`batch target: ${String(limits.totalTokens * limits.headroomRatio)} reference tokens, at most ${String(limits.maxItems)} questions and ${String(limits.maxRequestBytes)} wire bytes`);
+  if (adapter === 'vercel-ai-gateway') {
+    notes.push('Gateway advertises a 32k context; its use as an aggregate batch ceiling is a conservative local policy');
+  }
 
   return {
     repository_root: configuration.repositoryRoot,
@@ -144,7 +153,7 @@ export function inspectScope(configuration: LoadedConfiguration, options: Inspec
         ? 'no dated pricing record is configured, so no USD estimate is produced'
         : `estimated with the ${pricing.verified_at} rate card; an estimate, not an invoice`,
       cache_hits: null,
-      provider_context_limit_tokens: PROVIDER_CONTEXT_LIMITS.totalTokens,
+      provider_context_limit_tokens: limits.totalTokens,
     },
     remote_evaluation_enabled: config.remote_evaluation_enabled,
     notes,

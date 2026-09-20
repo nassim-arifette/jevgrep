@@ -220,7 +220,8 @@ export const configurationSchema = refine(object({
     max_file_bytes: positiveCount,
     extra_deny_globs: array(textValue(4_096), 0, 128),
   }),
-  cache: object({ enabled: booleanValue, ttl_seconds: positiveCount, max_bytes: positiveCount }),
+  cache: object({ enabled: booleanValue, ttl_seconds: positiveCount, max_bytes: positiveCount },
+    { rolling_ttl_seconds: numberValue(0, 900) }),
   logging: object({ level: enumeration(['silent', 'error', 'warn', 'info', 'debug']), include_source: literal(false) }),
 }), (value, path) => {
   requireContract(value.search.default_response_tokens <= value.search.max_response_tokens,

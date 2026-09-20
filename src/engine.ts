@@ -28,10 +28,11 @@ import { ConfigurationError, resolveCredential } from './config.ts';
 import type { LoadedConfiguration } from './config.ts';
 import { ScoreCache, evaluationIdentity, isPinnedModelRevision } from './evaluation/cache.ts';
 import {
-  CRITERION_VERSION, LAYOUT_VERSION, ProviderError, buildRequestPayload, fitsProviderLimits,
+  CRITERION_VERSION, LAYOUT_VERSION, ProviderError, buildRequestPayload,
 } from './evaluation/jev.ts';
 import type { BatchItem, EvaluationBatch, ProviderClient } from './evaluation/jev.ts';
 import { createConfiguredProvider } from './evaluation/provider.ts';
+import { batchLimits, fitsSerializedBatch, scoreCachePolicy, MAX_ROLLING_TTL_SECONDS, type BatchLimits } from './evaluation/policy.ts';
 import { runEvaluations } from './evaluation/scheduler.ts';
 import { SearchContext, SearchLogger, isAbortError, runPhase, systemClock } from './lifecycle.ts';
 import type { Clock } from './lifecycle.ts';
@@ -119,6 +120,7 @@ export class SearchEngine {
       directory: cacheDirectory,
       enabled: config.cache.enabled,
       ttlSeconds: config.cache.ttl_seconds,
+      rollingTtlSeconds: config.cache.rolling_ttl_seconds ?? MAX_ROLLING_TTL_SECONDS,
       maxBytes: config.cache.max_bytes,
     });
   }
@@ -213,6 +215,8 @@ export class SearchEngine {
 
     // Cache lookup precedes planning and scheduling (specification section 6.3).
     const model = provider.model;
+    const adapter = config.provider.adapter ?? 'typesafe-direct';
+    const cachePolicy = scoreCachePolicy(adapter, model, config.cache);
     const serialize = (batch: EvaluationBatch): string => provider.serializeBatch?.(batch) ?? JSON.stringify(buildRequestPayload(batch, model));
     const identityOf = (fragment: PreparedFragment, batchHash: string): string => evaluationIdentity({
       query: request.query,
@@ -226,34 +230,24 @@ export class SearchEngine {
       chunkerVersion: fragment.chunker,
       endpoint: config.provider.base_url,
       modelRevision: model,
-      providerOptions: { adapter: config.provider.adapter ?? 'typesafe-direct' },
+      providerOptions: { adapter, cachePolicy: cachePolicy.mode },
       batchComposition: [batchHash],
     });
 
     const cached = new Map<string, number>();
     const pending: PreparedFragment[] = [];
-    const pendingBatches: EvaluationBatch[] = [];
     const identities = new Map<string, string>();
-    const fragmentsById = new Map(prepared.fragments.map((fragment) => [fragment.id, fragment]));
-    // Form stable full batches before lookup. An incomplete cache hit does not
-    // regroup the remaining questions and thereby change their model-visible input.
-    for (const batch of buildBatches(prepared.fragments, request.query)) {
-      const batchHash = createHash('sha256').update(serialize(batch)).digest('hex');
-      const hits = new Map<string, number>();
-      for (const item of batch.items) {
-        const fragment = fragmentsById.get(item.id)!;
-        const identity = identityOf(fragment, batchHash);
-        identities.set(item.id, identity);
-        const hit = isPinnedModelRevision(model) ? this.#cache.read(identity) : null;
-        if (hit !== null) hits.set(item.id, hit);
-      }
-      if (hits.size === batch.items.length) {
-        for (const [id, score] of hits) cached.set(id, score);
-      } else {
-        pendingBatches.push(batch);
-        for (const item of batch.items) pending.push(fragmentsById.get(item.id)!);
-      }
+    // Both evaluation APIs judge each question independently against shared state.
+    // Hash its exact envelope and regroup only misses; neighbors cannot invalidate it.
+    for (const fragment of prepared.fragments) {
+      const inputHash = createHash('sha256').update(serialize({ query: request.query, items: [fragment] })).digest('hex');
+      const identity = identityOf(fragment, inputHash);
+      identities.set(fragment.id, identity);
+      const hit = cachePolicy.mode !== 'disabled' ? this.#cache.read(identity) : null;
+      if (hit !== null) cached.set(fragment.id, hit);
+      else pending.push(fragment);
     }
+    const pendingBatches = buildBatches(pending, request.query, { model, serialize, limits: batchLimits(adapter) });
     if (this.#cache.stats.corrupt > 0 || this.#cache.stats.failures > 0) {
       context.diagnostics.record('CACHE_UNAVAILABLE', context.elapsedMs,
         { count: this.#cache.stats.corrupt + this.#cache.stats.failures });
@@ -343,8 +337,10 @@ export class SearchEngine {
                 continue;
               }
               scored.push({ fragment, score, fromCache: false });
-              if (isPinnedModelRevision(model) && evaluation.requestedModel === model
-                && (evaluation.returnedModel === null || evaluation.returnedModel === model)) {
+              if (cachePolicy.mode !== 'disabled' && evaluation.requestedModel === model
+                && (evaluation.returnedModel === null || evaluation.returnedModel === model
+                  || (cachePolicy.mode === 'rolling' && adapter === 'typesafe-direct'
+                    && isPinnedModelRevision(evaluation.returnedModel)))) {
                 this.#cache.write(identities.get(fragment.id)!, score, {
                   modelRevision: model,
                   layout: LAYOUT_VERSION, criterion: CRITERION_VERSION, chunker: fragment.chunker,
@@ -600,7 +596,9 @@ export function planScan(
   query: string,
   options: PlanOptions,
 ): ScanPlan {
-  const batches = options.batches ?? buildBatches(fragments, query);
+  const batches = options.batches ?? buildBatches(fragments, query, {
+    model: options.model, ...(options.serialize === undefined ? {} : { serialize: options.serialize }),
+  });
   const estimatedTokens = batches.reduce((sum, batch) => sum + estimateBatchTokens(batch, options.model, options.serialize), 0);
   const estimatedBytes = batches.reduce((sum, batch) => sum + batchRequestBytes(batch, options.model, options.serialize), 0);
   const estimatedCost = estimateCost(estimatedTokens, options.pricePerMillionInputTokens);
@@ -668,7 +666,12 @@ export function planScan(
 }
 
 /** Deterministic batches: path and offset order, bounded by the provider's own limits. */
-export function buildBatches(fragments: readonly PreparedFragment[], query: string, maxItems = 8): EvaluationBatch[] {
+export function buildBatches(fragments: readonly PreparedFragment[], query: string, options: {
+  readonly model?: string; readonly limits?: BatchLimits; readonly serialize?: (batch: EvaluationBatch) => string;
+} = {}): EvaluationBatch[] {
+  const limits = options.limits ?? batchLimits();
+  const serialize = options.serialize ?? ((batch) => JSON.stringify(buildRequestPayload(batch, options.model ?? 'estimate')));
+  const fits = (batch: EvaluationBatch): boolean => fitsSerializedBatch(serialize(batch), limits);
   const ordered = [...fragments].sort((left, right) => (left.path < right.path ? -1 : left.path > right.path ? 1 : 0)
     || (left.startLine - right.startLine) || (left.endLine - right.endLine));
   const batches: EvaluationBatch[] = [];
@@ -688,10 +691,10 @@ export function buildBatches(fragments: readonly PreparedFragment[], query: stri
       text: fragment.text, label: fragment.label ?? null,
     };
     const candidate = { query, items: [...items, item] };
-    if (!fitsProviderLimits({ query, items: [item] }, 'estimate')) {
+    if (!fits({ query, items: [item] })) {
       throw new ConfigurationError('INVALID_REQUEST', 'one question exceeds the provider context estimate');
     }
-    if (items.length >= maxItems || (items.length > 0 && !fitsProviderLimits(candidate, 'estimate'))) {
+    if (items.length > 0 && !fits(candidate)) {
       flush();
     }
     items.push(item);

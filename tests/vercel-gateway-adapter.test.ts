@@ -55,7 +55,7 @@ test('Gateway uses the Jev evaluation model with boolean questions and no hidden
   assert.deepEqual(evaluation.invalid, []);
   assert.deepEqual(evaluation.usage, { inputTokens: 321, outputTokens: 4 });
   assert.equal(evaluation.requestedModel, VERCEL_JEV_MODEL);
-  assert.equal(evaluation.returnedModel, VERCEL_JEV_MODEL);
+  assert.equal(evaluation.returnedModel, null);
   assert.equal(evaluation.requestId, 'gw-request-1');
   assert.ok(evaluation.transmittedBytes > 0);
   assert.equal(adapter.endpoint, 'https://ai-gateway.vercel.sh/v4/ai');

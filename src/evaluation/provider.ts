@@ -1,10 +1,11 @@
 /** Select the configured Jev transport after configuration and credential validation. */
 import { ConfigurationError } from '../config.ts';
 import type { Configuration } from '../contracts.ts';
-import { JevAdapter, type JevAdapterOptions, type ProviderClient } from './jev.ts';
+import { JevAdapter, buildRequestPayload, type EvaluationBatch, type JevAdapterOptions, type ProviderClient } from './jev.ts';
 import {
   VERCEL_JEV_MODEL,
   VercelGatewayAdapter,
+  serializeGatewayBatch,
   type VercelGatewayAdapterOptions,
 } from './vercel-gateway.ts';
 
@@ -23,6 +24,12 @@ const defaultFactories: ProviderFactories = {
 /** Missing selectors are the legacy direct adapter, preserving existing v1 files. */
 export function configuredAdapter(config: Configuration): ProviderAdapterKind {
   return config.provider.adapter ?? 'typesafe-direct';
+}
+
+/** Offline planning uses exactly the same envelope as the selected transport. */
+export function serializeConfiguredBatch(config: Configuration, batch: EvaluationBatch): string {
+  return configuredAdapter(config) === 'vercel-ai-gateway' ? serializeGatewayBatch(batch)
+    : JSON.stringify(buildRequestPayload(batch, config.provider.model));
 }
 
 export function createConfiguredProvider(

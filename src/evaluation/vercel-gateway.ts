@@ -125,6 +125,10 @@ function usableCount(value: unknown): number | null {
   return typeof value === 'number' && Number.isSafeInteger(value) && value >= 0 ? value : null;
 }
 
+export function serializeGatewayBatch(batch: EvaluationBatch): string {
+  return JSON.stringify({ ...buildGatewayInput(batch), providerOptions: {} });
+}
+
 function errorRecord(value: unknown): Readonly<Record<string, unknown>> | null {
   return typeof value === 'object' && value !== null ? value as Readonly<Record<string, unknown>> : null;
 }
@@ -239,7 +243,9 @@ function normalizeGatewayResult(
       outputTokens: usableCount(result.usage.outputTokens),
     },
     requestedModel,
-    returnedModel: result.response.modelId.length > 0 ? result.response.modelId : null,
+    // The SDK echoes the requested alias: it is not a resolved immutable revision.
+    returnedModel: result.response.modelId.length > 0 && result.response.modelId !== VERCEL_JEV_MODEL
+      ? result.response.modelId : null,
     transmittedBytes,
     requestId: typeof result.response.id === 'string' && result.response.id.length > 0
       ? result.response.id : null,
@@ -284,7 +290,7 @@ export class VercelGatewayAdapter implements ProviderClient {
   }
 
   serializeBatch(batch: EvaluationBatch): string {
-    return JSON.stringify({ ...buildGatewayInput(batch), providerOptions: {} });
+    return serializeGatewayBatch(batch);
   }
 
   async evaluateBatch(batch: EvaluationBatch, signal?: AbortSignal): Promise<BatchEvaluation> {
