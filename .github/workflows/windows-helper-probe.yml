@@ -24,8 +24,8 @@ jobs:
           const source = readFileSync('src/source/windows-attributes-worker.ts', 'utf8');
           const program = source.split('const PROGRAM = String.raw`')[1].split('`;')[0];
           const root = process.env.SystemRoot;
-          async function probe(keys) {
-            const extra = Object.fromEntries(keys.map(k => [k, process.env[k]]));
+          async function probe(label, modulePath) {
+            const extra = { PSModulePath: modulePath };
             return await new Promise(resolve => {
               const start = Date.now();
               const child = spawn(join(root, 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe'),
@@ -39,22 +39,18 @@ jobs:
               child.on('close', code => {
                 clearTimeout(timer);
                 const ms = Date.now()-start;
-                console.log('[helper-probe]', JSON.stringify({ keys, code, ms, out, err }));
+                console.log('[helper-probe]', JSON.stringify({ label, modulePath, code, ms, out, err }));
                 resolve(code === 0 && ms < 5000 && out.trim() === '1 -1');
               });
               child.stdin.end(JSON.stringify([root]) + '\n');
             });
           }
-          let keys = Object.keys(process.env).filter(k => !/^(systemroot|windir)$/i.test(k));
-          if (!await probe(keys)) throw new Error('Inherited environment is not fast');
-          for (let chunk = Math.ceil(keys.length / 2); chunk >= 1; chunk = Math.floor(chunk / 2)) {
-            for (let i = 0; i < keys.length;) {
-              const candidate = keys.filter((_, index) => index < i || index >= i + chunk);
-              if (await probe(candidate)) keys = candidate;
-              else i += chunk;
-            }
-          }
-          console.log('[minimal-fast-keys]', JSON.stringify(keys));
+          const builtins = join(root, 'System32', 'WindowsPowerShell', 'v1.0', 'Modules');
+          await probe('inherited', process.env.PSModulePath);
+          await probe('trailing-separator', builtins + ';');
+          await probe('duplicate-builtins', builtins + ';' + builtins);
+          await probe('utility-first', join(builtins, 'Microsoft.PowerShell.Utility') + ';' + builtins);
+          await probe('empty', '');
           '@ | node --input-type=module
       - name: Probe the actual worker call
         shell: pwsh
