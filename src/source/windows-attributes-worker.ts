@@ -39,9 +39,16 @@ const port = parentPort;
 const systemRoot = process.env['SystemRoot'] ?? 'C:\\Windows';
 if (!/^[A-Za-z]:[\\/]/.test(systemRoot)) throw new Error('invalid Windows installation path');
 const executable = join(systemRoot, 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe');
+const modules = join(systemRoot, 'System32', 'WindowsPowerShell', 'v1.0', 'Modules');
 const child = spawn(executable, ['-NoLogo', '-NoProfile', '-NonInteractive', '-Command', PROGRAM], {
   windowsHide: true, cwd: systemRoot, stdio: ['pipe', 'pipe', 'pipe'],
-  env: { SystemRoot: systemRoot, WINDIR: systemRoot },
+  // An absent/default-only PSModulePath causes very slow module initialization
+  // on Windows runners. An explicit utility-first path keeps startup fast and
+  // module resolution inside Windows, without inheriting user modules or secrets.
+  env: {
+    SystemRoot: systemRoot, WINDIR: systemRoot,
+    PSModulePath: `${join(modules, 'Microsoft.PowerShell.Utility')};${modules}`,
+  },
 });
 
 let pending: Int32Array | null = null;

@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, mkdirSync, readFileSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test, { after } from 'node:test';
@@ -12,7 +12,7 @@ import {
 } from '../src/init.ts';
 
 const spaces: string[] = [];
-function temporary(prefix: string): string { const space = mkdtempSync(join(tmpdir(), prefix)); spaces.push(space); return space; }
+function temporary(prefix: string): string { const space = realpathSync.native(mkdtempSync(join(tmpdir(), prefix))); spaces.push(space); return space; }
 after(() => { for (const space of spaces) rmSync(space, { recursive: true, force: true }); });
 
 test('failed initialization preserves a secret created concurrently by another writer', (t) => {

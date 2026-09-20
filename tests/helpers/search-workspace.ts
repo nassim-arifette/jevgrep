@@ -5,7 +5,7 @@
  * the repository it authorizes (never inside it) and points the cache at its own
  * directory, so no test can touch a developer's real cache or read a real credential.
  */
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 
@@ -40,7 +40,8 @@ function toPosix(path: string): string {
 
 /** Create a workspace with a repository, a trusted configuration and an isolated cache. */
 export function createWorkspace(options: WorkspaceOptions = {}): Workspace {
-  const root = mkdtempSync(join(tmpdir(), 'jevgrep-test-'));
+  // Match the canonical paths used by production, including Windows 8.3 temp aliases.
+  const root = realpathSync.native(mkdtempSync(join(tmpdir(), 'jevgrep-test-')));
   const repositoryRoot = options.repositoryRoot ?? join(root, 'repository');
   if (options.repositoryRoot === undefined) {
     mkdirSync(repositoryRoot, { recursive: true });

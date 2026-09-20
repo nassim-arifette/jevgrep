@@ -13,7 +13,7 @@ import { createDefaultConfiguration, loadConfiguration } from '../src/config.ts'
 
 const temporary: string[] = [];
 function fixture(): { directory: string; root: string; outside: string; file: string } {
-  const directory = fs.mkdtempSync(join(tmpdir(), 'jevgrep-root-control-'));
+  const directory = fs.realpathSync.native(fs.mkdtempSync(join(tmpdir(), 'jevgrep-root-control-')));
   temporary.push(directory);
   const root = join(directory, 'repo');
   const outside = join(directory, 'repo-other');
@@ -27,7 +27,7 @@ function fixture(): { directory: string; root: string; outside: string; file: st
 
 after(() => {
   for (const directory of temporary) {
-    assert.ok(resolve(directory).startsWith(`${resolve(tmpdir())}${sep}`));
+    assert.ok(resolve(directory).startsWith(`${fs.realpathSync.native(tmpdir())}${sep}`));
     assert.ok(basename(directory).startsWith('jevgrep-root-control-'));
     fs.rmSync(directory, { recursive: true, force: true });
   }

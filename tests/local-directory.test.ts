@@ -6,7 +6,7 @@ import { test } from 'node:test';
 import { LocalDirectory } from '../src/local-directory.ts';
 
 test('a live writer remains exclusive, and an empty or dead generation is recoverable', (t) => {
-  const directory = fs.mkdtempSync(join(tmpdir(), 'jevgrep-local-lock-'));
+  const directory = fs.realpathSync.native(fs.mkdtempSync(join(tmpdir(), 'jevgrep-local-lock-')));
   const storage = new LocalDirectory(directory); const second = new LocalDirectory(directory);
   try {
     storage.withLock(() => { assert.throws(() => second.withLock(() => assert.fail('two writers entered'))); });
@@ -21,7 +21,7 @@ test('a live writer remains exclusive, and an empty or dead generation is recove
 });
 
 test('a candidate abandoned before publication is cleaned after its publisher exits', (t) => {
-  const directory = fs.mkdtempSync(join(tmpdir(), 'jevgrep-lock-candidate-'));
+  const directory = fs.realpathSync.native(fs.mkdtempSync(join(tmpdir(), 'jevgrep-lock-candidate-')));
   try {
     const marker = '999999-00000000-0000-0000-0000-000000000001.owner';
     const abandoned = join(directory, `.lock-${marker}`); fs.mkdirSync(abandoned);
@@ -33,7 +33,7 @@ test('a candidate abandoned before publication is cleaned after its publisher ex
 });
 
 test('a delayed stale-generation remover cannot delete a new owner or enter its critical section', (t) => {
-  const directory = fs.mkdtempSync(join(tmpdir(), 'jevgrep-local-lock-race-'));
+  const directory = fs.realpathSync.native(fs.mkdtempSync(join(tmpdir(), 'jevgrep-local-lock-race-')));
   const storage = new LocalDirectory(directory); const lock = join(directory, '.write.lock');
   const old = '999999-00000000-0000-0000-0000-000000000001.owner';
   const next = `${String(process.pid)}-00000000-0000-0000-0000-000000000002.owner`;
@@ -54,7 +54,7 @@ test('a delayed stale-generation remover cannot delete a new owner or enter its 
 });
 
 test('failed local writes close their handle and remove the temporary file', (t) => {
-  const directory = fs.mkdtempSync(join(tmpdir(), 'jevgrep-local-'));
+  const directory = fs.realpathSync.native(fs.mkdtempSync(join(tmpdir(), 'jevgrep-local-')));
   const storage = new LocalDirectory(directory);
   try {
     t.mock.method(fs, 'writeFileSync', () => { throw Object.assign(new Error('full'), { code: 'ENOSPC' }); });
@@ -64,7 +64,7 @@ test('failed local writes close their handle and remove the temporary file', (t)
 });
 
 test('a parent replaced between lookup and deletion cannot redirect an unlink', (t) => {
-  const directory = fs.mkdtempSync(join(tmpdir(), 'jevgrep-local-'));
+  const directory = fs.realpathSync.native(fs.mkdtempSync(join(tmpdir(), 'jevgrep-local-')));
   const storage = new LocalDirectory(directory);
   try {
     storage.write('shard/entry.json', '{}');
