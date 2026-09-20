@@ -29,11 +29,11 @@ test('the executable entry point runs a command and rejects a bad one', async ()
   assert.match(search.stderr, /config/i);
   assert.doesNotMatch(search.stderr, /not implemented/);
 
-  // The documented surface requires the trusted configuration: a missing flag is a usage
-  // error, reported before any command runs.
+  // Without an override, the command layer attempts automatic discovery and explains that
+  // this directory has not been initialized.
   const missingConfig = await runCli(sourceEntry, ['search', '--query', 'authorization checks']);
   assert.equal(missingConfig.code, EXIT_USAGE);
-  assert.match(missingConfig.stderr, /--config/);
+  assert.match(missingConfig.stderr, /jevgrep init|project.*configured/i);
 
   const unknown = await runCli(sourceEntry, ['frobnicate']);
   assert.equal(unknown.code, EXIT_USAGE);
@@ -47,7 +47,7 @@ test('the executable entry point runs a command and rejects a bad one', async ()
 test('a command documents itself through the executable', async () => {
   const help = await runCli(sourceEntry, ['doctor', '--help']);
   assert.equal(help.code, EXIT_OK);
-  assert.match(help.stdout, /^usage: jevgrep doctor --config <path>/);
+  assert.match(help.stdout, /^usage: jevgrep doctor \[--config <path>\]/);
   assert.match(help.stdout, /never needs a credential/);
   assert.equal(help.stderr, '');
 });

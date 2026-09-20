@@ -146,6 +146,19 @@ test('search --json prints the canonical contract on stdout and measurements on 
   assert.ok(captured.err.join('\n').includes('tiktoken@1.0.22/cl100k_base tokens'), 'the measurement is a diagnostic');
 });
 
+test('CLI search applies both the default and maximum response budget from trusted configuration', async () => {
+  const space = workspace((base) => ({ ...withRemoteEnabled(base), search: { ...base.search, default_response_tokens: 6_000, max_response_tokens: 20_000 } }));
+  const provider = new CountingProvider();
+  for (const budget of [undefined, 20_000, 20_001]) {
+    const captured = capture();
+    const code = await executeCommand(parsed(['search', '--config', space.configPath, '--query', 'cache', '--json',
+      ...(budget === undefined ? [] : ['--max-context-tokens', String(budget)])]), captured.io, dependencies(space, provider));
+    const outcome = JSON.parse(captured.out[0]!) as { report?: { response_budget: { requested_tokens: number } }; error?: { code: string } };
+    if (budget === 20_001) { assert.equal(code, CLI_EXIT_CODES.rejected); assert.equal(outcome.error?.code, 'INVALID_REQUEST'); }
+    else { assert.equal(code, CLI_EXIT_CODES.complete); assert.equal(outcome.report?.response_budget.requested_tokens, budget ?? 6_000); }
+  }
+});
+
 test('a multiline question from a file is used verbatim, never interpreted', async () => {
   const space = workspace();
   const provider = new CountingProvider();

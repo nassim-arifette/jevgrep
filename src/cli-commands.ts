@@ -15,6 +15,8 @@
  */
 import { readFileSync } from 'node:fs';
 import process from 'node:process';
+import { resolve } from 'node:path';
+import { createInterface } from 'node:readline/promises';
 import type { Readable, Writable } from 'node:stream';
 
 import type { CliCommand } from './cli-args.ts';
@@ -26,7 +28,12 @@ import { createSearchError } from './contracts.ts';
 import { SearchEngine, createSearchEngine } from './engine.ts';
 import { ScoreCache } from './evaluation/cache.ts';
 import { inspectScope, renderInspection } from './inspect.ts';
+import {
+  configurationHome, configuredGlobalProvider, createGlobalProfile, createProfile, discoverProjectConfiguration,
+  environmentWithProfileSecrets, updateGlobalProfile, validateProfileLocation, type InitProvider,
+} from './init.ts';
 import { runMcpServer } from './mcp.ts';
+import { LocalDirectory } from './local-directory.ts';
 import { CLI_EXIT_CODES, toCliSearchResponse } from './search-response.ts';
 import { REFERENCE_COUNTER_ID, referenceCounter } from './response/token-counter.ts';
 
@@ -42,12 +49,21 @@ export type CommandDependencies = {
   readonly signal?: AbortSignal;
   /** Test seam: builds the engine, for example with a scripted provider. */
   readonly engineFactory?: (configuration: LoadedConfiguration) => SearchEngine;
+  readonly prompt?: (question: string) => Promise<string>;
 };
 
 /** Load the trusted configuration, reporting a configuration problem as a rejection. */
-function load(command: { config: string }, io: CliIo, deps: CommandDependencies): LoadedConfiguration | number {
+function load(command: { config?: string }, io: CliIo, deps: CommandDependencies): LoadedConfiguration | number {
+  const cwd = deps.cwd ?? process.cwd();
+  let config: string;
   try {
-    return loadConfiguration(command.config, {
+    config = command.config ?? discoverProjectConfiguration(cwd, deps.env ?? process.env);
+  } catch (cause) {
+    io.err(`jevgrep: INVALID_CONFIG: ${cause instanceof Error ? cause.message : 'no project profile was found'}`);
+    return CLI_EXIT_CODES.rejected;
+  }
+  try {
+    return loadConfiguration(config, {
       ...(deps.cwd === undefined ? {} : { cwd: deps.cwd }),
       ...(deps.env === undefined ? {} : { env: deps.env }),
     });
@@ -64,8 +80,12 @@ function load(command: { config: string }, io: CliIo, deps: CommandDependencies)
 function engineFor(configuration: LoadedConfiguration, deps: CommandDependencies): SearchEngine {
   return deps.engineFactory?.(configuration) ?? createSearchEngine({
     configuration,
-    ...(deps.env === undefined ? {} : { env: deps.env }),
+    env: commandEnvironment(configuration, deps),
   });
+}
+
+function commandEnvironment(loaded: LoadedConfiguration, deps: CommandDependencies): NodeJS.ProcessEnv {
+  return environmentWithProfileSecrets(loaded.configPath, deps.env ?? process.env, loaded.sourceRoot, loaded.config.provider.api_key_env);
 }
 
 /** Run one parsed command and return the process exit code. */
@@ -75,6 +95,8 @@ export async function executeCommand(
   deps: CommandDependencies = {},
 ): Promise<number> {
   switch (command.kind) {
+    case 'init':
+      return runInit(command, io, deps);
     case 'doctor':
       return runDoctor(command, io, deps);
     case 'inspect':
@@ -88,12 +110,54 @@ export async function executeCommand(
   }
 }
 
+async function runInit(command: Extract<CliCommand, { kind: 'init' }>, io: CliIo, deps: CommandDependencies): Promise<number> {
+  const prompt = deps.prompt ?? (async (question: string): Promise<string> => {
+    const terminal = createInterface({ input: deps.input ?? process.stdin, output: deps.output ?? process.stdout });
+    try { return await terminal.question(question); } finally { terminal.close(); }
+  });
+  try {
+    const environment = deps.env ?? process.env;
+    const root = command.global ? undefined : validateProfileLocation(resolve(deps.cwd ?? process.cwd(), command.root), environment);
+    if (command.global) new LocalDirectory(configurationHome(environment));
+    const savedProvider = configuredGlobalProvider(environment);
+    const answer = command.provider ?? savedProvider ?? (await prompt('Provider [1 TypeSafe AI, 2 Vercel AI Gateway] (1): ')).trim();
+    let provider: InitProvider;
+    if (answer === '' || answer === '1' || answer === 'typesafe') provider = 'typesafe';
+    else if (answer === '2' || answer === 'vercel') provider = 'vercel';
+    else throw new Error('provider must be 1/typesafe or 2/vercel');
+    const variable = provider === 'typesafe' ? 'TYPESAFE_API_KEY' : 'AI_GATEWAY_API_KEY';
+    let globalCreated: ReturnType<typeof createGlobalProfile> | undefined;
+    if (savedProvider === undefined || (command.provider !== undefined && savedProvider !== provider)) {
+      const existing = environment[variable]?.trim();
+      const apiKey = existing && existing.length > 0 ? existing : (await prompt(`${variable} (stored outside repositories): `)).trim();
+      globalCreated = savedProvider === undefined
+        ? createGlobalProfile({ provider, apiKey, env: environment, ...(root === undefined ? {} : { repositoryRoot: root }) })
+        : updateGlobalProfile({ provider, apiKey, env: environment, ...(root === undefined ? {} : { repositoryRoot: root }) });
+    }
+    if (command.global) {
+      io.out(`configured JevGrep globally\nsettings: ${globalCreated?.settingsPath ?? 'already configured'}\nsecrets: ${globalCreated?.secretsPath ?? 'already configured'}\nprovider: ${provider === 'typesafe' ? 'TypeSafe AI' : 'Vercel AI Gateway'}\nnext: run 'jevgrep init' inside a repository`);
+      return CLI_EXIT_CODES.complete;
+    }
+    if (root === undefined) throw new Error('project authorization is missing');
+    root.assertCurrent();
+    const profile = createProfile({
+      root: root.path, provider, env: environment,
+      replaceProvider: command.provider !== undefined,
+    });
+    io.out(`authorized JevGrep project\nconfiguration: ${profile.configPath}\nprovider: ${provider === 'typesafe' ? 'TypeSafe AI' : 'Vercel AI Gateway'}\nnew profiles keep remote evaluation disabled; review the configuration before enabling remote_evaluation_enabled\nnext: jevgrep doctor`);
+    return CLI_EXIT_CODES.complete;
+  } catch (cause) {
+    io.err(`jevgrep: init failed: ${cause instanceof Error ? cause.message : 'unknown failure'}`);
+    return CLI_EXIT_CODES.rejected;
+  }
+}
+
 function runDoctor(command: Extract<CliCommand, { kind: 'doctor' }>, io: CliIo, deps: CommandDependencies): number {
   const loaded = load(command, io, deps);
   if (typeof loaded === 'number') {
     return loaded;
   }
-  const report = doctorReport(loaded, deps.env ?? process.env, REFERENCE_COUNTER_ID);
+  const report = doctorReport(loaded, commandEnvironment(loaded, deps), REFERENCE_COUNTER_ID);
   for (const line of renderDoctorReport(report)) {
     io.out(line);
   }
@@ -141,7 +205,7 @@ async function runSearch(
       const response = toCliSearchResponse(outcome, referenceCounter);
       io.out(response.stdout);
       if (measuredTokens !== null) {
-        io.err(`jevgrep: response measured at ${String(measuredTokens)} ${REFERENCE_COUNTER_ID} tokens of ${String(command.request.max_context_tokens)}`);
+        io.err(`jevgrep: response measured at ${String(measuredTokens)} ${REFERENCE_COUNTER_ID} tokens of ${String(command.request.max_context_tokens ?? loaded.config.search.default_response_tokens)}`);
       }
       return response.exitCode;
     } catch (cause) {

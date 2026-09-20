@@ -9,7 +9,8 @@
  *
  * This development transport implements stdio framing directly. SDK selection and
  * real Codex interoperability remain open in JG-006; local tests are not client
- * qualification. The executable remains gated until the senior acceptance work.
+ * qualification. Live tool calls still require explicit repository authorization,
+ * remote enablement and a provider credential.
  *
  * Lifecycle rules enforced here:
  * - startup scans nothing and contacts no provider; the tool is discoverable offline;

@@ -36,6 +36,9 @@ function expectError(argv: readonly string[]): string {
 }
 
 test('the documented command forms parse', () => {
+  const init = expectCommand(['init', '--root', 'C:/work/project', '--provider', 'typesafe']);
+  assert.deepEqual(init.command, { kind: 'init', root: 'C:/work/project', provider: 'typesafe', global: false });
+
   const doctor = expectCommand(['doctor', '--config', 'C:/work/config.json']);
   assert.deepEqual(doctor.command, { kind: 'doctor', config: 'C:/work/config.json' });
 
@@ -68,6 +71,14 @@ test('the documented command forms parse', () => {
   assert.deepEqual(cache.command, { kind: 'cache-clear', config: 'config.json' });
 });
 
+test('init defaults to the current directory and TypeSafe provider selection remains interactive', () => {
+  const init = expectCommand(['init']);
+  assert.deepEqual(init.command, { kind: 'init', root: '.', global: false });
+  assert.deepEqual(expectCommand(['init', '--global']).command, { kind: 'init', root: '.', global: true });
+  assert.match(expectError(['init', '--global', '--root', '.']), /--root.*--global/);
+  assert.match(expectError(['init', '--provider', 'unknown']), /typesafe.*vercel/i);
+});
+
 test('defaults follow the specification', () => {
   const search = expectCommand(['search', '--config', 'config.json', '--query', 'anything']);
   assert.equal(search.command.kind, 'search');
@@ -75,7 +86,7 @@ test('defaults follow the specification', () => {
     return;
   }
   assert.deepEqual(search.command.request.scope, ['.']);
-  assert.equal(search.command.request.max_context_tokens, 4_000);
+  assert.equal(search.command.request.max_context_tokens, undefined, 'the trusted configuration supplies the default later');
   assert.equal(search.command.request.allow_partial_scan, false);
   assert.equal(search.command.json, false);
 
@@ -87,16 +98,12 @@ test('defaults follow the specification', () => {
   }
 });
 
-test('a missing --config is refused for every command', () => {
-  for (const argv of [
-    ['doctor'],
-    ['inspect', '--scope', 'src'],
-    ['search', '--query', 'something'],
-    ['mcp'],
-    ['cache', 'clear'],
-  ]) {
-    assert.match(expectError(argv), /--config/);
-  }
+test('commands accept automatic project discovery when --config is absent', () => {
+  assert.deepEqual(expectCommand(['doctor']).command, { kind: 'doctor' });
+  assert.equal(expectCommand(['inspect', '--scope', 'src']).command.kind, 'inspect');
+  assert.equal(expectCommand(['search', '--query', 'something']).command.kind, 'search');
+  assert.deepEqual(expectCommand(['mcp']).command, { kind: 'mcp' });
+  assert.deepEqual(expectCommand(['cache', 'clear']).command, { kind: 'cache-clear' });
 });
 
 test('search requires exactly one query source', () => {
@@ -115,17 +122,17 @@ test('--query-file is read, so multiline queries survive the shell', () => {
   }
 });
 
-test('the response budget is an integer inside the documented range', () => {
-  for (const value of ['abc', '4000.5', '1023', '16001', '0', '-1']) {
+test('the response budget is an integer and the operator maximum is checked after loading configuration', () => {
+  for (const value of ['abc', '4000.5', '1023', '9007199254740992', '0', '-1']) {
     assert.match(
       expectError(['search', '--config', 'config.json', '--query', 'q', '--max-context-tokens', value]),
       /max-context-tokens|tokens|integer/i,
     );
   }
-  const accepted = expectCommand(['search', '--config', 'config.json', '--query', 'q', '--max-context-tokens', '16000']);
+  const accepted = expectCommand(['search', '--config', 'config.json', '--query', 'q', '--max-context-tokens', '20000']);
   assert.equal(accepted.command.kind, 'search');
   if (accepted.command.kind === 'search') {
-    assert.equal(accepted.command.request.max_context_tokens, 16_000);
+    assert.equal(accepted.command.request.max_context_tokens, 20_000);
   }
 });
 

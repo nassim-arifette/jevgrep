@@ -9,12 +9,12 @@ import { commandHelp, globalHelp, documentedCommands } from '../src/cli-help.ts'
  * The same rule as JG-001 applies: nothing is presented as available that cannot run.
  */
 test('every documented command has a help page', () => {
-  assert.deepEqual([...documentedCommands()].sort(), ['cache clear', 'doctor', 'inspect', 'mcp', 'search']);
+  assert.deepEqual([...documentedCommands()].sort(), ['cache clear', 'doctor', 'init', 'inspect', 'mcp', 'search']);
   for (const command of documentedCommands()) {
     const help = commandHelp(command);
     assert.ok(help !== undefined, `${command} has no help`);
     assert.match(help, new RegExp(command.split(' ')[0] ?? '', 'i'));
-    assert.match(help, /--config/);
+    if (command !== 'init') assert.match(help, /--config/);
     assert.match(help, /exit codes/i, `${command}: the page must state the exit-code contract`);
   }
   assert.equal(commandHelp('frobnicate'), undefined);

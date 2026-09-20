@@ -2,6 +2,11 @@
 node_modules/
 dist/
 
+# Local credentials (the init command stores its secrets outside the repository)
+.env
+.env.*
+!.env.example
+
 # Editor and OS noise
 .DS_Store
 Thumbs.db

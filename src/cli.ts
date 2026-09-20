@@ -4,7 +4,7 @@
  *
  * The entry point validates arguments, handles help/version, and dispatches every
  * documented command to the shared command layer. Provider activation remains guarded
- * by the trusted configuration and the qualification gates in the engine.
+ * by trusted repository authorization, explicit remote enablement and credentials.
  */
 import { readFileSync, realpathSync } from 'node:fs';
 import process from 'node:process';
