@@ -139,12 +139,22 @@ async function runInit(command: Extract<CliCommand, { kind: 'init' }>, io: CliIo
       return CLI_EXIT_CODES.complete;
     }
     if (root === undefined) throw new Error('project authorization is missing');
+    const providerLabel = provider === 'typesafe' ? 'TypeSafe AI' : 'Vercel AI Gateway';
+    const input = (deps.input ?? process.stdin) as Readable & { isTTY?: boolean };
+    const interactive = deps.prompt !== undefined || input.isTTY === true;
+    let remoteEvaluationEnabled: boolean | undefined;
+    if (interactive) {
+      io.out(`repository: ${root.path}`);
+      const consent = await prompt(`Allow sending eligible source excerpts from this repository to ${providerLabel}? [y/N] `);
+      remoteEvaluationEnabled = /^(y|yes)$/i.test(consent.trim());
+    }
     root.assertCurrent();
     const profile = createProfile({
       root: root.path, provider, env: environment,
       replaceProvider: command.provider !== undefined,
+      ...(remoteEvaluationEnabled === undefined ? {} : { remoteEvaluationEnabled }),
     });
-    io.out(`authorized JevGrep project\nconfiguration: ${profile.configPath}\nprovider: ${provider === 'typesafe' ? 'TypeSafe AI' : 'Vercel AI Gateway'}\nnew profiles keep remote evaluation disabled; review the configuration before enabling remote_evaluation_enabled\nnext: jevgrep doctor`);
+    io.out(`authorized JevGrep project\nconfiguration: ${profile.configPath}\nprovider: ${providerLabel}\nremote evaluation: ${profile.remoteEvaluationEnabled ? 'enabled' : 'disabled'}\n${profile.remoteEvaluationEnabled ? 'next: jevgrep search --query "your question"' : 'next: jevgrep inspect; review the configuration before enabling remote_evaluation_enabled'}`);
     return CLI_EXIT_CODES.complete;
   } catch (cause) {
     io.err(`jevgrep: init failed: ${cause instanceof Error ? cause.message : 'unknown failure'}`);

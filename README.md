@@ -11,6 +11,16 @@ those files in detail and continue its work with less exploratory context.
 Use the CLI or connect a coding agent
 through the local MCP server.
 
+## Demos
+
+### CLI
+
+![Initialize JevGrep, approve remote evaluation, and search source code from the terminal](docs/assets/jevgrep-cli-demo.gif)
+
+### MCP
+
+![Files explored without JevGrep compared with the relevant source located through JevGrep](docs/assets/jevgrep-tree-demo.gif)
+
 ## What it is for
 
 JevGrep is useful when a coding agent needs to:
@@ -96,7 +106,14 @@ jevgrep init --root path/to/my-project
 
 Provider credentials are global, but repository authorization is not. Each repository
 must be authorized separately. Its trusted profile is stored outside the repository.
-New profiles keep remote evaluation disabled. Optional scan caps are disabled by default;
+Interactive `init` asks before enabling remote evaluation for this repository:
+
+```text
+Allow sending eligible source excerpts from this repository to Vercel AI Gateway? [y/N]
+```
+
+Answer `y` to search immediately. Enter or `n` keeps remote evaluation disabled.
+Non-interactive initialization also leaves new profiles disabled. Optional scan caps are disabled by default;
 configure them if you want to limit usage.
 `init` also creates a commented `.jevgrepignore` in the repository when one does not
 already exist. Existing exclusions are preserved; `.gitignore` is already respected.
@@ -114,7 +131,8 @@ cache without making a network request.
 `inspect` shows which files and fragments are eligible, what was excluded and how much
 work a search would perform. It also stays offline.
 
-After reviewing the scope and limits, edit the profile path printed by `init` and set
+If you did not enable remote evaluation during `init`, review the scope and limits,
+then edit the profile path printed by `init` and set
 `remote_evaluation_enabled` to `true` to allow source disclosure to the selected provider.
 
 ### 4. Search by behaviour

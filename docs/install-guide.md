@@ -67,9 +67,12 @@ Each repository needs its own authorization. The trusted profile is stored outsi
 the repository, and `init` prints its path. The command also creates a commented
 `.jevgrepignore` when none exists; existing exclusions are preserved.
 
-New profiles set `remote_evaluation_enabled` to `false`. Both `doctor` and
-`inspect` work offline without a provider key. Review the eligible scope, exclusions
-and limits, then edit the printed profile and set:
+Interactive `init` asks for permission to send eligible source excerpts to the
+selected provider. Answer `y` to enable remote evaluation; Enter or `n` leaves it
+disabled. New non-interactive profiles also keep it disabled. Both `doctor` and
+`inspect` work offline without a provider key. If you did not enable remote
+evaluation during `init`, review the eligible scope, exclusions and limits, then
+edit the printed profile and set:
 
 ```json
 "remote_evaluation_enabled": true

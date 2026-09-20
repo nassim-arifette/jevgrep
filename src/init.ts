@@ -140,7 +140,7 @@ export function buildInitialConfiguration(root: string, provider: InitProvider):
   });
 }
 
-export type CreatedProfile = { readonly configPath: string; readonly secretsPath: string; readonly variable: string };
+export type CreatedProfile = { readonly configPath: string; readonly secretsPath: string; readonly variable: string; readonly remoteEvaluationEnabled: boolean };
 
 function createDefaultIgnoreFile(root: AuthorizedRoot): boolean {
   const repository = new LocalDirectory(root.path);
@@ -156,6 +156,7 @@ function createDefaultIgnoreFile(root: AuthorizedRoot): boolean {
 export function createProfile(options: {
   readonly root: string; readonly provider: InitProvider; readonly apiKey?: string; readonly env?: NodeJS.ProcessEnv;
   readonly replaceProvider?: boolean;
+  readonly remoteEvaluationEnabled?: boolean;
 }): CreatedProfile {
   if (options.apiKey !== undefined) validateKey(options.apiKey);
   const env = options.env ?? process.env;
@@ -164,14 +165,15 @@ export function createProfile(options: {
   const configPath = join(storage.path, 'config.json');
   const secretsPath = options.apiKey === undefined ? globalSecretsPath(env) : join(storage.path, 'secrets.env');
   const existing = readOptional(storage, 'config.json', 1_048_576);
-  const desired = buildInitialConfiguration(root.path, options.provider);
+  const desired = { ...buildInitialConfiguration(root.path, options.provider), remote_evaluation_enabled: options.remoteEvaluationEnabled === true };
   if (existing !== undefined) {
     if (options.replaceProvider !== true || options.apiKey !== undefined) throw new Error(`a profile already exists at ${storage.path}`);
     const current = configurationSchema.parse(parseJson(existing, configPath));
     if (AuthorizedRoot.open(current.repository_root).path !== root.path) throw new Error('the existing profile authorizes another repository');
-    const updated = configurationSchema.parse({ ...current, provider: desired.provider });
+    const updated = configurationSchema.parse({ ...current, provider: desired.provider,
+      remote_evaluation_enabled: options.remoteEvaluationEnabled ?? current.remote_evaluation_enabled });
     root.assertCurrent(); storage.write('config.json', `${JSON.stringify(updated, null, 2)}\n`);
-    return { configPath, secretsPath, variable: updated.provider.api_key_env };
+    return { configPath, secretsPath, variable: updated.provider.api_key_env, remoteEvaluationEnabled: updated.remote_evaluation_enabled };
   }
   if (options.apiKey !== undefined && readOptional(storage, 'secrets.env', 32_768) !== undefined) throw new Error(`a profile already exists at ${storage.path}`);
   root.assertCurrent(); storage.write('config.json', `${JSON.stringify(desired, null, 2)}\n`, true);
@@ -189,7 +191,7 @@ export function createProfile(options: {
     if (ignoreCreated) new LocalDirectory(root.path).remove('.jevgrepignore');
     throw cause;
   }
-  return { configPath, secretsPath, variable: desired.provider.api_key_env };
+  return { configPath, secretsPath, variable: desired.provider.api_key_env, remoteEvaluationEnabled: desired.remote_evaluation_enabled };
 }
 
 export function environmentWithProfileSecrets(

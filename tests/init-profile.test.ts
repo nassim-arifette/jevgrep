@@ -48,6 +48,24 @@ test('init resolves a relative root from the command cwd and keeps disclosure di
   assert.equal(config.repository_root, root); assert.equal(config.remote_evaluation_enabled, false);
 });
 
+for (const answer of ['y', 'YES', '', 'n', 'maybe']) {
+  test(`project init requires explicit disclosure consent (${JSON.stringify(answer)})`, async () => {
+    const space = temporary('jevgrep-init-consent-'); const root = join(space, 'repo'); mkdirSync(root);
+    const env = { JEVGREP_CONFIG_HOME: join(space, 'config'), AI_GATEWAY_API_KEY: 'synthetic' };
+    const questions: string[] = []; const output: string[] = [];
+    const code = await executeCommand({ kind: 'init', root: '.', global: false, provider: 'vercel' },
+      { out: (line) => output.push(line), err: (line) => assert.fail(line) },
+      { cwd: root, env, prompt: async (question) => { questions.push(question); return answer; } });
+    assert.equal(code, 0);
+    assert.equal(questions.length, 1);
+    assert.match(questions[0]!, /eligible source excerpts.*Vercel AI Gateway.*\[y\/N\]/);
+    const config = JSON.parse(readFileSync(discoverProjectConfiguration(root, env), 'utf8'));
+    assert.equal(config.remote_evaluation_enabled, /^(y|yes)$/i.test(answer));
+    assert.match(output.join('\n'), /remote evaluation: (enabled|disabled)/);
+    assert.ok(!output.join('\n').includes('synthetic'));
+  });
+}
+
 test('global setup from the user home does not authorize the home as a repository', async () => {
   const home = temporary('jevgrep-init-global-home-');
   const env = { JEVGREP_CONFIG_HOME: join(home, '.config', 'jevgrep'), TYPESAFE_API_KEY: 'synthetic' };
