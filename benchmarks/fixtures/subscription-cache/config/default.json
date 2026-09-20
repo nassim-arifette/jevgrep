@@ -1,5 +1,0 @@
-{
-  "cacheTtlSeconds": 300,
-  "webhookPath": "/internal/subscription-events",
-  "refreshEvents": ["profile.changed"]
-}

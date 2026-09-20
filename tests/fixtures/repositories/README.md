@@ -11,6 +11,5 @@ evaluation.
   behavioral test.
 - `migration-audit` covers TypeScript, JSON configuration and SQL migration content.
 
-The fixtures exercise provider and source-pipeline tests; they are not the retrieval
-benchmark's answer key. JG-027 owns the separately versioned corpus under
-`benchmarks/`.
+The fixtures exercise offline provider and source-pipeline correctness tests.
+They do not measure retrieval quality or performance.

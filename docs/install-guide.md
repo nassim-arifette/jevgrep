@@ -96,16 +96,27 @@ Everything else can stay as shipped. Notable defaults:
 | `scan_caps.*` | `null` | every optional spend/volume cap is **disabled**; `null` means off, `0` does not mean unlimited |
 | `search.deadline_ms` | `300000` | internal deadline (5 minutes), including preparation and queue wait |
 | `search.default_response_tokens` / `max_response_tokens` | `4000` / `16000` | response budget under the pinned `tiktoken@1.0.22/cl100k_base` counter |
-| `search.threshold` | `0.5` | provisional selection threshold, to be chosen on development data (JG-028) |
+| `search.threshold` | `0.5` | selection threshold; adjust after checking results on a small example |
 | `source.max_file_bytes` | `1048576` | per-file eligibility limit |
 | `source.follow_links` | `false` | links and junctions are never followed; `true` is rejected |
-| `cache.*` | enabled, 7 days, 100 MiB | evaluation cache outside the repository; persistent reuse needs a pinned model revision and an identical complete batch |
+| `cache.*` | enabled, 7 days, 100 MiB | per-fragment scores outside the repository; pinned direct models use this TTL |
+| `cache.rolling_ttl_seconds` | `900` when omitted | maximum age for known rolling aliases, including Vercel; `0` disables rolling reuse |
 
 `jevgrep init --global` can create global provider credentials, then `jevgrep init`
 creates a trusted profile for the current repository. New profiles keep remote
 evaluation disabled. Review the printed configuration path and enable disclosure
 there when ready. A provider switch preserves the existing project's limits and
 disclosure setting. Environment credentials override stored credentials.
+
+New direct profiles pin `jev-1.13.0`. Existing `jev-latest` / `jev-preview` profiles
+and Vercel's `typesafe-ai/jev` use short-lived score reuse because their underlying
+revision can change. `doctor` shows the effective policy and warns that scores can
+be stale within that window. No profile migration is required.
+
+Requests pack fragments by the full serialized token estimate, not a fixed group
+of eight. The targets are 44,800 reference tokens for direct TypeSafe and 22,400 for
+Gateway, with additional local limits of 64 questions and 256 KiB per request.
+See [request batching](../README.md#request-batching) for provider limits and caveats.
 
 Optional `search.retry` settings default to two retries, a 250 ms base delay and a
 5,000 ms maximum jittered delay. `Retry-After` applies across workers. Ambiguous

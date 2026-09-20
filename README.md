@@ -9,8 +9,7 @@ original source excerpts with their paths and line numbers. The calling agent ca
 those files in detail and continue its work with less exploratory context.
 
 > JevGrep is an experimental project being prepared for an open-source release. It is ready
-> for local testing, but its retrieval quality and live provider behaviour have not been
-> benchmarked broadly yet.
+> for local testing. A successful example is not a general retrieval-quality guarantee.
 
 ## What it is for
 
@@ -134,12 +133,13 @@ explicit override.
 
 | Provider | Setup | Model |
 | --- | --- | --- |
-| TypeSafe AI | `jevgrep init --global --provider typesafe` | `jev-latest` |
+| TypeSafe AI | `jevgrep init --global --provider typesafe` | `jev-1.13.0` (pinned) |
 | Vercel AI Gateway | `jevgrep init --global --provider vercel` | `typesafe-ai/jev` |
 
 The TypeSafe transport follows the documented System One HTTP contract and is covered
 with simulated responses. It has not been tested against a real account in this project.
-Vercel AI Gateway is the intended path for the first live tests.
+Vercel AI Gateway has been checked on a small authentication example, including a
+repeat search served entirely from the score cache.
 
 To switch an existing global and project profile to Vercel:
 
@@ -214,10 +214,20 @@ Results go to stdout. Diagnostics and measurements go to stderr.
 
 ## Cache
 
-JevGrep caches provider scores outside the repository. Repeating an identical search can
-reuse evaluations when the pinned model revision, criterion, complete request batch,
-source fragment and question are unchanged. Unresolved aliases (`jev-latest` and the
-Gateway model alias) currently disable persistent reuse.
+JevGrep caches provider scores outside the repository, independently for each question
+and fragment. Changing another fragment does not invalidate an unchanged score.
+Provider, endpoint, model, query, source, location, criterion and layout remain part
+of the identity. Only misses are grouped into requests.
+
+New TypeSafe direct profiles pin `jev-1.13.0` and use the configured cache TTL (seven
+days by default). Vercel's `typesafe-ai/jev` is a rolling alias, not an immutable
+revision. Its scores can be reused for up to 15 minutes. Existing direct profiles
+using `jev-latest` or `jev-preview` use the same short-lived policy.
+
+Rolling reuse can briefly serve a score from an earlier model revision. `doctor`
+shows this policy and its effective TTL. Set `cache.rolling_ttl_seconds` to `0` to
+disable it, or to an integer from `1` to `900` to shorten it. `cache.enabled: false`
+disables all score reuse. Existing profiles do not need to be recreated.
 
 Clear the cache for the current project with:
 
@@ -227,11 +237,35 @@ jevgrep cache clear
 
 Cached entries contain scores and identities, not source text, questions or credentials.
 
+## Request batching
+
+Fragments remain small enough to return precise excerpts; they are no longer sent
+in fixed groups of eight. Requests pack fragments by the estimated tokens in the
+complete serialized payload, including the query, criteria and metadata.
+
+| Transport | Aggregate ceiling used | Target with tokenizer headroom |
+| --- | --- | --- |
+| TypeSafe direct | 64,000 tokens | 44,800 reference tokens |
+| Vercel AI Gateway | 32,000 tokens (conservative local policy) | 22,400 reference tokens |
+
+TypeSafe documents 64k total and 32k for shared state plus one question. Gateway's
+catalog advertises a 32k context; using it as an aggregate ceiling is conservative,
+not a claim that Gateway documents the same total-question limit. Both paths keep
+30% headroom because the provider tokenizer is not public, and locally limit each
+request to 64 questions and 256 KiB. These last two limits are application safeguards.
+See [TypeSafe model limits](https://docs.typesafe.ai/models) and the
+[Gateway model catalog](https://ai-gateway.vercel.sh/v1/models).
+
+`inspect` and search planning use the same serializer and token estimator; `inspect`
+uses a sample query, so its estimate can differ from an actual search. Estimates are
+not provider billing. File preparation still runs on every search: there is no
+persistent repository index.
+
 ## Current limitations
 
-- The project is experimental and has not completed broad real-world benchmarks.
+- The project is experimental; check results on your own repository.
 - TypeSafe direct has only been tested against documentation and simulated responses.
-- Vercel live evaluation is enabled but still needs its first recorded end-to-end run.
+- The small Vercel example does not establish reliability on every repository or query.
 - MCP transport is tested locally, but Codex and Claude interoperability still needs to
   be qualified with real clients.
 - JavaScript and TypeScript receive the best source chunking today.
@@ -252,7 +286,8 @@ Run the complete local verification gate with:
 npm run verify
 ```
 
-The test suite is offline and does not use provider credentials.
+The test suite is offline and does not use provider credentials. There is no benchmark
+suite or benchmark acceptance gate; live checks use a small, explicitly chosen example.
 
 ## Documentation
 

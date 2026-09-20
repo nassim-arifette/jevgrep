@@ -1,5 +1,0 @@
-{
-  "auditDays": 90,
-  "deleteBatchSize": 100,
-  "schedule": "0 3 * * *"
-}
