@@ -8,7 +8,7 @@ permissions:
 jobs:
   probe:
     runs-on: windows-latest
-    timeout-minutes: 3
+    timeout-minutes: 6
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -24,12 +24,19 @@ jobs:
           const source = readFileSync('src/source/windows-attributes-worker.ts', 'utf8');
           const program = source.split('const PROGRAM = String.raw`')[1].split('`;')[0];
           const root = process.env.SystemRoot;
-          for (const inherited of [false, true]) {
+          const cases = [
+            ['module-path', { PSModulePath: join(root, 'System32', 'WindowsPowerShell', 'v1.0', 'Modules') }],
+            ['local-app-data', { LOCALAPPDATA: process.env.LOCALAPPDATA }],
+            ['temp', { TEMP: process.env.TEMP, TMP: process.env.TMP }],
+            ['user-profile', { USERPROFILE: process.env.USERPROFILE }],
+            ['system-dirs', Object.fromEntries(['LOCALAPPDATA', 'APPDATA', 'TEMP', 'TMP', 'USERPROFILE', 'ProgramFiles', 'ProgramData'].filter(k => process.env[k]).map(k => [k, process.env[k]]))],
+          ];
+          for (const [label, extra] of cases) {
             await new Promise(resolve => {
               const start = Date.now();
               const child = spawn(join(root, 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe'),
                 ['-NoLogo', '-NoProfile', '-NonInteractive', '-Command', program],
-                { windowsHide: true, cwd: root, env: inherited ? process.env : { SystemRoot: root, WINDIR: root } });
+                { windowsHide: true, cwd: root, env: { SystemRoot: root, WINDIR: root, ...extra } });
               let out = '', err = '';
               child.stdout.on('data', data => out += data);
               child.stderr.on('data', data => err += data);
@@ -37,7 +44,7 @@ jobs:
               child.on('error', error => console.log('[helper-probe] spawn:', error.code));
               child.on('close', code => {
                 clearTimeout(timer);
-                console.log('[helper-probe]', JSON.stringify({ inherited, code, ms: Date.now()-start, out, err }));
+                console.log('[helper-probe]', JSON.stringify({ label, code, ms: Date.now()-start, out, err }));
                 resolve();
               });
               child.stdin.end(JSON.stringify([root]) + '\n');
