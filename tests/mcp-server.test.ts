@@ -60,6 +60,7 @@ class DeterministicProvider implements ProviderClient {
 }
 
 type Session = {
+  readonly deadlineMs: number;
   send(message: unknown): void;
   sendRaw(line: string): void;
   responses(): Promise<Record<string, unknown>[]>;
@@ -91,6 +92,7 @@ function session(provider: ProviderClient = new DeterministicProvider(), clock?:
   });
 
   return {
+    deadlineMs: space.loaded.config.search.deadline_ms,
     send(message: unknown): void {
       input.write(`${JSON.stringify(message)}\n`);
     },
@@ -306,7 +308,7 @@ test('time spent in the queue consumes the search deadline before any provider d
   try {
     await new Promise((resolve) => setImmediate(resolve));
     assert.equal(calls, 1);
-    clock.advanceBy(60_001);
+    clock.advanceBy(active.deadlineMs + 1);
   } finally {
     release();
   }

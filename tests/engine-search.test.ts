@@ -460,7 +460,7 @@ test('deadline cancellation of the first dispatched attempt returns partial, not
   const provider = new JevAdapter({
     baseUrl: 'https://api.typesafe.ai', model: 'jev-1.13.0', apiKey: 'synthetic',
     transport: async () => {
-      clock.advanceBy(60_001);
+      clock.advanceBy(space.loaded.config.search.deadline_ms + 1);
       await Promise.resolve();
       throw new DOMException('deadline aborted transport', 'AbortError');
     },
@@ -553,7 +553,7 @@ test('an expired deadline stops new dispatch and returns flagged partial evidenc
   const space = workspace();
   const provider = new ScriptedProviderClient((path) => (path.includes('cache') ? 0.9 : 0.2), {
     onCall: () => {
-      clock.advanceBy(120_000);
+      clock.advanceBy(space.loaded.config.search.deadline_ms + 1);
     },
   });
   const engine = createSearchEngine({ configuration: space.loaded, provider, clock, env: space.env });
