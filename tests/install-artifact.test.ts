@@ -79,6 +79,8 @@ test('the packed artifact installs into a clean prefix and runs there', { timeou
   // the installation's dependency graph from the same lockfile, so a clean CI host
   // can install offline without having run an unrelated `npm install` first.
   const installation = JSON.parse(readFileSync(join(repoRoot, 'package.json'), 'utf8')) as Record<string, unknown>;
+  const packageName = installation['name'];
+  assert.equal(typeof packageName, 'string');
   installation['name'] = 'jevgrep-artifact-install';
   delete installation['bin'];
   delete installation['scripts'];
@@ -96,7 +98,7 @@ test('the packed artifact installs into a clean prefix and runs there', { timeou
   );
   assert.equal(installed.code, 0, installed.stderr);
 
-  const packageRoot = join(prefix, 'node_modules', 'jevgrep');
+  const packageRoot = join(prefix, 'node_modules', packageName as string);
   assert.equal(existsSync(join(packageRoot, 'dist', 'cli.js')), true, 'the artifact must ship the built entry point');
   const shipped = readdirSync(packageRoot).sort();
   assert.ok(shipped.includes('dist'), 'the artifact ships the build output');
@@ -114,7 +116,7 @@ test('the packed artifact installs into a clean prefix and runs there', { timeou
     dependencies?: Record<string, string>;
     bin?: Record<string, string>;
   };
-  assert.equal(manifest.bin?.['jevgrep'], './dist/cli.js');
+  assert.equal(manifest.bin?.['jevgrep'], 'dist/cli.js');
   // Start-up must never resolve an unpinned version: every declared dependency is exact.
   for (const [name, range] of Object.entries(manifest.dependencies ?? {})) {
     assert.match(range, /^(?:npm:typescript@)?\d+\.\d+\.\d+$/, `${name} is not pinned: ${range}`);

@@ -12,7 +12,8 @@ import { repoRoot } from './helpers/cli-runner.ts';
 type Manifest = {
   readonly name: string;
   readonly version: string;
-  readonly private: boolean;
+  readonly private?: boolean;
+  readonly publishConfig: { readonly access: string };
   readonly type: string;
   readonly engines: { readonly node: string };
   readonly bin: Record<string, string>;
@@ -78,10 +79,11 @@ test('the development scripts cover compile, type check, test and smoke', () => 
 });
 
 test('the package exposes one executable entry point built from src/cli.ts', () => {
-  assert.equal(manifest.private, true);
+  assert.notEqual(manifest.private, true);
+  assert.equal(manifest.publishConfig.access, 'public');
   assert.equal(manifest.type, 'module');
   assert.deepEqual(Object.keys(manifest.bin), ['jevgrep']);
-  assert.equal(manifest.bin['jevgrep'], './dist/cli.js');
+  assert.equal(manifest.bin['jevgrep'], 'dist/cli.js');
   assert.deepEqual(manifest.files, ['dist']);
 
   const buildConfig: { compilerOptions: { outDir: string; rootDir: string } } = JSON.parse(

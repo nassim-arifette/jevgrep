@@ -1,15 +1,27 @@
 {
-  "name": "jevgrep",
-  "version": "0.0.0",
-  "private": true,
+  "name": "@nassim-arifette/jevgrep",
+  "version": "0.1.0",
   "description": "Semantic code search for coding agents: evaluates authorized repository fragments with Jev and returns original excerpts under a response budget.",
   "type": "module",
-  "license": "UNLICENSED",
+  "license": "MIT",
+  "author": "Nassim Arifette",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nassim-arifette/jevgrep.git"
+  },
+  "homepage": "https://github.com/nassim-arifette/jevgrep#readme",
+  "bugs": {
+    "url": "https://github.com/nassim-arifette/jevgrep/issues"
+  },
+  "keywords": ["jev", "semantic-search", "code-search", "coding-agents", "mcp", "cli", "typesafe"],
+  "publishConfig": {
+    "access": "public"
+  },
   "engines": {
     "node": ">=24.0.0 <25.0.0"
   },
   "bin": {
-    "jevgrep": "./dist/cli.js"
+    "jevgrep": "dist/cli.js"
   },
   "files": [
     "dist"
@@ -19,7 +31,8 @@
     "typecheck": "node node_modules/typescript/bin/tsc -p tsconfig.json",
     "test": "node --test \"tests/*.test.ts\" \"tests/contract/*.test.ts\"",
     "smoke": "node scripts/smoke.ts",
-    "verify": "npm run typecheck && npm test && npm run build && npm run smoke"
+    "verify": "npm run typecheck && npm test && npm run build && npm run smoke",
+    "prepublishOnly": "npm run verify"
   },
   "devDependencies": {
     "@types/node": "24.13.6",

@@ -1,259 +1,235 @@
 # JevGrep installation and configuration guide
 
-For one operator, on one machine, authorizing one local repository. It covers a clean
-Windows install, the same steps on Linux, connecting the stdio server to an MCP client
-such as Codex, and the failures you are most likely to hit.
+JevGrep runs locally and evaluates eligible source fragments remotely with TypeSafe AI
+or Vercel AI Gateway. This guide covers installation, repository authorization and MCP.
 
-> **Status of this guide (2026-09-20).** The engine, the CLI command layer and the MCP
-> server exist and are covered by the offline suite. This is a development guide;
-> the operational commands below describe the experimental installation.
-> The executable now dispatches real commands: `doctor`, `inspect` and `cache clear`
-> run locally without a credential, and `search` is refused with exit code 2 until the
-> trusted configuration enables remote evaluation and the credential is present. Live
-> search is enabled after explicit repository authorization, remote evaluation
-> and credential checks. No real Codex interoperability run has been performed yet.
+## Install
 
-## 1. What leaves your machine
+Requires Node.js 24 and npm. The package name is `@nassim-arifette/jevgrep`;
+the unscoped package `jevgrep` belongs to a different project. Until the first npm
+release, install from this repository.
 
-Read this before enabling remote evaluation.
-
-When `remote_evaluation_enabled` is `true`, a search sends **the text of eligible source
-fragments** from the authorized repository, together with your search question, the
-relative path and line range of each fragment, and the versioned relevance criterion, to
-the configured provider endpoint (TypeSafe AI or Vercel AI Gateway). "Local" in this project
-describes the JevGrep process, not the evaluation: the evaluation is remote.
-
-The exclusion policy in §5.2 of the specification covers
-`.git`, the `.env` family, package-manager credential files, key material, dependencies,
-build output, generated and minified artifacts, oversized files, and any file in which a
-credential pattern is detected (the whole file is quarantined for that search, not
-rewritten). Source authorization and Windows reparse-point handling still require
-senior qualification (JG-008); the draft is not a proven confinement boundary.
-The provider credential is read from an environment variable and is sent
-only in the `Authorization` header of the provider request; redirects are refused rather
-than followed.
-
-What this guide does not promise: zero retention by the provider, or any inference
-running on your machine. The provider's terms are the provider's; see
-[research/jev.md](research/jev.md).
-
-Run `jevgrep inspect` before your first real search: it lists exactly what would be
-prepared, and it contacts nobody.
-
-## 2. Requirements
-
-| Component | Version used for this guide |
-| --- | --- |
-| Node.js | 24.15.0 (pinned in [`.nvmrc`](../.nvmrc); `package.json` requires `>=24.0.0 <25.0.0`) |
-| npm | 11.12.1 |
-| OS verified for the consolidated implementation | Windows 11 (26200); Linux remains to be run; CI is configured but has not executed |
-| Runtime dependencies | one: `tiktoken@1.0.22`, whose `cl100k_base` vocabulary ships in the package and is never fetched at run time |
-| Jev provider | account with access to the configured model (`jev-1.13.0` at the time of writing) |
-
-## 3. Install the versioned artifact
-
-From a clean checkout of the repository, on Windows PowerShell or a POSIX shell:
+From this repository:
 
 ```bash
-npm ci            # installs exactly the lockfile, no version drift
-npm run verify    # type check, offline test suite, build, smoke checks
-npm run build     # produces dist/cli.js, the executable entry point
-```
-
-`npm ci` installs the pinned versions from `package-lock.json`, so no step of this guide
-fetches a floating version at start-up. To use the command as `jevgrep` rather than
-`node dist/cli.js`:
-
-```bash
-npm link          # or: npm pack, then npm install -g ./jevgrep-<version>.tgz
+git clone https://github.com/nassim-arifette/jevgrep.git
+cd jevgrep
+npm ci
+npm run build
+npm link
 jevgrep --version
 ```
 
-Record the exact artifact you installed (`npm pack` output or the commit hash). Keep it:
-the MCP configuration below points at an absolute path inside it.
+After publication, install it with:
 
-## 4. Create the trusted configuration
+```bash
+npm install -g @nassim-arifette/jevgrep
+```
 
-The configuration file must live **outside** the repository it authorizes — a file the
-searched repository could edit cannot grant authorization, and JevGrep refuses to load
-one from inside the root it would authorize.
+For development checks, run `npm run verify`. Runtime dependencies are
+`@ai-sdk/gateway`, `ai`, `tiktoken` and `typescript-parser`; exact versions are in
+[package.json](../package.json). The tokenizer vocabulary ships with its package.
 
-Copy [`docs/examples/jevgrep.config.json`](examples/jevgrep.config.json) to, for example,
-`C:\Users\<you>\.jevgrep\orders-api.json`, then set:
+## Configure a provider
 
-- `repository_root`: absolute path of the repository, with forward slashes
-  (`C:/work/orders-api` or `/home/you/work/orders-api`);
-- `remote_evaluation_enabled`: leave `false` until you have read §1. `doctor` and
-  `inspect` work with it disabled; `search` refuses with `REMOTE_DISABLED`;
-- `provider.api_key_env`: the environment variable that holds your credential. The
-  credential itself is never written in this file;
-- `provider.model`: the model your account can use.
+Run the interactive setup once for your OS user:
 
-Everything else can stay as shipped. Notable defaults:
+```bash
+jevgrep init --global
+```
+
+To select Vercel explicitly:
+
+```bash
+jevgrep init --global --provider vercel
+```
+
+Credentials are stored in the user's JevGrep configuration directory, outside the
+repository. `TYPESAFE_API_KEY` and `AI_GATEWAY_API_KEY` override stored credentials.
+Use environment variables in automated environments; do not commit keys in project files.
+
+New direct profiles use `jev-1.13.0`; Vercel profiles use `typesafe-ai/jev`.
+To switch an existing project, run the corresponding global setup, then
+`jevgrep init --provider vercel` (or `--provider typesafe`) inside that project.
+Existing limits and the disclosure setting are preserved.
+
+## Authorize a repository
+
+```bash
+cd path/to/your-project
+jevgrep init
+jevgrep doctor
+jevgrep inspect
+```
+
+You can use `jevgrep init --root "/absolute/path/to/project"` instead.
+Each repository needs its own authorization. The trusted profile is stored outside
+the repository, and `init` prints its path. The command also creates a commented
+`.jevgrepignore` when none exists; existing exclusions are preserved.
+
+New profiles set `remote_evaluation_enabled` to `false`. Both `doctor` and
+`inspect` work offline without a provider key. Review the eligible scope, exclusions
+and limits, then edit the printed profile and set:
+
+```json
+"remote_evaluation_enabled": true
+```
+
+With a valid credential and authorization, searches can now contact the provider.
+
+For manual configuration, copy the [example profile](examples/jevgrep.config.json)
+outside the repository, set its absolute `repository_root`, and pass its path using
+`--config`. The configuration file cannot live inside the root it authorizes.
+
+## What leaves your machine
+
+Search sends eligible fragment text, your question, relative paths, line ranges and
+the relevance criterion to the configured provider. The evaluation runs remotely.
+
+The source policy excludes common credential files, the `.env` family, dependencies,
+build output, generated and minified artifacts, and files containing detected credential
+patterns. Links and junctions are refused. Filters cannot detect every secret;
+review `inspect` output and add exclusions in `.jevgrepignore` when needed.
+
+Credentials authenticate requests and are not placed in evaluation content or cache
+entries. Both transports refuse redirects. Provider retention and privacy policies
+apply to disclosed content; JevGrep does not promise zero retention.
+
+## Limits and cache
 
 | Setting | Default | Meaning |
 | --- | --- | --- |
-| `scan_caps.*` | `null` | every optional spend/volume cap is **disabled**; `null` means off, `0` does not mean unlimited |
-| `search.deadline_ms` | `300000` | internal deadline (5 minutes), including preparation and queue wait |
-| `search.default_response_tokens` / `max_response_tokens` | `4000` / `16000` | response budget under the pinned `tiktoken@1.0.22/cl100k_base` counter |
-| `search.threshold` | `0.5` | selection threshold; adjust after checking results on a small example |
+| `scan_caps.*` | `null` | optional caps disabled; `0` is a real zero allowance |
+| `search.deadline_ms` | `300000` | five minutes, including preparation and queue wait |
+| `search.concurrency` | `4` | concurrent provider work |
+| `search.default_response_tokens` | `4000` | default response budget |
+| `search.max_response_tokens` | `16000` | maximum response budget |
+| `search.threshold` | `0.5` | score threshold for selection |
 | `source.max_file_bytes` | `1048576` | per-file eligibility limit |
-| `source.follow_links` | `false` | links and junctions are never followed; `true` is rejected |
-| `cache.*` | enabled, 7 days, 100 MiB | per-fragment scores outside the repository; pinned direct models use this TTL |
-| `cache.rolling_ttl_seconds` | `900` when omitted | maximum age for known rolling aliases, including Vercel; `0` disables rolling reuse |
+| `source.follow_links` | `false` | `true` is rejected |
+| `cache.ttl_seconds` | `604800` | seven days for pinned models |
+| `cache.max_bytes` | `104857600` | 100 MiB cache limit |
+| `cache.rolling_ttl_seconds` | `900` when omitted | at most 15 minutes for known rolling aliases |
 
-`jevgrep init --global` can create global provider credentials, then `jevgrep init`
-creates a trusted profile for the current repository. New profiles keep remote
-evaluation disabled. Review the printed configuration path and enable disclosure
-there when ready. A provider switch preserves the existing project's limits and
-disclosure setting. Environment credentials override stored credentials.
+Response budgets use the bundled reference tokenizer, not the calling agent's tokenizer.
+An enabled USD cap requires a matching dated provider rate card in the configuration.
+Inspect the configuration examples before setting a cost cap.
 
-New direct profiles pin `jev-1.13.0`. Existing `jev-latest` / `jev-preview` profiles
-and Vercel's `typesafe-ai/jev` use short-lived score reuse because their underlying
-revision can change. `doctor` shows the effective policy and warns that scores can
-be stale within that window. No profile migration is required.
+Set `cache.rolling_ttl_seconds` to `0` to disable rolling reuse, or
+`cache.enabled` to `false` to disable all score reuse. `doctor` reports the active
+policy. Scores from a rolling alias can be stale within its reuse window.
 
-Requests pack fragments by the full serialized token estimate, not a fixed group
-of eight. The targets are 44,800 reference tokens for direct TypeSafe and 22,400 for
-Gateway, with additional local limits of 64 questions and 256 KiB per request.
-See [request batching](../README.md#request-batching) for provider limits and caveats.
+Requests pack fragments by the full serialized token estimate, with provider-specific
+headroom and local question/byte limits. See [request batching](../README.md#request-batching).
 
 Optional `search.retry` settings default to two retries, a 250 ms base delay and a
 5,000 ms maximum jittered delay. `Retry-After` applies across workers. Ambiguous
-attempts are not retried unless `retry_ambiguous` is explicitly enabled; their usage
-reservation remains unknown because a repeated attempt can incur another charge.
+attempts are not retried unless `retry_ambiguous` is enabled; repeated attempts can
+incur additional charges.
 
-Set the credential in your shell profile, never in the configuration file:
+## Search
 
-```powershell
-# Windows PowerShell
-$env:TYPESAFE_API_KEY = "<your key>"
-```
+These single-line commands work in PowerShell and POSIX shells:
 
 ```bash
-# POSIX shell
-export TYPESAFE_API_KEY="<your key>"
+jevgrep search --query "Which handler invalidates cached user data?" --scope src --json
+jevgrep search --query-file question.txt --max-context-tokens 4000
+jevgrep search --config "/absolute/path/to/config.json" --query "How are permissions checked?"
 ```
 
-Optional: `JEVGREP_CACHE_HOME` moves the cache directory. By default it is
-`%LOCALAPPDATA%\jevgrep` on Windows and `$XDG_CACHE_HOME/jevgrep` (or `~/.cache/jevgrep`)
-elsewhere, namespaced by repository and configuration fingerprint.
+The question file is read verbatim. Scope can narrow authorization, never expand it.
+Add `--allow-partial` to permit a deterministic partial scan when an enabled cap
+would otherwise reject the search.
 
-## 5. Check the setup without sending anything
+Exit codes are `0` complete (including an empty selection), `2` invalid request,
+configuration problem or preflight rejection, `3` partial, `4` fatal failure, and
+`130` interrupted. Results go to stdout and diagnostics to stderr.
+Read coverage and stop reasons before interpreting an empty or partial result.
+
+## Connect an MCP client
+
+Set up the provider and repository first. Start the server with an explicit profile:
 
 ```bash
-jevgrep doctor  --config C:/Users/<you>/.jevgrep/orders-api.json
-jevgrep inspect --config C:/Users/<you>/.jevgrep/orders-api.json --scope src --scope tests
+jevgrep mcp --config "/absolute/path/to/config.json"
 ```
 
-`doctor` prints the authorized root, the provider destination and model, whether remote
-evaluation is enabled, whether the credential variable is set (never its value), the
-response counter, the active and disabled caps, the source rules and the cache location.
-`inspect` prints the eligible files, the exclusions with their reasons, the prepared
-fragment count and size, and an estimate of the first-attempt scan. Neither contacts the
-provider; neither needs a credential.
+It exposes one tool, `semantic_search_code`, and exits when stdin closes. Startup
+does not scan or contact a provider. A tool call uses the same engine and authorization
+as CLI search. Each process serves one repository; use separate server names/profiles
+if configuring several repositories.
 
-> **Pending (JG-023).** Until `src/cli.ts` dispatches to `src/cli-commands.ts`, these two
-> commands exit `69` from the scaffold. The behaviour above is the one covered by
-> `tests/cli-commands.test.ts`.
+See the [README MCP examples](../README.md#use-through-mcp) for Claude Code, Codex and
+clients using JSON configuration. The examples follow the
+[Codex](https://developers.openai.com/codex/mcp) and
+[Claude Code](https://code.claude.com/docs/en/mcp) documentation.
 
-## 6. Run a search
-
-```bash
-jevgrep search --config C:/Users/<you>/.jevgrep/orders-api.json \
-  --query "Which handler invalidates cached user data on a subscription change?" \
-  --scope src --max-context-tokens 4000 --json
-```
-
-Use `--query-file question.txt` for a multiline question: the file's content is the
-question, verbatim, and is never interpreted as a shell command. Add `--allow-partial` to
-let a scope that exceeds an **enabled** cap run as a deterministic partial scan instead of
-being refused.
-
-Exit codes: `0` complete (including an empty selection), `2` invalid request,
-configuration problem or preflight rejection, `3` partial result, `4` fatal failure,
-`130` interrupted. stdout carries the result; stderr carries diagnostics, so a pipeline
-keeps the evidence even when the code is non-zero.
-
-## 7. Connect an MCP client
-
-Start the server manually once:
-
-```bash
-jevgrep mcp --config C:/Users/<you>/.jevgrep/orders-api.json
-```
-
-It starts without scanning the repository and without contacting the provider, exposes
-one tool (`semantic_search_code`), and exits when stdin closes.
-
-Configure your MCP client with **absolute paths** — the working directory of a client is
-not something to rely on. The shape below is the common stdio-server form; the exact file
-and syntax depend on your client's version, so check its documentation:
+For Windows clients that cannot launch the npm command shim, use `node.exe` directly.
+Replace all three paths with your installation and profile paths:
 
 ```json
 {
   "mcpServers": {
     "jevgrep": {
-      "command": "C:\\Program Files\\nodejs\\node.exe",
+      "command": "C:/Program Files/nodejs/node.exe",
       "args": [
-        "C:\\tools\\jevgrep\\dist\\cli.js",
+        "C:/tools/jevgrep/dist/cli.js",
         "mcp",
         "--config",
-        "C:\\Users\\<you>\\.jevgrep\\orders-api.json"
-      ],
-      "env": { "TYPESAFE_API_KEY": "<set this in the client's own secret store>" }
+        "C:/Users/me/path/to/config.json"
+      ]
     }
   }
 }
 ```
 
-Two client settings matter:
+For a linked checkout, the CLI path is `dist/cli.js` inside that checkout.
+Keep the checkout available while the client uses it. No credential needs to appear
+in this JSON when the client runs as the same user who completed global setup.
+If using environment credentials, ensure the client process receives them.
 
-- **Tool timeout.** The internal deadline defaults to 60 s. A **75 s** client timeout
-  is a proposal to measure, not a guarantee: bounded provider cleanup and completion
-  still need qualification. Adjust the client timeout when changing the internal one.
-- **Output limit.** One call returns one JSON payload bounded in reference tokens.
-  Reference tokens do not establish a client byte limit. Measure the largest payload
-  with the actual client and record its timeout, truncation and byte behaviour.
+The internal search deadline defaults to **300 seconds**. A client timeout of
+**360 seconds** is a starting point to test, not a measured guarantee. Adjust the
+client timeout when changing `search.deadline_ms`. Check the client's output limits
+against the configured response budget as well.
 
-> **Not verified here ([JG-006 transport report](reports/jg-006-mcp-interoperability.md), JG-026).** The actual Codex connection has not been tested.
-> Request the largest response your qualified configuration allows and
-> confirm the client shows it whole, with no truncation notice.
+Real Codex and Claude Code interoperability remains unqualified. Verify that the
+client lists the tool, completes a search and shows the result without truncation.
 
-## 8. Maintenance
+## Maintenance
 
 ```bash
-jevgrep cache clear --config C:/Users/<you>/.jevgrep/orders-api.json
+jevgrep cache clear
 ```
 
-This removes only the cache belonging to that configuration. Nothing in JevGrep writes to
-the searched repository.
+Use `--config` to target an explicit profile. Cache clearing does not edit source files.
+Search reads the repository; initialization can create `.jevgrepignore`.
 
-## 9. Troubleshooting
+## Troubleshooting
 
-| What you see | What it means | What to do |
-| --- | --- | --- |
-| `INVALID_CONFIG: … must live outside the repository it authorizes` | the configuration file is inside the authorized root | move it, for example to `~/.jevgrep/` |
-| `INVALID_CONFIG: … expected an absolute POSIX or Windows drive path` | `repository_root` is relative | use an absolute path with forward slashes |
-| `REMOTE_DISABLED` | remote evaluation is off | set `"remote_evaluation_enabled": true` after reading §1 |
-| `CREDENTIAL_MISSING` | the variable named by `api_key_env` is unset or blank | export it in the shell (or the client's secret store) that starts JevGrep |
-| `RESPONSE_BUDGET_TOO_SMALL` | the mandatory report does not fit the requested budget | raise `--max-context-tokens` (minimum 1 024, and the report envelope needs more) |
-| `SCOPE_EXCEEDS_SCAN_BUDGET` | an **enabled** cap cannot hold the planned scan | narrow `--scope`, raise that cap, or pass `--allow-partial` |
-| `PROVIDER_AUTH` | credential rejected, or the model is not available to the account | check the key and the model name with `doctor` |
-| `PROVIDER_RATE_LIMIT` | the provider rate-limited the attempt | retry later; lower `search.concurrency` |
-| `SOURCE_CHANGED` in `stop_reasons` | files changed while the search ran | expected in an active working tree; the stale excerpts are omitted, not returned with an old score |
-| empty selection, `no_score_above_threshold` | nothing reached the threshold | rephrase the question, widen the scope, or lower `search.threshold` — and note the result does not prove the behaviour is absent |
-| exit `69` | the command is parsed but not wired yet | see the status note at the top of this guide |
+| Symptom | Action |
+| --- | --- |
+| `jevgrep` command not found | run `npm link`, check the npm global bin is on PATH, or launch `node /path/to/dist/cli.js` |
+| Invalid or missing profile | run `jevgrep init` in the target repository, or pass an absolute `--config` path |
+| Configuration is inside its authorized root | move the profile outside that repository |
+| `REMOTE_DISABLED` | inspect the scope, then enable remote evaluation in the trusted profile |
+| `CREDENTIAL_MISSING` | run global setup or provide the selected provider's environment key to the process |
+| `RESPONSE_BUDGET_TOO_SMALL` | increase `--max-context-tokens` within the configured maximum |
+| `SCOPE_EXCEEDS_SCAN_BUDGET` | narrow the scope, adjust the enabled cap, or use `--allow-partial` |
+| `PROVIDER_AUTH` | check the selected provider, credential and model access |
+| `PROVIDER_RATE_LIMIT` | retry later or reduce `search.concurrency` |
+| Changed files omitted from results | rerun the search against the current files |
+| `no_score_above_threshold` | rephrase or widen the scope; this does not prove absence |
+| MCP timeout | align the client timeout with the internal search deadline |
+| MCP cannot launch on Windows | use absolute paths to `node.exe` and `dist/cli.js` as above |
 
-## 10. Tested matrix
+## Validation status
 
-| Item | Value | Evidence |
-| --- | --- | --- |
-| Node.js | 24.15.0, Windows 11 | `npm run verify` on this machine |
-| Linux | consolidated artifact **not tested** | CI configured; no remote/run |
-| Offline suite | 300+ tests, no key, no network | `npm test` |
-| Response counter | `tiktoken@1.0.22/cl100k_base` | [reports/jg-006 counter](reports/jg-006-response-counter.md) |
-| Provider SDK | `@typesafe-ai/sdk@0.6.0` pinned in the separate experiment; production choice pending | [reports/jg-004](reports/jg-004-offline-sdk.md) |
-| MCP protocol | `2025-06-18`, `2025-03-26`, `2024-11-05` | [reports/jg-006 transport](reports/jg-006-mcp-interoperability.md), `tests/mcp-server.test.ts` |
-| Codex | **untested** | no real-client qualification run |
-| Live provider call | **never executed** | JG-004 and JG-005 remain open |
+The local verification gate covers type checking, offline tests, packaging into a clean
+temporary installation, build and smoke checks. CI is configured for Ubuntu and Windows;
+its current results are available in [GitHub Actions](https://github.com/nassim-arifette/jevgrep/actions).
+
+TypeSafe direct has simulated-response coverage but no recorded live account test.
+Vercel has been checked on a small live authentication example, including cache reuse.
+Neither those checks nor the offline suite establishes retrieval quality on arbitrary
+repositories. Real MCP clients still need qualification.

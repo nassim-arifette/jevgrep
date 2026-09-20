@@ -1,15 +1,15 @@
 # JevGrep
 
-JevGrep helps coding agents find relevant code when they do not know the file name or
-symbol to search for.
+**Find code by what it does.** JevGrep helps coding agents find relevant code when
+they do not know the file name or symbol to search for.
 
 Ask a question such as “Where is session expiry handled?” and JevGrep scans the
 authorized repository, asks Jev to score all eligible fragments, then returns the
 original source excerpts with their paths and line numbers. The calling agent can read
 those files in detail and continue its work with less exploratory context.
 
-> JevGrep is an experimental project being prepared for an open-source release. It is ready
-> for local testing. A successful example is not a general retrieval-quality guarantee.
+Use the CLI or connect a coding agent
+through the local MCP server.
 
 ## What it is for
 
@@ -30,14 +30,27 @@ ordinary text search is usually faster.
 - a TypeSafe AI key or a Vercel AI Gateway key
 
 JevGrep searches every valid UTF-8 text file, regardless of repository language or
-extension. JavaScript and TypeScript additionally receive syntax-aware chunking; all
-other text uses bounded line windows.
+extension.
 
-## Install from the repository
+## Install
 
-The package is not published to npm yet. Install the current checkout locally:
+Install the public package from npm:
 
 ```bash
+npm install -g @nassim-arifette/jevgrep
+jevgrep --version
+```
+
+The unscoped package name `jevgrep` belongs to a different project. Use the complete
+scoped name above when installing. The installed command is still `jevgrep`.
+
+Package: [@nassim-arifette/jevgrep](https://www.npmjs.com/package/@nassim-arifette/jevgrep)
+
+To install a development checkout instead:
+
+```bash
+git clone https://github.com/nassim-arifette/jevgrep.git
+cd jevgrep
 npm ci
 npm run build
 npm link
@@ -83,7 +96,8 @@ jevgrep init --root path/to/my-project
 
 Provider credentials are global, but repository authorization is not. Each repository
 must be authorized separately. Its trusted profile is stored outside the repository.
-New profiles keep remote evaluation disabled.
+New profiles keep remote evaluation disabled. Optional scan caps are disabled by default;
+configure them if you want to limit usage.
 `init` also creates a commented `.jevgrepignore` in the repository when one does not
 already exist. Existing exclusions are preserved; `.gitignore` is already respected.
 
@@ -131,10 +145,10 @@ explicit override.
 
 ## Providers
 
-| Provider | Setup | Model |
-| --- | --- | --- |
-| TypeSafe AI | `jevgrep init --global --provider typesafe` | `jev-1.13.0` (pinned) |
-| Vercel AI Gateway | `jevgrep init --global --provider vercel` | `typesafe-ai/jev` |
+| Provider          | Setup                                       | Model                 |
+| ----------------- | ------------------------------------------- | --------------------- |
+| TypeSafe AI       | `jevgrep init --global --provider typesafe` | `jev-1.13.0` (pinned) |
+| Vercel AI Gateway | `jevgrep init --global --provider vercel`   | `typesafe-ai/jev`     |
 
 The TypeSafe transport follows the documented System One HTTP contract and is covered
 with simulated responses. It has not been tested against a real account in this project.
@@ -148,7 +162,7 @@ jevgrep init --global --provider vercel
 jevgrep init --provider vercel
 ```
 
-## Use with coding agents
+## Use through MCP
 
 JevGrep exposes the same search engine through a stdio MCP server:
 
@@ -160,23 +174,61 @@ The server exposes one tool, `semantic_search_code`. Starting it does not scan f
 contact a provider. A tool call performs a search using the authorization associated
 with the current directory.
 
-For Codex, Claude Code or another MCP client, configure a stdio server that runs
-`jevgrep mcp` with the repository as its working directory. If the client cannot set a
-working directory, pass the absolute profile path printed by `jevgrep init`:
+Configure and authorize the repository first. One server process serves one repository.
+Use the absolute profile path printed by `jevgrep init` so the server does not depend
+on the client's working directory. Replace the example paths below.
+
+### Claude Code
+
+After installing JevGrep:
+
+```bash
+claude mcp add --transport stdio jevgrep -- jevgrep mcp --config "/absolute/path/to/config.json"
+```
+
+Check `claude mcp get jevgrep` and `/mcp` in Claude Code. See the
+[Claude Code MCP documentation](https://code.claude.com/docs/en/mcp).
+
+### Codex
+
+Add an entry to your Codex `config.toml`:
+
+```toml
+[mcp_servers.jevgrep]
+command = "jevgrep"
+args = ["mcp", "--config", "/absolute/path/to/config.json"]
+tool_timeout_sec = 360
+```
+
+The suggested client timeout leaves a margin over JevGrep's default 300-second search
+deadline. Adjust both for your workload. See the
+[Codex MCP documentation](https://developers.openai.com/codex/mcp).
+
+### Other clients
+
+For clients that accept `mcpServers` configuration:
 
 ```json
 {
   "mcpServers": {
     "jevgrep": {
       "command": "jevgrep",
-      "args": ["mcp", "--config", "C:/Users/me/AppData/Roaming/jevgrep/profiles/my-project-<hash>/config.json"]
+      "args": ["mcp", "--config", "/absolute/path/to/config.json"]
     }
   }
 }
 ```
 
-The exact MCP configuration location depends on the client. See the
-[installation guide](docs/install-guide.md) for more detail.
+Credentials saved by `init --global` are available to clients running as the same OS
+user. Environment keys must be available to the client process. Do not commit keys
+in MCP configuration.
+
+If the client cannot find `jevgrep` or launch an npm shim on Windows, use absolute
+paths to `node` and the installed `dist/cli.js`. See the
+[installation guide](https://github.com/nassim-arifette/jevgrep/blob/main/docs/install-guide.md#connect-an-mcp-client).
+
+These examples have not yet been qualified with real Codex and Claude Code sessions.
+Confirm that your client lists `semantic_search_code` and completes a search.
 
 ## What leaves your computer
 
@@ -192,6 +244,9 @@ generated files, minified files and files that match credential patterns. Links 
 junctions are not followed. Run `jevgrep inspect` to review the eligible scope before
 the first live search.
 
+Credential filters cannot detect every secret; add repository-specific exclusions in
+`.jevgrepignore` where needed.
+
 The credential is never placed in the search payload, result or cache. Redirects are
 not followed by either transport. Provider retention and privacy policies
 still apply to anything sent remotely.
@@ -202,13 +257,13 @@ Human-readable output is the default. Pass `--json` for the validated response c
 The result includes coverage information, exclusions, stop reasons and exact excerpts,
 so an empty or partial result is not presented as proof that code does not exist.
 
-| Code | Meaning |
-| --- | --- |
-| `0` | complete result |
-| `2` | invalid request, configuration problem or rejected preflight |
-| `3` | partial result |
-| `4` | fatal runtime failure |
-| `130` | interrupted |
+| Code  | Meaning                                                      |
+| ----- | ------------------------------------------------------------ |
+| `0`   | complete result                                              |
+| `2`   | invalid request, configuration problem or rejected preflight |
+| `3`   | partial result                                               |
+| `4`   | fatal runtime failure                                        |
+| `130` | interrupted                                                  |
 
 Results go to stdout. Diagnostics and measurements go to stderr.
 
@@ -239,14 +294,14 @@ Cached entries contain scores and identities, not source text, questions or cred
 
 ## Request batching
 
-Fragments remain small enough to return precise excerpts; they are no longer sent
-in fixed groups of eight. Requests pack fragments by the estimated tokens in the
-complete serialized payload, including the query, criteria and metadata.
+Fragments remain small enough to return precise excerpts. Requests pack fragments by
+the estimated tokens in the complete serialized payload, including the query, criteria
+and metadata.
 
-| Transport | Aggregate ceiling used | Target with tokenizer headroom |
-| --- | --- | --- |
-| TypeSafe direct | 64,000 tokens | 44,800 reference tokens |
-| Vercel AI Gateway | 32,000 tokens (conservative local policy) | 22,400 reference tokens |
+| Transport         | Aggregate ceiling used                    | Target with tokenizer headroom |
+| ----------------- | ----------------------------------------- | ------------------------------ |
+| TypeSafe direct   | 64,000 tokens                             | 44,800 reference tokens        |
+| Vercel AI Gateway | 32,000 tokens (conservative local policy) | 22,400 reference tokens        |
 
 TypeSafe documents 64k total and 32k for shared state plus one question. Gateway's
 catalog advertises a 32k context; using it as an aggregate ceiling is conservative,
@@ -260,15 +315,6 @@ See [TypeSafe model limits](https://docs.typesafe.ai/models) and the
 uses a sample query, so its estimate can differ from an actual search. Estimates are
 not provider billing. File preparation still runs on every search: there is no
 persistent repository index.
-
-## Current limitations
-
-- The project is experimental; check results on your own repository.
-- TypeSafe direct has only been tested against documentation and simulated responses.
-- The small Vercel example does not establish reliability on every repository or query.
-- MCP transport is tested locally, but Codex and Claude interoperability still needs to
-  be qualified with real clients.
-- JavaScript and TypeScript receive the best source chunking today.
 
 ## Development
 
@@ -291,11 +337,10 @@ suite or benchmark acceptance gate; live checks use a small, explicitly chosen e
 
 ## Documentation
 
-- [Installation and troubleshooting](docs/install-guide.md)
-- [Configuration examples](docs/examples/)
+- [Installation and troubleshooting](https://github.com/nassim-arifette/jevgrep/blob/main/docs/install-guide.md)
+- [Configuration examples](https://github.com/nassim-arifette/jevgrep/tree/main/docs/examples)
+- [Report an issue](https://github.com/nassim-arifette/jevgrep/issues)
 
 ## License
 
-No open-source license has been selected yet. The repository is currently marked
-`UNLICENSED`; choose and add a license before presenting it as reusable open-source
-software.
+[MIT](https://github.com/nassim-arifette/jevgrep/blob/main/LICENSE) © 2026 Nassim Arifette.
