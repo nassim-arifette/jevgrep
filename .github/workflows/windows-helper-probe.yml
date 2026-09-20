@@ -25,11 +25,10 @@ jobs:
           const program = source.split('const PROGRAM = String.raw`')[1].split('`;')[0];
           const root = process.env.SystemRoot;
           const cases = [
-            ['module-path', { PSModulePath: join(root, 'System32', 'WindowsPowerShell', 'v1.0', 'Modules') }],
-            ['local-app-data', { LOCALAPPDATA: process.env.LOCALAPPDATA }],
-            ['temp', { TEMP: process.env.TEMP, TMP: process.env.TMP }],
-            ['user-profile', { USERPROFILE: process.env.USERPROFILE }],
-            ['system-dirs', Object.fromEntries(['LOCALAPPDATA', 'APPDATA', 'TEMP', 'TMP', 'USERPROFILE', 'ProgramFiles', 'ProgramData'].filter(k => process.env[k]).map(k => [k, process.env[k]]))],
+            ['system-path', { PATH: join(root, 'System32') }],
+            ['identity', Object.fromEntries(['USERNAME', 'USERDOMAIN', 'COMPUTERNAME', 'USERDNSDOMAIN', 'LOGONSERVER'].filter(k => process.env[k]).map(k => [k, process.env[k]]))],
+            ['architecture', { PROCESSOR_ARCHITECTURE: 'AMD64', OS: 'Windows_NT' }],
+            ['combined', Object.fromEntries(['PATH', 'LOCALAPPDATA', 'APPDATA', 'TEMP', 'TMP', 'USERPROFILE', 'ProgramFiles', 'ProgramData', 'USERNAME', 'USERDOMAIN', 'COMPUTERNAME', 'PROCESSOR_ARCHITECTURE', 'OS'].filter(k => process.env[k]).map(k => [k, process.env[k]]))],
           ];
           for (const [label, extra] of cases) {
             await new Promise(resolve => {
