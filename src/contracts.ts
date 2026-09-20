@@ -185,7 +185,7 @@ export const configurationSchema = refine(object({
   remote_evaluation_enabled: booleanValue,
   provider: object({
     base_url: refine(textValue(256), (value, path) => {
-      requireContract(/^https:\/\/(?:api\.typesafe\.ai|ai-gateway\.vercel\.sh)\/?$/.test(value), path,
+      requireContract(/^https:\/\/(?:api\.typesafe\.ai|ai-gateway\.vercel\.sh|openrouter\.ai)\/?$/.test(value), path,
         'unsupported provider endpoint');
     }),
     api_key_env: refine(textValue(128), (value, path) => {
@@ -193,7 +193,7 @@ export const configurationSchema = refine(object({
     }),
     model: identifier,
   }, {
-    adapter: enumeration(['typesafe-direct', 'vercel-ai-gateway']),
+    adapter: enumeration(['typesafe-direct', 'vercel-ai-gateway', 'openrouter']),
     pricing: nullable(pricingSchema),
   }),
   search: object({
@@ -236,11 +236,16 @@ export const configurationSchema = refine(object({
   if (adapter === 'typesafe-direct') {
     requireContract(/^https:\/\/api\.typesafe\.ai\/?$/.test(value.provider.base_url), `${path}.provider.base_url`,
       'typesafe-direct requires https://api.typesafe.ai');
-  } else {
+  } else if (adapter === 'vercel-ai-gateway') {
     requireContract(/^https:\/\/ai-gateway\.vercel\.sh\/?$/.test(value.provider.base_url), `${path}.provider.base_url`,
       'vercel-ai-gateway requires https://ai-gateway.vercel.sh');
     requireContract(value.provider.model === 'typesafe-ai/jev', `${path}.provider.model`,
       'vercel-ai-gateway requires the typesafe-ai/jev model id');
+  } else {
+    requireContract(/^https:\/\/openrouter\.ai\/?$/.test(value.provider.base_url), `${path}.provider.base_url`,
+      'openrouter requires https://openrouter.ai');
+    requireContract(value.provider.model === 'typesafe/jev-1.13', `${path}.provider.model`,
+      'openrouter requires the typesafe/jev-1.13 model id');
   }
 });
 export type Configuration = Infer<typeof configurationSchema>;

@@ -1,7 +1,7 @@
 # JevGrep installation and configuration guide
 
-JevGrep runs locally and evaluates eligible source fragments remotely with TypeSafe AI
-or Vercel AI Gateway. This guide covers installation, repository authorization and MCP.
+JevGrep runs locally and evaluates eligible source fragments remotely with TypeSafe AI,
+Vercel AI Gateway or OpenRouter. This guide covers installation, repository authorization and MCP.
 
 ## Install
 
@@ -44,14 +44,36 @@ To select Vercel explicitly:
 jevgrep init --global --provider vercel
 ```
 
+To select OpenRouter explicitly (the third option in interactive setup):
+
+```bash
+jevgrep init --global --provider openrouter
+```
+
+Create your key on the [OpenRouter keys page](https://openrouter.ai/settings/keys).
 Credentials are stored in the user's JevGrep configuration directory, outside the
-repository. `TYPESAFE_API_KEY` and `AI_GATEWAY_API_KEY` override stored credentials.
+repository. `TYPESAFE_API_KEY`, `AI_GATEWAY_API_KEY` and `OPENROUTER_API_KEY`
+override the corresponding stored credentials.
 Use environment variables in automated environments; do not commit keys in project files.
 
-New direct profiles use `jev-1.13.0`; Vercel profiles use `typesafe-ai/jev`.
+New direct profiles use `jev-1.13.0`; Vercel profiles use `typesafe-ai/jev`;
+OpenRouter profiles use `typesafe/jev-1.13`.
 To switch an existing project, run the corresponding global setup, then
-`jevgrep init --provider vercel` (or `--provider typesafe`) inside that project.
-Existing limits and the disclosure setting are preserved.
+`jevgrep init --provider openrouter` (or `--provider typesafe` / `--provider vercel`)
+inside that project.
+Existing limits are preserved. Interactive setup asks again for disclosure consent;
+non-interactive setup preserves the existing disclosure setting.
+
+OpenRouter configuration uses `adapter: "openrouter"` and
+`base_url: "https://openrouter.ai"`. The adapter adds `/api/alpha/decisions`;
+do not include `/api/v1` in the base URL. It sends Bearer authentication and
+structured `state` / `questions` payloads, with both Noul criteria, and reads
+probabilities from `answers[id].noul`. OpenRouter fallback is disabled;
+JevGrep's scheduler controls retries. See the
+[example OpenRouter profile](examples/jevgrep.openrouter.config.json) and the
+[official OpenAPI specification](https://openrouter.ai/openapi.json).
+This is an alpha endpoint; the integration has been reviewed against its documented
+schema, but has not been exercised against a live OpenRouter account.
 
 ## Authorize a repository
 
@@ -95,7 +117,7 @@ patterns. Links and junctions are refused. Filters cannot detect every secret;
 review `inspect` output and add exclusions in `.jevgrepignore` when needed.
 
 Credentials authenticate requests and are not placed in evaluation content or cache
-entries. Both transports refuse redirects. Provider retention and privacy policies
+entries. All three transports refuse redirects. Provider retention and privacy policies
 apply to disclosed content; JevGrep does not promise zero retention.
 
 ## Limits and cache
@@ -120,7 +142,8 @@ Inspect the configuration examples before setting a cost cap.
 
 Set `cache.rolling_ttl_seconds` to `0` to disable rolling reuse, or
 `cache.enabled` to `false` to disable all score reuse. `doctor` reports the active
-policy. Scores from a rolling alias can be stale within its reuse window.
+policy. Vercel and OpenRouter model aliases use this short-lived policy.
+Scores from a rolling alias can be stale within its reuse window.
 
 Requests pack fragments by the full serialized token estimate, with provider-specific
 headroom and local question/byte limits. See [request batching](../README.md#request-batching).
@@ -234,5 +257,7 @@ its current results are available in [GitHub Actions](https://github.com/nassim-
 
 TypeSafe direct has simulated-response coverage but no recorded live account test.
 Vercel has been checked on a small live authentication example, including cache reuse.
+OpenRouter was reviewed against its official Decisions OpenAPI schema on 2026-09-20;
+no automated tests or live provider calls were run for that integration.
 Neither those checks nor the offline suite establishes retrieval quality on arbitrary
 repositories. Real MCP clients still need qualification.

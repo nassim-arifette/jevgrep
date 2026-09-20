@@ -122,6 +122,9 @@ export function inspectScope(configuration: LoadedConfiguration, options: Inspec
   }
   notes.push('token and cost figures are local estimates under the pinned reference counter, not provider billing');
   notes.push(`batch target: ${String(limits.totalTokens * limits.headroomRatio)} reference tokens, at most ${String(limits.maxItems)} questions and ${String(limits.maxRequestBytes)} wire bytes`);
+  if (adapter === 'openrouter') {
+    notes.push('OpenRouter advertises a 32k context; its use as an aggregate batch ceiling is a conservative local policy');
+  }
   if (adapter === 'vercel-ai-gateway') {
     notes.push('Gateway advertises a 32k context; its use as an aggregate batch ceiling is a conservative local policy');
   }

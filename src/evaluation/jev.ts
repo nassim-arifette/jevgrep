@@ -446,7 +446,6 @@ export class JevAdapter implements ProviderClient {
       });
     }
     const body = this.serializeBatch(batch);
-    const transmittedBytes = Buffer.byteLength(body, 'utf8');
     const request: TransportRequest = {
       url: this.#url,
       method: 'POST',
@@ -459,39 +458,50 @@ export class JevAdapter implements ProviderClient {
       body,
     };
 
-    let response: TransportResponse;
-    try {
-      response = await this.#transport(request, signal);
-    } catch (cause) {
-      // The request may have reached the provider: usage stays unknown and the
-      // scheduler must not retry it automatically (specification section 6.3).
-      throw new ProviderError({
-        code: 'PROVIDER_UNAVAILABLE',
-        message: 'provider connection failed after the request may have been dispatched',
-        retryable: false, ambiguous: true, transmittedBytes,
-        cancelled: cause instanceof Error && cause.name === 'AbortError' && Boolean(signal?.aborted),
-      });
-    }
-
-    if (response.status < 200 || response.status >= 300) {
-      throw classifyStatus(response.status, response.headers, transmittedBytes);
-    }
-
-    let parsed: unknown;
-    try {
-      if (Buffer.byteLength(response.text) > MAX_PROVIDER_RESPONSE_BYTES) throw new Error('response byte limit');
-      parsed = JSON.parse(response.text);
-    } catch {
-      throw new ProviderError({
-        code: 'INVALID_PROVIDER_RESPONSE', message: 'provider response is not valid JSON',
-        retryable: false, ambiguous: true, transmittedBytes,
-      });
-    }
-    const keys = inspectResponseKeys(response.text, batch.items.map((item) => item.id));
-    return normalizeResponse(
-      parsed, batch, this.model, transmittedBytes,
-      response.headers['x-typesafe-request-id'] ?? null,
-      keys.answers, keys.usageAmbiguous,
-    );
+    return evaluateDecisionRequest(request, batch, this.model, this.#transport, signal);
   }
+}
+
+/** Shared bounded HTTP exchange for the System One and OpenRouter Decisions contracts. */
+export async function evaluateDecisionRequest(
+  request: TransportRequest, batch: EvaluationBatch, model: string,
+  transport: ProviderTransport, signal?: AbortSignal,
+): Promise<BatchEvaluation> {
+  const transmittedBytes = Buffer.byteLength(request.body, 'utf8');
+  let response: TransportResponse;
+  try {
+    response = await transport(request, signal);
+  } catch (cause) {
+    // The request may have reached the provider: usage stays unknown and the
+    // scheduler must not retry it automatically (specification section 6.3).
+    throw new ProviderError({
+      code: 'PROVIDER_UNAVAILABLE',
+      message: 'provider connection failed after the request may have been dispatched',
+      retryable: false, ambiguous: true, transmittedBytes,
+      cancelled: cause instanceof Error && cause.name === 'AbortError' && Boolean(signal?.aborted),
+    });
+  }
+
+  if (response.status < 200 || response.status >= 300) {
+    throw classifyStatus(response.status, response.headers, transmittedBytes);
+  }
+
+  let parsed: unknown;
+  try {
+    if (Buffer.byteLength(response.text) > MAX_PROVIDER_RESPONSE_BYTES) throw new Error('response byte limit');
+    parsed = JSON.parse(response.text);
+  } catch {
+    throw new ProviderError({
+      code: 'INVALID_PROVIDER_RESPONSE', message: 'provider response is not valid JSON',
+      retryable: false, ambiguous: true, transmittedBytes,
+    });
+  }
+  const responseId = typeof parsed === 'object' && parsed !== null && 'id' in parsed
+    && typeof parsed.id === 'string' && parsed.id.length > 0 ? parsed.id : null;
+  const keys = inspectResponseKeys(response.text, batch.items.map((item) => item.id));
+  return normalizeResponse(
+    parsed, batch, model, transmittedBytes,
+    response.headers['x-typesafe-request-id'] ?? responseId,
+    keys.answers, keys.usageAmbiguous,
+  );
 }

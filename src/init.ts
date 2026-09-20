@@ -8,7 +8,14 @@ import { LocalDirectory, isMissing } from './local-directory.ts';
 import { DEFAULT_DIRECT_MODEL } from './evaluation/policy.ts';
 import { AuthorizedRoot } from './source/authorization.ts';
 
-export type InitProvider = 'typesafe' | 'vercel';
+export type InitProvider = 'typesafe' | 'vercel' | 'openrouter';
+
+export const PROVIDER_LABELS: Readonly<Record<InitProvider, string>> = {
+  typesafe: 'TypeSafe AI', vercel: 'Vercel AI Gateway', openrouter: 'OpenRouter',
+};
+export const PROVIDER_KEY_VARIABLES: Readonly<Record<InitProvider, string>> = {
+  typesafe: 'TYPESAFE_API_KEY', vercel: 'AI_GATEWAY_API_KEY', openrouter: 'OPENROUTER_API_KEY',
+};
 
 export const DEFAULT_JEVGREPIGNORE = `# JevGrep already respects .gitignore.
 #
@@ -62,7 +69,7 @@ function readGlobalSettings(env: NodeJS.ProcessEnv): GlobalSettings | undefined 
   const parsed = parseJson(text, globalSettingsPath(env));
   if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) throw new Error('invalid global settings');
   const value = parsed as Record<string, unknown>;
-  if (value['schema_version'] !== 1 || (value['provider'] !== 'typesafe' && value['provider'] !== 'vercel')
+  if (value['schema_version'] !== 1 || (value['provider'] !== 'typesafe' && value['provider'] !== 'vercel' && value['provider'] !== 'openrouter')
     || Object.keys(value).some((key) => !['schema_version', 'provider'].includes(key))) throw new Error('invalid global settings');
   return { schema_version: 1, provider: value['provider'] };
 }
@@ -99,8 +106,8 @@ function writeGlobalProfile(options: GlobalProfileOptions, replace: boolean): Gl
   const existingSettings = readOptional(storage, 'global.json', 16_384);
   const existingSecrets = readOptional(storage, 'secrets.env', 32_768);
   if (!replace && (existingSettings !== undefined || existingSecrets !== undefined)) throw new Error(`global settings already exist at ${storage.path}`);
-  const variable = options.provider === 'typesafe' ? 'TYPESAFE_API_KEY' : 'AI_GATEWAY_API_KEY';
-  // Retain the other provider's key: existing project profiles may still use it.
+  const variable = PROVIDER_KEY_VARIABLES[options.provider];
+  // Retain the other providers' keys: existing project profiles may still use them.
   const secrets = parseSecrets(existingSecrets ?? '', join(storage.path, 'secrets.env'));
   secrets[variable] = options.apiKey.trim();
   root?.assertCurrent();
@@ -127,15 +134,19 @@ export function discoverProjectConfiguration(cwd: string, env: NodeJS.ProcessEnv
 }
 
 export function buildInitialConfiguration(root: string, provider: InitProvider): Configuration {
-  const config = createDefaultConfiguration(root, provider === 'typesafe' ? DEFAULT_DIRECT_MODEL : 'typesafe-ai/jev');
+  const config = createDefaultConfiguration(root, provider === 'typesafe' ? DEFAULT_DIRECT_MODEL : provider === 'vercel' ? 'typesafe-ai/jev' : 'typesafe/jev-1.13');
   return configurationSchema.parse({
     ...config,
     provider: provider === 'typesafe'
       ? { ...config.provider, adapter: 'typesafe-direct', base_url: 'https://api.typesafe.ai', api_key_env: 'TYPESAFE_API_KEY' }
-      : {
+      : provider === 'vercel' ? {
         ...config.provider, adapter: 'vercel-ai-gateway', base_url: 'https://ai-gateway.vercel.sh',
         api_key_env: 'AI_GATEWAY_API_KEY', model: 'typesafe-ai/jev',
         pricing: { model: 'typesafe-ai/jev', verified_at: '2026-09-20', input_usd_per_million_tokens: 0.042, output_usd_per_million_tokens: 0 },
+      } : {
+        ...config.provider, adapter: 'openrouter', base_url: 'https://openrouter.ai',
+        api_key_env: 'OPENROUTER_API_KEY', model: 'typesafe/jev-1.13',
+        pricing: { model: 'typesafe/jev-1.13', verified_at: '2026-09-20', input_usd_per_million_tokens: 0.042, output_usd_per_million_tokens: 0 },
       },
   });
 }

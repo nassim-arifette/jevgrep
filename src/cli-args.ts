@@ -13,7 +13,7 @@ import { CONTRACT_LIMITS, parseSearchRequest, type SearchRequest } from './contr
 
 /** Commands of the documented CLI surface (specification 4.5). */
 export type CliCommand =
-  | { readonly kind: 'init'; readonly root: string; readonly provider?: 'typesafe' | 'vercel'; readonly global: boolean }
+  | { readonly kind: 'init'; readonly root: string; readonly provider?: 'typesafe' | 'vercel' | 'openrouter'; readonly global: boolean }
   | { readonly kind: 'search'; readonly config?: string; readonly request: SearchRequest; readonly json: boolean }
   | { readonly kind: 'inspect'; readonly config?: string; readonly scope: readonly string[]; readonly json: boolean }
   | { readonly kind: 'doctor'; readonly config?: string }
@@ -161,7 +161,7 @@ function readOptions(
         break;
       case '--provider':
         if (state.provider !== undefined) return { state, error: "option '--provider' was given twice" };
-        if (value !== 'typesafe' && value !== 'vercel') return { state, error: "option '--provider' must be 'typesafe' or 'vercel'" };
+        if (value !== 'typesafe' && value !== 'vercel' && value !== 'openrouter') return { state, error: "option '--provider' must be 'typesafe', 'vercel' or 'openrouter'" };
         state.provider = value;
         break;
       case '--config':
@@ -256,7 +256,7 @@ export function parseCliArguments(
     return { kind: 'command', command: {
       kind: 'init', root: state.root ?? '.',
       global: state.global,
-      ...(state.provider === undefined ? {} : { provider: state.provider as 'typesafe' | 'vercel' }),
+      ...(state.provider === undefined ? {} : { provider: state.provider as 'typesafe' | 'vercel' | 'openrouter' }),
     } };
   }
   const config = state.config;

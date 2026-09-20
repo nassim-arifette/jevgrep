@@ -32,7 +32,7 @@ import {
 } from './evaluation/jev.ts';
 import type { BatchItem, EvaluationBatch, ProviderClient } from './evaluation/jev.ts';
 import { createConfiguredProvider } from './evaluation/provider.ts';
-import { batchLimits, fitsSerializedBatch, scoreCachePolicy, MAX_ROLLING_TTL_SECONDS, type BatchLimits } from './evaluation/policy.ts';
+import { batchLimits, fitsSerializedBatch, isOpenRouterModelRevision, scoreCachePolicy, MAX_ROLLING_TTL_SECONDS, type BatchLimits } from './evaluation/policy.ts';
 import { runEvaluations } from './evaluation/scheduler.ts';
 import { SearchContext, SearchLogger, isAbortError, runPhase, systemClock } from './lifecycle.ts';
 import type { Clock } from './lifecycle.ts';
@@ -340,7 +340,9 @@ export class SearchEngine {
               if (cachePolicy.mode !== 'disabled' && evaluation.requestedModel === model
                 && (evaluation.returnedModel === null || evaluation.returnedModel === model
                   || (cachePolicy.mode === 'rolling' && adapter === 'typesafe-direct'
-                    && isPinnedModelRevision(evaluation.returnedModel)))) {
+                    && isPinnedModelRevision(evaluation.returnedModel))
+                  || (cachePolicy.mode === 'rolling' && adapter === 'openrouter'
+                    && isOpenRouterModelRevision(evaluation.returnedModel)))) {
                 this.#cache.write(identities.get(fragment.id)!, score, {
                   modelRevision: model,
                   layout: LAYOUT_VERSION, criterion: CRITERION_VERSION, chunker: fragment.chunker,

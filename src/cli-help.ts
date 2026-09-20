@@ -18,7 +18,7 @@ const COMMAND_SUMMARY: Record<string, string> = {
 
 const OPTION_TEXT: Record<string, string> = {
   '--root': '--root <path>              repository to authorize (default: current directory)',
-  '--provider': '--provider <name>         typesafe (default) or vercel',
+  '--provider': '--provider <name>         typesafe (default), vercel or openrouter',
   '--global': '--global                  configure provider credentials for this computer only',
   '--config': '--config <path>            override automatic project-profile discovery',
   '--query': '--query <text>             the search question, kept verbatim',
@@ -31,7 +31,7 @@ const OPTION_TEXT: Record<string, string> = {
 
 /** Usage line of each command, written by hand so a choice is shown as a choice. */
 const COMMAND_USAGE: Record<string, string> = {
-  init: 'jevgrep init [--global] [--root <path>] [--provider typesafe|vercel]',
+  init: 'jevgrep init [--global] [--root <path>] [--provider typesafe|vercel|openrouter]',
   search:
     'jevgrep search [--config <path>] (--query <text> | --query-file <path>) [--scope <path>]... [--max-context-tokens <n>] [--json] [--allow-partial]',
   inspect: 'jevgrep inspect [--config <path>] [--scope <path>]... [--json]',

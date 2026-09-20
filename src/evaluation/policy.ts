@@ -1,7 +1,7 @@
 /** Provider limits and local safety policies; estimates are not billing tokens. */
 import { countReferenceTokens } from '../response/token-counter.ts';
 
-export type AdapterKind = 'typesafe-direct' | 'vercel-ai-gateway';
+export type AdapterKind = 'typesafe-direct' | 'vercel-ai-gateway' | 'openrouter';
 export const DEFAULT_DIRECT_MODEL = 'jev-1.13.0';
 export const MAX_ROLLING_TTL_SECONDS = 900;
 
@@ -15,7 +15,7 @@ export type BatchLimits = {
 
 export function batchLimits(adapter: AdapterKind = 'typesafe-direct'): BatchLimits {
   return {
-    // TypeSafe documents 64k total and 32k per question. Gateway advertises a
+    // TypeSafe documents 64k total and 32k per question. Gateway and OpenRouter advertise a
     // 32k context; treating that as an aggregate cap is our conservative policy.
     totalTokens: adapter === 'typesafe-direct' ? 64_000 : 32_000,
     perQuestionTokens: 32_000,
@@ -41,8 +41,13 @@ export function isPinnedModelRevision(model: string): boolean {
   return /^jev-\d+\.\d+\.\d+$/.test(model);
 }
 
+/** OpenRouter can resolve its version alias to a dated revision in the response. */
+export function isOpenRouterModelRevision(model: string): boolean {
+  return /^typesafe\/jev-1\.13-\d{8}$/.test(model);
+}
+
 export function isRollingModel(model: string): boolean {
-  return model === 'typesafe-ai/jev' || model === 'jev-latest' || model === 'jev-preview';
+  return model === 'typesafe-ai/jev' || model === 'typesafe/jev-1.13' || model === 'jev-latest' || model === 'jev-preview';
 }
 
 export function scoreCachePolicy(adapter: AdapterKind, model: string, cache: {
@@ -53,6 +58,7 @@ export function scoreCachePolicy(adapter: AdapterKind, model: string, cache: {
     return { mode: 'pinned', ttlSeconds: cache.ttl_seconds };
   }
   const rolling = adapter === 'vercel-ai-gateway' ? model === 'typesafe-ai/jev'
+    : adapter === 'openrouter' ? model === 'typesafe/jev-1.13'
     : model === 'jev-latest' || model === 'jev-preview';
   const ttlSeconds = Math.min(cache.ttl_seconds, cache.rolling_ttl_seconds ?? MAX_ROLLING_TTL_SECONDS,
     MAX_ROLLING_TTL_SECONDS);

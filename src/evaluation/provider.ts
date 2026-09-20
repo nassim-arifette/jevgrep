@@ -1,4 +1,5 @@
 /** Select the configured Jev transport after configuration and credential validation. */
+import { OPENROUTER_JEV_MODEL, OpenRouterAdapter, serializeOpenRouterBatch, type OpenRouterAdapterOptions } from './openrouter.ts';
 import { ConfigurationError } from '../config.ts';
 import type { Configuration } from '../contracts.ts';
 import { JevAdapter, buildRequestPayload, type EvaluationBatch, type JevAdapterOptions, type ProviderClient } from './jev.ts';
@@ -9,16 +10,19 @@ import {
   type VercelGatewayAdapterOptions,
 } from './vercel-gateway.ts';
 
-export type ProviderAdapterKind = 'typesafe-direct' | 'vercel-ai-gateway';
+export type ProviderAdapterKind = 'typesafe-direct' | 'vercel-ai-gateway' | 'openrouter';
 
 export type ProviderFactories = {
+  /** Optional to preserve existing callers that inject only the original adapters. */
+  readonly openrouter?: (options: OpenRouterAdapterOptions) => ProviderClient;
   readonly direct: (options: JevAdapterOptions) => ProviderClient;
   readonly gateway: (options: VercelGatewayAdapterOptions) => ProviderClient;
 };
 
-const defaultFactories: ProviderFactories = {
-  direct: (options) => new JevAdapter(options),
-  gateway: (options) => new VercelGatewayAdapter(options),
+const defaultFactories = {
+  openrouter: (options: OpenRouterAdapterOptions) => new OpenRouterAdapter(options),
+  direct: (options: JevAdapterOptions) => new JevAdapter(options),
+  gateway: (options: VercelGatewayAdapterOptions) => new VercelGatewayAdapter(options),
 };
 
 /** Missing selectors are the legacy direct adapter, preserving existing v1 files. */
@@ -28,6 +32,7 @@ export function configuredAdapter(config: Configuration): ProviderAdapterKind {
 
 /** Offline planning uses exactly the same envelope as the selected transport. */
 export function serializeConfiguredBatch(config: Configuration, batch: EvaluationBatch): string {
+  if (configuredAdapter(config) === 'openrouter') return serializeOpenRouterBatch(batch);
   return configuredAdapter(config) === 'vercel-ai-gateway' ? serializeGatewayBatch(batch)
     : JSON.stringify(buildRequestPayload(batch, config.provider.model));
 }
@@ -42,6 +47,14 @@ export function createConfiguredProvider(
       baseUrl: config.provider.base_url,
       model: config.provider.model,
       apiKey,
+    });
+  }
+  if (configuredAdapter(config) === 'openrouter') {
+    if (config.provider.model !== OPENROUTER_JEV_MODEL) {
+      throw new ConfigurationError('INVALID_CONFIG', `openrouter requires provider.model=${OPENROUTER_JEV_MODEL}`);
+    }
+    return (factories.openrouter ?? defaultFactories.openrouter)({
+      baseUrl: config.provider.base_url, model: OPENROUTER_JEV_MODEL, apiKey,
     });
   }
   if (config.provider.model !== VERCEL_JEV_MODEL) {

@@ -37,7 +37,7 @@ ordinary text search is usually faster.
 
 - Node.js 24
 - npm
-- a TypeSafe AI key or a Vercel AI Gateway key
+- a TypeSafe AI, Vercel AI Gateway or OpenRouter API key
 
 JevGrep searches every valid UTF-8 text file, regardless of repository language or
 extension.
@@ -85,9 +85,15 @@ TypeSafe AI is proposed first. To use Vercel AI Gateway instead:
 jevgrep init --global --provider vercel
 ```
 
+To use OpenRouter:
+
+```bash
+jevgrep init --global --provider openrouter
+```
+
 The command stores the credential in the user's JevGrep configuration directory, not
-in a repository. `TYPESAFE_API_KEY` and `AI_GATEWAY_API_KEY` environment variables take
-priority over the stored value.
+in a repository. `TYPESAFE_API_KEY`, `AI_GATEWAY_API_KEY` and `OPENROUTER_API_KEY`
+environment variables take priority over the corresponding stored value.
 
 ### 2. Authorize a repository
 
@@ -167,11 +173,23 @@ explicit override.
 | ----------------- | ------------------------------------------- | --------------------- |
 | TypeSafe AI       | `jevgrep init --global --provider typesafe` | `jev-1.13.0` (pinned) |
 | Vercel AI Gateway | `jevgrep init --global --provider vercel`   | `typesafe-ai/jev`     |
+| OpenRouter        | `jevgrep init --global --provider openrouter` | `typesafe/jev-1.13` |
 
 The TypeSafe transport follows the documented System One HTTP contract and is covered
 with simulated responses. It has not been tested against a real account in this project.
 Vercel AI Gateway has been checked on a small authentication example, including a
 repeat search served entirely from the score cache.
+
+OpenRouter uses its alpha Decisions endpoint, `POST https://openrouter.ai/api/alpha/decisions`,
+with Bearer authentication and structured Noul questions. The adapter supplies both
+`true` and `false` criteria, reads `answers[id].noul`, `usage.input_tokens`,
+`usage.output_tokens` and the response `id`, and disables provider fallback.
+Its request and response handling were reviewed against the
+[official OpenRouter OpenAPI specification](https://openrouter.ai/openapi.json)
+(`DecisionsRequest`, `DecisionsNoulQuestion`, `DecisionsResponse`) on 2026-09-20.
+No live OpenRouter request or automated test was run for this integration.
+The alpha API may change. See the [Jev model page](https://openrouter.ai/typesafe/jev-1.13)
+and [OpenRouter configuration example](docs/examples/jevgrep.openrouter.config.json).
 
 To switch an existing global and project profile to Vercel:
 
@@ -179,6 +197,8 @@ To switch an existing global and project profile to Vercel:
 jevgrep init --global --provider vercel
 jevgrep init --provider vercel
 ```
+
+Use `--provider openrouter` in both commands to switch to OpenRouter.
 
 ## Use through MCP
 
@@ -293,8 +313,10 @@ Provider, endpoint, model, query, source, location, criterion and layout remain 
 of the identity. Only misses are grouped into requests.
 
 New TypeSafe direct profiles pin `jev-1.13.0` and use the configured cache TTL (seven
-days by default). Vercel's `typesafe-ai/jev` is a rolling alias, not an immutable
-revision. Its scores can be reused for up to 15 minutes. Existing direct profiles
+days by default). Vercel's `typesafe-ai/jev` and OpenRouter's `typesafe/jev-1.13`
+use the conservative rolling policy: scores can be reused for up to 15 minutes.
+OpenRouter may resolve the requested model to a dated revision in its response;
+the version alias is not treated as an immutable cache identity. Existing direct profiles
 using `jev-latest` or `jev-preview` use the same short-lived policy.
 
 Rolling reuse can briefly serve a score from an earlier model revision. `doctor`
@@ -320,14 +342,16 @@ and metadata.
 | ----------------- | ----------------------------------------- | ------------------------------ |
 | TypeSafe direct   | 64,000 tokens                             | 44,800 reference tokens        |
 | Vercel AI Gateway | 32,000 tokens (conservative local policy) | 22,400 reference tokens        |
+| OpenRouter        | 32,000 tokens (conservative local policy) | 22,400 reference tokens        |
 
-TypeSafe documents 64k total and 32k for shared state plus one question. Gateway's
-catalog advertises a 32k context; using it as an aggregate ceiling is conservative,
-not a claim that Gateway documents the same total-question limit. Both paths keep
+TypeSafe documents 64k total and 32k for shared state plus one question. Gateway and
+OpenRouter advertise a 32k context; using it as an aggregate ceiling is conservative,
+not a claim that they document the same total-question limit. All three paths keep
 30% headroom because the provider tokenizer is not public, and locally limit each
 request to 64 questions and 256 KiB. These last two limits are application safeguards.
 See [TypeSafe model limits](https://docs.typesafe.ai/models) and the
-[Gateway model catalog](https://ai-gateway.vercel.sh/v1/models).
+[Gateway model catalog](https://ai-gateway.vercel.sh/v1/models) and
+[OpenRouter Jev model page](https://openrouter.ai/typesafe/jev-1.13).
 
 `inspect` and search planning use the same serializer and token estimator; `inspect`
 uses a sample query, so its estimate can differ from an actual search. Estimates are

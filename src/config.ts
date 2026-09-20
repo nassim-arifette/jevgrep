@@ -224,7 +224,7 @@ export type DoctorReport = {
   readonly repository_root_readable: boolean;
   readonly remote_evaluation_enabled: boolean;
   readonly provider: {
-    readonly adapter: 'typesafe-direct' | 'vercel-ai-gateway';
+    readonly adapter: 'typesafe-direct' | 'vercel-ai-gateway' | 'openrouter';
     readonly base_url: string; readonly model: string;
     readonly api_key_env: string; readonly credential: CredentialState;
   };
