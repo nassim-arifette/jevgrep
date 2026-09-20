@@ -1,10 +1,14 @@
 import assert from 'node:assert/strict';
-import { readFileSync, readdirSync } from 'node:fs';
+import { mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
 
-import { renderRun, runManifest } from '../benchmarks/tools/run-retrieval.ts';
-import type { CorpusManifest } from '../benchmarks/tools/run-retrieval.ts';
+import { renderRun, runManifest, summarize } from '../benchmarks/tools/run-retrieval.ts';
+import type { CorpusManifest, QuestionOutcome } from '../benchmarks/tools/run-retrieval.ts';
+import { ScoreCache } from '../src/evaluation/cache.ts';
 
 /**
  * The retrieval benchmark runner (JG-028, specification 11.2).
@@ -25,10 +29,43 @@ function manifestPath(name: string): string {
 
 const firstManifest = readdirSync(developmentDirectory).filter((name) => name.endsWith('.json')).sort()[0] ?? '';
 
-test('live benchmarking is blocked before any corpus or credential is read', async () => {
+test('a failure to establish the isolated cold cache refuses the run instead of mislabeling it', async (t) => {
+  t.mock.method(ScoreCache.prototype, 'clear', function (this: ScoreCache) { this.stats.failures++; return 0; });
+  await assert.rejects(runManifest({ manifestPath: manifestPath(firstManifest), providerMode: 'offline', cacheState: 'cold' }), /cold cache.*refused/);
+});
+
+test('headline precision excludes other populations and a failed negative is never a success', () => {
+  const row: QuestionOutcome = {
+    question_id: 'q', kind: 'behavior', status: 'complete', selection_outcome: 'selected', stop_reasons: [],
+    excerpts: 1, response_tokens: 1000, latency_ms: 1, category: 'scored', best_evidence_set: 0, evidence_sets: 1,
+    annotated_evidence: 1, annotated_evidence_found: 1, direct_evidence: 1, direct_evidence_found: 1,
+    complete_set_found: true, direct_set_found: true, excerpts_overlapping_annotation: 1,
+    provider_attempts: 1, input_tokens_known: 10, attempts_with_unknown_usage: 0, estimated_cost_usd: null,
+    cache_reused: 0, remote_evaluated: 1, scope_fully_scanned: true,
+  };
+  const control = { ...row, category: 'no_evidence_control', kind: 'no_evidence', excerpts: 0, excerpts_overlapping_annotation: 0 } as const;
+  const summary = summarize([row, { ...row, category: 'ambiguous', excerpts: 20, excerpts_overlapping_annotation: 0 },
+    control, { ...control, status: 'error', scope_fully_scanned: false }, { ...control, status: 'partial', scope_fully_scanned: false },
+    { ...control, status: 'rejected', scope_fully_scanned: false }]);
+  assert.equal(summary['annotated_precision'], 1);
+  assert.equal(summary['no_evidence_controls_answered_empty'], 1);
+  assert.equal(summary['no_evidence_controls_unevaluable'], 3);
+});
+
+test('a stale fixture revision is refused before any engine or provider work', async () => {
+  const temporary = mkdtempSync(join(tmpdir(), 'jevgrep-stale-manifest-'));
+  try {
+    const manifest = JSON.parse(readFileSync(manifestPath(firstManifest), 'utf8')) as CorpusManifest;
+    const stale = { ...manifest, fixture: { ...manifest.fixture, revision: { kind: 'tree-sha256', value: '0'.repeat(64) } } };
+    const path = join(temporary, 'stale.json'); writeFileSync(path, JSON.stringify(stale));
+    await assert.rejects(runManifest({ manifestPath: path, providerMode: 'live', cacheState: 'cold' }), /revision is stale/);
+  } finally { rmSync(temporary, { recursive: true, force: true }); }
+});
+
+test('live benchmarking is available and still validates the corpus before provider work', async () => {
   await assert.rejects(runManifest({
     manifestPath: 'not-a-file.json', providerMode: 'live', cacheState: 'cold',
-  }), /live search is not qualified/);
+  }), /not-a-file\.json/);
 });
 
 test('the development runner refuses held-out manifests', async () => {
@@ -52,6 +89,8 @@ test('a run records the settings, versions and corpus revision that produced it'
   assert.ok(run.manifest.layout_version.length > 0);
   assert.ok(run.manifest.chunkers.length >= 1);
   assert.ok(run.manifest.corpus.revision.includes(':'), 'the corpus revision is recorded with its kind');
+  assert.equal(run.manifest.corpus.annotation_revision, `sha256:${createHash('sha256').update(readFileSync(manifestPath(firstManifest))).digest('hex')}`);
+  assert.ok(run.manifest.corpus.corpus_commit === null || /^[0-9a-f]{40,64}$/.test(run.manifest.corpus.corpus_commit));
   assert.equal(typeof run.manifest.settings['threshold'], 'number');
   assert.equal(typeof run.manifest.settings['configuration_fingerprint'], 'string');
   assert.ok(run.manifest.caveats.some((caveat) => caveat.includes('OFFLINE MODE')));
@@ -72,6 +111,11 @@ test('every question of the manifest appears in the results, including empty sel
     + (run.summary['rejected'] ?? 0) + (run.summary['failed'] ?? 0);
   assert.equal(accounted, manifest.questions.length, 'no search is dropped from the report');
   assert.ok((run.summary['empty_selections'] ?? 0) >= 0);
+
+  // The three populations partition the questions: measured, ambiguous, control.
+  const populations = (run.summary['scored_questions'] ?? 0)
+    + (run.summary['ambiguous_questions'] ?? 0) + (run.summary['no_evidence_controls'] ?? 0);
+  assert.equal(populations, manifest.questions.length, 'no question falls outside its population');
 });
 
 test('unknown provider usage is reported as unknown, never as a zero cost', async () => {
@@ -125,7 +169,9 @@ test('the rendered report states its caveats and keeps every response inside its
 
   assert.ok(report.includes('## Caveats'));
   assert.ok(report.includes('annotations are an incomplete, revisable reference'));
-  assert.ok(report.includes('| question | status |'));
+  assert.ok(report.includes('| question | category | status |'), 'the table names the population of each question');
+  assert.ok(report.includes('recall is measured against the best matching annotated set'));
+  assert.ok(report.includes('ambiguous questions and no-evidence controls are reported apart'));
   for (const question of run.questions) {
     if (question.response_tokens !== null) {
       assert.ok(

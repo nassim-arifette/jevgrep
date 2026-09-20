@@ -22,7 +22,9 @@
  *                        itself. Its numbers measure plumbing, not retrieval quality,
  *                        and the report says so.
  */
-import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { execFileSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { argv, env, hrtime, stdout, versions } from 'node:process';
 import { basename, dirname, join, resolve } from 'node:path';
@@ -31,44 +33,20 @@ import { fileURLToPath } from 'node:url';
 import { loadConfiguration, createDefaultConfiguration } from '../../src/config.ts';
 import type { LoadedConfiguration } from '../../src/config.ts';
 import { createSearchEngine } from '../../src/engine.ts';
-import { requireQualifiedLiveSearch } from '../../src/readiness.ts';
 import { CRITERION_VERSION, LAYOUT_VERSION } from '../../src/evaluation/jev.ts';
 import type { BatchEvaluation, EvaluationBatch, ProviderClient } from '../../src/evaluation/jev.ts';
 import { REFERENCE_COUNTER_ID } from '../../src/response/token-counter.ts';
 import { SYNTAX_CHUNKER_VERSION } from '../../src/source/chunker.ts';
 import { LINE_WINDOW_CHUNKER_VERSION } from '../../src/source/line-windows.ts';
+import { AuthorizedRoot } from '../../src/source/authorization.ts';
 import type { SearchResult } from '../../src/contracts.ts';
+import { CorpusValidationError, scoreQuestion, validateManifest } from './corpus-scoring.ts';
+import type { CorpusManifest, CorpusQuestion, EvidenceScore } from './corpus-scoring.ts';
+import { fixtureTreeHash } from './check-corpus.ts';
 
 const repositoryRoot = fileURLToPath(new URL('../..', import.meta.url));
 
-export type EvidenceAnnotation = {
-  readonly path: string;
-  readonly start_line: number;
-  readonly end_line: number;
-  readonly role: 'direct' | 'supporting';
-  readonly note?: string;
-};
-
-export type CorpusQuestion = {
-  readonly id: string;
-  readonly kind: string;
-  readonly question: string;
-  readonly scope: readonly string[];
-  readonly expected_evidence: readonly EvidenceAnnotation[];
-  readonly ambiguous?: boolean;
-};
-
-export type CorpusManifest = {
-  readonly schema_version: number;
-  readonly fixture: {
-    readonly id: string;
-    readonly revision: { readonly kind: string; readonly value: string };
-    readonly license?: string;
-  };
-  readonly split: string;
-  readonly budget: { readonly max_context_tokens: number; readonly allow_partial_scan: boolean };
-  readonly questions: readonly CorpusQuestion[];
-};
+export type { CorpusManifest, CorpusQuestion, EvidenceAnnotation } from './corpus-scoring.ts';
 
 export type QuestionOutcome = {
   readonly question_id: string;
@@ -79,10 +57,18 @@ export type QuestionOutcome = {
   readonly excerpts: number;
   readonly response_tokens: number | null;
   readonly latency_ms: number;
+  /** How this question is counted: measured, ambiguous, or a no-evidence control. */
+  readonly category: EvidenceScore['category'];
+  /** Which annotated set matched best; 0 is the primary set, 1+ are the alternatives. */
+  readonly best_evidence_set: number | null;
+  readonly evidence_sets: number;
   readonly annotated_evidence: number;
   readonly annotated_evidence_found: number;
   readonly direct_evidence: number;
   readonly direct_evidence_found: number;
+  /** Every item of one annotated set was found. */
+  readonly complete_set_found: boolean;
+  readonly direct_set_found: boolean;
   readonly excerpts_overlapping_annotation: number;
   readonly provider_attempts: number;
   readonly input_tokens_known: number;
@@ -104,7 +90,10 @@ export type BenchmarkRun = {
     readonly layout_version: string;
     readonly chunkers: readonly string[];
     readonly settings: Record<string, number | boolean | string>;
-    readonly corpus: { readonly file: string; readonly split: string; readonly fixture: string; readonly revision: string };
+    readonly corpus: {
+      readonly file: string; readonly split: string; readonly fixture: string; readonly revision: string;
+      readonly annotation_revision: string; readonly corpus_commit: string | null;
+    };
     readonly caveats: readonly string[];
   };
   readonly questions: readonly QuestionOutcome[];
@@ -137,21 +126,15 @@ class OfflineLexicalProvider implements ProviderClient {
   }
 }
 
-function overlaps(left: { start: number; end: number }, right: { start: number; end: number }): boolean {
-  return left.start <= right.end && right.start <= left.end;
-}
-
-function measureQuestion(question: CorpusQuestion, result: SearchResult, latencyMs: number, responseTokens: number | null): QuestionOutcome {
-  const excerpts = result.excerpts.map((excerpt) => ({
-    path: excerpt.path, start: excerpt.start_line, end: excerpt.end_line,
-  }));
-  const annotated = question.expected_evidence;
-  const found = annotated.filter((evidence) => excerpts.some((excerpt) => excerpt.path === evidence.path
-    && overlaps({ start: excerpt.start, end: excerpt.end }, { start: evidence.start_line, end: evidence.end_line })));
-  const direct = annotated.filter((evidence) => evidence.role === 'direct');
-  const directFound = found.filter((evidence) => evidence.role === 'direct');
-  const overlapping = excerpts.filter((excerpt) => annotated.some((evidence) => evidence.path === excerpt.path
-    && overlaps({ start: excerpt.start, end: excerpt.end }, { start: evidence.start_line, end: evidence.end_line })));
+function measureQuestion(
+  question: CorpusQuestion,
+  result: SearchResult,
+  latencyMs: number,
+  responseTokens: number | null,
+): QuestionOutcome {
+  const score = scoreQuestion(question, result.excerpts.map((excerpt) => ({
+    path: excerpt.path, startLine: excerpt.start_line, endLine: excerpt.end_line,
+  })));
 
   return {
     question_id: question.id,
@@ -162,11 +145,16 @@ function measureQuestion(question: CorpusQuestion, result: SearchResult, latency
     excerpts: result.excerpts.length,
     response_tokens: responseTokens,
     latency_ms: latencyMs,
-    annotated_evidence: annotated.length,
-    annotated_evidence_found: found.length,
-    direct_evidence: direct.length,
-    direct_evidence_found: directFound.length,
-    excerpts_overlapping_annotation: overlapping.length,
+    category: score.category,
+    best_evidence_set: score.best_set,
+    evidence_sets: score.set_count,
+    annotated_evidence: score.evidence_items,
+    annotated_evidence_found: score.evidence_found,
+    direct_evidence: score.direct_items,
+    direct_evidence_found: score.direct_found,
+    complete_set_found: score.complete_set_found,
+    direct_set_found: score.direct_set_found,
+    excerpts_overlapping_annotation: score.excerpts_overlapping_annotation,
     provider_attempts: result.report.usage.provider_request_attempts,
     input_tokens_known: result.report.usage.provider_input_tokens_known_subtotal,
     attempts_with_unknown_usage: result.report.usage.attempts_with_unknown_usage,
@@ -186,15 +174,27 @@ function quantile(values: readonly number[], fraction: number): number | null {
   return sorted[index] ?? null;
 }
 
-function summarize(outcomes: readonly QuestionOutcome[]): Record<string, number | null> {
+/**
+ * Aggregate the run.
+ *
+ * Three populations are kept apart because they answer different questions: measured
+ * questions, questions the corpus marks ambiguous, and no-evidence controls whose
+ * correct outcome is an empty selection. Mixing them would let a control inflate
+ * recall or an ambiguity depress it.
+ */
+export function summarize(outcomes: readonly QuestionOutcome[]): Record<string, number | null> {
   const latencies = outcomes.map((outcome) => outcome.latency_ms);
   const tokens = outcomes.map((outcome) => outcome.response_tokens).filter((value): value is number => value !== null);
-  const annotated = outcomes.reduce((sum, outcome) => sum + outcome.annotated_evidence, 0);
-  const annotatedFound = outcomes.reduce((sum, outcome) => sum + outcome.annotated_evidence_found, 0);
-  const direct = outcomes.reduce((sum, outcome) => sum + outcome.direct_evidence, 0);
-  const directFound = outcomes.reduce((sum, outcome) => sum + outcome.direct_evidence_found, 0);
-  const returned = outcomes.reduce((sum, outcome) => sum + outcome.excerpts, 0);
-  const overlapping = outcomes.reduce((sum, outcome) => sum + outcome.excerpts_overlapping_annotation, 0);
+  const scored = outcomes.filter((outcome) => outcome.category === 'scored');
+  const ambiguous = outcomes.filter((outcome) => outcome.category === 'ambiguous');
+  const controls = outcomes.filter((outcome) => outcome.category === 'no_evidence_control');
+
+  const ratio = (found: number, total: number): number | null => (total === 0 ? null : Number((found / total).toFixed(4)));
+  const sum = (rows: readonly QuestionOutcome[], pick: (row: QuestionOutcome) => number): number =>
+    rows.reduce((total, row) => total + pick(row), 0);
+
+  const returned = sum(scored, (row) => row.excerpts);
+  const overlapping = sum(scored, (row) => row.excerpts_overlapping_annotation);
 
   return {
     questions: outcomes.length,
@@ -203,17 +203,33 @@ function summarize(outcomes: readonly QuestionOutcome[]): Record<string, number 
     rejected: outcomes.filter((outcome) => outcome.status === 'rejected').length,
     failed: outcomes.filter((outcome) => outcome.status === 'error').length,
     empty_selections: outcomes.filter((outcome) => outcome.excerpts === 0).length,
-    evidence_recall: annotated === 0 ? null : Number((annotatedFound / annotated).toFixed(4)),
-    direct_evidence_recall: direct === 0 ? null : Number((directFound / direct).toFixed(4)),
-    annotated_precision: returned === 0 ? null : Number((overlapping / returned).toFixed(4)),
+
+    scored_questions: scored.length,
+    complete_evidence_sets: scored.filter((outcome) => outcome.complete_set_found).length,
+    complete_evidence_set_rate: ratio(scored.filter((outcome) => outcome.complete_set_found).length, scored.length),
+    direct_evidence_sets_found: scored.filter((outcome) => outcome.direct_set_found).length,
+    evidence_recall: ratio(sum(scored, (row) => row.annotated_evidence_found), sum(scored, (row) => row.annotated_evidence)),
+    direct_evidence_recall: ratio(sum(scored, (row) => row.direct_evidence_found), sum(scored, (row) => row.direct_evidence)),
+    annotated_precision: ratio(overlapping, returned),
+    questions_using_an_alternative_set: scored.filter((outcome) => (outcome.best_evidence_set ?? 0) > 0).length,
+
+    ambiguous_questions: ambiguous.length,
+    ambiguous_complete_evidence_sets: ambiguous.filter((outcome) => outcome.complete_set_found).length,
+    ambiguous_evidence_recall: ratio(sum(ambiguous, (row) => row.annotated_evidence_found), sum(ambiguous, (row) => row.annotated_evidence)),
+
+    no_evidence_controls: controls.length,
+    no_evidence_controls_answered_empty: controls.filter((outcome) => outcome.excerpts === 0 && outcome.status === 'complete' && outcome.scope_fully_scanned).length,
+    no_evidence_controls_unevaluable: controls.filter((outcome) => outcome.status !== 'complete' || !outcome.scope_fully_scanned).length,
+    no_evidence_controls_with_excerpts: controls.filter((outcome) => outcome.excerpts > 0).length,
+
     median_latency_ms: quantile(latencies, 0.5),
     p90_latency_ms: quantile(latencies, 0.9),
     median_response_tokens: quantile(tokens, 0.5),
     max_response_tokens: tokens.length === 0 ? null : Math.max(...tokens),
-    provider_attempts: outcomes.reduce((sum, outcome) => sum + outcome.provider_attempts, 0),
-    attempts_with_unknown_usage: outcomes.reduce((sum, outcome) => sum + outcome.attempts_with_unknown_usage, 0),
-    input_tokens_known: outcomes.reduce((sum, outcome) => sum + outcome.input_tokens_known, 0),
-    cache_reused_fragments: outcomes.reduce((sum, outcome) => sum + outcome.cache_reused, 0),
+    provider_attempts: sum(outcomes, (row) => row.provider_attempts),
+    attempts_with_unknown_usage: sum(outcomes, (row) => row.attempts_with_unknown_usage),
+    input_tokens_known: sum(outcomes, (row) => row.input_tokens_known),
+    cache_reused_fragments: sum(outcomes, (row) => row.cache_reused),
   };
 }
 
@@ -227,23 +243,54 @@ export type RunOptions = {
 
 /** Replay one manifest and return its recorded run. */
 export async function runManifest(options: RunOptions): Promise<BenchmarkRun> {
-  if (options.providerMode === 'live') requireQualifiedLiveSearch();
-  const manifest = JSON.parse(readFileSync(options.manifestPath, 'utf8')) as CorpusManifest;
-  if (manifest.split !== 'development') {
-    throw new Error('this development runner cannot execute held-out data; JG-028/JG-029 require an isolated executor');
+  let parsed: unknown;
+  let annotationRevision: string;
+  try {
+    const bytes = readFileSync(options.manifestPath);
+    parsed = JSON.parse(bytes.toString('utf8'));
+    annotationRevision = `sha256:${createHash('sha256').update(bytes).digest('hex')}`;
+  } catch (cause) {
+    throw new CorpusValidationError(options.manifestPath, cause instanceof Error ? cause.message : 'unreadable manifest');
   }
+  // The held-out refusal comes before validation: which split a file belongs to is a
+  // policy gate, and a held-out manifest deliberately keeps its answers (and its
+  // budget block) outside this checkout, so schema complaints would only obscure it.
+  const declaredSplit = (parsed as { split?: unknown } | null)?.split;
+  if (declaredSplit !== 'development') {
+    throw new Error(`this development runner cannot execute held-out data (split: ${String(declaredSplit)}); `
+      + 'JG-028/JG-029 require an isolated executor');
+  }
+  const manifest = validateManifest(parsed, options.manifestPath);
   const fixtureRoot = resolve(repositoryRoot, 'benchmarks', 'fixtures', manifest.fixture.id);
+  const authorized = AuthorizedRoot.open(fixtureRoot);
+  if (manifest.fixture.revision.kind !== 'tree-sha256' || fixtureTreeHash(authorized.path) !== manifest.fixture.revision.value) {
+    throw new CorpusValidationError(options.manifestPath, 'fixture revision is stale; re-review annotations before measuring');
+  }
+  if (options.configuration !== undefined && options.configuration.repositoryRoot !== authorized.path) {
+    throw new CorpusValidationError(options.manifestPath, 'the trusted configuration authorizes a different fixture');
+  }
+  const temporary = options.configuration === undefined ? temporaryConfiguration(fixtureRoot, options) : undefined;
+  const coldCache = options.cacheState === 'cold' ? mkdtempSync(join(tmpdir(), 'jevgrep-benchmark-cache-')) : undefined;
+  try {
+    const configuration = options.configuration ?? temporary!.configuration;
+    return await runConfiguredManifest(options, manifest, coldCache === undefined ? configuration : { ...configuration, cacheDirectory: coldCache }, annotationRevision);
+  } finally {
+    temporary?.cleanup();
+    if (coldCache !== undefined) rmSync(coldCache, { recursive: true, force: true });
+  }
+}
 
-  const configuration = options.configuration ?? temporaryConfiguration(fixtureRoot, options);
+async function runConfiguredManifest(options: RunOptions, manifest: CorpusManifest, configuration: LoadedConfiguration, annotationRevision: string): Promise<BenchmarkRun> {
   const provider = options.providerMode === 'offline' ? new OfflineLexicalProvider() : undefined;
   const engine = createSearchEngine({
     configuration,
     ...(provider === undefined ? {} : { provider }),
-    env,
+    env: options.providerMode === 'offline' ? {} : env,
   });
 
   if (options.cacheState === 'cold') {
     engine.cache.clear();
+    if (engine.cache.stats.failures > 0) throw new Error('cannot establish an empty cold cache; benchmark refused');
   }
 
   const outcomes: QuestionOutcome[] = [];
@@ -258,13 +305,17 @@ export async function runManifest(options: RunOptions): Promise<BenchmarkRun> {
     const latencyMs = Number((hrtime.bigint() - started) / 1_000_000n);
 
     if (!('report' in outcome)) {
+      // A compact error still occupies its row: a refused search is a result of the
+      // run, and scoring it against zero returned ranges keeps the categories honest.
+      const score = scoreQuestion(question, []);
       outcomes.push({
         question_id: question.id, kind: question.kind, status: outcome.status,
         selection_outcome: `error:${outcome.error.code}`, stop_reasons: [outcome.error.code],
         excerpts: 0, response_tokens: measuredTokens, latency_ms: latencyMs,
-        annotated_evidence: question.expected_evidence.length, annotated_evidence_found: 0,
-        direct_evidence: question.expected_evidence.filter((item) => item.role === 'direct').length,
-        direct_evidence_found: 0, excerpts_overlapping_annotation: 0,
+        category: score.category, best_evidence_set: score.best_set, evidence_sets: score.set_count,
+        annotated_evidence: score.evidence_items, annotated_evidence_found: 0,
+        direct_evidence: score.direct_items, direct_evidence_found: 0,
+        complete_set_found: false, direct_set_found: false, excerpts_overlapping_annotation: 0,
         provider_attempts: 0, input_tokens_known: 0, attempts_with_unknown_usage: 0,
         estimated_cost_usd: null, cache_reused: 0, remote_evaluated: 0, scope_fully_scanned: false,
       });
@@ -274,12 +325,16 @@ export async function runManifest(options: RunOptions): Promise<BenchmarkRun> {
   }
 
   const caveats = [
+    'complete evidence sets means full annotated line coverage, not a semantic correctness or task-success judgment; disputed outputs need review',
     'annotations are an incomplete, revisable reference: an unannotated excerpt is not proven useless',
+    'recall is measured against the best matching annotated set; alternative sets are separate valid answers, not one larger set',
+    'ambiguous questions and no-evidence controls are reported apart from the headline metrics',
     'dollar figures are estimates from a dated rate card, never an invoice',
     'attempts whose usage the provider did not report are counted as unknown, not as zero',
   ];
   if (options.providerMode === 'offline') {
     caveats.unshift('OFFLINE MODE: scores come from a deterministic local scorer; these numbers exercise the runner, they do not measure Jev retrieval quality');
+    caveats.push('the offline scorer has no qualified pinned provider revision and cannot exercise persistent cache reuse; warm is a requested cache policy, not a claim of cache hits');
   }
 
   return {
@@ -300,18 +355,30 @@ export async function runManifest(options: RunOptions): Promise<BenchmarkRun> {
         deadline_ms: configuration.config.search.deadline_ms,
         max_file_bytes: configuration.config.source.max_file_bytes,
         configuration_fingerprint: configuration.fingerprint,
+        provider_adapter: configuration.config.provider.adapter ?? 'typesafe-direct',
+        provider_model: configuration.config.provider.model,
+        scan_caps: JSON.stringify(configuration.config.scan_caps),
       },
       corpus: {
         file: basename(options.manifestPath),
         split: manifest.split,
         fixture: manifest.fixture.id,
         revision: `${manifest.fixture.revision.kind}:${manifest.fixture.revision.value}`,
+        annotation_revision: annotationRevision,
+        corpus_commit: corpusCommit(),
       },
       caveats,
     },
     questions: outcomes,
     summary: summarize(outcomes),
   };
+}
+
+function corpusCommit(): string | null {
+  try {
+    const value = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: repositoryRoot, encoding: 'utf8', timeout: 2_000, windowsHide: true, stdio: ['ignore', 'pipe', 'ignore'] }).trim();
+    return /^[0-9a-f]{40,64}$/.test(value) ? value : null;
+  } catch { return null; }
 }
 
 /**
@@ -321,7 +388,7 @@ export async function runManifest(options: RunOptions): Promise<BenchmarkRun> {
  * inside the project tree: a configuration a repository could edit would not be
  * trusted (specification 5.1).
  */
-function temporaryConfiguration(fixtureRoot: string, options: RunOptions): LoadedConfiguration {
+function temporaryConfiguration(fixtureRoot: string, options: RunOptions): { configuration: LoadedConfiguration; cleanup(): void } {
   const workspace = mkdtempSync(join(tmpdir(), 'jevgrep-benchmark-'));
   const base = createDefaultConfiguration(fixtureRoot.split('\\').join('/'), 'jev-1.13.0');
   const config = {
@@ -331,7 +398,8 @@ function temporaryConfiguration(fixtureRoot: string, options: RunOptions): Loade
   };
   const configPath = join(workspace, `${basename(fixtureRoot)}.config.json`);
   writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`, 'utf8');
-  return loadConfiguration(configPath, { env });
+  const configuration = loadConfiguration(configPath, { env: options.providerMode === 'offline' ? { JEVGREP_CACHE_HOME: join(workspace, 'cache') } : env });
+  return { configuration, cleanup: () => rmSync(workspace, { recursive: true, force: true }) };
 }
 
 /** Markdown summary; the JSON run stays the record of truth. */
@@ -343,6 +411,7 @@ export function renderRun(run: BenchmarkRun): string {
     `Provider mode: **${run.manifest.provider_mode}**. Cache: **${run.manifest.cache_state}**.`,
     `Counter ${run.manifest.counter}; criterion ${run.manifest.criterion_version}; layout ${run.manifest.layout_version}.`,
     `Corpus revision ${run.manifest.corpus.revision}.`,
+    `Annotations ${run.manifest.corpus.annotation_revision}; corpus commit ${run.manifest.corpus.corpus_commit ?? 'unavailable'}.`,
     '',
     '## Settings in force',
     '',
@@ -360,10 +429,13 @@ export function renderRun(run: BenchmarkRun): string {
     '',
     '## Per-question outcomes',
     '',
-    '| question | status | selection | excerpts | direct evidence found | response tokens | latency ms |',
-    '| --- | --- | --- | --- | --- | --- | --- |',
-    ...run.questions.map((question) => `| ${question.question_id} | ${question.status} | ${question.selection_outcome} `
-      + `| ${String(question.excerpts)} | ${String(question.direct_evidence_found)}/${String(question.direct_evidence)} `
+    '| question | category | status | selection | excerpts | evidence found | complete set | response tokens | latency ms |',
+    '| --- | --- | --- | --- | --- | --- | --- | --- | --- |',
+    ...run.questions.map((question) => `| ${question.question_id} | ${question.category} | ${question.status} `
+      + `| ${question.selection_outcome} | ${String(question.excerpts)} `
+      + `| ${String(question.annotated_evidence_found)}/${String(question.annotated_evidence)}`
+      + `${(question.best_evidence_set ?? 0) > 0 ? ` (set ${String(question.best_evidence_set)})` : ''} `
+      + `| ${question.category === 'no_evidence_control' ? 'n/a' : question.complete_set_found ? 'yes' : 'no'} `
       + `| ${question.response_tokens === null ? 'unknown' : String(question.response_tokens)} | ${String(question.latency_ms)} |`),
     '',
   ];
@@ -403,7 +475,7 @@ if (import.meta.url === `file://${resolve(argv[1] ?? '').split('\\').join('/')}`
     ? options.manifests
     : [join(repositoryRoot, 'benchmarks', 'manifests', 'development', 'subscription-cache.development.json')];
 
-  for (const manifestPath of manifests) {
+  for (const [manifestIndex, manifestPath] of manifests.entries()) {
     const run = await runManifest({
       manifestPath: resolve(manifestPath),
       providerMode: options.providerMode,
@@ -413,7 +485,8 @@ if (import.meta.url === `file://${resolve(argv[1] ?? '').split('\\').join('/')}`
       stdout.write(`${renderRun(run)}\n`);
     } else {
       mkdirSync(dirname(resolve(options.out)), { recursive: true });
-      const stem = resolve(options.out).replace(/\.(json|md)$/, '');
+      const stem = resolve(options.out).replace(/\.(json|md)$/, '')
+        + (manifests.length > 1 ? `-${String(manifestIndex + 1)}-${run.manifest.corpus.fixture}` : '');
       writeFileSync(`${stem}.json`, `${JSON.stringify(run, null, 2)}\n`, 'utf8');
       writeFileSync(`${stem}.md`, renderRun(run), 'utf8');
       stdout.write(`wrote ${stem}.json and ${stem}.md\n`);
