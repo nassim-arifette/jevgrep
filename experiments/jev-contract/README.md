@@ -39,4 +39,4 @@ observations, not a retrieval-quality gate.
 The SDK buffers a response before parsing it. This probe is not the production
 adapter and does not claim bounded response bytes or duplicate-key detection.
 Capacity limits, live cancellation/billing, account pricing and batching independence
-need separate experiments. See [the evidence report](../../docs/reports/jg-004-offline-sdk.md).
+need separate experiments.

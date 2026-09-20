@@ -14,7 +14,7 @@
  *   node scripts/probe-typescript-parser.ts --json     # machine-readable verdict
  *
  * Re-run it whenever either TypeScript version changes; the decision is recorded
- * in docs/reports/jg-015-syntax-chunker.md.
+ * during the syntax chunker investigation.
  */
 import { spawnSync } from 'node:child_process';
 import { argv, execPath, stdout, versions } from 'node:process';
@@ -172,7 +172,7 @@ async function main(): Promise<void> {
   const usable = verdicts.filter((verdict) => verdict.status === 'usable');
   stdout.write(usable.length === 0
     ? '\nNo usable syntax-only parser: parser qualification failed.\n'
-    : `\n${String(usable.length)} usable candidate(s); see docs/reports/jg-015-syntax-chunker.md.\n`);
+    : `\n${String(usable.length)} usable candidate(s).\n`);
 }
 
 if (argv[1] !== undefined && argv[1].endsWith('probe-typescript-parser.ts')) {

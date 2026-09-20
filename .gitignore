@@ -10,3 +10,17 @@ dist/
 # Editor and OS noise
 .DS_Store
 Thumbs.db
+
+# Local project notes and internal working documentation
+CONTEXT.md
+docs/compatibility.md
+docs/contracts.md
+docs/decisions.md
+docs/handoff.md
+docs/implementation-plan.md
+docs/issues.md
+docs/specification.md
+docs/workflow-equipe.md
+docs/reports/
+docs/research/
+docs/reviews/

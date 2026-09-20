@@ -55,7 +55,6 @@ test('the search help documents the response budget bounds and the query sources
   assert.match(help, /4[ ,]?000/);
   assert.match(help, /1[ ,]?024/);
   assert.match(help, /16[ ,]?000/);
-  assert.match(help, /\bspecification\b/i, 'the help should cite the authority it comes from');
 });
 
 test('the global help lists every command and the whole exit-code contract', () => {

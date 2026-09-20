@@ -90,8 +90,7 @@ export function commandHelp(command: string): string | undefined {
   }
   lines.push('');
   lines.push('exit codes: 0 complete, 2 rejected request or configuration, 3 partial result,');
-  lines.push('4 fatal runtime failure, 130 interrupted. See docs/specification.md sections 2.1,');
-  lines.push('4.1, 4.5 and 7.3.');
+  lines.push('4 fatal runtime failure, 130 interrupted.');
   return lines.join('\n');
 }
 
@@ -127,6 +126,6 @@ export function globalHelp(): string {
   lines.push('  4    fatal runtime failure, for example an unreadable package manifest');
   lines.push('  130  user interruption');
   lines.push('');
-  lines.push('documentation: README.md, docs/specification.md, docs/issues.md');
+  lines.push('documentation: README.md, docs/install-guide.md');
   return lines.join('\n');
 }

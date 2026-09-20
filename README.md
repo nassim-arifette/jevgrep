@@ -292,11 +292,7 @@ suite or benchmark acceptance gate; live checks use a small, explicitly chosen e
 ## Documentation
 
 - [Installation and troubleshooting](docs/install-guide.md)
-- [Product and technical specification](docs/specification.md)
-- [Public contracts](docs/contracts.md)
-- [Implementation plan](docs/implementation-plan.md)
-- [Provider research](docs/research/jev.md)
-- [Current project handoff](docs/handoff.md)
+- [Configuration examples](docs/examples/)
 
 ## License
 
