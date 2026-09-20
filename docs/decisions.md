@@ -6,7 +6,7 @@ Prepared 2026-09-19. This register records the user's confirmed choices, the acc
 
 | ID | Choice | Alternatives considered | Why this fits |
 | --- | --- | --- | --- |
-| D1 | Personal MVP first | Public developer tool; production team tool | Validate usefulness before packaging, support, and multiuser operations |
+| D1 | Experimental open-source MVP first | Personal-only tool; production team platform | Publish a usable, honest baseline, gather real developer feedback, and validate usefulness before broader packaging, support, and multiuser operations |
 | D2 | Target repositories up to approximately 100,000 lines | Approximately one million lines; larger monorepos | A practical first benchmark workload for exhaustive evaluation; not a hardcoded size cap |
 | D3 | TypeScript | Python | One runtime for the core, CLI, MCP, and JS/TS syntax parser; official Jev SDK available |
 | D4 | Require the scope to fit configured limits by default | Partial scan by default | A zero-call preflight rejection is clearer than a silently incomplete prefix; partial mode remains explicit |
@@ -38,7 +38,7 @@ The user accepted the recommended technical baseline as a group. The table retai
 | E8 | Changed selected files | Omit stale source and report partial results | Return the captured excerpt with a stale label to preserve potentially useful historical evidence, at the cost of more caller interpretation |
 | E9 | Deduplication | Merge overlaps in the same file; retain different paths | Cross-file content dedup reduces tokens but can erase meaningful provenance; add only after measuring |
 | E10 | Authorization | Trusted external config, one root per process, link traversal disabled | Multi-root/link-aware policy is more flexible and substantially harder to verify across Windows/POSIX |
-| E11 | Batch scheduling | Deterministic batches; concurrency starts at 4; one active search per process | More simultaneous searches may lower queueing but complicate resource sharing and personal-MVP accounting |
+| E11 | Batch scheduling | Deterministic batches; concurrency starts at 4; one active search per process | More simultaneous searches may lower queueing but complicate resource sharing and single-user MVP accounting |
 | E12 | Selection | Threshold plus descending score, overlap merge, and fit; threshold starts at 0.50 for experiments | Diversity/MMR/role-aware selection may help complementary evidence but needs a baseline and can suppress useful matches |
 | E13 | Platform and distribution | Windows first-class, Linux CI, local package installation | Windows-only saves CI setup; public npm/multi-platform release adds support work before the hypothesis is proven |
 | E14 | Success criterion | Protect task success, measure both total cost and latency, and treat the first study as exploratory | Optimize a single metric early; useful later, but too easy to choose a flattering metric before pilot results |
@@ -68,4 +68,4 @@ These are empirical questions. Asking the user to guess the answers would not re
 
 ## Decisions intentionally left for a later phase
 
-Public license, npm publication, team deployment, other language parsers, multiple repository roots, streaming/resume semantics, and a new relevance prefilter are outside the confirmed personal MVP. Choose them only when needed, with the relevant trade-offs visible. No implementation or external publication is implied by this planning document.
+A public license and an honest experimental release are part of the confirmed open-source MVP. npm publication, team deployment, other language parsers, multiple repository roots, streaming/resume semantics, and a new relevance prefilter remain later decisions. Choose them only when needed, with the relevant trade-offs visible. No production-readiness claim is implied by this planning document.

@@ -65,7 +65,7 @@ Recommended scheduler behavior:
 3. Apply hard aggregate byte and attempt limits, a concurrency limit, and a whole-search deadline. Enforce provider context estimates conservatively with headroom.
 4. Reconcile reservations with successful reported usage. Retain reservations and mark usage unknown for potentially submitted attempts without trustworthy usage.
 5. Retry recognized transient responses only within remaining reservation, attempt, and deadline limits. Surface partial coverage if work stops.
-6. Do not retry ambiguous transport failures automatically by default in a cost-controlled personal MVP. An explicit configured policy may enable them with the same attempt accounting.
+6. Do not retry ambiguous transport failures automatically by default in a cost-controlled experimental open-source MVP. An explicit configured policy may enable them with the same attempt accounting.
 7. If a strict invoice-level spend ceiling is required, require a verified provider/account spending control or clarified billing contract. Local estimates alone cannot establish that promise.
 
 The SDK supports caller cancellation and `withResponse()` exposes `x-typesafe-request-id`. Debug logging includes full request bodies, including state and questions. Configure logging explicitly to omit content and credentials; do not rely on environment-selected debug settings. [SDK client](https://github.com/typesafe-ai/typesafe-sdk-js/blob/v0.6.0/src/client.ts), [API promise](https://github.com/typesafe-ai/typesafe-sdk-js/blob/v0.6.0/src/api-promise.ts)

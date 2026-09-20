@@ -1,23 +1,17 @@
 # JevGrep — Issues d’implémentation du MVP
 
-Version : 1.1. Date : 19 septembre 2026. **Statut initial de toutes les issues : À faire.**
+Version : 1.2. Mise à jour : 20 septembre 2026. Les statuts ci-dessous distinguent les implémentations locales revues des qualifications externes encore ouvertes.
 
 Ce document contient 30 issues locales, prêtes à être reprises dans un gestionnaire de projet. Les identifiants `JG-001` à `JG-030` sont stables ; ils ne correspondent pas à des tickets déjà créés sur GitHub.
 
 **Point de reprise du 20 septembre 2026 :** la base commune est intégrée sur `main`.
-Lire [le passage de relais](handoff.md) pour les modules disponibles, les corrections
-de revue et l’ordre de reprise. JG-002 et JG-003 sont stabilisés ; JG-008 est implémenté
-et revu sur Windows/NTFS et Linux, avec clôture administrative liée à JG-007. La revue senior du
-corpus JG-027 est faite ; son isolation opérationnelle reste à prouver. Les autres
-modules intégrés constituent une base de développement testée hors ligne, sans
-clôture automatique de leurs critères. Le transport réel et le benchmark live sont
-bloqués dans le code tant que les gates senior restent ouverts.
+Lire [le passage de relais](handoff.md) pour les modules disponibles, leurs preuves et l’ordre de reprise. JG-002, JG-003, JG-007 et JG-008 sont stabilisés. Parseur, budgets/reprises, transports, cache, profils et instrument de benchmark ont été revus et intégrés. La revue senior du corpus JG-027 est faite ; son isolation opérationnelle reste à prouver. Les appels réels sont accessibles après autorisation du dépôt, activation distante et credential ; leur qualification, celle de Codex et les mesures de qualité restent ouvertes.
 
 Sources de référence : [spécification v0.1](specification.md), [plan d’implémentation](implementation-plan.md), [décisions validées](decisions.md) et [vocabulaire](../CONTEXT.md). La spécification reste la référence pour les contrats et les valeurs de configuration.
 
 ## Règles communes
 
-- Le MVP est personnel, écrit en TypeScript, avec un moteur partagé entre la CLI et le serveur MCP local.
+- Le MVP prépare une diffusion open source expérimentale, écrit en TypeScript, avec un moteur partagé entre la CLI et le serveur MCP local.
 - La cible d’environ 100 000 lignes sert aux mesures ; elle ne constitue pas une limite commerciale ou technique codée en dur.
 - Les plafonds facultatifs de dépenses et de volume total sont désactivés par défaut. Le délai d’exécution et le budget de réponse restent configurables.
 - Aucun préfiltrage de pertinence par grep ou embeddings n’est ajouté. Les exclusions servent à déterminer l’éligibilité des fichiers.
@@ -257,7 +251,7 @@ Les phases `P0` à `P7` correspondent au plan d’implémentation existant.
 <a id="jg-007"></a>
 ### JG-007 — Charger la configuration de confiance et fournir `doctor`
 
-**Type :** Implémentation. **Priorité :** Critique. **Phase :** P1. **Statut :** À faire.
+**Type :** Implémentation. **Priorité :** Critique. **Phase :** P1. **Statut :** Terminé le 20 septembre 2026 (`9608b36`). [Revue configuration/profils](reviews/jg-007-profile-review.md), divulgation désactivée à la création et budgets opérateur partagés avec MCP.
 
 **Niveau recommandé :** Medium. **Pilote proposé :** M. **Revue :** S.
 
@@ -271,19 +265,19 @@ Les phases `P0` à `P7` correspondent au plan d’implémentation existant.
 
 **Critères d’acceptation :**
 
-- [ ] Tous les plafonds facultatifs de scan sont désactivés par défaut et restent désactivés lorsque leur valeur est `null`.
-- [ ] Le délai et le budget de réponse sont configurables ; aucun plafond caché ne remplace un plafond désactivé.
-- [ ] `doctor` affiche l’état utile sans clé, source ni question complète et fonctionne sans appel fournisseur.
-- [ ] Un secret absent ou une divulgation désactivée produit une erreur exploitable avant tout appel réel.
-- [ ] Une option non supportée, notamment le suivi des liens ou la journalisation de source, est refusée.
-- [ ] Les redirections vers un autre domaine ne reçoivent pas les identifiants fournisseur.
+- [x] Tous les plafonds facultatifs de scan sont désactivés par défaut et restent désactivés lorsque leur valeur est `null`.
+- [x] Le délai et le budget de réponse sont configurables ; aucun plafond caché ne remplace un plafond désactivé.
+- [x] `doctor` affiche l’état utile sans clé, source ni question complète et fonctionne sans appel fournisseur.
+- [x] Un secret absent ou une divulgation désactivée produit une erreur exploitable avant tout appel réel.
+- [x] Une option non supportée, notamment le suivi des liens ou la journalisation de source, est refusée.
+- [x] Les redirections vers un autre domaine ne reçoivent pas les identifiants fournisseur.
 
 **Livrables :** chargeur validé, gestion des secrets, commande `doctor`, exemple de configuration et tests.
 
 <a id="jg-008"></a>
 ### JG-008 — Garantir le confinement des lectures au dépôt autorisé
 
-**Type :** Implémentation. **Priorité :** Critique. **Phase :** P1. **Statut :** Implémenté et revu le 20 septembre 2026 (`e8952c8`, `07d48e1`), contrôles Windows/NTFS et Linux réussis. Clôture administrative suspendue à JG-007. Voir la [revue et ses limites](reviews/jg-008-review.md).
+**Type :** Implémentation. **Priorité :** Critique. **Phase :** P1. **Statut :** Terminé le 20 septembre 2026 après clôture de JG-007 (`e8952c8`, `07d48e1`, `3c16fce`). Contrôles Windows/NTFS et Linux réussis ; [preuves et limites](reviews/jg-008-review.md).
 
 **Décisions S sur les questions du lot préparatoire :** les trois cas initialement
 ouverts sont résolus dans la table : `//` et les deux-points sont refusés sur toutes
@@ -419,7 +413,7 @@ table sont maintenant exercés contre le contrôle réel par `source-authorizati
 <a id="jg-013"></a>
 ### JG-013 — Implémenter l’adaptateur Jev et normaliser ses réponses
 
-**Type :** Implémentation. **Priorité :** Critique. **Phase :** P2. **Statut :** À faire.
+**Type :** Implémentation. **Priorité :** Critique. **Phase :** P2. **Statut :** Implémenté et revu localement (`864472b`). [Transports et normalisation](reviews/jg-013-018-stabilisation.md) vérifiés avec fetch simulé et SDK réel. Qualification des comptes/modèles et disposition mesurée JG-004/JG-005 encore ouvertes.
 
 **Niveau recommandé :** Medium. **Pilote proposé :** M. **Revue :** S.
 
@@ -471,7 +465,7 @@ table sont maintenant exercés contre le contrôle réel par `source-authorizati
 <a id="jg-015"></a>
 ### JG-015 — Ajouter le découpage syntaxique JavaScript/TypeScript
 
-**Type :** Implémentation. **Priorité :** Haute. **Phase :** P3. **Statut :** À faire.
+**Type :** Implémentation. **Priorité :** Haute. **Phase :** P3. **Statut :** Parseur syntaxique épinglé et qualifié localement (`1e93e7d`, `e70d507`). [Rapport JG-015](reports/jg-015-syntax-chunker.md). Les dépendances administratives JG-012 restent ouvertes.
 
 **Niveau recommandé :** Medium. **Pilote proposé :** M. **Revue :** S.
 
@@ -497,7 +491,7 @@ table sont maintenant exercés contre le contrôle réel par `source-authorizati
 <a id="jg-016"></a>
 ### JG-016 — Planifier le scan et comptabiliser les limites facultatives
 
-**Type :** Implémentation. **Priorité :** Critique. **Phase :** P4. **Statut :** À faire.
+**Type :** Implémentation. **Priorité :** Critique. **Phase :** P4. **Statut :** Planificateur et réservations stabilisés localement (`d3899e2`, `864472b`), [revue budgets/reprises](reviews/jg-016-017-stabilisation.md). Clôture liée aux qualifications fournisseur restantes.
 
 **Niveau recommandé :** Senior. **Pilote proposé :** S. **Revue :** M.
 
@@ -524,7 +518,7 @@ table sont maintenant exercés contre le contrôle réel par `source-authorizati
 <a id="jg-017"></a>
 ### JG-017 — Ordonner les lots, reprises et annulations
 
-**Type :** Implémentation. **Priorité :** Critique. **Phase :** P4. **Statut :** À faire.
+**Type :** Implémentation. **Priorité :** Critique. **Phase :** P4. **Statut :** Ordonnanceur, reprises finies, cooldown partagé et annulations stabilisés localement (`d3899e2`), [revue](reviews/jg-016-017-stabilisation.md). Les capacités réelles fournisseur restent à mesurer.
 
 **Niveau recommandé :** Senior. **Pilote proposé :** S. **Revue :** M.
 
@@ -551,7 +545,7 @@ table sont maintenant exercés contre le contrôle réel par `source-authorizati
 <a id="jg-018"></a>
 ### JG-018 — Mettre en cache uniquement les évaluations identiques
 
-**Type :** Implémentation. **Priorité :** Haute. **Phase :** P4. **Statut :** À faire.
+**Type :** Implémentation. **Priorité :** Haute. **Phase :** P4. **Statut :** Cache exact revu et corrigé (`864472b`), [revue](reviews/jg-013-018-stabilisation.md). Réutilisation d’un lot complet sur révision explicite uniquement ; aucune indépendance entre questions supposée avant JG-005.
 
 **Niveau recommandé :** Medium. **Pilote proposé :** M. **Revue :** S.
 
@@ -684,7 +678,7 @@ table sont maintenant exercés contre le contrôle réel par `source-authorizati
 <a id="jg-023"></a>
 ### JG-023 — Finaliser toutes les commandes CLI
 
-**Type :** Implémentation. **Priorité :** Haute. **Phase :** P6. **Statut :** Revue M hors ligne réussie le 20 septembre 2026 ([compte rendu](reviews/jg-023-review.md)) ; les défauts d'aide et de comptabilité de sortie ont été corrigés dans `5bd0f98`. La qualification live reste suspendue à JG-022 et aux gates senior.
+**Type :** Implémentation. **Priorité :** Haute. **Phase :** P6. **Statut :** Revue M hors ligne réussie le 20 septembre 2026 ([compte rendu](reviews/jg-023-review.md)) ; les défauts d'aide et de comptabilité de sortie ont été corrigés dans `5bd0f98`. Les profils et budgets CLI sont stabilisés (`9608b36`) ; la qualification avec fournisseur et client réels reste ouverte.
 
 **Niveau recommandé :** Junior encadré. **Pilote proposé :** J. **Revue :** M.
 
@@ -832,7 +826,7 @@ table sont maintenant exercés contre le contrôle réel par `source-authorizati
 <a id="jg-028"></a>
 ### JG-028 — Mesurer la qualité de recherche et figer les réglages
 
-**Type :** Évaluation. **Priorité :** Normale. **Phase :** P7. **Statut :** À faire.
+**Type :** Évaluation. **Priorité :** Normale. **Phase :** P7. **Statut :** Instrument de mesure revu et testé hors ligne ; couverture des ensembles/alternatives corrigée, contrôles négatifs et ambiguïtés séparés. Réglages, qualité Jev et mesures réelles restent à qualifier.
 
 **Niveau recommandé :** Medium. **Pilote proposé :** M. **Revue :** S.
 

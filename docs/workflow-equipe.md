@@ -5,7 +5,7 @@ Version : 1.0. Cette organisation est une proposition pour **une personne junior
 **Reprise actuelle :** la branche commune est `main`, dans le dossier `jevgrep`.
 Les travaux intermédiaires sont consolidés ; reprendre depuis ce HEAD, pas depuis
 les anciennes branches JG. Le [passage de relais](handoff.md) indique les validations
-terminées, les modules encore provisoires et les gates d’activation.
+terminées et les qualifications fournisseur, client et benchmark encore ouvertes.
 
 Le niveau indique l’autonomie recommandée pour piloter l’issue entière. Il dépend des compétences réelles de la personne, pas uniquement de son ancienneté. Un junior peut contribuer aux tests d’une issue senior sans porter la décision technique ni sa clôture.
 
@@ -96,7 +96,7 @@ Les séquences ci-dessous sont des **vagues de travail, pas des semaines**. Dans
 | **3. Budgets et intégration du moteur** | Exécuter les scénarios de limites/obsolescence ; préparer aide et arguments de **023** | Réaliser **021** après 020 ; préparer l’adaptateur **024** sur le contrat stable | Finaliser **020** pour débloquer M, puis **016 → 017 → 022** ; 022 attend aussi 021 | 022 intégré avec toutes ses dépendances et les contrôles de résultat |
 | **4. Interfaces et mesures de recherche** | Finaliser **023** ; préparer l’installation **026** | Finaliser **024 → 028** | Réaliser **025** après 023 et 024 ; préparer le protocole de **029** | 023–025 validés ; 028 analysé ; préparation de 029 seulement |
 | **5. Installation et essais agent** | Finaliser **026**, puis exécuter les essais A/B prévus | Assister la compatibilité et l’exécuteur de benchmark ; revoir les résultats | Exécuter/analyser **029** après 026 et 028 | Installation prouvée et comparaison A/B documentée |
-| **6. Livraison** | Assembler guide, artefact et preuves de validation | Revoir la version et reproduire le parcours d’installation | Finaliser **030** | Version personnelle et bilan exact, y compris les résultats défavorables |
+| **6. Livraison** | Assembler guide, artefact et preuves de validation | Revoir la version et reproduire le parcours d’installation | Finaliser **030** | Version open source expérimentale et bilan exact, y compris les résultats défavorables |
 
 Les numéros abrégés désignent les issues `JG-xxx`. Une personne n’a qu’une implémentation principale en cours ; les éléments supplémentaires d’une cellule sont des tâches successives ou des contributions de revue.
 

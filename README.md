@@ -1,54 +1,270 @@
 # JevGrep
 
-JevGrep is a planned semantic code-search tool for coding agents. The agent asks a question; JevGrep evaluates authorized code fragments with Jev and returns original excerpts under a response budget; the agent continues its investigation.
+JevGrep helps coding agents find relevant code when they do not know the file name or
+symbol to search for.
 
-**Project status:** the work is consolidated on `main`. Public contracts and the
-scripted provider are reviewed; the engine, source preparation, cache, CLI command
-layer and MCP transport are integrated and tested offline. Live search is blocked by
-an explicit qualification gate. The executable still exposes the CLI scaffold.
+Ask a question such as “Where is session expiry handled?” and JevGrep scans the
+authorized repository, asks Jev to score all eligible fragments, then returns the
+original source excerpts with their paths and line numbers. The calling agent can read
+those files in detail and continue its work with less exploratory context.
 
-- [Current handoff and remaining gates (French)](docs/handoff.md) — start here to resume work from `main`.
+> JevGrep is an experimental project being prepared for an open-source release. It is ready
+> for local testing, but its retrieval quality and live provider behaviour have not been
+> benchmarked broadly yet.
 
-- [Full product and technical specification](docs/specification.md) — scope, interfaces, source handling, evaluation, budgets, caching, failure behavior, and acceptance criteria.
-- [Public contracts v1](docs/contracts.md) — executable schemas, units, defaults, status/error codes, counter invariants and shared CLI/MCP serialization.
-- [Implementation plan](docs/implementation-plan.md) — phases, dependencies, deliverables, tests, and benchmark/release gates.
-- [Implementation issues (French)](docs/issues.md) — 30 actionable issues with recommended experience levels, owners, reviewers, dependencies, and acceptance criteria.
-- [Three-person workflow (French)](docs/workflow-equipe.md) — junior, intermediate, and senior responsibilities; parallel work, handoffs, reviews, and integration gates.
-- [Decisions and alternatives](docs/decisions.md) — user-confirmed choices, accepted engineering baseline, and open empirical questions.
-- [Domain language](CONTEXT.md) — the project's terms.
-- [Jev research](docs/research/jev.md), [MCP/Codex integration research](docs/research/integration.md), and [independent design review](docs/research/design-review.md) — supporting evidence, primary sources, and edge cases.
+## What it is for
 
-Confirmed direction: personal MVP, TypeScript, JS/TS-first, repositories up to approximately 100,000 lines as the target workload, and complete-scan preflight when configured limits apply. Optional spending and total-scan caps are disabled by default; response budgets and execution timeouts are adjustable. JevGrep runs locally and sends eligible excerpts to a configured remote Jev provider.
+JevGrep is useful when a coding agent needs to:
 
-The specification is authoritative for proposed behavior. Research notes contain dated observations and design alternatives, not additional product requirements. Performance improvements remain to be measured.
+- locate behaviour without knowing the exact identifier;
+- understand a feature spread across implementation, configuration and tests;
+- reduce the amount of repository exploration placed in the agent's main context;
+- retrieve exact source excerpts instead of a generated summary.
 
-Shared contracts live in `src/contracts.ts`; their types are inferred from executable schemas. `parseSearchRequest` preserves the original query and validates scope/budgets, while `createDefaultConfiguration` disables remote evaluation and optional caps. `src/search-response.ts` supplies common validated JSON serialization and status mapping. The reference tokenizer is `tiktoken@1.0.22/cl100k_base`; its vocabulary is bundled and requires no runtime download.
+It complements exact tools such as `rg`. If you already know the symbol or literal,
+ordinary text search is usually faster.
+
+## Requirements
+
+- Node.js 24
+- npm
+- a TypeSafe AI key or a Vercel AI Gateway key
+
+JevGrep searches every valid UTF-8 text file, regardless of repository language or
+extension. JavaScript and TypeScript additionally receive syntax-aware chunking; all
+other text uses bounded line windows.
+
+## Install from the repository
+
+The package is not published to npm yet. Install the current checkout locally:
+
+```bash
+npm ci
+npm run build
+npm link
+jevgrep --version
+```
+
+`npm link` makes the `jevgrep` command available from any directory on the computer.
+
+## Quick start
+
+### 1. Configure a provider
+
+Configure the provider and key once for the computer:
+
+```bash
+jevgrep init --global
+```
+
+TypeSafe AI is proposed first. To use Vercel AI Gateway instead:
+
+```bash
+jevgrep init --global --provider vercel
+```
+
+The command stores the credential in the user's JevGrep configuration directory, not
+in a repository. `TYPESAFE_API_KEY` and `AI_GATEWAY_API_KEY` environment variables take
+priority over the stored value.
+
+### 2. Authorize a repository
+
+Run `init` once from the repository root:
+
+```bash
+cd path/to/my-project
+jevgrep init
+```
+
+The default root is the current directory. You can also provide it explicitly:
+
+```bash
+jevgrep init --root path/to/my-project
+```
+
+Provider credentials are global, but repository authorization is not. Each repository
+must be authorized separately. Its trusted profile is stored outside the repository.
+New profiles keep remote evaluation disabled.
+`init` also creates a commented `.jevgrepignore` in the repository when one does not
+already exist. Existing exclusions are preserved; `.gitignore` is already respected.
+
+### 3. Inspect before sending code
+
+```bash
+jevgrep doctor
+jevgrep inspect
+```
+
+`doctor` checks the selected provider, credential state, authorized root, limits and
+cache without making a network request.
+
+`inspect` shows which files and fragments are eligible, what was excluded and how much
+work a search would perform. It also stays offline.
+
+After reviewing the scope and limits, edit the profile path printed by `init` and set
+`remote_evaluation_enabled` to `true` to allow source disclosure to the selected provider.
+
+### 4. Search by behaviour
+
+```bash
+jevgrep search --query "Where is session expiry handled?"
+```
+
+Useful options:
+
+```bash
+# Search only selected directories
+jevgrep search --query "How are permissions checked?" --scope src --scope tests
+
+# Return the canonical JSON response
+jevgrep search --query "Where is the cache invalidated?" --json
+
+# Read a multiline question from a file
+jevgrep search --query-file question.txt
+
+# Allow a deterministic partial scan when an enabled scan cap is exceeded
+jevgrep search --query "How does synchronization work?" --allow-partial
+```
+
+JevGrep automatically finds the authorized project for the current directory, including
+when the command runs from a subdirectory. `--config <path>` remains available as an
+explicit override.
+
+## Providers
+
+| Provider | Setup | Model |
+| --- | --- | --- |
+| TypeSafe AI | `jevgrep init --global --provider typesafe` | `jev-latest` |
+| Vercel AI Gateway | `jevgrep init --global --provider vercel` | `typesafe-ai/jev` |
+
+The TypeSafe transport follows the documented System One HTTP contract and is covered
+with simulated responses. It has not been tested against a real account in this project.
+Vercel AI Gateway is the intended path for the first live tests.
+
+To switch an existing global and project profile to Vercel:
+
+```bash
+jevgrep init --global --provider vercel
+jevgrep init --provider vercel
+```
+
+## Use with coding agents
+
+JevGrep exposes the same search engine through a stdio MCP server:
+
+```bash
+jevgrep mcp
+```
+
+The server exposes one tool, `semantic_search_code`. Starting it does not scan files or
+contact a provider. A tool call performs a search using the authorization associated
+with the current directory.
+
+For Codex, Claude Code or another MCP client, configure a stdio server that runs
+`jevgrep mcp` with the repository as its working directory. If the client cannot set a
+working directory, pass the absolute profile path printed by `jevgrep init`:
+
+```json
+{
+  "mcpServers": {
+    "jevgrep": {
+      "command": "jevgrep",
+      "args": ["mcp", "--config", "C:/Users/me/AppData/Roaming/jevgrep/profiles/my-project-<hash>/config.json"]
+    }
+  }
+}
+```
+
+The exact MCP configuration location depends on the client. See the
+[installation guide](docs/install-guide.md) for more detail.
+
+## What leaves your computer
+
+Search evaluation is remote. When you run `jevgrep search`, eligible source fragments
+are sent to the configured provider together with:
+
+- your search question;
+- repository-relative paths and line ranges;
+- the relevance criterion used for scoring.
+
+JevGrep excludes common credential files, `.env` files, dependencies, build output,
+generated files, minified files and files that match credential patterns. Links and
+junctions are not followed. Run `jevgrep inspect` to review the eligible scope before
+the first live search.
+
+The credential is never placed in the search payload, result or cache. Redirects are
+not followed by either transport. Provider retention and privacy policies
+still apply to anything sent remotely.
+
+## Results and exit codes
+
+Human-readable output is the default. Pass `--json` for the validated response contract.
+The result includes coverage information, exclusions, stop reasons and exact excerpts,
+so an empty or partial result is not presented as proof that code does not exist.
+
+| Code | Meaning |
+| --- | --- |
+| `0` | complete result |
+| `2` | invalid request, configuration problem or rejected preflight |
+| `3` | partial result |
+| `4` | fatal runtime failure |
+| `130` | interrupted |
+
+Results go to stdout. Diagnostics and measurements go to stderr.
+
+## Cache
+
+JevGrep caches provider scores outside the repository. Repeating an identical search can
+reuse evaluations when the pinned model revision, criterion, complete request batch,
+source fragment and question are unchanged. Unresolved aliases (`jev-latest` and the
+Gateway model alias) currently disable persistent reuse.
+
+Clear the cache for the current project with:
+
+```bash
+jevgrep cache clear
+```
+
+Cached entries contain scores and identities, not source text, questions or credentials.
+
+## Current limitations
+
+- The project is experimental and has not completed broad real-world benchmarks.
+- TypeSafe direct has only been tested against documentation and simulated responses.
+- Vercel live evaluation is enabled but still needs its first recorded end-to-end run.
+- MCP transport is tested locally, but Codex and Claude interoperability still needs to
+  be qualified with real clients.
+- JavaScript and TypeScript receive the best source chunking today.
 
 ## Development
 
-Runtime: Node.js 24.15.0 LTS, pinned in [`.nvmrc`](.nvmrc); `package.json` accepts `>=24.0.0 <25.0.0`. TypeScript and Node type definitions are pinned development dependencies. `tiktoken@1.0.22` is the pinned runtime dependency; retain its WASM asset when packaging.
+```bash
+npm ci
+npm run typecheck
+npm test
+npm run build
+npm run smoke
+```
 
-| Command | Purpose |
-| --- | --- |
-| `npm ci` | Install the exact versions recorded in `package-lock.json`. |
-| `npm run typecheck` | Strict type check over `src`, `tests` and `scripts`; any type error exits non-zero. |
-| `npm test` | Offline test suite: no provider key, no network call. |
-| `npm run build` | Emit the CLI to `dist/` and make it executable on POSIX. |
-| `npm run smoke` | Run the built CLI and check its documented exit codes (needs `npm run build` first). |
-| `npm run verify` | `typecheck` + `test` + `build` + `smoke`; this is the CI gate. |
+Run the complete local verification gate with:
 
-Run the CLI from source with `node src/cli.ts --help`. The build emits `dist/cli.js`, which is the `jevgrep` bin entry; `npm link` exposes it locally.
+```bash
+npm run verify
+```
 
-Tests use Node's built-in test runner on `tests/*.test.ts` and
-`tests/contract/*.test.ts`. These explicit suite roots keep fixture repositories under
-`tests/fixtures/` as search material: their own `*.test.ts` files never run as part of
-the project suite. Node 24 strips TypeScript types natively and `tsconfig.json` enables
-`erasableSyntaxOnly`, so no transpiler and no test framework are installed.
+The test suite is offline and does not use provider credentials.
 
-`.nvmrc` pins the exact patch release used by CI (24.15.0) while `engines` accepts any Node.js 24.x; only the major version is enforced by the test suite. The CI workflow (`.github/workflows/ci.yml`) is configured for Ubuntu and Windows. No remote is configured and CI has not run. The consolidated implementation was verified locally on Windows; the earlier JG-001 Linux check does not qualify the new modules.
+## Documentation
 
-Spawned CLI processes run with an offline preload (`tests/helpers/offline-preload.ts`), which turns any provider call into a loud failure. `NODE_OPTIONS` does not survive the WSL-to-Windows boundary, so probe it from Node, not from a WSL shell.
+- [Installation and troubleshooting](docs/install-guide.md)
+- [Product and technical specification](docs/specification.md)
+- [Public contracts](docs/contracts.md)
+- [Implementation plan](docs/implementation-plan.md)
+- [Provider research](docs/research/jev.md)
+- [Current project handoff](docs/handoff.md)
 
-The gate artifact of `tests/type-check-gate.test.ts` is `tests/__type_check_gate__.ts`: it holds one deliberate type error while the check runs, is deleted again (also at the start of the next run) and is not gitignored, so an interrupted run leaves something visible and harmless rather than a broken `src/` file.
+## License
 
-Current executable: `jevgrep --help` and `jevgrep --version` work. `search`, `inspect`, `doctor`, `mcp` and `cache` still exit 69 with an explicit "not implemented in this build" message. Their implementation is available in `src/cli-commands.ts` for offline tests. Wiring it into `src/cli.ts` awaits the gates listed in the handoff; passing unit tests alone does not authorize live repository disclosure.
+No open-source license has been selected yet. The repository is currently marked
+`UNLICENSED`; choose and add a license before presenting it as reusable open-source
+software.

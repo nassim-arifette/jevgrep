@@ -38,7 +38,7 @@ test('every pinned dependency the matrix mentions matches package.json', () => {
 });
 
 test('the unverified areas stay labelled unverified', () => {
-  for (const claim of ['Codex', 'readiness']) {
+  for (const claim of ['Codex', 'Provider account behaviour']) {
     assert.ok(matrix.includes(claim), `the matrix must address ${claim}`);
   }
   assert.match(matrix, /Unverified|unverified/, 'the matrix must mark what was not run');

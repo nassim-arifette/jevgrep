@@ -1,105 +1,86 @@
 # Reprise sur main — 20 septembre 2026
 
-La base commune est `main`, dans le dossier habituel `jevgrep`. Les anciens lots
-JG ont été réunis et les modules qui étaient non commités sont intégrés. Reprendre
-depuis ce HEAD. Aucun remote n’est configuré : les commits sont locaux.
+La base commune est `main`, dans le dossier habituel `jevgrep`. Tous les lots de
+stabilisation et les modifications parallèles de l'utilisateur sont réunis sur cette
+branche. Aucun remote n'est configuré : les commits restent locaux.
 
-Repères : `291e394` fige le tokenizer, `d4a6827` consolide les modules hors ligne
-et les gardes d’activation, `efea6f2` corrige l’attente MCP et les plans incomplets.
-Voir aussi [le compte rendu de revue](reviews/stabilisation-main.md).
+Les points 1 et 2 de la reprise sont traités : configuration, parseur, budgets/reprises,
+HTTP/cache, profils d'initialisation, instrument de benchmark et documentation.
+Cela stabilise la base de reprise ; les qualifications externes ci-dessous restent ouvertes.
 
-Le contrôle d'accès JG-008 est intégré dans `e8952c8`, puis les corrections de
-portabilité dans `07d48e1`. Ces deux lots ont été vérifiés sur une copie figée de
-la base commune pour exclure les modifications simultanées des autres tâches.
-Les changements encore non commités ne font pas partie de cette qualification.
-`3c16fce` ajoute le contrôle du délai après revalidation, vérifié par les 30 tests
-du moteur sur Windows et Linux ; `cc8410c` isole les profils/secrets de l'opérateur
-des tests CLI (16 contrôles CLI/MCP réussis sur chaque système).
+## Lots disponibles
 
-## Ce qui est stabilisé
+| Périmètre | État et preuve |
+| --- | --- |
+| JG-002 / JG-003 | Contrats v1 et fournisseur simulé stabilisés ; mêmes schémas entre CLI et MCP. |
+| JG-007 / JG-008 | Revue configuration close (`9608b36`) et contrôle d'accès conservé (`e8952c8`, `07d48e1`, `3c16fce`). Voir [profils](reviews/jg-007-profile-review.md) et [autorisation](reviews/jg-008-review.md). |
+| JG-015 | Parseur syntaxique TypeScript 6.0.2 épinglé par alias, distinct du compilateur 7.0.2 ; aucun plugin/import exécuté. Parcours non quadratique des membres. `1e93e7d`, `e70d507`, [rapport](reports/jg-015-syntax-chunker.md). |
+| JG-016 / JG-017 | Réservations par tentative, octets du corps exact, reprises finies, cooldown partagé, arrêt sur erreur terminale et annulation bornée du scheduler. `d3899e2`, [revue](reviews/jg-016-017-stabilisation.md). |
+| JG-013 / JG-018 | Transports bornés, voisins valides conservés, usage ambigu inconnu, cache exact par lot complet, modèle explicitement versionné et verrou local par génération. `864472b`, [revue](reviews/jg-013-018-stabilisation.md). |
+| CLI / profils | `init --global`, profil par dépôt, découverte depuis un sous-dossier et remplacement explicite de fournisseur. Les limites CLI viennent de la configuration ; environnement prioritaire sur secrets stockés. `9608b36`. |
+| JG-027 / JG-028 | Corpus revu par le senior ; runner corrigé pour ensembles/alternatives, populations, cache froid isolé et provenance des annotations. `48fef9c`, [revue du runner](reviews/jg-028-runner-review.md). |
+| Contributions utilisateur | Tous les textes UTF-8 éligibles sont recherchables, sans filtre d'extension ; retrait de `unsupported_format` (`4a44fc1`, `befe984`, `ad999ab`). Délai initial de cinq minutes (`2a3fde8`). `init` crée un `.jevgrepignore` commenté sans écraser l'existant (`f13fb24`). |
 
-- **JG-002** : contrat public v1 et validateurs, revus et corrigés. Les unités,
-  `null`, plafonds zéro, usages inconnus et invariants de compteurs sont partagés.
-- **JG-003** : fournisseur simulé, horloge et fixtures, revus après JG-002.
-- **JG-027** : annotations et protocole revus par le senior. Six fixtures,
-  42 questions de développement et 12 réservées sur des fixtures distinctes.
-  Les réponses réservées restent hors du dépôt. Leur séparation sur disque ne
-  prouve pas l’isolation d’un agent d’évaluation : ce dernier contrôle reste ouvert.
-- **JG-006, compteur** : `tiktoken@1.0.22/cl100k_base`, données embarquées, budget
-  de la sérialisation entière. La partie MCP/Codex réel reste ouverte.
-- **JG-004, expérimentation locale** : SDK `@typesafe-ai/sdk@0.6.0` épinglé dans
-  `experiments/jev-contract`, 14 cas locaux SDK/fetch vérifiés. La sonde fournisseur
-  réelle est préparée et n’a pas été exécutée.
-- **JG-008** : ancre d'autorisation conservée et invalidation mémorisée, lectures
-  et fichiers d'exclusion vérifiés, attributs reparse Windows contrôlés avant
-  descente, descripteur comparé avant lecture et chemins revalidés avant envoi.
-  Revue et tests Windows/NTFS + Linux passés ; clôture administrative liée à JG-007.
-  Voir les [preuves et limites](reviews/jg-008-review.md).
+Les checklists historiques d'issues ne constituent pas une nouvelle implémentation à
+recommencer. Reprendre les modules présents et les critères encore ouverts dans
+[issues.md](issues.md). La revue locale d'un module dépendant du fournisseur ne vaut
+pas qualification de son compte, de sa latence ou de sa qualité de recherche.
 
-Les modules configuration, cycle de vie, inventaire, snapshots, découpage, cache,
-sélection, moteur, commandes et MCP sont maintenant versionnés et testables
-ensemble. Leur présence ne clôt pas les issues dont les critères restent ouverts.
+## Comportement stabilisé
 
-## Corrections de la consolidation
+- Les nouveaux profils gardent `remote_evaluation_enabled: false`. Après inspection,
+  l'opérateur l'active dans la configuration externe. `init --global` seul n'autorise
+  aucun dépôt. Les credentials ne vont ni dans les résultats, ni dans le cache.
+- Les transports réels sont accessibles après autorisation, activation et credential.
+  Le verrou global `readiness.ts` a été retiré conformément à l'activation expérimentale.
+  Les tests utilisent des transports simulés, y compris le SDK Gateway réel sur fetch local.
+- Les redirections sont refusées et les corps de réponse bornés à 8 Mio. Un HTTP 401
+  reste terminal et un HTTP 429 conserve son délai même si le corps est inexploitable.
+- Une reprise consomme une nouvelle réservation ; l'usage d'une tentative ambiguë
+  reste inconnu. Les reprises ambiguës sont désactivées par défaut. Les tarifs de
+  sortie non nuls sont refusés par l'estimateur actuel, qui couvre Jev à sortie gratuite.
+- Le cache n'assume pas l'indépendance des questions : identité du lot transmis complet,
+  réutilisation seulement si toutes ses entrées sont présentes. Les aliases
+  `jev-latest` et Gateway ne bénéficient pas de réutilisation persistante ; une révision
+  explicite `jev-X.Y.Z` doit être cohérente avec celle retournée.
+- Le benchmark distingue intersection d'annotation et couverture complète de ses lignes.
+  Ni l'une ni l'autre ne prouve seule la justesse sémantique ou le succès d'une tâche.
+  Une erreur sur un contrôle négatif n'est jamais comptée comme une réussite.
 
-- Le mode partiel respecte les plafonds et ne sélectionne qu’un préfixe déterministe
-  de lots. Le compte d’octets inclut critères, question, métadonnées et JSON échappé.
-- Les réservations sont prises avant dispatch, visibles entre workers, puis
-  réconciliées avec l’usage connu. Une annulation après envoi conserve sa tentative
-  et sa réservation inconnue. Un dépassement d’estimation arrête les prochains lots.
-- Le MCP limite les recherches à une active et une en attente ; une troisième reçoit
-  `BUSY`. Les annulations et les identifiants numériques/texte restent distincts.
-  Les entrées nulles ou malformées produisent des erreurs de protocole bornées.
-  L’attente compte dans le délai ; une recherche expirée dans la file n’envoie rien.
-  Les plans incomplets conservent des totaux inconnus, sans inventer de scan complet.
-- Le rendu humain mesure et borne son propre texte complet ; il retire des extraits
-  entiers et préserve les totaux inconnus. Les rendus sont remesurés sans supposer
-  qu’un compteur BPE est monotone.
-- L’erreur de parsing de configuration n’affiche plus le contenu JSON fourni.
+## Ce qu'il reste après cette stabilisation
 
-## Gates maintenus dans le code
-
-`src/readiness.ts` bloque les appels réels depuis le moteur et l’adaptateur, même
-avec une clé et `remote_evaluation_enabled=true`. Les tests injectent leur fournisseur
-hors ligne. Le runner de développement refuse `--provider live` et tout split réservé.
-Ne pas retirer ces contrôles sans les preuves d’acceptation correspondantes.
-
-Le binaire `dist/cli.js` appelle maintenant les commandes réelles : aide, doctor,
-inspect, cache et MCP sont raccordés. Les adaptateurs TypeSafe direct et Vercel
-AI Gateway existent et sont testés hors ligne. Cela ne retire pas les gates des
-recherches fournisseur. Voir la [revue CLI](reviews/jg-023-review.md) et la
-[matrice de compatibilité](compatibility.md).
-
-## Ordre de reprise
-
-| Priorité / pilote | Travail | Preuve attendue avant clôture |
+| Priorité | Travail à reprendre | Preuve attendue |
 | --- | --- | --- |
-| S + M : JG-007/JG-008 | Finaliser la revue de configuration et clôturer leur dépendance | Le contrôle JG-008 est implémenté et revu ; conserver son ancre dans les nouvelles entrées et ne jamais réautoriser une racine par son seul chemin. Voir `reviews/jg-008-review.md`. |
-| S : JG-004 → JG-005 | Exécuter la sonde réelle autorisée, qualifier scores/usage/modèle/tarif puis disposition des requêtes | Résultats expurgés, budget d’expérience explicite, choix mesuré et conséquences sur le cache. Aucun résultat réel disponible actuellement. |
-| S + M : JG-016/JG-017 | Finaliser l’estimateur et l’ordonnanceur | Reprises finies et `Retry-After`, limites fournisseur, annulation/cleanup borné ; étendre les tests de réservations concurrentes. |
-| M + S : JG-006/JG-024 | Qualifier le transport MCP et un vrai client Codex | Choix SDK documenté, flux/buffers bornés, versions négociées, timeout et sortie maximale réellement observés. |
-| M + S : JG-013/JG-015/JG-018 | Revoir les modules dépendant des décisions réelles | Corps HTTP lu sous limite, parseur JS/TS qualifié, identité des modèles et réutilisation exacte du cache. Le scanner lexical actuel est provisoire. |
-| S + M + J : JG-020/JG-022/JG-025 puis JG-023/JG-026 | Compléter la qualification des invariants et de l'installation | Binaire raccordé et artefact installé hors ligne ; restent la matrice R1–R11 complète et la qualification des intégrations réelles. |
-| M + S : JG-028/JG-029 | Qualifier l’instrument, mesurer développement puis jeu réservé | Couverture complète des preuves/alternatives, settings figés, exécuteur isolé et contrôle négatif d’accès aux réponses. Aucun résultat du scorer hors ligne n’est une mesure de qualité Jev. |
+| 1 — JG-004 / JG-005 | Qualifier un compte réel et le batching | Scores, usages, modèle effectif, limites, tarif et comparaison des dispositions sur données autorisées. Le premier essai est prévu via Gateway ; aucun appel réel effectué dans cette stabilisation. |
+| 2 — JG-006 / JG-024 / JG-026 | Qualifier MCP avec un vrai client Codex | Découverte, réponse complète unique, annulation, fermeture, timeout et troncature réellement observés. Le stdio local est testé ; le client réel ne l'est pas. |
+| 3 — JG-025 / JG-028 / JG-029 | Compléter la qualification intégrée et les mesures | Matrice R1–R11 finale, réglages figés, développement puis exécuteur réservé isolé ; comparaison de tâches avec/sans JevGrep. Les chiffres du scorer hors ligne ne mesurent pas Jev. |
+| 4 — JG-030 | Préparer la diffusion expérimentale et le bilan | Licence et distribution à choisir, limites et résultats documentés. Le package reste privé et `UNLICENSED`. |
 
-J peut poursuivre les fixtures, cas d’échec et procédures d’installation. M dispose
-des contrats et modules intégrés pour continuer les lots hors ligne. Toute modification
-significative doit être accompagnée de ses contrôles et d’un commit sur la base commune.
+JG-027 contient six fixtures : 42 questions de développement et 12 réservées sur
+des fixtures distinctes. Les réponses réservées restent hors du dépôt. Leur absence
+du checkout ne prouve pas l'isolation d'un agent évalué : le contrôle négatif d'accès
+doit être exécuté dans l'environnement de mesure. Le runner de développement refuse
+ces manifestes et ne charge aucune réponse privée.
 
-## Vérification de cette base
+## Vérification et commandes
 
-Pour JG-008 et ses corrections de portabilité, sur Node.js 24.15.0 : 396 tests sur
-chaque système, zéro échec (Windows : 394 réussis, 2 skips ; Linux : 393 réussis,
-3 skips Windows), contrôle de types, build et 8 smoke checks réussis. Installation
-depuis le lockfile et de l'artefact empaqueté vérifiées. Les skips et la copie figée
-exacte sont décrits dans la revue JG-008. La matrice CI distante n'a pas tourné.
-Les 14 contrôles SDK locaux et le corpus avaient passé lors de la consolidation ;
-cette validation ne prétend pas qualifier un fournisseur réel.
+La suite complète sur le code `e2f1b77` passe : **460 tests, 458 réussis et 2 skips
+sur Windows ; 460 tests, 457 réussis et 3 skips sur Linux**. Types, build, installation
+de l'artefact empaqueté et huit smoke checks passent sur les deux systèmes, sous
+Node 24.15.0. Linux a utilisé une copie figée issue de `git archive`, avec le delta
+documentaire et son test de compatibilité. Le corpus passe : six fixtures, 54 questions,
+aucune incohérence publique ; les réponses réservées sont absentes, comme prévu.
 
-La dernière vérification Windows de l'arbre partagé, avec les autres lots encore
-non commités, passe aussi : 410 tests, dont 408 réussis et 2 skips, types, build et
-8 smoke checks. Les modifications en cours restent à relire et committer par leurs
-pilotes ; ce résultat ne constitue pas leur clôture.
+Le dernier ajustement `1a8e2b7` signale les purges de cache incomplètes et isole aussi
+les profils des tests en processus. Ses 12 tests CLI, types, build et huit smoke checks
+ont été revérifiés sur Windows et sur la même copie Linux après application du delta.
+Les 21 tests du runner et les revues indépendantes Spec/Standards sont clos.
+La CI distante n'a pas tourné, faute de remote.
+
+Les deux skips Windows concernent le renommage d'une racine pendant l'ouverture d'un
+fichier, interdit par cet hôte, et la création d'un symlink de fichier sans privilège.
+Ces cas passent sous Linux. Les trois skips Linux sont les contrôles du helper
+d'attributs Windows, exercés sous Windows. Aucun appel réel au fournisseur effectué.
 
 ```sh
 npm ci
@@ -107,13 +88,6 @@ npm run verify
 npm run corpus:check
 ```
 
-Expérience SDK locale distincte, sans appel fournisseur :
-
-```sh
-npm ci --prefix experiments/jev-contract
-npm test --prefix experiments/jev-contract
-```
-
-La validation des réponses réservées se fait uniquement côté curateur, selon
-`benchmarks/README.md`. Ne pas recopier le fichier de réponses dans le dépôt ni dans
-l’espace de l’agent évalué.
+L'expérience SDK locale séparée se reproduit sans fournisseur avec
+`npm ci --prefix experiments/jev-contract` puis `npm test --prefix experiments/jev-contract`.
+Les 14 contrôles locaux antérieurs ne remplacent pas une sonde sur compte réel.

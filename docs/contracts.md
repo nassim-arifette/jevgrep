@@ -10,6 +10,9 @@ Each schema exposes `parse(unknown)` and `safeParse(unknown)`. Parsing returns a
 
 Use `parseSearchRequest(input, configuration.search)` at the engine boundary. It preserves the **exact original query**, normalizes/collapses scope entries and supplies missing defaults. `searchRequestSchema` validates the optional input shape with the initial limits; `createSearchRequestSchema(limits)` uses the operator's response limits.
 
+The CLI preserves an omitted response budget until the trusted configuration is loaded.
+Both its default and maximum therefore follow the operator's settings, as MCP does.
+
 | Field | Contract |
 | --- | --- |
 | `query` | Nonblank after a whitespace check; at most 8,192 UTF-8 bytes; no trimming, Unicode normalization or newline rewriting |
@@ -55,6 +58,15 @@ Every optional cap is explicitly present in configuration. `null` disables it; *
 | `fragments` | Unique prepared fragments, independent of retries |
 
 `provider.pricing` is an optional nullable v1 extension to the configuration example. Fields: `model`, `verified_at` (valid `YYYY-MM-DD` date), `input_usd_per_million_tokens` and `output_usd_per_million_tokens`. Prices are explicitly supplied, including any zero output price. The model must match `provider.model`. Enabling any USD cap, including zero, requires this dated matching record. Checking applicable real prices/model access belongs to JG-004/007. Missing pricing means estimated USD is unknown, not free.
+
+The current estimator supports Jev models with a zero output price only; a nonzero
+`output_usd_per_million_tokens` is rejected instead of silently omitted from reservations.
+
+`search.retry` is optional. Its complete object contains `max_retries` (0–10),
+`base_delay_ms` and `max_delay_ms` (1–60,000, base no greater than maximum), and
+`retry_ambiguous` (boolean). Omission means 2 retries, 250 ms base, 5,000 ms maximum,
+and no ambiguous retry. Each attempt reserves budget separately. `Retry-After` is
+shared across workers, and waiting remains cancellable and bounded by the search deadline.
 
 Only `https://api.typesafe.ai` (optionally followed by `/`) is accepted as the endpoint. Credentials, query parameters, alternate ports and custom hosts are unsupported. Secrets belong in the environment variable named by `api_key_env`. `follow_links=true`, `include_source=true` and `require_fit=false` are rejected; explicit partial scanning uses `allow_partial_scan`. Unsupported advanced settings are rejected rather than accepted without an implementation. Logging levels: `silent`, `error`, `warn`, `info`, `debug`.
 

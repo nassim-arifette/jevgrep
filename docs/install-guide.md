@@ -4,25 +4,23 @@ For one operator, on one machine, authorizing one local repository. It covers a 
 Windows install, the same steps on Linux, connecting the stdio server to an MCP client
 such as Codex, and the failures you are most likely to hit.
 
-> **Status of this guide (2026-09-19).** The engine, the CLI command layer and the MCP
+> **Status of this guide (2026-09-20).** The engine, the CLI command layer and the MCP
 > server exist and are covered by the offline suite. This is a development guide;
-> the operational commands below describe the future qualified installation.
+> the operational commands below describe the experimental installation.
 > The executable now dispatches real commands: `doctor`, `inspect` and `cache clear`
 > run locally without a credential, and `search` is refused with exit code 2 until the
 > trusted configuration enables remote evaluation and the credential is present. Live
-> search is still explicitly blocked in `src/readiness.ts`, and no real Codex
-> interoperability run has been performed. See [the current handoff](handoff.md)
-> before attempting activation.
+> search is enabled after explicit repository authorization, remote evaluation
+> and credential checks. No real Codex interoperability run has been performed yet.
 
 ## 1. What leaves your machine
 
 Read this before enabling remote evaluation.
 
-After qualification and activation, the intended behaviour when
-`remote_evaluation_enabled` is `true` is to send **the text of eligible source
+When `remote_evaluation_enabled` is `true`, a search sends **the text of eligible source
 fragments** from the authorized repository, together with your search question, the
 relative path and line range of each fragment, and the versioned relevance criterion, to
-the configured provider endpoint (`https://api.typesafe.ai`). "Local" in this project
+the configured provider endpoint (TypeSafe AI or Vercel AI Gateway). "Local" in this project
 describes the JevGrep process, not the evaluation: the evaluation is remote.
 
 The exclusion policy in §5.2 of the specification covers
@@ -96,12 +94,23 @@ Everything else can stay as shipped. Notable defaults:
 | Setting | Default | Meaning |
 | --- | --- | --- |
 | `scan_caps.*` | `null` | every optional spend/volume cap is **disabled**; `null` means off, `0` does not mean unlimited |
-| `search.deadline_ms` | `60000` | internal deadline, including preparation and queue wait |
+| `search.deadline_ms` | `300000` | internal deadline (5 minutes), including preparation and queue wait |
 | `search.default_response_tokens` / `max_response_tokens` | `4000` / `16000` | response budget under the pinned `tiktoken@1.0.22/cl100k_base` counter |
 | `search.threshold` | `0.5` | provisional selection threshold, to be chosen on development data (JG-028) |
 | `source.max_file_bytes` | `1048576` | per-file eligibility limit |
 | `source.follow_links` | `false` | links and junctions are never followed; `true` is rejected |
-| `cache.*` | enabled, 7 days, 100 MiB | evaluation cache, stored per user outside the repository |
+| `cache.*` | enabled, 7 days, 100 MiB | evaluation cache outside the repository; persistent reuse needs a pinned model revision and an identical complete batch |
+
+`jevgrep init --global` can create global provider credentials, then `jevgrep init`
+creates a trusted profile for the current repository. New profiles keep remote
+evaluation disabled. Review the printed configuration path and enable disclosure
+there when ready. A provider switch preserves the existing project's limits and
+disclosure setting. Environment credentials override stored credentials.
+
+Optional `search.retry` settings default to two retries, a 250 ms base delay and a
+5,000 ms maximum jittered delay. `Retry-After` applies across workers. Ambiguous
+attempts are not retried unless `retry_ambiguous` is explicitly enabled; their usage
+reservation remains unknown because a repeated attempt can incur another charge.
 
 Set the credential in your shell profile, never in the configuration file:
 

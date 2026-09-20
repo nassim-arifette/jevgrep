@@ -162,7 +162,7 @@ Milestones are outcomes, not calendar promises:
 
 **Done when:** the user can follow the installation guide on a clean environment and Codex can call the tool with exact excerpts, complete JSON, and truthful status. No raw secret appears in configuration examples, logs, or output.
 
-**Milestone:** M3, the first usable personal MVP.
+**Milestone:** M3, the first usable experimental open-source MVP.
 
 ## 9. P7 — Evaluate the hypothesis and decide the next iteration
 
@@ -252,7 +252,7 @@ A personal implementation can execute the same plan sequentially. Initial effort
 | Source/path bugs | Wrong lines, stale hashes, link escape fixtures | Enforce invariants before live provider usage; Windows coverage from the start |
 | SDK/client drift | Broken cancellation or host truncation | Pin versions, subprocess smoke checks, narrow adapters |
 | Benchmark overstates gains | Wins depend on warm cache or forced tool use | Cold/warm separation, voluntary use, paired task outcomes, fixed held-out sets |
-| Personal MVP turns into a platform | Multiple servers, languages, graph search before a useful CLI | Preserve current scope and require evidence for the next feature |
+| Experimental MVP turns into a platform | Multiple servers, languages, graph search before a useful CLI | Preserve current scope and require evidence for the next feature |
 
 ## 13. Deferred work, explicitly gated
 

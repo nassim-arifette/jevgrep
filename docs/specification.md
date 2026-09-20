@@ -1,8 +1,8 @@
 # JevGrep product and technical specification
 
-Version: 0.1 implementation baseline. Prepared 2026-09-19. Product choices and the technical baseline have been accepted; provider feasibility and tuning remain implementation gates. The CLI scaffold and JG-002 public contracts are implemented. Engine and MCP drafts are integrated on main and tested offline; live activation and executable wiring remain gated. See the [handoff](handoff.md). The [v1 contract reference](contracts.md) documents executable schemas, finite code lists, bounds and the optional dated pricing record.
+Version: 0.1 implementation baseline. Prepared 2026-09-19, updated 2026-09-20. Product choices and the technical baseline have been accepted; provider qualification and tuning remain open. The contracts, engine, CLI and experimental MCP transport are integrated on main and tested offline. Live dispatch requires trusted repository authorization, explicit remote enablement and a credential. See the [handoff](handoff.md). The [v1 contract reference](contracts.md) documents executable schemas, finite code lists, bounds and the optional dated pricing record.
 
-The project brief establishes the product direction. The user has confirmed a **personal MVP**, **TypeScript**, **small and medium repositories up to approximately 100,000 lines**, **require-fit preflight when configured limits apply**, **optional spending/total-scan caps disabled by default**, and the **recommended technical baseline**. Choices and alternatives are recorded in [decisions.md](decisions.md). Numerical tuning values remain provisional. Terminology is defined in [CONTEXT.md](../CONTEXT.md), execution order in [implementation-plan.md](implementation-plan.md), and external facts in [research](research/jev.md).
+The project brief establishes the product direction. The user has confirmed an **experimental open-source MVP**, **TypeScript**, **small and medium repositories up to approximately 100,000 lines**, **require-fit preflight when configured limits apply**, **optional spending/total-scan caps disabled by default**, and the **recommended technical baseline**. Choices and alternatives are recorded in [decisions.md](decisions.md). Numerical tuning values remain provisional. Terminology is defined in [CONTEXT.md](../CONTEXT.md), execution order in [implementation-plan.md](implementation-plan.md), and external facts in [research](research/jev.md).
 
 ## 1. Product contract
 
@@ -55,9 +55,11 @@ Eligibility filters enforce authorization, supported formats, and resource limit
 
 ### 2.1 Setup
 
-The operator installs the CLI, creates a trusted configuration outside the searched repository, chooses an absolute repository root, enables remote disclosure for that root, and supplies a provider credential through an environment variable. A local `doctor` command validates configuration and reports the provider destination, configured model, disclosure state, cache location, and limits without printing credentials or contacting Jev.
+The operator installs the CLI and can run `jevgrep init --global` once to store a default provider and credential for the computer. TypeSafe AI is proposed first and Vercel AI Gateway is available as an alternative. Running `jevgrep init` in a repository then creates a separate trusted authorization profile for that root. Global settings, credentials, and project profiles all live outside searched repositories. Commands discover the nearest authorized ancestor from the current directory; `--config` remains an explicit override. Process environment variables override the stored credential. A local `doctor` command validates configuration and reports the provider destination, configured model, disclosure state, cache location, and limits without printing credentials or contacting Jev.
 
 A local `inspect` command inventories and chunks a requested scope, reports exclusions, and estimates work without making a provider call. This makes proposed disclosure and scan size reviewable before a real search. Neither setup nor search requires a new confirmation on every call once configured authorization exists.
+
+Generated project profiles keep `remote_evaluation_enabled: false`. The operator enables it in the printed trusted profile after reviewing scope, provider and limits. Global provider setup alone never authorizes a repository.
 
 The installation guide must state plainly that selected eligible source fragments are transmitted to the configured remote Jev provider. The word “local” describes the JevGrep process, not inference or zero-retention storage.
 
@@ -263,10 +265,11 @@ Stable reason/error families include `INVALID_REQUEST`, `UNAUTHORIZED_SCOPE`, `R
 
 ### 4.5 CLI surface
 
-Proposed executable: `jevgrep`. These are future commands, not installed commands in this repository.
+Executable: `jevgrep`. These commands are wired into the packaged CLI. Live evaluation requires an authorized project profile, explicit remote enablement and a provider credential; the experimental MVP makes no production-readiness claim.
 
 ```text
-jevgrep doctor --config <trusted-config-path>
+jevgrep init [--global] [--root <repository-path>] [--provider typesafe|vercel]
+jevgrep doctor [--config <trusted-config-path>]
 jevgrep inspect --config <trusted-config-path> --scope src --scope tests --json
 jevgrep search --config <trusted-config-path> --query "..." --scope src --max-context-tokens 4000 --json
 jevgrep search --config <trusted-config-path> --query "..." --scope src --allow-partial
@@ -390,7 +393,7 @@ Optional spend and total-scan caps are **off by default**, as the user requested
 | --- | --- |
 | Response tokens, default / maximum | 4,000 / 16,000 reference tokens |
 | Search latency target | 30 seconds on a declared reference fixture |
-| Internal deadline | 60 seconds including preparation and queue wait |
+| Internal deadline | 5 minutes including preparation and queue wait |
 | Codex outer tool timeout | At least 15 seconds longer than internal deadline |
 | Estimated Jev spend cap per search | `null` (disabled) |
 | Estimated provider-input cap | `null` (disabled) |
@@ -421,7 +424,7 @@ JSON is the recommended format for strict validation without executing configura
     "model": "jev-1.13.0"
   },
   "search": {
-    "deadline_ms": 60000,
+    "deadline_ms": 300000,
     "concurrency": 4,
     "require_fit": true,
     "default_response_tokens": 4000,
@@ -545,13 +548,13 @@ Use identical task statements, resource ceilings, and objective completion tests
 
 Measure task success, total main-agent input/output and cost, Jev cost, wall time, search/read calls, context received, and recovery work. Use actual usage where available; label unavailable billed measurements rather than presenting estimates as invoices. Paired differences and uncertainty belong in the report.
 
-Proposed decision rule: protect task success first, then seek at least a 20% reduction in median total exploration cost or exploration wall time on the predeclared behavior-search subset. Also report whole-task cost/time, tail latency, and every negative regression. A personal MVP smoke set of about 10 paired tasks can expose serious regressions but cannot prove statistical non-inferiority. Expand the benchmark and choose an explicit tolerated success-rate margin before making general performance claims. If quality degrades or costs/latency dominate, revise chunking/layout/policy or keep the tool experimental. Do not solve a failed exhaustive-scan hypothesis by silently adding a forbidden relevance prefilter.
+Proposed decision rule: protect task success first, then seek at least a 20% reduction in median total exploration cost or exploration wall time on the predeclared behavior-search subset. Also report whole-task cost/time, tail latency, and every negative regression. An experimental open-source MVP smoke set of about 10 paired tasks can expose serious regressions but cannot prove statistical non-inferiority. Expand the benchmark and choose an explicit tolerated success-rate margin before making general performance claims. If quality degrades or costs/latency dominate, revise chunking/layout/policy or keep the tool experimental. Do not solve a failed exhaustive-scan hypothesis by silently adding a forbidden relevance prefilter.
 
 ## 12. Definition of MVP done
 
 The MVP is usable when the operator can install it on Windows, authorize a repository, inspect disclosure/estimated scan size locally, run a CLI search, connect the stdio server to Codex, and receive exact budgeted excerpts plus truthful coverage. All R1–R11 contract checks pass, the provider batching decision is supported by a recorded experiment, credentials and source bodies are absent from default logs/cache, and the first paired benchmark report documents benefits and failures without claiming unmeasured gains.
 
-A usable MVP and a demonstrated improvement are separate milestones. The latter additionally requires the chosen benchmark decision rule to be met. Production/team deployment, broad language support, and public release are separate future decisions.
+A usable experimental open-source MVP and a demonstrated improvement are separate milestones. The latter additionally requires the chosen benchmark decision rule to be met. Production/team deployment, syntax parsers for additional languages, and a stable production release are separate future decisions.
 
 ## 13. External references and open facts
 
