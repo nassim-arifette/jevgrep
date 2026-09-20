@@ -60,7 +60,10 @@ export function createWorkspace(options: WorkspaceOptions = {}): Workspace {
   const configPath = join(root, 'jevgrep.config.json');
   writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`, 'utf8');
 
-  const env: NodeJS.ProcessEnv = { JEVGREP_CACHE_HOME: join(root, 'cache') };
+  const env: NodeJS.ProcessEnv = {
+    JEVGREP_CACHE_HOME: join(root, 'cache'),
+    JEVGREP_CONFIG_HOME: join(root, 'configuration'),
+  };
   return {
     root,
     repositoryRoot,

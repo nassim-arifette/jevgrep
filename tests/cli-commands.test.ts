@@ -7,6 +7,7 @@ import { executeCommand } from '../src/cli-commands.ts';
 import type { CommandDependencies } from '../src/cli-commands.ts';
 import type { CliIo } from '../src/cli.ts';
 import { createSearchEngine } from '../src/engine.ts';
+import { ScoreCache } from '../src/evaluation/cache.ts';
 import type { BatchEvaluation, EvaluationBatch, ProviderClient } from '../src/evaluation/jev.ts';
 import { CLI_EXIT_CODES } from '../src/search-response.ts';
 import { createWorkspace, withRemoteEnabled } from './helpers/search-workspace.ts';
@@ -94,6 +95,14 @@ test('doctor runs without a credential and dispatches nothing', async () => {
   assert.ok(text.includes('TYPESAFE_API_KEY'));
   assert.ok(text.includes('all disabled (null)'));
   assert.equal(captured.err.length, 0, 'a healthy doctor writes nothing to stderr');
+});
+
+test('cache clear reports a failed purge instead of claiming success', async (t) => {
+  const space = workspace(); const captured = capture();
+  t.mock.method(ScoreCache.prototype, 'clear', function (this: ScoreCache) { this.stats.failures++; return 0; });
+  const code = await executeCommand(parsed(['cache', 'clear', '--config', space.configPath]), captured.io, dependencies(space));
+  assert.equal(code, CLI_EXIT_CODES.error); assert.equal(captured.out.length, 0);
+  assert.match(captured.err.join(''), /could not be completely cleared/);
 });
 
 test('inspect reports scope, exclusions, fragments and estimates without a provider call', async () => {

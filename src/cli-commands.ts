@@ -250,6 +250,10 @@ function runCacheClear(
     maxBytes: loaded.config.cache.max_bytes,
   });
   const removed = cache.clear();
+  if (cache.stats.failures > 0) {
+    io.err('jevgrep: the configured cache could not be completely cleared; check local access or an active writer');
+    return CLI_EXIT_CODES.error;
+  }
   io.out(`removed ${String(removed)} cached evaluation(s) from ${loaded.cacheDirectory}`);
   io.err('jevgrep: only the cache configured by this configuration was cleared; no repository file was written');
   return CLI_EXIT_CODES.complete;
