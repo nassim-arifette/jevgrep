@@ -175,12 +175,16 @@ export function createProfile(options: {
   if (options.apiKey !== undefined && readOptional(storage, 'secrets.env', 32_768) !== undefined) throw new Error(`a profile already exists at ${storage.path}`);
   root.assertCurrent(); storage.write('config.json', `${JSON.stringify(desired, null, 2)}\n`, true);
   let ignoreCreated = false;
+  let secretsCreated = false;
   try {
-    if (options.apiKey !== undefined) storage.write('secrets.env', `${desired.provider.api_key_env}=${options.apiKey.trim()}\n`, true);
+    if (options.apiKey !== undefined) {
+      storage.write('secrets.env', `${desired.provider.api_key_env}=${options.apiKey.trim()}\n`, true);
+      secretsCreated = true;
+    }
     ignoreCreated = createDefaultIgnoreFile(root);
   } catch (cause) {
     storage.remove('config.json');
-    if (options.apiKey !== undefined) storage.remove('secrets.env');
+    if (secretsCreated) storage.remove('secrets.env');
     if (ignoreCreated) new LocalDirectory(root.path).remove('.jevgrepignore');
     throw cause;
   }

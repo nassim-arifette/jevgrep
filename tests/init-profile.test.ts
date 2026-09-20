@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test, { after } from 'node:test';
 import { executeCommand } from '../src/cli-commands.ts';
+import { LocalDirectory } from '../src/local-directory.ts';
 
 import {
   configuredGlobalProvider, createGlobalProfile, createProfile, DEFAULT_JEVGREPIGNORE, discoverProjectConfiguration,
@@ -13,6 +14,19 @@ import {
 const spaces: string[] = [];
 function temporary(prefix: string): string { const space = mkdtempSync(join(tmpdir(), prefix)); spaces.push(space); return space; }
 after(() => { for (const space of spaces) rmSync(space, { recursive: true, force: true }); });
+
+test('failed initialization preserves a secret created concurrently by another writer', (t) => {
+  const space = temporary('jevgrep-init-exclusive-'); const root = join(space, 'repository'); mkdirSync(root);
+  const env = { JEVGREP_CONFIG_HOME: join(space, 'configuration') };
+  let competingSecret = '';
+  const original = LocalDirectory.prototype.write;
+  t.mock.method(LocalDirectory.prototype, 'write', function (this: LocalDirectory, name: string, text: string, exclusive?: boolean) {
+    if (name === 'secrets.env') { competingSecret = join(this.path, name); writeFileSync(competingSecret, 'TYPESAFE_API_KEY=another-writer\n', { flag: 'wx' }); }
+    return original.call(this, name, text, exclusive);
+  });
+  assert.throws(() => createProfile({ root, provider: 'typesafe', apiKey: 'ours', env }), /already exists/);
+  assert.equal(readFileSync(competingSecret, 'utf8'), 'TYPESAFE_API_KEY=another-writer\n');
+});
 
 test('init refuses a repository-local home before prompting for or writing a credential', async () => {
   const space = temporary('jevgrep-init-refusal-');

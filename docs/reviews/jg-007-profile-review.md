@@ -23,6 +23,10 @@ Les budgets CLI sont résolus après chargement de la configuration. Régression
 défaut 6 000, maximum 20 000 acceptés et 20 001 refusé ; l'absence du flag n'injecte
 plus un défaut fixe de 4 000 avant le moteur.
 
+L'ajout utilisateur `f13fb24` crée aussi un `.jevgrepignore` commenté, sans écraser
+l'existant. Les secrets et profils restent externes. Un échec d'initialisation ne
+supprime que les secrets créés par cette tentative ; un fichier concurrent est conservé.
+
 Relecture indépendante Spec : les défauts initiaux et la régression du démarrage
 global ont été corrigés et revérifiés. Tests : `init-profile`, `cli-args`,
 `cli-commands`, `local-directory` et contrats de configuration. La qualification
