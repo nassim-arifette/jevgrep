@@ -8,7 +8,7 @@ permissions:
 jobs:
   probe:
     runs-on: windows-latest
-    timeout-minutes: 6
+    timeout-minutes: 12
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -24,14 +24,9 @@ jobs:
           const source = readFileSync('src/source/windows-attributes-worker.ts', 'utf8');
           const program = source.split('const PROGRAM = String.raw`')[1].split('`;')[0];
           const root = process.env.SystemRoot;
-          const cases = [
-            ['system-path', { PATH: join(root, 'System32') }],
-            ['identity', Object.fromEntries(['USERNAME', 'USERDOMAIN', 'COMPUTERNAME', 'USERDNSDOMAIN', 'LOGONSERVER'].filter(k => process.env[k]).map(k => [k, process.env[k]]))],
-            ['architecture', { PROCESSOR_ARCHITECTURE: 'AMD64', OS: 'Windows_NT' }],
-            ['combined', Object.fromEntries(['PATH', 'LOCALAPPDATA', 'APPDATA', 'TEMP', 'TMP', 'USERPROFILE', 'ProgramFiles', 'ProgramData', 'USERNAME', 'USERDOMAIN', 'COMPUTERNAME', 'PROCESSOR_ARCHITECTURE', 'OS'].filter(k => process.env[k]).map(k => [k, process.env[k]]))],
-          ];
-          for (const [label, extra] of cases) {
-            await new Promise(resolve => {
+          async function probe(keys) {
+            const extra = Object.fromEntries(keys.map(k => [k, process.env[k]]));
+            return await new Promise(resolve => {
               const start = Date.now();
               const child = spawn(join(root, 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe'),
                 ['-NoLogo', '-NoProfile', '-NonInteractive', '-Command', program],
@@ -43,12 +38,23 @@ jobs:
               child.on('error', error => console.log('[helper-probe] spawn:', error.code));
               child.on('close', code => {
                 clearTimeout(timer);
-                console.log('[helper-probe]', JSON.stringify({ label, code, ms: Date.now()-start, out, err }));
-                resolve();
+                const ms = Date.now()-start;
+                console.log('[helper-probe]', JSON.stringify({ keys, code, ms, out, err }));
+                resolve(code === 0 && ms < 5000 && out.trim() === '1 -1');
               });
               child.stdin.end(JSON.stringify([root]) + '\n');
             });
           }
+          let keys = Object.keys(process.env).filter(k => !/^(systemroot|windir)$/i.test(k));
+          if (!await probe(keys)) throw new Error('Inherited environment is not fast');
+          for (let chunk = Math.ceil(keys.length / 2); chunk >= 1; chunk = Math.floor(chunk / 2)) {
+            for (let i = 0; i < keys.length;) {
+              const candidate = keys.filter((_, index) => index < i || index >= i + chunk);
+              if (await probe(candidate)) keys = candidate;
+              else i += chunk;
+            }
+          }
+          console.log('[minimal-fast-keys]', JSON.stringify(keys));
           '@ | node --input-type=module
       - name: Probe the actual worker call
         shell: pwsh
