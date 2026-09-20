@@ -9,7 +9,7 @@
     "model": "jev-1.13.0"
   },
   "search": {
-    "deadline_ms": 60000,
+    "deadline_ms": 300000,
     "concurrency": 4,
     "require_fit": true,
     "default_response_tokens": 4000,

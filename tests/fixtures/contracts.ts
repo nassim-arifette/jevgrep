@@ -17,7 +17,7 @@ export const validConfiguration = {
     adapter: 'typesafe-direct', base_url: 'https://api.typesafe.ai',
     api_key_env: 'TYPESAFE_API_KEY', model: 'synthetic-model-v1',
   },
-  search: { deadline_ms: 60_000, concurrency: 4, require_fit: true, default_response_tokens: 4_000, max_response_tokens: 16_000, threshold: 0.5 },
+  search: { deadline_ms: 300_000, concurrency: 4, require_fit: true, default_response_tokens: 4_000, max_response_tokens: 16_000, threshold: 0.5 },
   scan_caps: {
     estimated_cost_usd: null, estimated_input_tokens: null, transmitted_bytes: null,
     request_attempts: null, prepared_source_bytes: null, candidate_files: null, fragments: null,

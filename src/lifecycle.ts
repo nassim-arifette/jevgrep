@@ -173,7 +173,7 @@ export class SearchContext {
     this.searchId = options.searchId ?? randomUUID();
     this.clock = options.clock ?? systemClock;
     this.startedAtMs = options.startedAtMs ?? this.clock.nowMs;
-    this.deadlineAtMs = this.startedAtMs + (options.deadlineMs ?? 60_000);
+    this.deadlineAtMs = this.startedAtMs + (options.deadlineMs ?? 300_000);
     this.diagnostics = new DiagnosticsRecorder(this.searchId);
     this.logger = options.logger ?? new SearchLogger('silent');
 
