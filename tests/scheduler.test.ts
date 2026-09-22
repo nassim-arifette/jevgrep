@@ -42,6 +42,25 @@ test('each retry reserves a fresh attempt and honors Retry-After before resendin
   await context.dispose(); assert.equal(clock.pendingTimerCount, 0);
 });
 
+test('retries reuse the same prepared request body', async () => {
+  const clock = new ManualClock();
+  const context = new SearchContext({ clock });
+  const bodies: (string | undefined)[] = [];
+  const prepared = '{"state":{},"questions":{"a":{}}}';
+  const provider: ProviderClient = { model: 'jev-1.13.0', async evaluateBatch(_batch, _signal, body) {
+    bodies.push(body);
+    if (bodies.length === 1) throw refusal();
+    return answer;
+  } };
+  const work = runEvaluations(provider, [batch], context, {
+    concurrency: 1, random: () => 0, bodyOf: () => prepared,
+    onScores: () => undefined, onFailure: () => undefined,
+  });
+  await setImmediate(); clock.advanceBy(125); await work;
+  assert.deepEqual(bodies, [prepared, prepared]);
+  await context.dispose();
+});
+
 test('retry count is finite and ambiguous failures are never automatically repeated', async () => {
   for (const ambiguous of [false, true]) {
     const clock = new ManualClock();

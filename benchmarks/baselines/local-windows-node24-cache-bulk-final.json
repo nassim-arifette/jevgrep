@@ -1,0 +1,2246 @@
+{
+  "schemaVersion": 1,
+  "kind": "local-performance",
+  "createdAt": "2026-09-22T18:46:12.956Z",
+  "environment": {
+    "node": "v24.15.0",
+    "platform": "win32",
+    "architecture": "x64",
+    "cpu": "11th Gen Intel(R) Core(TM) i5-1135G7 @ 2.40GHz",
+    "logicalCpus": 8,
+    "totalMemoryBytes": 12612919296,
+    "revision": "52e2d895b69d3bd41138b5f9091d7eed3e2cf4a0",
+    "workingTree": "M .gitignore\n M README.md\n M package-lock.json\n M package.json\n M src/engine.ts\n M src/evaluation/cache.ts\n M src/evaluation/scheduler.ts\n M src/response/token-counter.ts\n M src/source/chunker.ts\n M src/source/prepare.ts\n M src/source/snapshot.ts\n M tests/fixtures/repositories/README.md\n M tests/score-cache.test.ts\n?? benchmarks/\n?? roadmap.md\n?? scripts/bench-retrieval.ts\n?? scripts/bench.ts\n?? scripts/bench/\n?? src/profiling.ts\n?? tests/benchmark.test.ts\n?? tests/profiling.test.ts",
+    "sourceHash": "71825f99d088752cb059d420af29920d04edb9a8ef31cf054fe079fc7004ae34",
+    "harnessHash": "c1904b32a16bb10c2ab2fcadc468f02d52953697e70c70c05069cb56b3105571",
+    "packageLockHash": "d772547c55f363cb1f86490584c9dc3ad810d99c6c018cfa67873c14f0a42780"
+  },
+  "settings": {
+    "files": 64,
+    "samples": 3,
+    "instrumented": true,
+    "responseTokens": 4000,
+    "concurrency": 1
+  },
+  "semantics": {
+    "provider": "offline fixed scores; reported usage is a synthetic reference-token count; no billed requests",
+    "quality": "not measured; use bench:retrieval for real provider judgments",
+    "cache": "new score cache and fresh process per sample; four ordered searches share one engine; no preparation cache exists",
+    "cold": "cold process/tokenizer/score cache; OS filesystem cache is uncontrolled; startup/imports and fixture setup excluded",
+    "timings": "inclusive stages overlap; provider includes adapter work and waiting, not isolated network time",
+    "memory": "sampled maxima at instrumented boundaries; process peak RSS covers the whole child including setup"
+  },
+  "summary": [
+    {
+      "scenario": "cold",
+      "elapsedMs": {
+        "min": 22881.7201,
+        "median": 23769.211900000002,
+        "max": 24015.7666
+      },
+      "initialTimerDelayMs": {
+        "min": 22881.9711,
+        "median": 23769.461600000002,
+        "max": 24016.1498
+      },
+      "providerAttempts": {
+        "min": 1,
+        "median": 1,
+        "max": 1
+      },
+      "cacheReused": {
+        "min": 0,
+        "median": 0,
+        "max": 0
+      },
+      "transmittedBytes": {
+        "min": 121858,
+        "median": 121858,
+        "max": 121858
+      }
+    },
+    {
+      "scenario": "repeat_question",
+      "elapsedMs": {
+        "min": 6612.940100000003,
+        "median": 6636.822199999999,
+        "max": 7277.73
+      },
+      "initialTimerDelayMs": {
+        "min": 6620.054900000003,
+        "median": 6637.806499999999,
+        "max": 7284.286700000001
+      },
+      "providerAttempts": {
+        "min": 0,
+        "median": 0,
+        "max": 0
+      },
+      "cacheReused": {
+        "min": 64,
+        "median": 64,
+        "max": 64
+      },
+      "transmittedBytes": {
+        "min": 0,
+        "median": 0,
+        "max": 0
+      }
+    },
+    {
+      "scenario": "new_question",
+      "elapsedMs": {
+        "min": 24129.980399999997,
+        "median": 24199.3768,
+        "max": 25078.1852
+      },
+      "initialTimerDelayMs": {
+        "min": 24131.4281,
+        "median": 24199.509599999998,
+        "max": 25081.225600000005
+      },
+      "providerAttempts": {
+        "min": 1,
+        "median": 1,
+        "max": 1
+      },
+      "cacheReused": {
+        "min": 0,
+        "median": 0,
+        "max": 0
+      },
+      "transmittedBytes": {
+        "min": 121854,
+        "median": 121854,
+        "max": 121854
+      }
+    },
+    {
+      "scenario": "small_edit",
+      "elapsedMs": {
+        "min": 7035.221700000002,
+        "median": 7090.325700000001,
+        "max": 7562.538199999995
+      },
+      "initialTimerDelayMs": {
+        "min": 7035.582699999999,
+        "median": 7090.447699999997,
+        "max": 7562.868099999992
+      },
+      "providerAttempts": {
+        "min": 1,
+        "median": 1,
+        "max": 1
+      },
+      "cacheReused": {
+        "min": 63,
+        "median": 63,
+        "max": 63
+      },
+      "transmittedBytes": {
+        "min": 2764,
+        "median": 2764,
+        "max": 2764
+      }
+    }
+  ],
+  "samples": [
+    {
+      "workloadHash": "ad6ee40f5c2ce46aab3e695be009185db4c6ab884bf9976762ba5f130ac6233b",
+      "fileCount": 64,
+      "rows": [
+        {
+          "scenario": "cold",
+          "elapsedMs": 24015.7666,
+          "initialTimerDelayMs": 24016.1498,
+          "profile": {
+            "stages": {
+              "tokenization": {
+                "calls": 7428,
+                "durationMs": 9254.222000000016
+              },
+              "rendering": {
+                "calls": 2,
+                "durationMs": 196.77429999999777
+              },
+              "inventory": {
+                "calls": 1,
+                "durationMs": 1306.2777999999998
+              },
+              "source_read": {
+                "calls": 64,
+                "durationMs": 1500.3296999999984
+              },
+              "decode": {
+                "calls": 64,
+                "durationMs": 1.1131000000000313
+              },
+              "hash": {
+                "calls": 64,
+                "durationMs": 6.786100000004353
+              },
+              "snapshot": {
+                "calls": 64,
+                "durationMs": 178.91749999999956
+              },
+              "secret_scan": {
+                "calls": 64,
+                "durationMs": 4.045700000000124
+              },
+              "chunking": {
+                "calls": 64,
+                "durationMs": 1191.9343999999996
+              },
+              "parsing": {
+                "calls": 32,
+                "durationMs": 175.65879999999743
+              },
+              "preparation": {
+                "calls": 1,
+                "durationMs": 4192.1133
+              },
+              "serialization": {
+                "calls": 198,
+                "durationMs": 59.46620000000348
+              },
+              "cache_lookup": {
+                "calls": 64,
+                "durationMs": 1011.9097000000002
+              },
+              "batching": {
+                "calls": 1,
+                "durationMs": 7417.7479
+              },
+              "planning": {
+                "calls": 1,
+                "durationMs": 239.09269999999924
+              },
+              "provider": {
+                "calls": 1,
+                "durationMs": 104.84550000000127
+              },
+              "cache_write": {
+                "calls": 1,
+                "durationMs": 9384.7126
+              },
+              "evaluation": {
+                "calls": 1,
+                "durationMs": 10537.742600000001
+              },
+              "selection": {
+                "calls": 1,
+                "durationMs": 110.96029999999882
+              },
+              "freshness": {
+                "calls": 8,
+                "durationMs": 291.7323000000033
+              },
+              "search": {
+                "calls": 1,
+                "durationMs": 24013.182
+              }
+            },
+            "counters": {
+              "tokenizerInputUtf16": 9502824,
+              "referenceTokensCounted": 2426903,
+              "serializedQuestions": 2655,
+              "serializedBytes": 4970711
+            },
+            "memory": {
+              "start": {
+                "rssBytes": 156770304,
+                "heapUsedBytes": 28653920,
+                "externalBytes": 43110141
+              },
+              "end": {
+                "rssBytes": 187928576,
+                "heapUsedBytes": 40640696,
+                "externalBytes": 47476694
+              },
+              "sampledMax": {
+                "rssBytes": 187928576,
+                "heapUsedBytes": 42094368,
+                "externalBytes": 55303489
+              },
+              "samples": 377
+            }
+          },
+          "responseTokens": 3260,
+          "report": {
+            "scope": [
+              "."
+            ],
+            "inventory_complete": true,
+            "scope_fully_scanned": true,
+            "files": {
+              "discovered": 64,
+              "eligible": 64,
+              "excluded_by_reason": {},
+              "unreadable": 0,
+              "changed_before_return": 0
+            },
+            "fragments": {
+              "total": 64,
+              "remote_evaluated": 64,
+              "cache_reused": 0,
+              "not_evaluated": 0,
+              "below_threshold": 0,
+              "above_threshold": 64,
+              "represented_in_response": 8,
+              "omitted_by_response_budget": 56,
+              "omitted_stale": 0
+            },
+            "selection": {
+              "outcome": "selected",
+              "threshold": 0.5,
+              "ranges_returned": 8,
+              "duplicate_ranges_collapsed": 0
+            },
+            "usage": {
+              "provider_request_attempts": 1,
+              "provider_input_tokens_reported": 30929,
+              "provider_input_tokens_known_subtotal": 30929,
+              "provider_input_tokens_estimated": 30929,
+              "estimated_cost_usd": null,
+              "reported_cost_usd": null,
+              "attempts_with_unknown_usage": 0,
+              "transmitted_bytes": 121858,
+              "elapsed_ms": 23997
+            },
+            "response_budget": {
+              "requested_tokens": 4000,
+              "counter": "tiktoken@1.0.22/cl100k_base",
+              "accounting": "reference_tokenizer"
+            },
+            "preflight": {
+              "planned_remote_fragments": 64,
+              "planned_cache_hits": 0,
+              "estimated_first_attempt_tokens": 30929,
+              "estimated_first_attempt_cost_usd": null,
+              "estimated_first_attempt_requests": 1,
+              "enabled_caps": {},
+              "estimated_required_caps": {}
+            },
+            "stop_reasons": [],
+            "diagnostics_truncated": false
+          }
+        },
+        {
+          "scenario": "repeat_question",
+          "elapsedMs": 7277.73,
+          "initialTimerDelayMs": 7284.286700000001,
+          "profile": {
+            "stages": {
+              "tokenization": {
+                "calls": 5026,
+                "durationMs": 1257.0533999999243
+              },
+              "rendering": {
+                "calls": 2,
+                "durationMs": 16.378899999996065
+              },
+              "inventory": {
+                "calls": 1,
+                "durationMs": 1934.2244999999966
+              },
+              "source_read": {
+                "calls": 64,
+                "durationMs": 1539.7226000000082
+              },
+              "decode": {
+                "calls": 64,
+                "durationMs": 0.8168000000005122
+              },
+              "hash": {
+                "calls": 64,
+                "durationMs": 6.325999999986379
+              },
+              "snapshot": {
+                "calls": 64,
+                "durationMs": 161.8475000000035
+              },
+              "secret_scan": {
+                "calls": 64,
+                "durationMs": 2.606599999995524
+              },
+              "chunking": {
+                "calls": 64,
+                "durationMs": 1060.450899999989
+              },
+              "parsing": {
+                "calls": 32,
+                "durationMs": 75.39090000000215
+              },
+              "preparation": {
+                "calls": 1,
+                "durationMs": 4705.527099999999
+              },
+              "serialization": {
+                "calls": 64,
+                "durationMs": 4.262799999993149
+              },
+              "cache_lookup": {
+                "calls": 64,
+                "durationMs": 2151.4601999999977
+              },
+              "batching": {
+                "calls": 1,
+                "durationMs": 0.09309999999823049
+              },
+              "planning": {
+                "calls": 1,
+                "durationMs": 0.0654999999969732
+              },
+              "selection": {
+                "calls": 1,
+                "durationMs": 131.89420000000246
+              },
+              "freshness": {
+                "calls": 8,
+                "durationMs": 258.88670000000275
+              },
+              "search": {
+                "calls": 1,
+                "durationMs": 7277.5118
+              }
+            },
+            "counters": {
+              "tokenizerInputUtf16": 1045481,
+              "referenceTokensCounted": 281558,
+              "serializedQuestions": 64,
+              "serializedBytes": 157768
+            },
+            "memory": {
+              "start": {
+                "rssBytes": 187928576,
+                "heapUsedBytes": 40658008,
+                "externalBytes": 47476694
+              },
+              "end": {
+                "rssBytes": 191549440,
+                "heapUsedBytes": 43400344,
+                "externalBytes": 51283982
+              },
+              "sampledMax": {
+                "rssBytes": 194994176,
+                "heapUsedBytes": 45183536,
+                "externalBytes": 53885246
+              },
+              "samples": 179
+            }
+          },
+          "responseTokens": 3255,
+          "report": {
+            "scope": [
+              "."
+            ],
+            "inventory_complete": true,
+            "scope_fully_scanned": true,
+            "files": {
+              "discovered": 64,
+              "eligible": 64,
+              "excluded_by_reason": {},
+              "unreadable": 0,
+              "changed_before_return": 0
+            },
+            "fragments": {
+              "total": 64,
+              "remote_evaluated": 0,
+              "cache_reused": 64,
+              "not_evaluated": 0,
+              "below_threshold": 0,
+              "above_threshold": 64,
+              "represented_in_response": 8,
+              "omitted_by_response_budget": 56,
+              "omitted_stale": 0
+            },
+            "selection": {
+              "outcome": "selected",
+              "threshold": 0.5,
+              "ranges_returned": 8,
+              "duplicate_ranges_collapsed": 0
+            },
+            "usage": {
+              "provider_request_attempts": 0,
+              "provider_input_tokens_reported": 0,
+              "provider_input_tokens_known_subtotal": 0,
+              "provider_input_tokens_estimated": 0,
+              "estimated_cost_usd": null,
+              "reported_cost_usd": null,
+              "attempts_with_unknown_usage": 0,
+              "transmitted_bytes": 0,
+              "elapsed_ms": 7262
+            },
+            "response_budget": {
+              "requested_tokens": 4000,
+              "counter": "tiktoken@1.0.22/cl100k_base",
+              "accounting": "reference_tokenizer"
+            },
+            "preflight": {
+              "planned_remote_fragments": 0,
+              "planned_cache_hits": 64,
+              "estimated_first_attempt_tokens": 0,
+              "estimated_first_attempt_cost_usd": null,
+              "estimated_first_attempt_requests": 0,
+              "enabled_caps": {},
+              "estimated_required_caps": {}
+            },
+            "stop_reasons": [],
+            "diagnostics_truncated": false
+          }
+        },
+        {
+          "scenario": "new_question",
+          "elapsedMs": 25078.1852,
+          "initialTimerDelayMs": 25081.225600000005,
+          "profile": {
+            "stages": {
+              "tokenization": {
+                "calls": 7428,
+                "durationMs": 10205.812299999867
+              },
+              "rendering": {
+                "calls": 2,
+                "durationMs": 15.955799999996088
+              },
+              "inventory": {
+                "calls": 1,
+                "durationMs": 1733.3911000000007
+              },
+              "source_read": {
+                "calls": 64,
+                "durationMs": 1413.6998999999996
+              },
+              "decode": {
+                "calls": 64,
+                "durationMs": 0.9878000000462634
+              },
+              "hash": {
+                "calls": 64,
+                "durationMs": 5.511500000029628
+              },
+              "snapshot": {
+                "calls": 64,
+                "durationMs": 140.55229999998846
+              },
+              "secret_scan": {
+                "calls": 64,
+                "durationMs": 2.0966000000044005
+              },
+              "chunking": {
+                "calls": 64,
+                "durationMs": 994.5777000000235
+              },
+              "parsing": {
+                "calls": 32,
+                "durationMs": 48.38760000000184
+              },
+              "preparation": {
+                "calls": 1,
+                "durationMs": 4290.477699999996
+              },
+              "serialization": {
+                "calls": 198,
+                "durationMs": 55.38499999992928
+              },
+              "cache_lookup": {
+                "calls": 64,
+                "durationMs": 1320.7761000000028
+              },
+              "batching": {
+                "calls": 1,
+                "durationMs": 8679.5026
+              },
+              "planning": {
+                "calls": 1,
+                "durationMs": 170.58750000000146
+              },
+              "provider": {
+                "calls": 1,
+                "durationMs": 110.65499999999884
+              },
+              "cache_write": {
+                "calls": 1,
+                "durationMs": 9042.225700000003
+              },
+              "evaluation": {
+                "calls": 1,
+                "durationMs": 10177.074099999998
+              },
+              "selection": {
+                "calls": 1,
+                "durationMs": 106.7219000000041
+              },
+              "freshness": {
+                "calls": 8,
+                "durationMs": 306.5262000000075
+              },
+              "search": {
+                "calls": 1,
+                "durationMs": 25077.9456
+              }
+            },
+            "counters": {
+              "tokenizerInputUtf16": 9501788,
+              "referenceTokensCounted": 2426644,
+              "serializedQuestions": 2655,
+              "serializedBytes": 4969919
+            },
+            "memory": {
+              "start": {
+                "rssBytes": 186920960,
+                "heapUsedBytes": 28949984,
+                "externalBytes": 46317634
+              },
+              "end": {
+                "rssBytes": 189767680,
+                "heapUsedBytes": 42824240,
+                "externalBytes": 47476690
+              },
+              "sampledMax": {
+                "rssBytes": 193695744,
+                "heapUsedBytes": 44540600,
+                "externalBytes": 52523038
+              },
+              "samples": 417
+            }
+          },
+          "responseTokens": 3260,
+          "report": {
+            "scope": [
+              "."
+            ],
+            "inventory_complete": true,
+            "scope_fully_scanned": true,
+            "files": {
+              "discovered": 64,
+              "eligible": 64,
+              "excluded_by_reason": {},
+              "unreadable": 0,
+              "changed_before_return": 0
+            },
+            "fragments": {
+              "total": 64,
+              "remote_evaluated": 64,
+              "cache_reused": 0,
+              "not_evaluated": 0,
+              "below_threshold": 0,
+              "above_threshold": 64,
+              "represented_in_response": 8,
+              "omitted_by_response_budget": 56,
+              "omitted_stale": 0
+            },
+            "selection": {
+              "outcome": "selected",
+              "threshold": 0.5,
+              "ranges_returned": 8,
+              "duplicate_ranges_collapsed": 0
+            },
+            "usage": {
+              "provider_request_attempts": 1,
+              "provider_input_tokens_reported": 30928,
+              "provider_input_tokens_known_subtotal": 30928,
+              "provider_input_tokens_estimated": 30928,
+              "estimated_cost_usd": null,
+              "reported_cost_usd": null,
+              "attempts_with_unknown_usage": 0,
+              "transmitted_bytes": 121854,
+              "elapsed_ms": 25065
+            },
+            "response_budget": {
+              "requested_tokens": 4000,
+              "counter": "tiktoken@1.0.22/cl100k_base",
+              "accounting": "reference_tokenizer"
+            },
+            "preflight": {
+              "planned_remote_fragments": 64,
+              "planned_cache_hits": 0,
+              "estimated_first_attempt_tokens": 30928,
+              "estimated_first_attempt_cost_usd": null,
+              "estimated_first_attempt_requests": 1,
+              "enabled_caps": {},
+              "estimated_required_caps": {}
+            },
+            "stop_reasons": [],
+            "diagnostics_truncated": false
+          }
+        },
+        {
+          "scenario": "small_edit",
+          "elapsedMs": 7562.538199999995,
+          "initialTimerDelayMs": 7562.868099999992,
+          "profile": {
+            "stages": {
+              "tokenization": {
+                "calls": 5034,
+                "durationMs": 1201.7865000001766
+              },
+              "rendering": {
+                "calls": 2,
+                "durationMs": 19.267500000009022
+              },
+              "inventory": {
+                "calls": 1,
+                "durationMs": 1834.3709999999992
+              },
+              "source_read": {
+                "calls": 64,
+                "durationMs": 1504.1037999999971
+              },
+              "decode": {
+                "calls": 64,
+                "durationMs": 0.9439999999958673
+              },
+              "hash": {
+                "calls": 64,
+                "durationMs": 5.361699999994016
+              },
+              "snapshot": {
+                "calls": 64,
+                "durationMs": 141.83759999994072
+              },
+              "secret_scan": {
+                "calls": 64,
+                "durationMs": 2.0125999999945634
+              },
+              "chunking": {
+                "calls": 64,
+                "durationMs": 988.8517000000065
+              },
+              "parsing": {
+                "calls": 32,
+                "durationMs": 43.528799999985495
+              },
+              "preparation": {
+                "calls": 1,
+                "durationMs": 4477.020200000006
+              },
+              "serialization": {
+                "calls": 72,
+                "durationMs": 5.391500000012456
+              },
+              "cache_lookup": {
+                "calls": 64,
+                "durationMs": 2164.035700000015
+              },
+              "batching": {
+                "calls": 1,
+                "durationMs": 5.123999999996158
+              },
+              "planning": {
+                "calls": 1,
+                "durationMs": 6.224000000001979
+              },
+              "provider": {
+                "calls": 1,
+                "durationMs": 2.401399999995192
+              },
+              "cache_write": {
+                "calls": 1,
+                "durationMs": 474.0679000000018
+              },
+              "evaluation": {
+                "calls": 1,
+                "durationMs": 500.96459999999934
+              },
+              "selection": {
+                "calls": 1,
+                "durationMs": 107.07660000000033
+              },
+              "freshness": {
+                "calls": 8,
+                "durationMs": 272.5552000000025
+              },
+              "search": {
+                "calls": 1,
+                "durationMs": 7562.2143
+              }
+            },
+            "counters": {
+              "tokenizerInputUtf16": 1064765,
+              "referenceTokensCounted": 286152,
+              "serializedQuestions": 72,
+              "serializedBytes": 179880
+            },
+            "memory": {
+              "start": {
+                "rssBytes": 189775872,
+                "heapUsedBytes": 28477976,
+                "externalBytes": 47476690
+              },
+              "end": {
+                "rssBytes": 188203008,
+                "heapUsedBytes": 29412800,
+                "externalBytes": 47002402
+              },
+              "sampledMax": {
+                "rssBytes": 193929216,
+                "heapUsedBytes": 45192568,
+                "externalBytes": 52595302
+              },
+              "samples": 177
+            }
+          },
+          "responseTokens": 3256,
+          "report": {
+            "scope": [
+              "."
+            ],
+            "inventory_complete": true,
+            "scope_fully_scanned": true,
+            "files": {
+              "discovered": 64,
+              "eligible": 64,
+              "excluded_by_reason": {},
+              "unreadable": 0,
+              "changed_before_return": 0
+            },
+            "fragments": {
+              "total": 64,
+              "remote_evaluated": 1,
+              "cache_reused": 63,
+              "not_evaluated": 0,
+              "below_threshold": 0,
+              "above_threshold": 64,
+              "represented_in_response": 8,
+              "omitted_by_response_budget": 56,
+              "omitted_stale": 0
+            },
+            "selection": {
+              "outcome": "selected",
+              "threshold": 0.5,
+              "ranges_returned": 8,
+              "duplicate_ranges_collapsed": 0
+            },
+            "usage": {
+              "provider_request_attempts": 1,
+              "provider_input_tokens_reported": 661,
+              "provider_input_tokens_known_subtotal": 661,
+              "provider_input_tokens_estimated": 661,
+              "estimated_cost_usd": null,
+              "reported_cost_usd": null,
+              "attempts_with_unknown_usage": 0,
+              "transmitted_bytes": 2764,
+              "elapsed_ms": 7546
+            },
+            "response_budget": {
+              "requested_tokens": 4000,
+              "counter": "tiktoken@1.0.22/cl100k_base",
+              "accounting": "reference_tokenizer"
+            },
+            "preflight": {
+              "planned_remote_fragments": 1,
+              "planned_cache_hits": 63,
+              "estimated_first_attempt_tokens": 661,
+              "estimated_first_attempt_cost_usd": null,
+              "estimated_first_attempt_requests": 1,
+              "enabled_caps": {},
+              "estimated_required_caps": {}
+            },
+            "stop_reasons": [],
+            "diagnostics_truncated": false
+          }
+        }
+      ],
+      "processPeakRssBytes": 195653632
+    },
+    {
+      "workloadHash": "ad6ee40f5c2ce46aab3e695be009185db4c6ab884bf9976762ba5f130ac6233b",
+      "fileCount": 64,
+      "rows": [
+        {
+          "scenario": "cold",
+          "elapsedMs": 22881.7201,
+          "initialTimerDelayMs": 22881.9711,
+          "profile": {
+            "stages": {
+              "tokenization": {
+                "calls": 7428,
+                "durationMs": 8975.987399999958
+              },
+              "rendering": {
+                "calls": 2,
+                "durationMs": 230.70089999999823
+              },
+              "inventory": {
+                "calls": 1,
+                "durationMs": 1384.5992999999999
+              },
+              "source_read": {
+                "calls": 64,
+                "durationMs": 1361.9340999999995
+              },
+              "decode": {
+                "calls": 64,
+                "durationMs": 1.049399999999423
+              },
+              "hash": {
+                "calls": 64,
+                "durationMs": 5.658400000002075
+              },
+              "snapshot": {
+                "calls": 64,
+                "durationMs": 170.74019999999928
+              },
+              "secret_scan": {
+                "calls": 64,
+                "durationMs": 4.293399999996836
+              },
+              "chunking": {
+                "calls": 64,
+                "durationMs": 1102.894700000003
+              },
+              "parsing": {
+                "calls": 32,
+                "durationMs": 165.70319999999901
+              },
+              "preparation": {
+                "calls": 1,
+                "durationMs": 4033.612
+              },
+              "serialization": {
+                "calls": 198,
+                "durationMs": 60.66950000000634
+              },
+              "cache_lookup": {
+                "calls": 64,
+                "durationMs": 929.4725000000008
+              },
+              "batching": {
+                "calls": 1,
+                "durationMs": 7172.299
+              },
+              "planning": {
+                "calls": 1,
+                "durationMs": 258.4972999999991
+              },
+              "provider": {
+                "calls": 1,
+                "durationMs": 111.54099999999926
+              },
+              "cache_write": {
+                "calls": 1,
+                "durationMs": 8744.195600000001
+              },
+              "evaluation": {
+                "calls": 1,
+                "durationMs": 9854.979899999998
+              },
+              "selection": {
+                "calls": 1,
+                "durationMs": 107.0599000000002
+              },
+              "freshness": {
+                "calls": 8,
+                "durationMs": 281.2733999999982
+              },
+              "search": {
+                "calls": 1,
+                "durationMs": 22880.977199999998
+              }
+            },
+            "counters": {
+              "tokenizerInputUtf16": 9502824,
+              "referenceTokensCounted": 2426903,
+              "serializedQuestions": 2655,
+              "serializedBytes": 4970711
+            },
+            "memory": {
+              "start": {
+                "rssBytes": 157147136,
+                "heapUsedBytes": 28607560,
+                "externalBytes": 43110141
+              },
+              "end": {
+                "rssBytes": 187633664,
+                "heapUsedBytes": 44506960,
+                "externalBytes": 47473082
+              },
+              "sampledMax": {
+                "rssBytes": 192937984,
+                "heapUsedBytes": 44506960,
+                "externalBytes": 55303489
+              },
+              "samples": 365
+            }
+          },
+          "responseTokens": 3260,
+          "report": {
+            "scope": [
+              "."
+            ],
+            "inventory_complete": true,
+            "scope_fully_scanned": true,
+            "files": {
+              "discovered": 64,
+              "eligible": 64,
+              "excluded_by_reason": {},
+              "unreadable": 0,
+              "changed_before_return": 0
+            },
+            "fragments": {
+              "total": 64,
+              "remote_evaluated": 64,
+              "cache_reused": 0,
+              "not_evaluated": 0,
+              "below_threshold": 0,
+              "above_threshold": 64,
+              "represented_in_response": 8,
+              "omitted_by_response_budget": 56,
+              "omitted_stale": 0
+            },
+            "selection": {
+              "outcome": "selected",
+              "threshold": 0.5,
+              "ranges_returned": 8,
+              "duplicate_ranges_collapsed": 0
+            },
+            "usage": {
+              "provider_request_attempts": 1,
+              "provider_input_tokens_reported": 30929,
+              "provider_input_tokens_known_subtotal": 30929,
+              "provider_input_tokens_estimated": 30929,
+              "estimated_cost_usd": null,
+              "reported_cost_usd": null,
+              "attempts_with_unknown_usage": 0,
+              "transmitted_bytes": 121858,
+              "elapsed_ms": 22863
+            },
+            "response_budget": {
+              "requested_tokens": 4000,
+              "counter": "tiktoken@1.0.22/cl100k_base",
+              "accounting": "reference_tokenizer"
+            },
+            "preflight": {
+              "planned_remote_fragments": 64,
+              "planned_cache_hits": 0,
+              "estimated_first_attempt_tokens": 30929,
+              "estimated_first_attempt_cost_usd": null,
+              "estimated_first_attempt_requests": 1,
+              "enabled_caps": {},
+              "estimated_required_caps": {}
+            },
+            "stop_reasons": [],
+            "diagnostics_truncated": false
+          }
+        },
+        {
+          "scenario": "repeat_question",
+          "elapsedMs": 6636.822199999999,
+          "initialTimerDelayMs": 6637.806499999999,
+          "profile": {
+            "stages": {
+              "tokenization": {
+                "calls": 5026,
+                "durationMs": 1154.3218999999262
+              },
+              "rendering": {
+                "calls": 2,
+                "durationMs": 17.949200000002747
+              },
+              "inventory": {
+                "calls": 1,
+                "durationMs": 1634.9107999999978
+              },
+              "source_read": {
+                "calls": 64,
+                "durationMs": 1379.760700000017
+              },
+              "decode": {
+                "calls": 64,
+                "durationMs": 0.8513000000020838
+              },
+              "hash": {
+                "calls": 64,
+                "durationMs": 4.8914000000331725
+              },
+              "snapshot": {
+                "calls": 64,
+                "durationMs": 139.1175999999832
+              },
+              "secret_scan": {
+                "calls": 64,
+                "durationMs": 2.0974000000169326
+              },
+              "chunking": {
+                "calls": 64,
+                "durationMs": 964.2404999999817
+              },
+              "parsing": {
+                "calls": 32,
+                "durationMs": 54.44349999999031
+              },
+              "preparation": {
+                "calls": 1,
+                "durationMs": 4126.200000000001
+              },
+              "serialization": {
+                "calls": 64,
+                "durationMs": 4.0864000000292435
+              },
+              "cache_lookup": {
+                "calls": 64,
+                "durationMs": 2064.266999999989
+              },
+              "batching": {
+                "calls": 1,
+                "durationMs": 0.08759999999892898
+              },
+              "planning": {
+                "calls": 1,
+                "durationMs": 0.05709999999817228
+              },
+              "selection": {
+                "calls": 1,
+                "durationMs": 119.41050000000178
+              },
+              "freshness": {
+                "calls": 8,
+                "durationMs": 299.25609999999506
+              },
+              "search": {
+                "calls": 1,
+                "durationMs": 6636.636900000001
+              }
+            },
+            "counters": {
+              "tokenizerInputUtf16": 1045481,
+              "referenceTokensCounted": 281558,
+              "serializedQuestions": 64,
+              "serializedBytes": 157768
+            },
+            "memory": {
+              "start": {
+                "rssBytes": 187633664,
+                "heapUsedBytes": 44524272,
+                "externalBytes": 47473082
+              },
+              "end": {
+                "rssBytes": 188547072,
+                "heapUsedBytes": 30940240,
+                "externalBytes": 47529220
+              },
+              "sampledMax": {
+                "rssBytes": 193630208,
+                "heapUsedBytes": 45221744,
+                "externalBytes": 52154162
+              },
+              "samples": 177
+            }
+          },
+          "responseTokens": 3255,
+          "report": {
+            "scope": [
+              "."
+            ],
+            "inventory_complete": true,
+            "scope_fully_scanned": true,
+            "files": {
+              "discovered": 64,
+              "eligible": 64,
+              "excluded_by_reason": {},
+              "unreadable": 0,
+              "changed_before_return": 0
+            },
+            "fragments": {
+              "total": 64,
+              "remote_evaluated": 0,
+              "cache_reused": 64,
+              "not_evaluated": 0,
+              "below_threshold": 0,
+              "above_threshold": 64,
+              "represented_in_response": 8,
+              "omitted_by_response_budget": 56,
+              "omitted_stale": 0
+            },
+            "selection": {
+              "outcome": "selected",
+              "threshold": 0.5,
+              "ranges_returned": 8,
+              "duplicate_ranges_collapsed": 0
+            },
+            "usage": {
+              "provider_request_attempts": 0,
+              "provider_input_tokens_reported": 0,
+              "provider_input_tokens_known_subtotal": 0,
+              "provider_input_tokens_estimated": 0,
+              "estimated_cost_usd": null,
+              "reported_cost_usd": null,
+              "attempts_with_unknown_usage": 0,
+              "transmitted_bytes": 0,
+              "elapsed_ms": 6623
+            },
+            "response_budget": {
+              "requested_tokens": 4000,
+              "counter": "tiktoken@1.0.22/cl100k_base",
+              "accounting": "reference_tokenizer"
+            },
+            "preflight": {
+              "planned_remote_fragments": 0,
+              "planned_cache_hits": 64,
+              "estimated_first_attempt_tokens": 0,
+              "estimated_first_attempt_cost_usd": null,
+              "estimated_first_attempt_requests": 0,
+              "enabled_caps": {},
+              "estimated_required_caps": {}
+            },
+            "stop_reasons": [],
+            "diagnostics_truncated": false
+          }
+        },
+        {
+          "scenario": "new_question",
+          "elapsedMs": 24199.3768,
+          "initialTimerDelayMs": 24199.509599999998,
+          "profile": {
+            "stages": {
+              "tokenization": {
+                "calls": 7428,
+                "durationMs": 9461.274699999834
+              },
+              "rendering": {
+                "calls": 2,
+                "durationMs": 19.72530000000188
+              },
+              "inventory": {
+                "calls": 1,
+                "durationMs": 1650.880799999999
+              },
+              "source_read": {
+                "calls": 64,
+                "durationMs": 1368.295199999986
+              },
+              "decode": {
+                "calls": 64,
+                "durationMs": 1.845100000005914
+              },
+              "hash": {
+                "calls": 64,
+                "durationMs": 5.06169999998383
+              },
+              "snapshot": {
+                "calls": 64,
+                "durationMs": 142.1559999999663
+              },
+              "secret_scan": {
+                "calls": 64,
+                "durationMs": 1.8353000000061002
+              },
+              "chunking": {
+                "calls": 64,
+                "durationMs": 946.1508000000031
+              },
+              "parsing": {
+                "calls": 32,
+                "durationMs": 46.93279999998049
+              },
+              "preparation": {
+                "calls": 1,
+                "durationMs": 4115.6005000000005
+              },
+              "serialization": {
+                "calls": 198,
+                "durationMs": 55.414800000042305
+              },
+              "cache_lookup": {
+                "calls": 64,
+                "durationMs": 1335.834000000017
+              },
+              "batching": {
+                "calls": 1,
+                "durationMs": 7802.633500000004
+              },
+              "planning": {
+                "calls": 1,
+                "durationMs": 266.1302000000069
+              },
+              "provider": {
+                "calls": 1,
+                "durationMs": 141.9216000000015
+              },
+              "cache_write": {
+                "calls": 1,
+                "durationMs": 9014.4611
+              },
+              "evaluation": {
+                "calls": 1,
+                "durationMs": 10277.448500000006
+              },
+              "selection": {
+                "calls": 1,
+                "durationMs": 114.69930000000022
+              },
+              "freshness": {
+                "calls": 8,
+                "durationMs": 255.3666999999914
+              },
+              "search": {
+                "calls": 1,
+                "durationMs": 24199.1236
+              }
+            },
+            "counters": {
+              "tokenizerInputUtf16": 9501788,
+              "referenceTokensCounted": 2426644,
+              "serializedQuestions": 2655,
+              "serializedBytes": 4969919
+            },
+            "memory": {
+              "start": {
+                "rssBytes": 188559360,
+                "heapUsedBytes": 30482272,
+                "externalBytes": 47529220
+              },
+              "end": {
+                "rssBytes": 188063744,
+                "heapUsedBytes": 29468464,
+                "externalBytes": 46466262
+              },
+              "sampledMax": {
+                "rssBytes": 195067904,
+                "heapUsedBytes": 46030672,
+                "externalBytes": 53500234
+              },
+              "samples": 401
+            }
+          },
+          "responseTokens": 3260,
+          "report": {
+            "scope": [
+              "."
+            ],
+            "inventory_complete": true,
+            "scope_fully_scanned": true,
+            "files": {
+              "discovered": 64,
+              "eligible": 64,
+              "excluded_by_reason": {},
+              "unreadable": 0,
+              "changed_before_return": 0
+            },
+            "fragments": {
+              "total": 64,
+              "remote_evaluated": 64,
+              "cache_reused": 0,
+              "not_evaluated": 0,
+              "below_threshold": 0,
+              "above_threshold": 64,
+              "represented_in_response": 8,
+              "omitted_by_response_budget": 56,
+              "omitted_stale": 0
+            },
+            "selection": {
+              "outcome": "selected",
+              "threshold": 0.5,
+              "ranges_returned": 8,
+              "duplicate_ranges_collapsed": 0
+            },
+            "usage": {
+              "provider_request_attempts": 1,
+              "provider_input_tokens_reported": 30928,
+              "provider_input_tokens_known_subtotal": 30928,
+              "provider_input_tokens_estimated": 30928,
+              "estimated_cost_usd": null,
+              "reported_cost_usd": null,
+              "attempts_with_unknown_usage": 0,
+              "transmitted_bytes": 121854,
+              "elapsed_ms": 24184
+            },
+            "response_budget": {
+              "requested_tokens": 4000,
+              "counter": "tiktoken@1.0.22/cl100k_base",
+              "accounting": "reference_tokenizer"
+            },
+            "preflight": {
+              "planned_remote_fragments": 64,
+              "planned_cache_hits": 0,
+              "estimated_first_attempt_tokens": 30928,
+              "estimated_first_attempt_cost_usd": null,
+              "estimated_first_attempt_requests": 1,
+              "enabled_caps": {},
+              "estimated_required_caps": {}
+            },
+            "stop_reasons": [],
+            "diagnostics_truncated": false
+          }
+        },
+        {
+          "scenario": "small_edit",
+          "elapsedMs": 7090.325700000001,
+          "initialTimerDelayMs": 7090.447699999997,
+          "profile": {
+            "stages": {
+              "tokenization": {
+                "calls": 5034,
+                "durationMs": 1169.6650999997
+              },
+              "rendering": {
+                "calls": 2,
+                "durationMs": 18.891799999997602
+              },
+              "inventory": {
+                "calls": 1,
+                "durationMs": 1635.5219999999972
+              },
+              "source_read": {
+                "calls": 64,
+                "durationMs": 1413.4966000000277
+              },
+              "decode": {
+                "calls": 64,
+                "durationMs": 1.044899999986228
+              },
+              "hash": {
+                "calls": 64,
+                "durationMs": 4.5143999999709195
+              },
+              "snapshot": {
+                "calls": 64,
+                "durationMs": 136.56640000001062
+              },
+              "secret_scan": {
+                "calls": 64,
+                "durationMs": 2.1423000000067987
+              },
+              "chunking": {
+                "calls": 64,
+                "durationMs": 962.8322000000189
+              },
+              "parsing": {
+                "calls": 32,
+                "durationMs": 45.413799999980256
+              },
+              "preparation": {
+                "calls": 1,
+                "durationMs": 4156.183799999999
+              },
+              "serialization": {
+                "calls": 72,
+                "durationMs": 5.3276000000405475
+              },
+              "cache_lookup": {
+                "calls": 64,
+                "durationMs": 2023.7902000000104
+              },
+              "batching": {
+                "calls": 1,
+                "durationMs": 5.018600000003062
+              },
+              "planning": {
+                "calls": 1,
+                "durationMs": 5.233200000002398
+              },
+              "provider": {
+                "calls": 1,
+                "durationMs": 2.2564999999958673
+              },
+              "cache_write": {
+                "calls": 1,
+                "durationMs": 416.07620000000315
+              },
+              "evaluation": {
+                "calls": 1,
+                "durationMs": 440.65200000000186
+              },
+              "selection": {
+                "calls": 1,
+                "durationMs": 105.64639999999781
+              },
+              "freshness": {
+                "calls": 8,
+                "durationMs": 324.39049999999406
+              },
+              "search": {
+                "calls": 1,
+                "durationMs": 7090.033799999997
+              }
+            },
+            "counters": {
+              "tokenizerInputUtf16": 1064765,
+              "referenceTokensCounted": 286152,
+              "serializedQuestions": 72,
+              "serializedBytes": 179880
+            },
+            "memory": {
+              "start": {
+                "rssBytes": 188071936,
+                "heapUsedBytes": 29493888,
+                "externalBytes": 46466262
+              },
+              "end": {
+                "rssBytes": 189804544,
+                "heapUsedBytes": 30489808,
+                "externalBytes": 47408262
+              },
+              "sampledMax": {
+                "rssBytes": 194408448,
+                "heapUsedBytes": 46181856,
+                "externalBytes": 52883130
+              },
+              "samples": 179
+            }
+          },
+          "responseTokens": 3256,
+          "report": {
+            "scope": [
+              "."
+            ],
+            "inventory_complete": true,
+            "scope_fully_scanned": true,
+            "files": {
+              "discovered": 64,
+              "eligible": 64,
+              "excluded_by_reason": {},
+              "unreadable": 0,
+              "changed_before_return": 0
+            },
+            "fragments": {
+              "total": 64,
+              "remote_evaluated": 1,
+              "cache_reused": 63,
+              "not_evaluated": 0,
+              "below_threshold": 0,
+              "above_threshold": 64,
+              "represented_in_response": 8,
+              "omitted_by_response_budget": 56,
+              "omitted_stale": 0
+            },
+            "selection": {
+              "outcome": "selected",
+              "threshold": 0.5,
+              "ranges_returned": 8,
+              "duplicate_ranges_collapsed": 0
+            },
+            "usage": {
+              "provider_request_attempts": 1,
+              "provider_input_tokens_reported": 661,
+              "provider_input_tokens_known_subtotal": 661,
+              "provider_input_tokens_estimated": 661,
+              "estimated_cost_usd": null,
+              "reported_cost_usd": null,
+              "attempts_with_unknown_usage": 0,
+              "transmitted_bytes": 2764,
+              "elapsed_ms": 7075
+            },
+            "response_budget": {
+              "requested_tokens": 4000,
+              "counter": "tiktoken@1.0.22/cl100k_base",
+              "accounting": "reference_tokenizer"
+            },
+            "preflight": {
+              "planned_remote_fragments": 1,
+              "planned_cache_hits": 63,
+              "estimated_first_attempt_tokens": 661,
+              "estimated_first_attempt_cost_usd": null,
+              "estimated_first_attempt_requests": 1,
+              "enabled_caps": {},
+              "estimated_required_caps": {}
+            },
+            "stop_reasons": [],
+            "diagnostics_truncated": false
+          }
+        }
+      ],
+      "processPeakRssBytes": 195149824
+    },
+    {
+      "workloadHash": "ad6ee40f5c2ce46aab3e695be009185db4c6ab884bf9976762ba5f130ac6233b",
+      "fileCount": 64,
+      "rows": [
+        {
+          "scenario": "cold",
+          "elapsedMs": 23769.211900000002,
+          "initialTimerDelayMs": 23769.461600000002,
+          "profile": {
+            "stages": {
+              "tokenization": {
+                "calls": 7428,
+                "durationMs": 9621.172400000012
+              },
+              "rendering": {
+                "calls": 2,
+                "durationMs": 167.11779999999862
+              },
+              "inventory": {
+                "calls": 1,
+                "durationMs": 1080.8247999999999
+              },
+              "source_read": {
+                "calls": 64,
+                "durationMs": 1357.6414999999997
+              },
+              "decode": {
+                "calls": 64,
+                "durationMs": 1.0163999999995212
+              },
+              "hash": {
+                "calls": 64,
+                "durationMs": 5.930899999999838
+              },
+              "snapshot": {
+                "calls": 64,
+                "durationMs": 173.7909999999997
+              },
+              "secret_scan": {
+                "calls": 64,
+                "durationMs": 4.237299999998868
+              },
+              "chunking": {
+                "calls": 64,
+                "durationMs": 1118.601200000001
+              },
+              "parsing": {
+                "calls": 32,
+                "durationMs": 167.79090000000178
+              },
+              "preparation": {
+                "calls": 1,
+                "durationMs": 3743.6838
+              },
+              "serialization": {
+                "calls": 198,
+                "durationMs": 65.29330000001573
+              },
+              "cache_lookup": {
+                "calls": 64,
+                "durationMs": 906.7421000000004
+              },
+              "batching": {
+                "calls": 1,
+                "durationMs": 7769.1233999999995
+              },
+              "planning": {
+                "calls": 1,
+                "durationMs": 286.4964
+              },
+              "provider": {
+                "calls": 1,
+                "durationMs": 136.47810000000027
+              },
+              "cache_write": {
+                "calls": 1,
+                "durationMs": 9170.782899999998
+              },
+              "evaluation": {
+                "calls": 1,
+                "durationMs": 10512.741000000002
+              },
+              "selection": {
+                "calls": 1,
+                "durationMs": 100.25859999999739
+              },
+              "freshness": {
+                "calls": 8,
+                "durationMs": 267.8675999999941
+              },
+              "search": {
+                "calls": 1,
+                "durationMs": 23768.0228
+              }
+            },
+            "counters": {
+              "tokenizerInputUtf16": 9502824,
+              "referenceTokensCounted": 2426903,
+              "serializedQuestions": 2655,
+              "serializedBytes": 4970711
+            },
+            "memory": {
+              "start": {
+                "rssBytes": 157425664,
+                "heapUsedBytes": 28734152,
+                "externalBytes": 43110141
+              },
+              "end": {
+                "rssBytes": 186986496,
+                "heapUsedBytes": 40635288,
+                "externalBytes": 47476694
+              },
+              "sampledMax": {
+                "rssBytes": 187363328,
+                "heapUsedBytes": 41821736,
+                "externalBytes": 55303489
+              },
+              "samples": 379
+            }
+          },
+          "responseTokens": 3260,
+          "report": {
+            "scope": [
+              "."
+            ],
+            "inventory_complete": true,
+            "scope_fully_scanned": true,
+            "files": {
+              "discovered": 64,
+              "eligible": 64,
+              "excluded_by_reason": {},
+              "unreadable": 0,
+              "changed_before_return": 0
+            },
+            "fragments": {
+              "total": 64,
+              "remote_evaluated": 64,
+              "cache_reused": 0,
+              "not_evaluated": 0,
+              "below_threshold": 0,
+              "above_threshold": 64,
+              "represented_in_response": 8,
+              "omitted_by_response_budget": 56,
+              "omitted_stale": 0
+            },
+            "selection": {
+              "outcome": "selected",
+              "threshold": 0.5,
+              "ranges_returned": 8,
+              "duplicate_ranges_collapsed": 0
+            },
+            "usage": {
+              "provider_request_attempts": 1,
+              "provider_input_tokens_reported": 30929,
+              "provider_input_tokens_known_subtotal": 30929,
+              "provider_input_tokens_estimated": 30929,
+              "estimated_cost_usd": null,
+              "reported_cost_usd": null,
+              "attempts_with_unknown_usage": 0,
+              "transmitted_bytes": 121858,
+              "elapsed_ms": 23748
+            },
+            "response_budget": {
+              "requested_tokens": 4000,
+              "counter": "tiktoken@1.0.22/cl100k_base",
+              "accounting": "reference_tokenizer"
+            },
+            "preflight": {
+              "planned_remote_fragments": 64,
+              "planned_cache_hits": 0,
+              "estimated_first_attempt_tokens": 30929,
+              "estimated_first_attempt_cost_usd": null,
+              "estimated_first_attempt_requests": 1,
+              "enabled_caps": {},
+              "estimated_required_caps": {}
+            },
+            "stop_reasons": [],
+            "diagnostics_truncated": false
+          }
+        },
+        {
+          "scenario": "repeat_question",
+          "elapsedMs": 6612.940100000003,
+          "initialTimerDelayMs": 6620.054900000003,
+          "profile": {
+            "stages": {
+              "tokenization": {
+                "calls": 5026,
+                "durationMs": 1139.622400000022
+              },
+              "rendering": {
+                "calls": 2,
+                "durationMs": 18.458700000002864
+              },
+              "inventory": {
+                "calls": 1,
+                "durationMs": 1662.690599999998
+              },
+              "source_read": {
+                "calls": 64,
+                "durationMs": 1385.0870000000032
+              },
+              "decode": {
+                "calls": 64,
+                "durationMs": 0.8992999999791209
+              },
+              "hash": {
+                "calls": 64,
+                "durationMs": 5.013600000005681
+              },
+              "snapshot": {
+                "calls": 64,
+                "durationMs": 131.6950000000179
+              },
+              "secret_scan": {
+                "calls": 64,
+                "durationMs": 2.0736000000179047
+              },
+              "chunking": {
+                "calls": 64,
+                "durationMs": 949.1829000000107
+              },
+              "parsing": {
+                "calls": 32,
+                "durationMs": 60.74409999999261
+              },
+              "preparation": {
+                "calls": 1,
+                "durationMs": 4137.0681
+              },
+              "serialization": {
+                "calls": 64,
+                "durationMs": 4.9812999999921885
+              },
+              "cache_lookup": {
+                "calls": 64,
+                "durationMs": 2006.6310999999987
+              },
+              "batching": {
+                "calls": 1,
+                "durationMs": 0.07289999999920838
+              },
+              "planning": {
+                "calls": 1,
+                "durationMs": 0.07359999999971478
+              },
+              "selection": {
+                "calls": 1,
+                "durationMs": 132.7428
+              },
+              "freshness": {
+                "calls": 8,
+                "durationMs": 307.8749000000025
+              },
+              "search": {
+                "calls": 1,
+                "durationMs": 6612.676100000001
+              }
+            },
+            "counters": {
+              "tokenizerInputUtf16": 1045481,
+              "referenceTokensCounted": 281558,
+              "serializedQuestions": 64,
+              "serializedBytes": 157768
+            },
+            "memory": {
+              "start": {
+                "rssBytes": 186986496,
+                "heapUsedBytes": 40652600,
+                "externalBytes": 47476694
+              },
+              "end": {
+                "rssBytes": 191016960,
+                "heapUsedBytes": 43216864,
+                "externalBytes": 51283982
+              },
+              "sampledMax": {
+                "rssBytes": 194142208,
+                "heapUsedBytes": 45113008,
+                "externalBytes": 53885246
+              },
+              "samples": 177
+            }
+          },
+          "responseTokens": 3255,
+          "report": {
+            "scope": [
+              "."
+            ],
+            "inventory_complete": true,
+            "scope_fully_scanned": true,
+            "files": {
+              "discovered": 64,
+              "eligible": 64,
+              "excluded_by_reason": {},
+              "unreadable": 0,
+              "changed_before_return": 0
+            },
+            "fragments": {
+              "total": 64,
+              "remote_evaluated": 0,
+              "cache_reused": 64,
+              "not_evaluated": 0,
+              "below_threshold": 0,
+              "above_threshold": 64,
+              "represented_in_response": 8,
+              "omitted_by_response_budget": 56,
+              "omitted_stale": 0
+            },
+            "selection": {
+              "outcome": "selected",
+              "threshold": 0.5,
+              "ranges_returned": 8,
+              "duplicate_ranges_collapsed": 0
+            },
+            "usage": {
+              "provider_request_attempts": 0,
+              "provider_input_tokens_reported": 0,
+              "provider_input_tokens_known_subtotal": 0,
+              "provider_input_tokens_estimated": 0,
+              "estimated_cost_usd": null,
+              "reported_cost_usd": null,
+              "attempts_with_unknown_usage": 0,
+              "transmitted_bytes": 0,
+              "elapsed_ms": 6597
+            },
+            "response_budget": {
+              "requested_tokens": 4000,
+              "counter": "tiktoken@1.0.22/cl100k_base",
+              "accounting": "reference_tokenizer"
+            },
+            "preflight": {
+              "planned_remote_fragments": 0,
+              "planned_cache_hits": 64,
+              "estimated_first_attempt_tokens": 0,
+              "estimated_first_attempt_cost_usd": null,
+              "estimated_first_attempt_requests": 0,
+              "enabled_caps": {},
+              "estimated_required_caps": {}
+            },
+            "stop_reasons": [],
+            "diagnostics_truncated": false
+          }
+        },
+        {
+          "scenario": "new_question",
+          "elapsedMs": 24129.980399999997,
+          "initialTimerDelayMs": 24131.4281,
+          "profile": {
+            "stages": {
+              "tokenization": {
+                "calls": 7428,
+                "durationMs": 9283.537299999865
+              },
+              "rendering": {
+                "calls": 2,
+                "durationMs": 17.196799999997893
+              },
+              "inventory": {
+                "calls": 1,
+                "durationMs": 1685.842300000004
+              },
+              "source_read": {
+                "calls": 64,
+                "durationMs": 1489.609000000055
+              },
+              "decode": {
+                "calls": 64,
+                "durationMs": 1.0767000000123517
+              },
+              "hash": {
+                "calls": 64,
+                "durationMs": 5.7511999999551335
+              },
+              "snapshot": {
+                "calls": 64,
+                "durationMs": 146.7361999999921
+              },
+              "secret_scan": {
+                "calls": 64,
+                "durationMs": 1.9519000000145752
+              },
+              "chunking": {
+                "calls": 64,
+                "durationMs": 1116.3888000000006
+              },
+              "parsing": {
+                "calls": 32,
+                "durationMs": 52.81960000000254
+              },
+              "preparation": {
+                "calls": 1,
+                "durationMs": 4447.155500000001
+              },
+              "serialization": {
+                "calls": 198,
+                "durationMs": 56.16130000000703
+              },
+              "cache_lookup": {
+                "calls": 64,
+                "durationMs": 1379.0537000000331
+              },
+              "batching": {
+                "calls": 1,
+                "durationMs": 7496.9475999999995
+              },
+              "planning": {
+                "calls": 1,
+                "durationMs": 262.6843000000008
+              },
+              "provider": {
+                "calls": 1,
+                "durationMs": 141.1273000000001
+              },
+              "cache_write": {
+                "calls": 1,
+                "durationMs": 8894.923299999995
+              },
+              "evaluation": {
+                "calls": 1,
+                "durationMs": 10148.0167
+              },
+              "selection": {
+                "calls": 1,
+                "durationMs": 97.88110000000597
+              },
+              "freshness": {
+                "calls": 8,
+                "durationMs": 269.82519999999204
+              },
+              "search": {
+                "calls": 1,
+                "durationMs": 24129.726000000002
+              }
+            },
+            "counters": {
+              "tokenizerInputUtf16": 9501788,
+              "referenceTokensCounted": 2426644,
+              "serializedQuestions": 2655,
+              "serializedBytes": 4969919
+            },
+            "memory": {
+              "start": {
+                "rssBytes": 186183680,
+                "heapUsedBytes": 28927888,
+                "externalBytes": 46317634
+              },
+              "end": {
+                "rssBytes": 188207104,
+                "heapUsedBytes": 42956944,
+                "externalBytes": 47476690
+              },
+              "sampledMax": {
+                "rssBytes": 192368640,
+                "heapUsedBytes": 44527344,
+                "externalBytes": 52523038
+              },
+              "samples": 402
+            }
+          },
+          "responseTokens": 3260,
+          "report": {
+            "scope": [
+              "."
+            ],
+            "inventory_complete": true,
+            "scope_fully_scanned": true,
+            "files": {
+              "discovered": 64,
+              "eligible": 64,
+              "excluded_by_reason": {},
+              "unreadable": 0,
+              "changed_before_return": 0
+            },
+            "fragments": {
+              "total": 64,
+              "remote_evaluated": 64,
+              "cache_reused": 0,
+              "not_evaluated": 0,
+              "below_threshold": 0,
+              "above_threshold": 64,
+              "represented_in_response": 8,
+              "omitted_by_response_budget": 56,
+              "omitted_stale": 0
+            },
+            "selection": {
+              "outcome": "selected",
+              "threshold": 0.5,
+              "ranges_returned": 8,
+              "duplicate_ranges_collapsed": 0
+            },
+            "usage": {
+              "provider_request_attempts": 1,
+              "provider_input_tokens_reported": 30928,
+              "provider_input_tokens_known_subtotal": 30928,
+              "provider_input_tokens_estimated": 30928,
+              "estimated_cost_usd": null,
+              "reported_cost_usd": null,
+              "attempts_with_unknown_usage": 0,
+              "transmitted_bytes": 121854,
+              "elapsed_ms": 24117
+            },
+            "response_budget": {
+              "requested_tokens": 4000,
+              "counter": "tiktoken@1.0.22/cl100k_base",
+              "accounting": "reference_tokenizer"
+            },
+            "preflight": {
+              "planned_remote_fragments": 64,
+              "planned_cache_hits": 0,
+              "estimated_first_attempt_tokens": 30928,
+              "estimated_first_attempt_cost_usd": null,
+              "estimated_first_attempt_requests": 1,
+              "enabled_caps": {},
+              "estimated_required_caps": {}
+            },
+            "stop_reasons": [],
+            "diagnostics_truncated": false
+          }
+        },
+        {
+          "scenario": "small_edit",
+          "elapsedMs": 7035.221700000002,
+          "initialTimerDelayMs": 7035.582699999999,
+          "profile": {
+            "stages": {
+              "tokenization": {
+                "calls": 5034,
+                "durationMs": 1150.1722999999256
+              },
+              "rendering": {
+                "calls": 2,
+                "durationMs": 14.324099999990722
+              },
+              "inventory": {
+                "calls": 1,
+                "durationMs": 1707.2888999999996
+              },
+              "source_read": {
+                "calls": 64,
+                "durationMs": 1368.7633000000133
+              },
+              "decode": {
+                "calls": 64,
+                "durationMs": 0.8853999999773805
+              },
+              "hash": {
+                "calls": 64,
+                "durationMs": 4.692700000014156
+              },
+              "snapshot": {
+                "calls": 64,
+                "durationMs": 132.44459999995888
+              },
+              "secret_scan": {
+                "calls": 64,
+                "durationMs": 1.944499999997788
+              },
+              "chunking": {
+                "calls": 64,
+                "durationMs": 962.2328999999954
+              },
+              "parsing": {
+                "calls": 32,
+                "durationMs": 42.54899999998452
+              },
+              "preparation": {
+                "calls": 1,
+                "durationMs": 4178.351999999999
+              },
+              "serialization": {
+                "calls": 72,
+                "durationMs": 4.61260000000766
+              },
+              "cache_lookup": {
+                "calls": 64,
+                "durationMs": 2044.0276000000376
+              },
+              "batching": {
+                "calls": 1,
+                "durationMs": 6.178800000001502
+              },
+              "planning": {
+                "calls": 1,
+                "durationMs": 4.747499999997672
+              },
+              "provider": {
+                "calls": 1,
+                "durationMs": 2.4297999999980675
+              },
+              "cache_write": {
+                "calls": 1,
+                "durationMs": 395.40699999999924
+              },
+              "evaluation": {
+                "calls": 1,
+                "durationMs": 418.5746999999974
+              },
+              "selection": {
+                "calls": 1,
+                "durationMs": 92.90160000000469
+              },
+              "freshness": {
+                "calls": 8,
+                "durationMs": 267.26269999998476
+              },
+              "search": {
+                "calls": 1,
+                "durationMs": 7035.040300000001
+              }
+            },
+            "counters": {
+              "tokenizerInputUtf16": 1064765,
+              "referenceTokensCounted": 286152,
+              "serializedQuestions": 72,
+              "serializedBytes": 179880
+            },
+            "memory": {
+              "start": {
+                "rssBytes": 186400768,
+                "heapUsedBytes": 28478728,
+                "externalBytes": 47476690
+              },
+              "end": {
+                "rssBytes": 187822080,
+                "heapUsedBytes": 29428968,
+                "externalBytes": 47002402
+              },
+              "sampledMax": {
+                "rssBytes": 193200128,
+                "heapUsedBytes": 45208776,
+                "externalBytes": 52595302
+              },
+              "samples": 177
+            }
+          },
+          "responseTokens": 3256,
+          "report": {
+            "scope": [
+              "."
+            ],
+            "inventory_complete": true,
+            "scope_fully_scanned": true,
+            "files": {
+              "discovered": 64,
+              "eligible": 64,
+              "excluded_by_reason": {},
+              "unreadable": 0,
+              "changed_before_return": 0
+            },
+            "fragments": {
+              "total": 64,
+              "remote_evaluated": 1,
+              "cache_reused": 63,
+              "not_evaluated": 0,
+              "below_threshold": 0,
+              "above_threshold": 64,
+              "represented_in_response": 8,
+              "omitted_by_response_budget": 56,
+              "omitted_stale": 0
+            },
+            "selection": {
+              "outcome": "selected",
+              "threshold": 0.5,
+              "ranges_returned": 8,
+              "duplicate_ranges_collapsed": 0
+            },
+            "usage": {
+              "provider_request_attempts": 1,
+              "provider_input_tokens_reported": 661,
+              "provider_input_tokens_known_subtotal": 661,
+              "provider_input_tokens_estimated": 661,
+              "estimated_cost_usd": null,
+              "reported_cost_usd": null,
+              "attempts_with_unknown_usage": 0,
+              "transmitted_bytes": 2764,
+              "elapsed_ms": 7021
+            },
+            "response_budget": {
+              "requested_tokens": 4000,
+              "counter": "tiktoken@1.0.22/cl100k_base",
+              "accounting": "reference_tokenizer"
+            },
+            "preflight": {
+              "planned_remote_fragments": 1,
+              "planned_cache_hits": 63,
+              "estimated_first_attempt_tokens": 661,
+              "estimated_first_attempt_cost_usd": null,
+              "estimated_first_attempt_requests": 1,
+              "enabled_caps": {},
+              "estimated_required_caps": {}
+            },
+            "stop_reasons": [],
+            "diagnostics_truncated": false
+          }
+        }
+      ],
+      "processPeakRssBytes": 194744320
+    }
+  ]
+}

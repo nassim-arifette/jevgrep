@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { buildBatches } from '../src/engine.ts';
 import { buildRequestPayload, type EvaluationBatch } from '../src/evaluation/jev.ts';
-import { batchLimits, fitsSerializedBatch, scoreCachePolicy } from '../src/evaluation/policy.ts';
+import { batchLimits, fitsSerializedBatch, measureSerializedBatch, scoreCachePolicy } from '../src/evaluation/policy.ts';
 import { serializeGatewayBatch } from '../src/evaluation/vercel-gateway.ts';
 import { countReferenceTokens } from '../src/response/token-counter.ts';
 import type { PreparedFragment } from '../src/source/chunker.ts';
@@ -43,6 +43,25 @@ test('wire bytes, the full query and individual question limits constrain batchi
   assert.throws(() => buildBatches(items, 'query '.repeat(30_000)), /one question exceeds/);
   const body = serializeDirect({ query, items });
   assert.equal(fitsSerializedBatch(body, { ...batchLimits(), perQuestionTokens: 10 }), false);
+});
+
+test('premeasured singleton questions and final batch costs keep exact payload limits', () => {
+  const fragments = Array.from({ length: 4 }, (_, i) => fragment(i));
+  const query = 'Find value';
+  const limits = batchLimits();
+  const singletons = new Map(fragments.map((item) => [item.id,
+    measureSerializedBatch(serializeDirect({ query, items: [item] }), limits)]));
+  let serializations = 0;
+  const measurements: { tokens: number | null; bytes: number }[] = [];
+  const batches = buildBatches(fragments, query, {
+    serialize: (batch) => { serializations++; return serializeDirect(batch); },
+    limits, singletonMeasures: singletons,
+    onBatchMeasure: (_batch, cost) => measurements.push(cost),
+  });
+  assert.deepEqual(batches.map((batch) => batch.items.length), [4]);
+  assert.equal(serializations, 3, 'only the three growing batch candidates are serialized');
+  const body = serializeDirect(batches[0]!);
+  assert.deepEqual(measurements, [{ tokens: countReferenceTokens(body), bytes: Buffer.byteLength(body), fits: true }]);
 });
 
 test('new direct profiles are pinned; rolling reuse is bounded, optional and adapter-specific', () => {

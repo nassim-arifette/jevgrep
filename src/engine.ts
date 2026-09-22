@@ -27,12 +27,13 @@ import type { ErrorCode, ScanCap, SearchOutcome, StopReason } from './contracts.
 import { ConfigurationError, resolveCredential } from './config.ts';
 import type { LoadedConfiguration } from './config.ts';
 import { ScoreCache, evaluationIdentity, isPinnedModelRevision } from './evaluation/cache.ts';
+import type { ScoreCacheWrite } from './evaluation/cache.ts';
 import {
   CRITERION_VERSION, LAYOUT_VERSION, ProviderError, buildRequestPayload,
 } from './evaluation/jev.ts';
 import type { BatchItem, EvaluationBatch, ProviderClient } from './evaluation/jev.ts';
 import { createConfiguredProvider } from './evaluation/provider.ts';
-import { batchLimits, fitsSerializedBatch, isOpenRouterModelRevision, scoreCachePolicy, MAX_ROLLING_TTL_SECONDS, type BatchLimits } from './evaluation/policy.ts';
+import { batchLimits, measureSerializedBatch, isOpenRouterModelRevision, scoreCachePolicy, MAX_ROLLING_TTL_SECONDS, type BatchLimits, type SerializedBatchMeasure } from './evaluation/policy.ts';
 import { runEvaluations } from './evaluation/scheduler.ts';
 import { SearchContext, SearchLogger, isAbortError, runPhase, systemClock } from './lifecycle.ts';
 import type { Clock } from './lifecycle.ts';
@@ -47,6 +48,7 @@ import { FreshnessTracker, rootReader } from './source/freshness.ts';
 import { exclusionCounts, prepareScope } from './source/prepare.ts';
 import type { PreparedScope } from './source/prepare.ts';
 import type { SourceSnapshot } from './source/snapshot.ts';
+import { countProfile, measureAsync, measureSync, withSearchProfile, type SearchProfiler } from './profiling.ts';
 
 /** A caller's request that the shared contract refused. */
 export class RequestValidationError extends Error {
@@ -68,6 +70,8 @@ export type EngineOptions = {
 };
 
 export type SearchInvocation = {
+  /** Optional local measurements; never serialized into the search response. */
+  readonly profile?: SearchProfiler;
   /** Client cancellation: after it, no new result is emitted for this call. */
   readonly signal?: AbortSignal;
   readonly searchId?: string;
@@ -94,12 +98,28 @@ type UsageAccount = {
 };
 
 /** Estimated provider input tokens for a batch; a local estimate, never a bill. */
-function estimateBatchTokens(batch: EvaluationBatch, model: string, serialize?: (batch: EvaluationBatch) => string): number {
-  return countReferenceTokens(serialize?.(batch) ?? JSON.stringify(buildRequestPayload(batch, model)));
+type BatchCost = { readonly tokens: number; readonly bytes: number; readonly body?: string };
+
+function batchCost(batch: EvaluationBatch, model: string, serialize?: (batch: EvaluationBatch) => string): BatchCost {
+  const body = serialize?.(batch) ?? JSON.stringify(buildRequestPayload(batch, model));
+  return { tokens: countReferenceTokens(body), bytes: Buffer.byteLength(body, 'utf8'), body };
 }
 
-function batchRequestBytes(batch: EvaluationBatch, model: string, serialize?: (batch: EvaluationBatch) => string): number {
-  return Buffer.byteLength(serialize?.(batch) ?? JSON.stringify(buildRequestPayload(batch, model)), 'utf8');
+/** The same state/question JSON recurs across candidate batches; bound retention. */
+function questionTokenMemo(maxUtf16Bytes = 8 * 1024 * 1024): (value: string) => number {
+  const counts = new Map<string, number>();
+  let retained = 0;
+  return (value) => {
+    const hit = counts.get(value);
+    if (hit !== undefined) return hit;
+    const tokens = countReferenceTokens(value);
+    const bytes = value.length * 2;
+    if (retained + bytes <= maxUtf16Bytes) {
+      counts.set(value, tokens);
+      retained += bytes;
+    }
+    return tokens;
+  };
 }
 
 /** Round up to the contract's integer nanodollar unit, including sub-unit costs. */
@@ -135,6 +155,10 @@ export class SearchEngine {
 
   /** Run one search. Never throws for caller input: it returns a contract outcome. */
   async search(request: unknown, invocation: SearchInvocation = {}): Promise<SearchOutcomeWithDiagnostics> {
+    return withSearchProfile(invocation.profile, () => this.#search(request, invocation));
+  }
+
+  async #search(request: unknown, invocation: SearchInvocation): Promise<SearchOutcomeWithDiagnostics> {
     const { config } = this.#options.configuration;
     const context = new SearchContext({
       ...(invocation.searchId === undefined ? {} : { searchId: invocation.searchId }),
@@ -173,7 +197,7 @@ export class SearchEngine {
     }
 
     // The mandatory report envelope is reserved before any work that could cost money.
-    const available = excerptBudget(context.searchId, request.scope, REFERENCE_COUNTER_ID, request.max_context_tokens);
+    const available = measureSync('rendering', () => excerptBudget(context.searchId, request.scope, REFERENCE_COUNTER_ID, request.max_context_tokens));
 
     const provider = this.#options.provider ?? createConfiguredProvider(
       config,
@@ -181,7 +205,7 @@ export class SearchEngine {
     );
 
     const root = sourceRoot;
-    const prepared = await runPhase(context, 'preparation', async () => prepareScope(root, request.scope, {
+    const prepared = await measureAsync('preparation', () => runPhase(context, 'preparation', async () => prepareScope(root, request.scope, {
       inventory: {
         respectGitignore: config.source.respect_gitignore,
         maxFileBytes: config.source.max_file_bytes,
@@ -194,7 +218,7 @@ export class SearchEngine {
         fragments: config.scan_caps.fragments,
       },
       shouldStop: () => !context.canStartWork(),
-    }));
+    })));
 
     // A lost authorization cannot become permission to send an earlier partial
     // snapshot. The anchor is retained and invalidation lasts until config reload.
@@ -217,7 +241,23 @@ export class SearchEngine {
     const model = provider.model;
     const adapter = config.provider.adapter ?? 'typesafe-direct';
     const cachePolicy = scoreCachePolicy(adapter, model, config.cache);
-    const serialize = (batch: EvaluationBatch): string => provider.serializeBatch?.(batch) ?? JSON.stringify(buildRequestPayload(batch, model));
+    const serialize = (batch: EvaluationBatch): string => measureSync('serialization', () => {
+      const payload = provider.serializeBatch?.(batch) ?? JSON.stringify(buildRequestPayload(batch, model));
+      countProfile('serializedQuestions', batch.items.length);
+      countProfile('serializedBytes', () => Buffer.byteLength(payload, 'utf8'));
+      return payload;
+    });
+    const measuredBatches = new WeakMap<EvaluationBatch, BatchCost>();
+    let retainedPayloadBytes = 0;
+    const maxRetainedPayloadBytes = 16 * 1024 * 1024;
+    const costOf = (batch: EvaluationBatch): BatchCost => {
+      let cost = measuredBatches.get(batch);
+      if (cost === undefined) {
+        cost = batchCost(batch, model, serialize);
+        measuredBatches.set(batch, cost);
+      }
+      return cost;
+    };
     const identityOf = (fragment: PreparedFragment, batchHash: string): string => evaluationIdentity({
       query: request.query,
       path: fragment.path,
@@ -237,27 +277,43 @@ export class SearchEngine {
     const cached = new Map<string, number>();
     const pending: PreparedFragment[] = [];
     const identities = new Map<string, string>();
+    const limits = batchLimits(adapter);
+    const countQuestionTokens = questionTokenMemo();
+    const singletonMeasures = new Map<string, SerializedBatchMeasure>();
     // Both evaluation APIs judge each question independently against shared state.
     // Hash its exact envelope and regroup only misses; neighbors cannot invalidate it.
     for (const fragment of prepared.fragments) {
-      const inputHash = createHash('sha256').update(serialize({ query: request.query, items: [fragment] })).digest('hex');
-      const identity = identityOf(fragment, inputHash);
-      identities.set(fragment.id, identity);
-      const hit = cachePolicy.mode !== 'disabled' ? this.#cache.read(identity) : null;
+      const hit = measureSync('cache_lookup', () => {
+        const body = serialize({ query: request.query, items: [fragment] });
+        const inputHash = createHash('sha256').update(body).digest('hex');
+        const identity = identityOf(fragment, inputHash);
+        identities.set(fragment.id, identity);
+        const score = cachePolicy.mode !== 'disabled' ? this.#cache.read(identity) : null;
+        if (score === null) singletonMeasures.set(fragment.id, measureSerializedBatch(body, limits, countQuestionTokens));
+        return score;
+      });
       if (hit !== null) cached.set(fragment.id, hit);
       else pending.push(fragment);
     }
-    const pendingBatches = buildBatches(pending, request.query, { model, serialize, limits: batchLimits(adapter) });
+    const pendingBatches = measureSync('batching', () => buildBatches(pending, request.query, {
+      model, serialize, limits, countQuestionTokens, singletonMeasures,
+      onBatchMeasure: (batch, measure, body) => {
+        const retain = retainedPayloadBytes + measure.bytes <= maxRetainedPayloadBytes;
+        if (retain) retainedPayloadBytes += measure.bytes;
+        measuredBatches.set(batch, { tokens: measure.tokens!, bytes: measure.bytes, ...(retain ? { body } : {}) });
+      },
+    }));
     if (this.#cache.stats.corrupt > 0 || this.#cache.stats.failures > 0) {
       context.diagnostics.record('CACHE_UNAVAILABLE', context.elapsedMs,
         { count: this.#cache.stats.corrupt + this.#cache.stats.failures });
     }
 
     const enabledCaps = enabledCapsOf(config.scan_caps);
-    const plan = planScan(pending, request.query, {
+    const plan = measureSync('planning', () => planScan(pending, request.query, {
       model,
       batches: pendingBatches,
       serialize,
+      batchCost: costOf,
       enabledCaps,
       allowPartial: request.allow_partial_scan,
       requireFit: config.search.require_fit,
@@ -265,7 +321,7 @@ export class SearchEngine {
       candidateFiles: prepared.files.length,
       preparedFragments: prepared.fragments.length,
       pricePerMillionInputTokens: config.provider.pricing?.input_usd_per_million_tokens ?? null,
-    });
+    }));
 
     const usage: UsageAccount = {
       attempts: 0, knownInputTokens: 0, reservedInputTokens: 0, unknownUsageAttempts: 0, transmittedBytes: 0,
@@ -287,10 +343,11 @@ export class SearchEngine {
     if (plan.capReached) context.addStopReason('SCAN_CAP_REACHED');
 
     if (plan.batches.length > 0) {
-      await runPhase(context, 'evaluation', async () => {
+      await measureAsync('evaluation', () => runPhase(context, 'evaluation', async () => {
         await runEvaluations(provider, plan.batches, context, {
           concurrency: config.search.concurrency,
           ...(config.search.retry === undefined ? {} : { retry: config.search.retry }),
+          bodyOf: (batch) => costOf(batch).body,
           onDispatch: (batch) => {
             root.assertCurrent();
             // Revalidate each named entry before disclosure, while sending only
@@ -300,8 +357,9 @@ export class SearchEngine {
                 throw new UnauthorizedPathError('not_regular_file', path, 'source type changed before dispatch');
               }
             }
-            const tokens = Math.max(1, estimateBatchTokens(batch, model, serialize));
-            const bytes = batchRequestBytes(batch, model, serialize);
+            const cost = costOf(batch);
+            const tokens = Math.max(1, cost.tokens);
+            const bytes = cost.bytes;
             const projected: Partial<Record<ScanCap, number | null>> = {
               request_attempts: usage.attempts + 1,
               transmitted_bytes: usage.transmittedBytes + bytes,
@@ -327,6 +385,13 @@ export class SearchEngine {
             return true;
           },
           onScores: (batch, evaluation) => {
+            const cacheable = cachePolicy.mode !== 'disabled' && evaluation.requestedModel === model
+              && (evaluation.returnedModel === null || evaluation.returnedModel === model
+                || (cachePolicy.mode === 'rolling' && adapter === 'typesafe-direct'
+                  && isPinnedModelRevision(evaluation.returnedModel))
+                || (cachePolicy.mode === 'rolling' && adapter === 'openrouter'
+                  && isOpenRouterModelRevision(evaluation.returnedModel)));
+            const writes: ScoreCacheWrite[] = [];
             for (const item of batch.items) {
               const score = evaluation.scores.get(item.id);
               if (score === undefined) {
@@ -337,25 +402,21 @@ export class SearchEngine {
                 continue;
               }
               scored.push({ fragment, score, fromCache: false });
-              if (cachePolicy.mode !== 'disabled' && evaluation.requestedModel === model
-                && (evaluation.returnedModel === null || evaluation.returnedModel === model
-                  || (cachePolicy.mode === 'rolling' && adapter === 'typesafe-direct'
-                    && isPinnedModelRevision(evaluation.returnedModel))
-                  || (cachePolicy.mode === 'rolling' && adapter === 'openrouter'
-                    && isOpenRouterModelRevision(evaluation.returnedModel)))) {
-                this.#cache.write(identities.get(fragment.id)!, score, {
+              if (cacheable) {
+                writes.push({ identity: identities.get(fragment.id)!, score, meta: {
                   modelRevision: model,
                   layout: LAYOUT_VERSION, criterion: CRITERION_VERSION, chunker: fragment.chunker,
-                });
+                } });
               }
             }
+            if (writes.length > 0) measureSync('cache_write', () => this.#cache.writeMany(writes));
             if (evaluation.usage.inputTokens === null) {
               // The reservation survives: an attempt whose usage never resolved is
               // still an attempt the provider may have billed.
               usage.unknownUsageAttempts += 1;
               context.addStopReason('USAGE_UNKNOWN');
             } else {
-              usage.reservedInputTokens -= Math.max(1, estimateBatchTokens(batch, model, serialize));
+              usage.reservedInputTokens -= Math.max(1, costOf(batch).tokens);
               usage.knownInputTokens += evaluation.usage.inputTokens;
               const usedTokens = usage.knownInputTokens + usage.reservedInputTokens;
               const usedCost = estimateCost(usedTokens, config.provider.pricing?.input_usd_per_million_tokens ?? null);
@@ -376,7 +437,7 @@ export class SearchEngine {
             context.diagnostics.record(failure.code, context.elapsedMs, { count: batch.items.length });
           },
         });
-      });
+      }));
     }
 
     return this.#render(context, request, prepared, scored, usage, plan, available, false);
@@ -408,13 +469,13 @@ export class SearchEngine {
       return snapshot === undefined ? null : snapshot.sliceLines(startLine, endLine).text;
     };
 
-    let selection = selectRanges(candidates, {
+    let selection = measureSync('selection', () => selectRanges(candidates, {
       threshold: config.search.threshold,
       availableTokens,
       measure: excerptCost,
       sliceLines,
       unavailablePaths: freshness.unavailablePaths,
-    });
+    }));
 
     // Revalidate the files a range came from, at most once each, and fill the freed
     // space from candidates already evaluated. No new provider work is ever started.
@@ -422,7 +483,7 @@ export class SearchEngine {
     for (let round = 0; round < prepared.files.length + 1; round += 1) {
       let changed = false;
       for (const range of selection.ranges) {
-        const verdict = freshness.check(range.path, range.sha256);
+        const verdict = measureSync('freshness', () => freshness.check(range.path, range.sha256));
         if (verdict.verdict !== 'fresh') {
           changed = true;
           staleFiles += 1;
@@ -434,13 +495,13 @@ export class SearchEngine {
       }
       context.addStopReason('SOURCE_CHANGED');
       context.diagnostics.record('SOURCE_CHANGED', context.elapsedMs, { count: staleFiles });
-      selection = selectRanges(candidates, {
+      selection = measureSync('selection', () => selectRanges(candidates, {
         threshold: config.search.threshold,
         availableTokens,
         measure: excerptCost,
         sliceLines,
         unavailablePaths: freshness.unavailablePaths,
-      });
+      }));
     }
 
     const evaluated = scored.length;
@@ -505,7 +566,7 @@ export class SearchEngine {
     };
 
     const representedFor = (ranges: readonly SelectedRange[]): number => countRepresented(candidates, ranges, config.search.threshold, freshness.unavailablePaths);
-    const rendered: RenderedResponse = renderSearchResult(inputs, rejected ? [] : selection.ranges, representedFor);
+    const rendered: RenderedResponse = measureSync('rendering', () => renderSearchResult(inputs, rejected ? [] : selection.ranges, representedFor));
     context.diagnostics.setResponseTokensMeasured(rendered.measuredTokens);
     context.logger.log('info', context.searchId, 'search.complete', {
       status: rendered.result.status,
@@ -575,6 +636,7 @@ export type ScanPlan = {
 type PlanOptions = {
   readonly model: string;
   readonly serialize?: (batch: EvaluationBatch) => string;
+  readonly batchCost?: (batch: EvaluationBatch) => BatchCost;
   readonly batches?: readonly EvaluationBatch[];
   readonly enabledCaps: Partial<Record<ScanCap, number>>;
   readonly allowPartial: boolean;
@@ -601,8 +663,17 @@ export function planScan(
   const batches = options.batches ?? buildBatches(fragments, query, {
     model: options.model, ...(options.serialize === undefined ? {} : { serialize: options.serialize }),
   });
-  const estimatedTokens = batches.reduce((sum, batch) => sum + estimateBatchTokens(batch, options.model, options.serialize), 0);
-  const estimatedBytes = batches.reduce((sum, batch) => sum + batchRequestBytes(batch, options.model, options.serialize), 0);
+  const measured = new WeakMap<EvaluationBatch, BatchCost>();
+  const costOf = (batch: EvaluationBatch): BatchCost => {
+    let cost = measured.get(batch);
+    if (cost === undefined) {
+      cost = options.batchCost?.(batch) ?? batchCost(batch, options.model, options.serialize);
+      measured.set(batch, cost);
+    }
+    return cost;
+  };
+  const estimatedTokens = batches.reduce((sum, batch) => sum + costOf(batch).tokens, 0);
+  const estimatedBytes = batches.reduce((sum, batch) => sum + costOf(batch).bytes, 0);
   const estimatedCost = estimateCost(estimatedTokens, options.pricePerMillionInputTokens);
   if (options.enabledCaps.estimated_cost_usd !== undefined && estimatedCost === null) {
     throw new ConfigurationError('INVALID_CONFIG', 'a USD cap requires a qualified pricing record');
@@ -634,8 +705,9 @@ export function planScan(
   let tokens = 0;
   let bytes = 0;
   for (const batch of batches) {
-    const nextTokens = tokens + estimateBatchTokens(batch, options.model, options.serialize);
-    const nextBytes = bytes + batchRequestBytes(batch, options.model, options.serialize);
+    const cost = costOf(batch);
+    const nextTokens = tokens + cost.tokens;
+    const nextBytes = bytes + cost.bytes;
     const needs: Partial<Record<ScanCap, number | null>> = {
       estimated_input_tokens: nextTokens,
       transmitted_bytes: nextBytes,
@@ -670,19 +742,30 @@ export function planScan(
 /** Deterministic batches: path and offset order, bounded by the provider's own limits. */
 export function buildBatches(fragments: readonly PreparedFragment[], query: string, options: {
   readonly model?: string; readonly limits?: BatchLimits; readonly serialize?: (batch: EvaluationBatch) => string;
+  readonly countQuestionTokens?: (text: string) => number;
+  readonly singletonMeasures?: ReadonlyMap<string, SerializedBatchMeasure>;
+  readonly onBatchMeasure?: (batch: EvaluationBatch, measure: SerializedBatchMeasure, body: string) => void;
 } = {}): EvaluationBatch[] {
   const limits = options.limits ?? batchLimits();
   const serialize = options.serialize ?? ((batch) => JSON.stringify(buildRequestPayload(batch, options.model ?? 'estimate')));
-  const fits = (batch: EvaluationBatch): boolean => fitsSerializedBatch(serialize(batch), limits);
+  const countQuestionTokens = options.countQuestionTokens ?? questionTokenMemo();
+  const measure = (batch: EvaluationBatch): { result: SerializedBatchMeasure; body: string } => {
+    const body = serialize(batch);
+    return { result: measureSerializedBatch(body, limits, countQuestionTokens), body };
+  };
   const ordered = [...fragments].sort((left, right) => (left.path < right.path ? -1 : left.path > right.path ? 1 : 0)
     || (left.startLine - right.startLine) || (left.endLine - right.endLine));
   const batches: EvaluationBatch[] = [];
   let items: BatchItem[] = [];
+  let lastFit: { result: SerializedBatchMeasure; body?: string } | null = null;
 
   const flush = (): void => {
     if (items.length > 0) {
-      batches.push({ query, items });
+      const batch = { query, items };
+      batches.push(batch);
+      if (lastFit !== null) options.onBatchMeasure?.(batch, lastFit.result, lastFit.body ?? serialize(batch));
       items = [];
+      lastFit = null;
     }
   };
 
@@ -692,13 +775,18 @@ export function buildBatches(fragments: readonly PreparedFragment[], query: stri
       startLine: fragment.startLine, endLine: fragment.endLine,
       text: fragment.text, label: fragment.label ?? null,
     };
-    const candidate = { query, items: [...items, item] };
-    if (!fits({ query, items: [item] })) {
+    const premeasured = options.singletonMeasures?.get(item.id);
+    const singleton = premeasured === undefined ? measure({ query, items: [item] })
+      : { result: premeasured };
+    if (!singleton.result.fits) {
       throw new ConfigurationError('INVALID_REQUEST', 'one question exceeds the provider context estimate');
     }
-    if (items.length > 0 && !fits(candidate)) {
-      flush();
+    if (items.length > 0) {
+      const candidate = measure({ query, items: [...items, item] });
+      if (!candidate.result.fits) flush();
+      else lastFit = candidate;
     }
+    if (items.length === 0) lastFit = singleton;
     items.push(item);
   }
   flush();

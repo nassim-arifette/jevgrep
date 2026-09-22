@@ -406,7 +406,8 @@ export type ProviderClient = {
   readonly model: string;
   /** Exact outbound JSON body, including the adapter's protocol envelope. */
   serializeBatch?(batch: EvaluationBatch): string;
-  evaluateBatch(batch: EvaluationBatch, signal?: AbortSignal): Promise<BatchEvaluation>;
+  /** Prepared body is the exact result of serializeBatch for this immutable batch. */
+  evaluateBatch(batch: EvaluationBatch, signal?: AbortSignal, preparedBody?: string): Promise<BatchEvaluation>;
 };
 
 export class JevAdapter implements ProviderClient {
@@ -435,7 +436,7 @@ export class JevAdapter implements ProviderClient {
    * Evaluate one batch. Exactly one attempt: a transport failure raises a normalized
    * `ProviderError` and never becomes a score.
    */
-  async evaluateBatch(batch: EvaluationBatch, signal?: AbortSignal): Promise<BatchEvaluation> {
+  async evaluateBatch(batch: EvaluationBatch, signal?: AbortSignal, preparedBody?: string): Promise<BatchEvaluation> {
     if (signal?.aborted === true) {
       throw new DOMException('evaluation cancelled before dispatch', 'AbortError');
     }
@@ -445,7 +446,7 @@ export class JevAdapter implements ProviderClient {
         retryable: false, ambiguous: false,
       });
     }
-    const body = this.serializeBatch(batch);
+    const body = preparedBody ?? this.serializeBatch(batch);
     const request: TransportRequest = {
       url: this.#url,
       method: 'POST',

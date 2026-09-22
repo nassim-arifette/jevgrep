@@ -1,5 +1,6 @@
 /** Bounded provider work. The engine reserves every attempt before this seam sends it. */
 import { SearchContext, isAbortError } from '../lifecycle.ts';
+import { measureAsync } from '../profiling.ts';
 import { ProviderError, type BatchEvaluation, type EvaluationBatch, type ProviderClient } from './jev.ts';
 
 export const DEFAULT_RETRY_POLICY = Object.freeze({
@@ -14,6 +15,7 @@ export type EvaluationHandlers = {
   readonly concurrency: number;
   readonly retry?: RetryPolicy;
   readonly random?: () => number;
+  readonly bodyOf?: (batch: EvaluationBatch) => string | undefined;
   readonly onDispatch?: (batch: EvaluationBatch) => boolean;
   readonly onScores: (batch: EvaluationBatch, evaluation: BatchEvaluation) => void;
   readonly onFailure: (batch: EvaluationBatch, failure: ProviderError, willRetry: boolean) => void;
@@ -66,7 +68,9 @@ export async function runEvaluations(
         if (terminal || !context.canStartWork() || signal.aborted) return;
         if (handlers.onDispatch?.(batch) === false) { terminal = true; waiting.abort(); return; }
         try {
-          const evaluation = await abortable(provider.evaluateBatch(batch, signal), signal);
+          const evaluation = await measureAsync('provider', () => abortable(
+            provider.evaluateBatch(batch, signal, handlers.bodyOf?.(batch)), signal,
+          ));
           // No score/cache write is accepted after a stop, even if abort was ignored.
           if (!context.canStartWork() || signal.aborted) throw new DOMException('provider wait aborted', 'AbortError');
           handlers.onScores(batch, evaluation);

@@ -12,4 +12,6 @@ evaluation.
 - `migration-audit` covers TypeScript, JSON configuration and SQL migration content.
 
 The fixtures exercise offline provider and source-pipeline correctness tests.
-They do not measure retrieval quality or performance.
+The [annotated retrieval pilot](../../../scripts/bench/dataset.ts) also uses pinned
+copies of these sources for bounded real-provider evaluation. Results on these
+small synthetic repositories do not establish real-world retrieval quality.

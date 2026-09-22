@@ -16,6 +16,7 @@
  * - a BOM is preserved in both the bytes and the decoded text.
  */
 import { createHash } from 'node:crypto';
+import { measureSync } from '../profiling.ts';
 
 /** Reason a byte buffer cannot become a snapshot. Both map onto contract exclusions. */
 export type SnapshotRefusal = 'binary' | 'unsupported_encoding';
@@ -227,7 +228,7 @@ export function createSnapshot(
   }
   let text: string;
   try {
-    text = decoder.decode(bytes);
+    text = measureSync('decode', () => decoder.decode(bytes));
   } catch {
     throw new SnapshotError('unsupported_encoding', `${relativePath} is not valid UTF-8`);
   }
@@ -264,7 +265,7 @@ export function createSnapshot(
     lineTokens[line] = countTokens(text.slice(start, end));
   }
 
-  const sha256 = createHash('sha256').update(bytes).digest('hex');
+  const sha256 = measureSync('hash', () => createHash('sha256').update(bytes).digest('hex'));
   return new SourceSnapshot(
     relativePath, absolutePath, bytes, text,
     Int32Array.from(lineStartsUtf16), Int32Array.from(lineStartsBytes), lineTokens, sha256,

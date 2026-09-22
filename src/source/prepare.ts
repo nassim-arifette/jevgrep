@@ -13,6 +13,7 @@
  * coverage (requirement R8).
  */
 import { countReferenceTokens } from '../response/token-counter.ts';
+import { measureSync } from '../profiling.ts';
 import { AuthorizedRoot, UnauthorizedPathError } from './authorization.ts';
 import { chunkSnapshot } from './chunker.ts';
 import type { PreparedFragment, WindowLimits } from './chunker.ts';
@@ -106,7 +107,7 @@ export function prepareScope(
   scope: readonly string[],
   options: PrepareOptions,
 ): PreparedScope {
-  const inventory = inventoryScope(root, scope, options.inventory);
+  const inventory = measureSync('inventory', () => inventoryScope(root, scope, options.inventory));
   const limits = options.limits ?? NO_PREPARATION_LIMITS;
 
   const files: PreparedFile[] = [];
@@ -129,7 +130,7 @@ export function prepareScope(
 
     let bytes;
     try {
-      bytes = root.readFileBytes(entry.absolutePath, options.inventory.maxFileBytes);
+      bytes = measureSync('source_read', () => root.readFileBytes(entry.absolutePath, options.inventory.maxFileBytes));
     } catch (cause) {
       if (cause instanceof UnauthorizedPathError) {
         if (cause.refusal === 'changed' || cause.refusal === 'unavailable' || cause.refusal === 'missing') {
@@ -153,7 +154,7 @@ export function prepareScope(
 
     let snapshot: SourceSnapshot;
     try {
-      snapshot = createSnapshot(entry.relativePath, entry.absolutePath, bytes, countReferenceTokens);
+      snapshot = measureSync('snapshot', () => createSnapshot(entry.relativePath, entry.absolutePath, bytes, countReferenceTokens));
     } catch (cause) {
       if (cause instanceof SnapshotError) {
         excluded.push({ relativePath: entry.relativePath, reason: cause.refusal });
@@ -166,13 +167,13 @@ export function prepareScope(
       excluded.push({ relativePath: entry.relativePath, reason: snapshot.byteLength === 0 ? 'empty' : 'whitespace_only' });
       continue;
     }
-    const credential = findCredentialPattern(snapshot.text);
+    const credential = measureSync('secret_scan', () => findCredentialPattern(snapshot.text));
     if (credential !== null) {
       excluded.push({ relativePath: entry.relativePath, reason: 'credential_pattern', detail: credential });
       continue;
     }
 
-    const chunked = chunkSnapshot(snapshot, options.windowLimits);
+    const chunked = measureSync('chunking', () => chunkSnapshot(snapshot, options.windowLimits));
     if (chunked.kind === 'unsupported-long-line') {
       excluded.push({
         relativePath: entry.relativePath, reason: 'unsupported_long_line',

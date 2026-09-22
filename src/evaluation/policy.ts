@@ -27,14 +27,25 @@ export function batchLimits(adapter: AdapterKind = 'typesafe-direct'): BatchLimi
 
 /** Count the actual wire envelope, including state, criteria and question keys. */
 export function fitsSerializedBatch(body: string, limits: BatchLimits): boolean {
-  if (Buffer.byteLength(body, 'utf8') > limits.maxRequestBytes) return false;
+  return measureSerializedBatch(body, limits).fits;
+}
+
+export type SerializedBatchMeasure = { readonly fits: boolean; readonly bytes: number; readonly tokens: number | null };
+
+/** Exact checks; the optional counter reuses only identical state/question JSON. */
+export function measureSerializedBatch(
+  body: string, limits: BatchLimits, countQuestionTokens: (text: string) => number = countReferenceTokens,
+): SerializedBatchMeasure {
+  const bytes = Buffer.byteLength(body, 'utf8');
+  if (bytes > limits.maxRequestBytes) return { fits: false, bytes, tokens: null };
   const payload = JSON.parse(body) as { state: unknown; questions: Record<string, unknown> };
   const questions = Object.values(payload.questions);
-  if (questions.length > limits.maxItems) return false;
-  if (countReferenceTokens(body) > limits.totalTokens * limits.headroomRatio) return false;
-  const stateTokens = countReferenceTokens(JSON.stringify(payload.state));
-  return questions.every((question) => stateTokens + countReferenceTokens(JSON.stringify(question))
-    <= limits.perQuestionTokens * limits.headroomRatio);
+  if (questions.length > limits.maxItems) return { fits: false, bytes, tokens: null };
+  const tokens = countReferenceTokens(body);
+  if (tokens > limits.totalTokens * limits.headroomRatio) return { fits: false, bytes, tokens };
+  const stateTokens = countQuestionTokens(JSON.stringify(payload.state));
+  return { fits: questions.every((question) => stateTokens + countQuestionTokens(JSON.stringify(question))
+    <= limits.perQuestionTokens * limits.headroomRatio), bytes, tokens };
 }
 
 export function isPinnedModelRevision(model: string): boolean {

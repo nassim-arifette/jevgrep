@@ -293,7 +293,7 @@ export class VercelGatewayAdapter implements ProviderClient {
     return serializeGatewayBatch(batch);
   }
 
-  async evaluateBatch(batch: EvaluationBatch, signal?: AbortSignal): Promise<BatchEvaluation> {
+  async evaluateBatch(batch: EvaluationBatch, signal?: AbortSignal, preparedBody?: string): Promise<BatchEvaluation> {
     if (signal?.aborted === true) {
       throw new DOMException('evaluation cancelled before dispatch', 'AbortError');
     }
@@ -304,10 +304,11 @@ export class VercelGatewayAdapter implements ProviderClient {
       });
     }
 
-    const input = buildGatewayInput(batch);
+    const input = preparedBody === undefined ? buildGatewayInput(batch)
+      : JSON.parse(preparedBody) as ReturnType<typeof buildGatewayInput>;
     // This is the serialized evaluation input Jev receives. Gateway may add its own
     // protocol envelope, so this remains a conservative application-level measurement.
-    const transmittedBytes = Buffer.byteLength(this.serializeBatch(batch), 'utf8');
+    const transmittedBytes = Buffer.byteLength(preparedBody ?? this.serializeBatch(batch), 'utf8');
     const request: GatewayEvaluationRequest = {
       model: this.#evaluationModel,
       state: input.state,

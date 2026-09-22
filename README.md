@@ -380,8 +380,11 @@ Run the complete local verification gate with:
 npm run verify
 ```
 
-The test suite is offline and does not use provider credentials. There is no benchmark
-suite or benchmark acceptance gate; live checks use a small, explicitly chosen example.
+The test suite is offline and does not use provider credentials. Run `npm run bench`
+for the local performance baseline, or `npm run bench:retrieval -- --validate-only`
+to check the annotated retrieval pilot without network access. Real retrieval runs
+use an explicit provider configuration. See [benchmark commands and interpretation](benchmarks/README.md).
+CI verifies benchmark correctness without enforcing machine-dependent timing limits.
 
 ## Documentation
 
