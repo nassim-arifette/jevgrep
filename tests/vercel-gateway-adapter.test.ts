@@ -61,6 +61,22 @@ test('Gateway uses the Jev evaluation model with boolean questions and no hidden
   assert.equal(adapter.endpoint, 'https://ai-gateway.vercel.sh/v4/ai');
 });
 
+test('Gateway uses the prepared input and byte count without serializing again', async (t) => {
+  let sent: GatewayEvaluationRequest | undefined;
+  const adapter = new VercelGatewayAdapter({ apiKey: 'synthetic-secret', model: VERCEL_JEV_MODEL,
+    evaluate: (request) => { sent = request; return Promise.resolve(result({
+      first: { type: 'boolean', probability: 0.9 }, second: { type: 'boolean', probability: 0.2 },
+    })); },
+  });
+  const body = adapter.serializeBatch(BATCH);
+  t.mock.method(adapter, 'serializeBatch', () => { throw new Error('unexpected serialization'); });
+  const evaluation = await adapter.evaluateBatch(BATCH, undefined, body);
+  const payload = JSON.parse(body) as { state: unknown; questions: unknown };
+  assert.deepEqual(sent?.state, payload.state);
+  assert.deepEqual(sent?.questions, payload.questions);
+  assert.equal(evaluation.transmittedBytes, Buffer.byteLength(body));
+});
+
 test('invalid and missing Gateway answers stay unavailable rather than becoming zero', async () => {
   const adapter = new VercelGatewayAdapter({
     apiKey: 'synthetic-secret', model: VERCEL_JEV_MODEL,

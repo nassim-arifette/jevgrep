@@ -15,6 +15,7 @@
  * - nothing from the repository is imported, executed, compiled or type-checked.
  */
 import { countReferenceTokens } from '../response/token-counter.ts';
+import { measureSync } from '../profiling.ts';
 import { parseJavaScriptBoundaries } from './javascript-boundaries.ts';
 import type { Boundary } from './javascript-boundaries.ts';
 import { DEFAULT_WINDOW_LIMITS, LINE_WINDOW_CHUNKER_VERSION, lineWindows } from './line-windows.ts';
@@ -251,11 +252,11 @@ export function chunkSnapshot(
     return fallbackWindows(snapshot, limits);
   }
 
-  const scan = parseJavaScriptBoundaries(
+  const scan = measureSync('parsing', () => parseJavaScriptBoundaries(
     snapshot.text,
     (offset) => snapshot.lineOfUtf16(offset),
     snapshot.relativePath,
-  );
+  ));
   if (!scan.ok) {
     const windows = fallbackWindows(snapshot, limits);
     return windows.kind === 'unsupported-long-line'

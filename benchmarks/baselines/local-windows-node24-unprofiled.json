@@ -1,0 +1,950 @@
+{
+  "schemaVersion": 1,
+  "kind": "local-performance",
+  "createdAt": "2026-09-21T21:29:32.602Z",
+  "environment": {
+    "node": "v24.15.0",
+    "platform": "win32",
+    "architecture": "x64",
+    "cpu": "11th Gen Intel(R) Core(TM) i5-1135G7 @ 2.40GHz",
+    "logicalCpus": 8,
+    "totalMemoryBytes": 12612919296,
+    "revision": "52e2d895b69d3bd41138b5f9091d7eed3e2cf4a0",
+    "workingTree": "M .gitignore\n M README.md\n M package-lock.json\n M package.json\n M src/engine.ts\n M src/evaluation/scheduler.ts\n M src/response/token-counter.ts\n M src/source/chunker.ts\n M src/source/prepare.ts\n M src/source/snapshot.ts\n M tests/fixtures/repositories/README.md\n?? benchmarks/\n?? roadmap.md\n?? scripts/bench-retrieval.ts\n?? scripts/bench.ts\n?? scripts/bench/\n?? src/profiling.ts\n?? tests/benchmark.test.ts\n?? tests/profiling.test.ts",
+    "sourceHash": "3dfdcf404f8dcbc2314866407df4e5f369d26d0ba77a5bebb000cc237c072f88",
+    "harnessHash": "c1904b32a16bb10c2ab2fcadc468f02d52953697e70c70c05069cb56b3105571",
+    "packageLockHash": "d772547c55f363cb1f86490584c9dc3ad810d99c6c018cfa67873c14f0a42780"
+  },
+  "settings": {
+    "files": 64,
+    "samples": 3,
+    "instrumented": false,
+    "responseTokens": 4000,
+    "concurrency": 1
+  },
+  "semantics": {
+    "provider": "offline fixed scores; reported usage is a synthetic reference-token count; no billed requests",
+    "quality": "not measured; use bench:retrieval for real provider judgments",
+    "cache": "new score cache and fresh process per sample; four ordered searches share one engine; no preparation cache exists",
+    "cold": "cold process/tokenizer/score cache; OS filesystem cache is uncontrolled; startup/imports and fixture setup excluded",
+    "timings": "inclusive stages overlap; provider includes adapter work and waiting, not isolated network time",
+    "memory": "sampled maxima at instrumented boundaries; process peak RSS covers the whole child including setup"
+  },
+  "summary": [
+    {
+      "scenario": "cold",
+      "elapsedMs": {
+        "min": 15837.254500000001,
+        "median": 15950.415500000001,
+        "max": 16189.2535
+      },
+      "initialTimerDelayMs": {
+        "min": 15837.342200000001,
+        "median": 15950.530400000001,
+        "max": 16189.335000000001
+      },
+      "providerAttempts": {
+        "min": 1,
+        "median": 1,
+        "max": 1
+      },
+      "cacheReused": {
+        "min": 0,
+        "median": 0,
+        "max": 0
+      },
+      "transmittedBytes": {
+        "min": 121858,
+        "median": 121858,
+        "max": 121858
+      }
+    },
+    {
+      "scenario": "repeat_question",
+      "elapsedMs": {
+        "min": 2183.7338999999993,
+        "median": 2303.1589999999997,
+        "max": 2747.2314000000006
+      },
+      "initialTimerDelayMs": {
+        "min": 2184.078699999998,
+        "median": 2303.4935000000005,
+        "max": 2748.2538000000022
+      },
+      "providerAttempts": {
+        "min": 0,
+        "median": 0,
+        "max": 0
+      },
+      "cacheReused": {
+        "min": 64,
+        "median": 64,
+        "max": 64
+      },
+      "transmittedBytes": {
+        "min": 0,
+        "median": 0,
+        "max": 0
+      }
+    },
+    {
+      "scenario": "new_question",
+      "elapsedMs": {
+        "min": 12981.4335,
+        "median": 18716.216699999997,
+        "max": 19258.5834
+      },
+      "initialTimerDelayMs": {
+        "min": 12981.4911,
+        "median": 18716.832199999997,
+        "max": 19259.287800000002
+      },
+      "providerAttempts": {
+        "min": 1,
+        "median": 1,
+        "max": 1
+      },
+      "cacheReused": {
+        "min": 0,
+        "median": 0,
+        "max": 0
+      },
+      "transmittedBytes": {
+        "min": 121854,
+        "median": 121854,
+        "max": 121854
+      }
+    },
+    {
+      "scenario": "small_edit",
+      "elapsedMs": {
+        "min": 2758.631300000001,
+        "median": 3737.113900000004,
+        "max": 4919.750800000002
+      },
+      "initialTimerDelayMs": {
+        "min": 2758.7005000000063,
+        "median": 3737.677100000001,
+        "max": 4919.960700000003
+      },
+      "providerAttempts": {
+        "min": 1,
+        "median": 1,
+        "max": 1
+      },
+      "cacheReused": {
+        "min": 63,
+        "median": 63,
+        "max": 63
+      },
+      "transmittedBytes": {
+        "min": 2764,
+        "median": 2764,
+        "max": 2764
+      }
+    }
+  ],
+  "samples": [
+    {
+      "workloadHash": "ad6ee40f5c2ce46aab3e695be009185db4c6ab884bf9976762ba5f130ac6233b",
+      "fileCount": 64,
+      "rows": [
+        {
+          "scenario": "cold",
+          "elapsedMs": 16189.2535,
+          "initialTimerDelayMs": 16189.335000000001,
+          "profile": null,
+          "responseTokens": 3260,
+          "report": {
+            "scope": [
+              "."
+            ],
+            "inventory_complete": true,
+            "scope_fully_scanned": true,
+            "files": {
+              "discovered": 64,
+              "eligible": 64,
+              "excluded_by_reason": {},
+              "unreadable": 0,
+              "changed_before_return": 0
+            },
+            "fragments": {
+              "total": 64,
+              "remote_evaluated": 64,
+              "cache_reused": 0,
+              "not_evaluated": 0,
+              "below_threshold": 0,
+              "above_threshold": 64,
+              "represented_in_response": 8,
+              "omitted_by_response_budget": 56,
+              "omitted_stale": 0
+            },
+            "selection": {
+              "outcome": "selected",
+              "threshold": 0.5,
+              "ranges_returned": 8,
+              "duplicate_ranges_collapsed": 0
+            },
+            "usage": {
+              "provider_request_attempts": 1,
+              "provider_input_tokens_reported": 30929,
+              "provider_input_tokens_known_subtotal": 30929,
+              "provider_input_tokens_estimated": 30929,
+              "estimated_cost_usd": null,
+              "reported_cost_usd": null,
+              "attempts_with_unknown_usage": 0,
+              "transmitted_bytes": 121858,
+              "elapsed_ms": 16184
+            },
+            "response_budget": {
+              "requested_tokens": 4000,
+              "counter": "tiktoken@1.0.22/cl100k_base",
+              "accounting": "reference_tokenizer"
+            },
+            "preflight": {
+              "planned_remote_fragments": 64,
+              "planned_cache_hits": 0,
+              "estimated_first_attempt_tokens": 30929,
+              "estimated_first_attempt_cost_usd": null,
+              "estimated_first_attempt_requests": 1,
+              "enabled_caps": {},
+              "estimated_required_caps": {}
+            },
+            "stop_reasons": [],
+            "diagnostics_truncated": false
+          }
+        },
+        {
+          "scenario": "repeat_question",
+          "elapsedMs": 2183.7338999999993,
+          "initialTimerDelayMs": 2184.078699999998,
+          "profile": null,
+          "responseTokens": 3255,
+          "report": {
+            "scope": [
+              "."
+            ],
+            "inventory_complete": true,
+            "scope_fully_scanned": true,
+            "files": {
+              "discovered": 64,
+              "eligible": 64,
+              "excluded_by_reason": {},
+              "unreadable": 0,
+              "changed_before_return": 0
+            },
+            "fragments": {
+              "total": 64,
+              "remote_evaluated": 0,
+              "cache_reused": 64,
+              "not_evaluated": 0,
+              "below_threshold": 0,
+              "above_threshold": 64,
+              "represented_in_response": 8,
+              "omitted_by_response_budget": 56,
+              "omitted_stale": 0
+            },
+            "selection": {
+              "outcome": "selected",
+              "threshold": 0.5,
+              "ranges_returned": 8,
+              "duplicate_ranges_collapsed": 0
+            },
+            "usage": {
+              "provider_request_attempts": 0,
+              "provider_input_tokens_reported": 0,
+              "provider_input_tokens_known_subtotal": 0,
+              "provider_input_tokens_estimated": 0,
+              "estimated_cost_usd": null,
+              "reported_cost_usd": null,
+              "attempts_with_unknown_usage": 0,
+              "transmitted_bytes": 0,
+              "elapsed_ms": 2180
+            },
+            "response_budget": {
+              "requested_tokens": 4000,
+              "counter": "tiktoken@1.0.22/cl100k_base",
+              "accounting": "reference_tokenizer"
+            },
+            "preflight": {
+              "planned_remote_fragments": 0,
+              "planned_cache_hits": 64,
+              "estimated_first_attempt_tokens": 0,
+              "estimated_first_attempt_cost_usd": null,
+              "estimated_first_attempt_requests": 0,
+              "enabled_caps": {},
+              "estimated_required_caps": {}
+            },
+            "stop_reasons": [],
+            "diagnostics_truncated": false
+          }
+        },
+        {
+          "scenario": "new_question",
+          "elapsedMs": 12981.4335,
+          "initialTimerDelayMs": 12981.4911,
+          "profile": null,
+          "responseTokens": 3260,
+          "report": {
+            "scope": [
+              "."
+            ],
+            "inventory_complete": true,
+            "scope_fully_scanned": true,
+            "files": {
+              "discovered": 64,
+              "eligible": 64,
+              "excluded_by_reason": {},
+              "unreadable": 0,
+              "changed_before_return": 0
+            },
+            "fragments": {
+              "total": 64,
+              "remote_evaluated": 64,
+              "cache_reused": 0,
+              "not_evaluated": 0,
+              "below_threshold": 0,
+              "above_threshold": 64,
+              "represented_in_response": 8,
+              "omitted_by_response_budget": 56,
+              "omitted_stale": 0
+            },
+            "selection": {
+              "outcome": "selected",
+              "threshold": 0.5,
+              "ranges_returned": 8,
+              "duplicate_ranges_collapsed": 0
+            },
+            "usage": {
+              "provider_request_attempts": 1,
+              "provider_input_tokens_reported": 30928,
+              "provider_input_tokens_known_subtotal": 30928,
+              "provider_input_tokens_estimated": 30928,
+              "estimated_cost_usd": null,
+              "reported_cost_usd": null,
+              "attempts_with_unknown_usage": 0,
+              "transmitted_bytes": 121854,
+              "elapsed_ms": 12978
+            },
+            "response_budget": {
+              "requested_tokens": 4000,
+              "counter": "tiktoken@1.0.22/cl100k_base",
+              "accounting": "reference_tokenizer"
+            },
+            "preflight": {
+              "planned_remote_fragments": 64,
+              "planned_cache_hits": 0,
+              "estimated_first_attempt_tokens": 30928,
+              "estimated_first_attempt_cost_usd": null,
+              "estimated_first_attempt_requests": 1,
+              "enabled_caps": {},
+              "estimated_required_caps": {}
+            },
+            "stop_reasons": [],
+            "diagnostics_truncated": false
+          }
+        },
+        {
+          "scenario": "small_edit",
+          "elapsedMs": 3737.113900000004,
+          "initialTimerDelayMs": 3737.677100000001,
+          "profile": null,
+          "responseTokens": 3256,
+          "report": {
+            "scope": [
+              "."
+            ],
+            "inventory_complete": true,
+            "scope_fully_scanned": true,
+            "files": {
+              "discovered": 64,
+              "eligible": 64,
+              "excluded_by_reason": {},
+              "unreadable": 0,
+              "changed_before_return": 0
+            },
+            "fragments": {
+              "total": 64,
+              "remote_evaluated": 1,
+              "cache_reused": 63,
+              "not_evaluated": 0,
+              "below_threshold": 0,
+              "above_threshold": 64,
+              "represented_in_response": 8,
+              "omitted_by_response_budget": 56,
+              "omitted_stale": 0
+            },
+            "selection": {
+              "outcome": "selected",
+              "threshold": 0.5,
+              "ranges_returned": 8,
+              "duplicate_ranges_collapsed": 0
+            },
+            "usage": {
+              "provider_request_attempts": 1,
+              "provider_input_tokens_reported": 661,
+              "provider_input_tokens_known_subtotal": 661,
+              "provider_input_tokens_estimated": 661,
+              "estimated_cost_usd": null,
+              "reported_cost_usd": null,
+              "attempts_with_unknown_usage": 0,
+              "transmitted_bytes": 2764,
+              "elapsed_ms": 3733
+            },
+            "response_budget": {
+              "requested_tokens": 4000,
+              "counter": "tiktoken@1.0.22/cl100k_base",
+              "accounting": "reference_tokenizer"
+            },
+            "preflight": {
+              "planned_remote_fragments": 1,
+              "planned_cache_hits": 63,
+              "estimated_first_attempt_tokens": 661,
+              "estimated_first_attempt_cost_usd": null,
+              "estimated_first_attempt_requests": 1,
+              "enabled_caps": {},
+              "estimated_required_caps": {}
+            },
+            "stop_reasons": [],
+            "diagnostics_truncated": false
+          }
+        }
+      ],
+      "processPeakRssBytes": 202387456
+    },
+    {
+      "workloadHash": "ad6ee40f5c2ce46aab3e695be009185db4c6ab884bf9976762ba5f130ac6233b",
+      "fileCount": 64,
+      "rows": [
+        {
+          "scenario": "cold",
+          "elapsedMs": 15837.254500000001,
+          "initialTimerDelayMs": 15837.342200000001,
+          "profile": null,
+          "responseTokens": 3260,
+          "report": {
+            "scope": [
+              "."
+            ],
+            "inventory_complete": true,
+            "scope_fully_scanned": true,
+            "files": {
+              "discovered": 64,
+              "eligible": 64,
+              "excluded_by_reason": {},
+              "unreadable": 0,
+              "changed_before_return": 0
+            },
+            "fragments": {
+              "total": 64,
+              "remote_evaluated": 64,
+              "cache_reused": 0,
+              "not_evaluated": 0,
+              "below_threshold": 0,
+              "above_threshold": 64,
+              "represented_in_response": 8,
+              "omitted_by_response_budget": 56,
+              "omitted_stale": 0
+            },
+            "selection": {
+              "outcome": "selected",
+              "threshold": 0.5,
+              "ranges_returned": 8,
+              "duplicate_ranges_collapsed": 0
+            },
+            "usage": {
+              "provider_request_attempts": 1,
+              "provider_input_tokens_reported": 30929,
+              "provider_input_tokens_known_subtotal": 30929,
+              "provider_input_tokens_estimated": 30929,
+              "estimated_cost_usd": null,
+              "reported_cost_usd": null,
+              "attempts_with_unknown_usage": 0,
+              "transmitted_bytes": 121858,
+              "elapsed_ms": 15831
+            },
+            "response_budget": {
+              "requested_tokens": 4000,
+              "counter": "tiktoken@1.0.22/cl100k_base",
+              "accounting": "reference_tokenizer"
+            },
+            "preflight": {
+              "planned_remote_fragments": 64,
+              "planned_cache_hits": 0,
+              "estimated_first_attempt_tokens": 30929,
+              "estimated_first_attempt_cost_usd": null,
+              "estimated_first_attempt_requests": 1,
+              "enabled_caps": {},
+              "estimated_required_caps": {}
+            },
+            "stop_reasons": [],
+            "diagnostics_truncated": false
+          }
+        },
+        {
+          "scenario": "repeat_question",
+          "elapsedMs": 2303.1589999999997,
+          "initialTimerDelayMs": 2303.4935000000005,
+          "profile": null,
+          "responseTokens": 3255,
+          "report": {
+            "scope": [
+              "."
+            ],
+            "inventory_complete": true,
+            "scope_fully_scanned": true,
+            "files": {
+              "discovered": 64,
+              "eligible": 64,
+              "excluded_by_reason": {},
+              "unreadable": 0,
+              "changed_before_return": 0
+            },
+            "fragments": {
+              "total": 64,
+              "remote_evaluated": 0,
+              "cache_reused": 64,
+              "not_evaluated": 0,
+              "below_threshold": 0,
+              "above_threshold": 64,
+              "represented_in_response": 8,
+              "omitted_by_response_budget": 56,
+              "omitted_stale": 0
+            },
+            "selection": {
+              "outcome": "selected",
+              "threshold": 0.5,
+              "ranges_returned": 8,
+              "duplicate_ranges_collapsed": 0
+            },
+            "usage": {
+              "provider_request_attempts": 0,
+              "provider_input_tokens_reported": 0,
+              "provider_input_tokens_known_subtotal": 0,
+              "provider_input_tokens_estimated": 0,
+              "estimated_cost_usd": null,
+              "reported_cost_usd": null,
+              "attempts_with_unknown_usage": 0,
+              "transmitted_bytes": 0,
+              "elapsed_ms": 2299
+            },
+            "response_budget": {
+              "requested_tokens": 4000,
+              "counter": "tiktoken@1.0.22/cl100k_base",
+              "accounting": "reference_tokenizer"
+            },
+            "preflight": {
+              "planned_remote_fragments": 0,
+              "planned_cache_hits": 64,
+              "estimated_first_attempt_tokens": 0,
+              "estimated_first_attempt_cost_usd": null,
+              "estimated_first_attempt_requests": 0,
+              "enabled_caps": {},
+              "estimated_required_caps": {}
+            },
+            "stop_reasons": [],
+            "diagnostics_truncated": false
+          }
+        },
+        {
+          "scenario": "new_question",
+          "elapsedMs": 19258.5834,
+          "initialTimerDelayMs": 19259.287800000002,
+          "profile": null,
+          "responseTokens": 3260,
+          "report": {
+            "scope": [
+              "."
+            ],
+            "inventory_complete": true,
+            "scope_fully_scanned": true,
+            "files": {
+              "discovered": 64,
+              "eligible": 64,
+              "excluded_by_reason": {},
+              "unreadable": 0,
+              "changed_before_return": 0
+            },
+            "fragments": {
+              "total": 64,
+              "remote_evaluated": 64,
+              "cache_reused": 0,
+              "not_evaluated": 0,
+              "below_threshold": 0,
+              "above_threshold": 64,
+              "represented_in_response": 8,
+              "omitted_by_response_budget": 56,
+              "omitted_stale": 0
+            },
+            "selection": {
+              "outcome": "selected",
+              "threshold": 0.5,
+              "ranges_returned": 8,
+              "duplicate_ranges_collapsed": 0
+            },
+            "usage": {
+              "provider_request_attempts": 1,
+              "provider_input_tokens_reported": 30928,
+              "provider_input_tokens_known_subtotal": 30928,
+              "provider_input_tokens_estimated": 30928,
+              "estimated_cost_usd": null,
+              "reported_cost_usd": null,
+              "attempts_with_unknown_usage": 0,
+              "transmitted_bytes": 121854,
+              "elapsed_ms": 19248
+            },
+            "response_budget": {
+              "requested_tokens": 4000,
+              "counter": "tiktoken@1.0.22/cl100k_base",
+              "accounting": "reference_tokenizer"
+            },
+            "preflight": {
+              "planned_remote_fragments": 64,
+              "planned_cache_hits": 0,
+              "estimated_first_attempt_tokens": 30928,
+              "estimated_first_attempt_cost_usd": null,
+              "estimated_first_attempt_requests": 1,
+              "enabled_caps": {},
+              "estimated_required_caps": {}
+            },
+            "stop_reasons": [],
+            "diagnostics_truncated": false
+          }
+        },
+        {
+          "scenario": "small_edit",
+          "elapsedMs": 2758.631300000001,
+          "initialTimerDelayMs": 2758.7005000000063,
+          "profile": null,
+          "responseTokens": 3256,
+          "report": {
+            "scope": [
+              "."
+            ],
+            "inventory_complete": true,
+            "scope_fully_scanned": true,
+            "files": {
+              "discovered": 64,
+              "eligible": 64,
+              "excluded_by_reason": {},
+              "unreadable": 0,
+              "changed_before_return": 0
+            },
+            "fragments": {
+              "total": 64,
+              "remote_evaluated": 1,
+              "cache_reused": 63,
+              "not_evaluated": 0,
+              "below_threshold": 0,
+              "above_threshold": 64,
+              "represented_in_response": 8,
+              "omitted_by_response_budget": 56,
+              "omitted_stale": 0
+            },
+            "selection": {
+              "outcome": "selected",
+              "threshold": 0.5,
+              "ranges_returned": 8,
+              "duplicate_ranges_collapsed": 0
+            },
+            "usage": {
+              "provider_request_attempts": 1,
+              "provider_input_tokens_reported": 661,
+              "provider_input_tokens_known_subtotal": 661,
+              "provider_input_tokens_estimated": 661,
+              "estimated_cost_usd": null,
+              "reported_cost_usd": null,
+              "attempts_with_unknown_usage": 0,
+              "transmitted_bytes": 2764,
+              "elapsed_ms": 2753
+            },
+            "response_budget": {
+              "requested_tokens": 4000,
+              "counter": "tiktoken@1.0.22/cl100k_base",
+              "accounting": "reference_tokenizer"
+            },
+            "preflight": {
+              "planned_remote_fragments": 1,
+              "planned_cache_hits": 63,
+              "estimated_first_attempt_tokens": 661,
+              "estimated_first_attempt_cost_usd": null,
+              "estimated_first_attempt_requests": 1,
+              "enabled_caps": {},
+              "estimated_required_caps": {}
+            },
+            "stop_reasons": [],
+            "diagnostics_truncated": false
+          }
+        }
+      ],
+      "processPeakRssBytes": 201543680
+    },
+    {
+      "workloadHash": "ad6ee40f5c2ce46aab3e695be009185db4c6ab884bf9976762ba5f130ac6233b",
+      "fileCount": 64,
+      "rows": [
+        {
+          "scenario": "cold",
+          "elapsedMs": 15950.415500000001,
+          "initialTimerDelayMs": 15950.530400000001,
+          "profile": null,
+          "responseTokens": 3260,
+          "report": {
+            "scope": [
+              "."
+            ],
+            "inventory_complete": true,
+            "scope_fully_scanned": true,
+            "files": {
+              "discovered": 64,
+              "eligible": 64,
+              "excluded_by_reason": {},
+              "unreadable": 0,
+              "changed_before_return": 0
+            },
+            "fragments": {
+              "total": 64,
+              "remote_evaluated": 64,
+              "cache_reused": 0,
+              "not_evaluated": 0,
+              "below_threshold": 0,
+              "above_threshold": 64,
+              "represented_in_response": 8,
+              "omitted_by_response_budget": 56,
+              "omitted_stale": 0
+            },
+            "selection": {
+              "outcome": "selected",
+              "threshold": 0.5,
+              "ranges_returned": 8,
+              "duplicate_ranges_collapsed": 0
+            },
+            "usage": {
+              "provider_request_attempts": 1,
+              "provider_input_tokens_reported": 30929,
+              "provider_input_tokens_known_subtotal": 30929,
+              "provider_input_tokens_estimated": 30929,
+              "estimated_cost_usd": null,
+              "reported_cost_usd": null,
+              "attempts_with_unknown_usage": 0,
+              "transmitted_bytes": 121858,
+              "elapsed_ms": 15943
+            },
+            "response_budget": {
+              "requested_tokens": 4000,
+              "counter": "tiktoken@1.0.22/cl100k_base",
+              "accounting": "reference_tokenizer"
+            },
+            "preflight": {
+              "planned_remote_fragments": 64,
+              "planned_cache_hits": 0,
+              "estimated_first_attempt_tokens": 30929,
+              "estimated_first_attempt_cost_usd": null,
+              "estimated_first_attempt_requests": 1,
+              "enabled_caps": {},
+              "estimated_required_caps": {}
+            },
+            "stop_reasons": [],
+            "diagnostics_truncated": false
+          }
+        },
+        {
+          "scenario": "repeat_question",
+          "elapsedMs": 2747.2314000000006,
+          "initialTimerDelayMs": 2748.2538000000022,
+          "profile": null,
+          "responseTokens": 3255,
+          "report": {
+            "scope": [
+              "."
+            ],
+            "inventory_complete": true,
+            "scope_fully_scanned": true,
+            "files": {
+              "discovered": 64,
+              "eligible": 64,
+              "excluded_by_reason": {},
+              "unreadable": 0,
+              "changed_before_return": 0
+            },
+            "fragments": {
+              "total": 64,
+              "remote_evaluated": 0,
+              "cache_reused": 64,
+              "not_evaluated": 0,
+              "below_threshold": 0,
+              "above_threshold": 64,
+              "represented_in_response": 8,
+              "omitted_by_response_budget": 56,
+              "omitted_stale": 0
+            },
+            "selection": {
+              "outcome": "selected",
+              "threshold": 0.5,
+              "ranges_returned": 8,
+              "duplicate_ranges_collapsed": 0
+            },
+            "usage": {
+              "provider_request_attempts": 0,
+              "provider_input_tokens_reported": 0,
+              "provider_input_tokens_known_subtotal": 0,
+              "provider_input_tokens_estimated": 0,
+              "estimated_cost_usd": null,
+              "reported_cost_usd": null,
+              "attempts_with_unknown_usage": 0,
+              "transmitted_bytes": 0,
+              "elapsed_ms": 2740
+            },
+            "response_budget": {
+              "requested_tokens": 4000,
+              "counter": "tiktoken@1.0.22/cl100k_base",
+              "accounting": "reference_tokenizer"
+            },
+            "preflight": {
+              "planned_remote_fragments": 0,
+              "planned_cache_hits": 64,
+              "estimated_first_attempt_tokens": 0,
+              "estimated_first_attempt_cost_usd": null,
+              "estimated_first_attempt_requests": 0,
+              "enabled_caps": {},
+              "estimated_required_caps": {}
+            },
+            "stop_reasons": [],
+            "diagnostics_truncated": false
+          }
+        },
+        {
+          "scenario": "new_question",
+          "elapsedMs": 18716.216699999997,
+          "initialTimerDelayMs": 18716.832199999997,
+          "profile": null,
+          "responseTokens": 3260,
+          "report": {
+            "scope": [
+              "."
+            ],
+            "inventory_complete": true,
+            "scope_fully_scanned": true,
+            "files": {
+              "discovered": 64,
+              "eligible": 64,
+              "excluded_by_reason": {},
+              "unreadable": 0,
+              "changed_before_return": 0
+            },
+            "fragments": {
+              "total": 64,
+              "remote_evaluated": 64,
+              "cache_reused": 0,
+              "not_evaluated": 0,
+              "below_threshold": 0,
+              "above_threshold": 64,
+              "represented_in_response": 8,
+              "omitted_by_response_budget": 56,
+              "omitted_stale": 0
+            },
+            "selection": {
+              "outcome": "selected",
+              "threshold": 0.5,
+              "ranges_returned": 8,
+              "duplicate_ranges_collapsed": 0
+            },
+            "usage": {
+              "provider_request_attempts": 1,
+              "provider_input_tokens_reported": 30928,
+              "provider_input_tokens_known_subtotal": 30928,
+              "provider_input_tokens_estimated": 30928,
+              "estimated_cost_usd": null,
+              "reported_cost_usd": null,
+              "attempts_with_unknown_usage": 0,
+              "transmitted_bytes": 121854,
+              "elapsed_ms": 18699
+            },
+            "response_budget": {
+              "requested_tokens": 4000,
+              "counter": "tiktoken@1.0.22/cl100k_base",
+              "accounting": "reference_tokenizer"
+            },
+            "preflight": {
+              "planned_remote_fragments": 64,
+              "planned_cache_hits": 0,
+              "estimated_first_attempt_tokens": 30928,
+              "estimated_first_attempt_cost_usd": null,
+              "estimated_first_attempt_requests": 1,
+              "enabled_caps": {},
+              "estimated_required_caps": {}
+            },
+            "stop_reasons": [],
+            "diagnostics_truncated": false
+          }
+        },
+        {
+          "scenario": "small_edit",
+          "elapsedMs": 4919.750800000002,
+          "initialTimerDelayMs": 4919.960700000003,
+          "profile": null,
+          "responseTokens": 3256,
+          "report": {
+            "scope": [
+              "."
+            ],
+            "inventory_complete": true,
+            "scope_fully_scanned": true,
+            "files": {
+              "discovered": 64,
+              "eligible": 64,
+              "excluded_by_reason": {},
+              "unreadable": 0,
+              "changed_before_return": 0
+            },
+            "fragments": {
+              "total": 64,
+              "remote_evaluated": 1,
+              "cache_reused": 63,
+              "not_evaluated": 0,
+              "below_threshold": 0,
+              "above_threshold": 64,
+              "represented_in_response": 8,
+              "omitted_by_response_budget": 56,
+              "omitted_stale": 0
+            },
+            "selection": {
+              "outcome": "selected",
+              "threshold": 0.5,
+              "ranges_returned": 8,
+              "duplicate_ranges_collapsed": 0
+            },
+            "usage": {
+              "provider_request_attempts": 1,
+              "provider_input_tokens_reported": 661,
+              "provider_input_tokens_known_subtotal": 661,
+              "provider_input_tokens_estimated": 661,
+              "estimated_cost_usd": null,
+              "reported_cost_usd": null,
+              "attempts_with_unknown_usage": 0,
+              "transmitted_bytes": 2764,
+              "elapsed_ms": 4911
+            },
+            "response_budget": {
+              "requested_tokens": 4000,
+              "counter": "tiktoken@1.0.22/cl100k_base",
+              "accounting": "reference_tokenizer"
+            },
+            "preflight": {
+              "planned_remote_fragments": 1,
+              "planned_cache_hits": 63,
+              "estimated_first_attempt_tokens": 661,
+              "estimated_first_attempt_cost_usd": null,
+              "estimated_first_attempt_requests": 1,
+              "enabled_caps": {},
+              "estimated_required_caps": {}
+            },
+            "stop_reasons": [],
+            "diagnostics_truncated": false
+          }
+        }
+      ],
+      "processPeakRssBytes": 201093120
+    }
+  ]
+}

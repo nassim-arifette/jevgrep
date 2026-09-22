@@ -1,6 +1,6 @@
 {
   "name": "@nassim-arifette/jevgrep",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Semantic code search for coding agents: evaluates authorized repository fragments with Jev and returns original excerpts under a response budget.",
   "type": "module",
   "license": "MIT",
@@ -31,6 +31,9 @@
     "typecheck": "node node_modules/typescript/bin/tsc -p tsconfig.json",
     "test": "node --test \"tests/*.test.ts\" \"tests/contract/*.test.ts\"",
     "smoke": "node scripts/smoke.ts",
+    "bench": "node scripts/bench.ts",
+    "bench:cache": "node scripts/bench-cache-writes.ts",
+    "bench:retrieval": "node scripts/bench-retrieval.ts",
     "verify": "npm run typecheck && npm test && npm run build && npm run smoke",
     "prepublishOnly": "npm run verify"
   },

@@ -104,6 +104,17 @@ export type CacheStats = {
   corrupt: number;
 };
 
+export type ScoreCacheWrite = {
+  readonly identity: string;
+  readonly score: number;
+  readonly meta: {
+    readonly modelRevision: string;
+    readonly layout: string;
+    readonly criterion: string;
+    readonly chunker: string;
+  };
+};
+
 function isCacheEntry(value: unknown): value is CacheEntry {
   if (typeof value !== 'object' || value === null) {
     return false;
@@ -177,33 +188,55 @@ export class ScoreCache {
     this.stats.hits++; return entry.score;
   }
 
-  write(identity: string, score: number, meta: {
-    readonly modelRevision: string; readonly layout: string; readonly criterion: string; readonly chunker: string;
-  }): boolean {
-    if (!this.enabled || !/^[a-f0-9]{64}$/.test(identity) || !Number.isFinite(score) || score < 0 || score > 1
-      || this.#ttl(meta.modelRevision) <= 0) return false;
+  write(identity: string, score: number, meta: ScoreCacheWrite['meta']): boolean {
+    return this.writeMany([{ identity, score, meta }]) === 1;
+  }
+
+  /** Persist one provider response under one lock and one size/eviction pass. */
+  writeMany(writes: readonly ScoreCacheWrite[]): number {
+    if (!this.enabled || writes.length === 0) return 0;
     const now = this.#now();
-    const entry: CacheEntry = {
-      schema_version: CACHE_SCHEMA_VERSION, identity, score, model_revision: meta.modelRevision,
-      layout: meta.layout, criterion: meta.criterion, chunker: meta.chunker,
-      created_at_ms: now, expires_at_ms: now + this.#ttl(meta.modelRevision) * 1_000,
-    };
-    const raw = `${JSON.stringify(entry)}\n`;
-    const size = Buffer.byteLength(raw);
-    if (!isCacheEntry(entry) || size > Math.min(16_384, this.#options.maxBytes)) return false;
+    const prepared: { identity: string; raw: string; size: number }[] = [];
+    for (const { identity, score, meta } of writes) {
+      if (!/^[a-f0-9]{64}$/.test(identity) || !Number.isFinite(score) || score < 0 || score > 1) continue;
+      const ttl = this.#ttl(meta.modelRevision);
+      if (ttl <= 0) continue;
+      const entry: CacheEntry = {
+        schema_version: CACHE_SCHEMA_VERSION, identity, score, model_revision: meta.modelRevision,
+        layout: meta.layout, criterion: meta.criterion, chunker: meta.chunker,
+        created_at_ms: now, expires_at_ms: now + ttl * 1_000,
+      };
+      const raw = `${JSON.stringify(entry)}\n`;
+      const size = Buffer.byteLength(raw);
+      if (isCacheEntry(entry) && size <= Math.min(16_384, this.#options.maxBytes)) {
+        prepared.push({ identity, raw, size });
+      }
+    }
+    if (prepared.length === 0) return 0;
+    let written = 0;
     try {
-      return this.#storage!.withLock(() => {
-      this.#loadSizes();
-      const name = this.#name(identity);
-      this.#storage!.write(name, raw);
-      this.#totalBytes += size - (this.#sizes!.get(name)?.size ?? 0);
-      this.#sizes!.set(name, { size, created: now });
-      this.#shardStamps.set(identity.slice(0, 2), this.#stamp(identity.slice(0, 2)));
-      this.stats.writes++;
-      this.#evict();
-      return true;
+      this.#storage!.withLock(() => {
+        this.#loadSizes();
+        const changedShards = new Set<string>();
+        try {
+          for (const { identity, raw, size } of prepared) {
+            const name = this.#name(identity);
+            this.#storage!.write(name, raw);
+            this.#totalBytes += size - (this.#sizes!.get(name)?.size ?? 0);
+            this.#sizes!.set(name, { size, created: now });
+            changedShards.add(identity.slice(0, 2));
+            this.stats.writes++;
+            written++;
+          }
+        } finally {
+          // A failed write may follow successful ones; still enforce the limit.
+          try {
+            for (const shard of changedShards) this.#shardStamps.set(shard, this.#stamp(shard));
+          } finally { this.#evict(); }
+        }
       });
-    } catch { this.stats.failures++; this.#sizes = null; return false; }
+    } catch { this.stats.failures++; this.#sizes = null; }
+    return written;
   }
 
   enforceSizeLimit(): void {

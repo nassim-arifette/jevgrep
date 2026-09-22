@@ -58,7 +58,7 @@ export class OpenRouterAdapter implements ProviderClient {
 
   serializeBatch(batch: EvaluationBatch): string { return serializeOpenRouterBatch(batch); }
 
-  async evaluateBatch(batch: EvaluationBatch, signal?: AbortSignal): Promise<BatchEvaluation> {
+  async evaluateBatch(batch: EvaluationBatch, signal?: AbortSignal, preparedBody?: string): Promise<BatchEvaluation> {
     if (signal?.aborted === true) throw new DOMException('evaluation cancelled before dispatch', 'AbortError');
     if (batch.items.length === 0) {
       throw new ProviderError({
@@ -75,7 +75,7 @@ export class OpenRouterAdapter implements ProviderClient {
         accept: 'application/json',
         'user-agent': 'jevgrep',
       },
-      body: this.serializeBatch(batch),
+      body: preparedBody ?? this.serializeBatch(batch),
     }, batch, this.model, this.#transport, signal);
   }
 }

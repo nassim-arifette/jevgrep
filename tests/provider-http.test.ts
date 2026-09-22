@@ -2,11 +2,32 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { boundedFetch, MAX_PROVIDER_RESPONSE_BYTES } from '../src/evaluation/http.ts';
 import { JevAdapter, ProviderError, duplicateAnswerKeys, type EvaluationBatch } from '../src/evaluation/jev.ts';
+import { OpenRouterAdapter, OPENROUTER_JEV_MODEL } from '../src/evaluation/openrouter.ts';
 import { VercelGatewayAdapter, VERCEL_JEV_MODEL } from '../src/evaluation/vercel-gateway.ts';
 import { createSearchEngine } from '../src/engine.ts';
 import { createWorkspace } from './helpers/search-workspace.ts';
 
 const batch: EvaluationBatch = { query: 'q "é"', items: [{ id: 'first', path: 'a.ts', startLine: 1, endLine: 1, text: 'a();\n' }] };
+
+test('direct and OpenRouter transports send the prepared body without serializing again', async (t) => {
+  for (const kind of ['direct', 'openrouter'] as const) {
+    let sent = '';
+    const transport = async (request: { body: string }) => {
+      sent = request.body;
+      return { status: 200, headers: {}, text: JSON.stringify({
+        answers: { first: { type: 'noul', noul: 0.9 } }, usage: { input_tokens: 1 },
+      }) };
+    };
+    const adapter = kind === 'direct'
+      ? new JevAdapter({ model: 'jev-1.13.0', apiKey: 'synthetic', baseUrl: 'https://api.typesafe.ai', transport })
+      : new OpenRouterAdapter({ model: OPENROUTER_JEV_MODEL, apiKey: 'synthetic', transport });
+    const body = adapter.serializeBatch(batch);
+    t.mock.method(adapter, 'serializeBatch', () => { throw new Error('unexpected serialization'); });
+    const result = await adapter.evaluateBatch(batch, undefined, body);
+    assert.equal(sent, body);
+    assert.equal(result.scores.get('first'), 0.9);
+  }
+});
 
 function adapterFor(gateway: boolean) {
   return gateway ? new VercelGatewayAdapter({ model: VERCEL_JEV_MODEL, apiKey: 'synthetic' })

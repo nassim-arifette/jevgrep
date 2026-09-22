@@ -8,6 +8,7 @@ import {
   CACHE_SCHEMA_VERSION, ScoreCache, evaluationIdentity, isPinnedModelRevision,
 } from '../src/evaluation/cache.ts';
 import type { EvaluationIdentityInput } from '../src/evaluation/cache.ts';
+import { LocalDirectory } from '../src/local-directory.ts';
 
 /**
  * Exact evaluation reuse (JG-018, specification 9, requirement R9).
@@ -59,6 +60,75 @@ test('an identical repetition reuses the score without a new evaluation', () => 
   assert.equal(cache.write(identity, 0.81, META), true);
   assert.equal(cache.read(evaluationIdentity({ ...BASE })), 0.81);
   assert.equal(cache.stats.hits, 1);
+});
+
+test('bulk writes persist valid scores and keep invalid entries out', () => {
+  const directory = cacheDirectory();
+  const cache = newCache({ directory });
+  const first = evaluationIdentity(BASE);
+  const second = evaluationIdentity({ ...BASE, query: 'Where is the cache refreshed?' });
+  assert.equal(cache.writeMany([
+    { identity: first, score: 0.81, meta: META },
+    { identity: '../outside', score: 0.5, meta: META },
+    { identity: second, score: 0.37, meta: META },
+    { identity: evaluationIdentity({ ...BASE, query: 'invalid score' }), score: 2, meta: META },
+  ]), 2);
+  assert.equal(cache.stats.writes, 2);
+  assert.equal(new ScoreCache({ directory, enabled: true, ttlSeconds: 60, maxBytes: 1_000_000 }).read(first), 0.81);
+  assert.equal(cache.read(second), 0.37);
+  assert.equal(cache.writeMany([]), 0);
+});
+
+test('bulk writes honor rolling TTL and a shared size limit across cache instances', () => {
+  const directory = cacheDirectory();
+  let now = 1_000;
+  const options = { directory, enabled: true, ttlSeconds: 600, rollingTtlSeconds: 60,
+    maxBytes: 600, now: () => now };
+  const first = new ScoreCache(options);
+  const second = new ScoreCache(options);
+  const old = evaluationIdentity(BASE);
+  assert.equal(first.write(old, 0.1, META), true);
+  now += 1_000;
+  const rolling = evaluationIdentity({ ...BASE, query: 'rolling' });
+  const newest = evaluationIdentity({ ...BASE, query: 'newest' });
+  assert.equal(second.writeMany([
+    { identity: rolling, score: 0.2, meta: { ...META, modelRevision: 'typesafe-ai/jev' } },
+    { identity: newest, score: 0.3, meta: META },
+  ]), 2);
+  const sizes = readdirSync(directory).filter((name) => /^[a-f0-9]{2}$/.test(name)).flatMap((shard) =>
+    readdirSync(join(directory, shard)).map((name) => Buffer.byteLength(readFileSync(join(directory, shard, name)))));
+  assert.ok(sizes.reduce((sum, size) => sum + size, 0) <= options.maxBytes);
+  assert.equal(first.read(old), null, 'the oldest score is evicted');
+  assert.equal(first.read(newest), 0.3);
+  now += 60_000;
+  assert.equal(first.read(rolling), null, 'the rolling score expires at its bounded TTL');
+});
+
+test('a failed bulk entry still leaves successful writes within the size limit', (t) => {
+  const directory = cacheDirectory();
+  let now = 1_000;
+  const cache = newCache({ directory, maxBytes: 400, now: () => now });
+  const old = evaluationIdentity(BASE);
+  const first = evaluationIdentity({ ...BASE, query: 'first new score' });
+  const failed = evaluationIdentity({ ...BASE, query: 'failed new score' });
+  assert.equal(cache.write(old, 0.1, META), true);
+  now += 1_000;
+  const originalWrite = LocalDirectory.prototype.write;
+  t.mock.method(LocalDirectory.prototype, 'write', function (this: LocalDirectory,
+    relative: string, value: string, exclusive?: boolean) {
+    if (relative.endsWith(`${failed}.json`)) throw new Error('simulated local write failure');
+    return originalWrite.call(this, relative, value, exclusive);
+  });
+  assert.equal(cache.writeMany([
+    { identity: first, score: 0.2, meta: META },
+    { identity: failed, score: 0.3, meta: META },
+  ]), 1);
+  assert.equal(cache.stats.failures, 1);
+  assert.equal(cache.read(first), 0.2);
+  assert.equal(cache.read(old), null);
+  const bytes = readdirSync(directory).filter((name) => /^[a-f0-9]{2}$/.test(name)).flatMap((shard) =>
+    readdirSync(join(directory, shard)).map((name) => Buffer.byteLength(readFileSync(join(directory, shard, name)))));
+  assert.ok(bytes.reduce((sum, size) => sum + size, 0) <= 400);
 });
 
 test('rolling aliases expire within 15 minutes, including across sessions and policy changes', () => {

@@ -1,0 +1,35 @@
+{
+  "kind": "paired-cache-write",
+  "pairs": 5,
+  "entries": 64,
+  "medianIndividualMs": 10568.131499999996,
+  "medianGroupedMs": 4263.561699999998,
+  "medianPairedRatio": 2.359074691003065,
+  "samples": [
+    {
+      "individualMs": 10058.0605,
+      "groupedMs": 4263.561699999998,
+      "ratio": 2.359074691003065
+    },
+    {
+      "individualMs": 10568.131499999996,
+      "groupedMs": 4938.548499999997,
+      "ratio": 2.1399266403883654
+    },
+    {
+      "individualMs": 9577.389499999997,
+      "groupedMs": 4199.586899999995,
+      "ratio": 2.2805551422212527
+    },
+    {
+      "individualMs": 13667.68310000001,
+      "groupedMs": 4448.846000000005,
+      "ratio": 3.0721861579384844
+    },
+    {
+      "individualMs": 14085.197499999995,
+      "groupedMs": 3970.7293999999965,
+      "ratio": 3.5472569598925596
+    }
+  ]
+}
