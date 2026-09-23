@@ -1,0 +1,48 @@
+name: publish
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    name: Publish to npm
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v7
+
+      - name: Install the pinned Node.js version from .nvmrc
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          registry-url: https://registry.npmjs.org
+          cache: npm
+
+      - name: Install exact versions from the lockfile
+        run: npm ci --no-audit --no-fund
+
+      - name: Verify the tag matches the package version
+        run: |
+          tag_version="${GITHUB_REF_NAME#v}"
+          pkg_version="$(node -p "require('./package.json').version")"
+          if [ "$tag_version" != "$pkg_version" ]; then
+            echo "Tag v$tag_version does not match package.json version $pkg_version" >&2
+            exit 1
+          fi
+        if: github.event_name == 'push'
+
+      - name: Type check, test, build and smoke without provider credentials
+        run: npm run verify
+
+      - name: Publish with provenance
+        run: npm publish --provenance --access public
