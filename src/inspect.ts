@@ -115,7 +115,7 @@ export function inspectScope(configuration: LoadedConfiguration, options: Inspec
     notes.push(`${String(prepared.unreadable)} eligible file(s) could not be read`);
   }
   if (prepared.parseFallbacks > 0) {
-    notes.push(`${String(prepared.parseFallbacks)} JS/TS file(s) fell back to line windows after a lexical parse failure`);
+    notes.push(`${String(prepared.parseFallbacks)} syntax-chunked file(s) fell back to line windows after a lexical parse failure`);
   }
   if (!config.remote_evaluation_enabled) {
     notes.push('remote evaluation is disabled: a search would be refused before any excerpt leaves this machine');
