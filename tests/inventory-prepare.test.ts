@@ -91,7 +91,7 @@ test('administrative, credential, dependency and build entries are excluded with
     'an unvisited directory contributes no invented descendant counts');
 });
 
-test('every valid UTF-8 language is searchable while only JS and TS use syntax chunking', () => {
+test('every valid UTF-8 language is searchable while only JS, TS, Python and Java use syntax chunking', () => {
   const space = workspace({
     'Dockerfile': 'FROM node:24\nRUN npm ci\n',
     'src/main.go': 'package main\nfunc main() {}\n',
@@ -119,7 +119,7 @@ test('every valid UTF-8 language is searchable while only JS and TS use syntax c
   const prepared = prepareScope(AuthorizedRoot.open(space.repositoryRoot), ['.'], { inventory: defaultOptions });
   assert.equal(prepared.files.length, 13);
   for (const file of prepared.files) {
-    assert.equal(file.strategy, file.snapshot.relativePath.endsWith('.ts') ? 'syntax' : 'line-window',
+    assert.equal(file.strategy, /\.(?:ts|py|java)$/.test(file.snapshot.relativePath) ? 'syntax' : 'line-window',
       file.snapshot.relativePath);
     assert.ok(file.fragments.length > 0, `${file.snapshot.relativePath} must be searchable`);
   }
