@@ -118,10 +118,12 @@ function scan(text: string, lineOfOffset: (offset: number) => number): MutableBo
       if (CONTINUES_AFTER_BLOCK.has(value) || (value === 'while' && resumed.firstWord === 'do')) {
         statement = resumed;
         expectStart = false;
+        commentStart = null;
       } else {
+        const documentation = commentStart;
         statement = resumed;
         endStatement(offset - 1);
-        terminatorLine = 0;
+        commentStart = documentation;
       }
     }
     if (expectStart && atStatementLevel() && value !== ';' && value !== '}') {
@@ -155,7 +157,7 @@ function scan(text: string, lineOfOffset: (offset: number) => number): MutableBo
       continue;
     }
     if (char === '/' && (text[index + 1] === '/' || text[index + 1] === '*')) {
-      if (expectStart && closed === null && commentStart === null && atStatementLevel()
+      if ((expectStart || closed !== null) && commentStart === null && atStatementLevel()
         && lineOfOffset(index) > terminatorLine) {
         commentStart = index;
       }
