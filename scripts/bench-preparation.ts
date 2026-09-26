@@ -11,7 +11,7 @@
  */
 import { execFileSync, spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { cpSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { appendFileSync, cpSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { performance } from 'node:perf_hooks';
@@ -85,7 +85,11 @@ function child(input: StepInput): Promise<Awaited<ReturnType<typeof runStep>>> {
     const proc = spawn(process.execPath, [script, '--step', JSON.stringify(input)], { stdio: ['ignore', 'pipe', 'inherit'] });
     let out = '';
     proc.stdout.on('data', (chunk: Buffer) => { out += chunk.toString('utf8'); });
-    proc.on('exit', (code) => (code === 0 ? resolve(JSON.parse(out) as Awaited<ReturnType<typeof runStep>>) : reject(new Error(`step ${input.step} exited ${String(code)}`))));
+    proc.on('error', reject);
+    proc.on('close', (code) => {
+      if (code !== 0) { reject(new Error(`step ${input.step} exited ${String(code)}`)); return; }
+      try { resolve(JSON.parse(out) as Awaited<ReturnType<typeof runStep>>); } catch (error) { reject(error as Error); }
+    });
   });
 }
 
@@ -157,7 +161,15 @@ async function main(): Promise<void> {
     else if (args[i] === '--output') output = args[i + 1]!;
   }
   const plan = corpora.flatMap(([name, path]) => Array.from({ length: repeats }, (_, repeat) => ({ name, path, repeat })));
-  const rows = (await mapLimit(plan, jobs, (item) => sequence(item.name, item.path, item.repeat))).flat();
+  mkdirSync(dirname(output), { recursive: true });
+  const progress = `${output}.partial.jsonl`;
+  writeFileSync(progress, '');
+  const rows = (await mapLimit(plan, jobs, async (item) => {
+    const result = await sequence(item.name, item.path, item.repeat);
+    appendFileSync(progress, `${JSON.stringify(result)}\n`);
+    console.error(`done ${item.name} #${String(item.repeat)}`);
+    return result;
+  })).flat();
   const summary = [];
   for (const [name] of corpora) {
     for (const step of steps) {
