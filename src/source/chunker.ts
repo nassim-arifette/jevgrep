@@ -18,7 +18,7 @@ import { countReferenceTokens } from '../response/token-counter.ts';
 import { measureSync } from '../profiling.ts';
 import { parseJavaScriptBoundaries } from './javascript-boundaries.ts';
 import type { Boundary } from './javascript-boundaries.ts';
-import { DEFAULT_WINDOW_LIMITS, LINE_WINDOW_CHUNKER_VERSION, lineWindows } from './line-windows.ts';
+import { DEFAULT_WINDOW_LIMITS, LINE_WINDOW_CHUNKER_VERSION, lineWindowsOf } from './line-windows.ts';
 import type { FragmentWindow, UnsupportedLongLine, WindowLimits } from './line-windows.ts';
 import type { SourceSnapshot } from './snapshot.ts';
 
@@ -81,8 +81,8 @@ function fragmentOf(snapshot: SourceSnapshot, range: LineRange): PreparedFragmen
     byteCount: slice.byteLength,
     // Measured on the slice itself: summing line costs over-estimates a BPE counter,
     // whose merges cross line endings. The sums stay in the packing decisions, where
-    // over-estimating is the safe direction.
-    tokenCount: countReferenceTokens(slice.text),
+    // over-estimating is the safe direction. A one-line slice is exactly a cached line.
+    tokenCount: range.startLine === range.endLine ? snapshot.lineTokens(range.startLine) : countReferenceTokens(slice.text),
     chunker: SYNTAX_CHUNKER_VERSION,
     classification: 'syntax-range',
     label: range.label,
@@ -115,7 +115,7 @@ function windowsOfRange(
   let cursor = range.startLine;
 
   while (cursor <= range.endLine) {
-    if (snapshot.lineTokens(cursor) > limits.maxTokens || snapshot.rangeBytes(cursor, cursor) > limits.maxBytes) {
+    if (snapshot.rangeBytes(cursor, cursor) > limits.maxBytes || snapshot.lineTokens(cursor) > limits.maxTokens) {
       return {
         kind: 'unsupported-long-line', line: cursor, reason: 'unsupported_long_line',
         byteCount: snapshot.rangeBytes(cursor, cursor), tokenCount: snapshot.lineTokens(cursor),
@@ -227,9 +227,11 @@ function packUnits(
 
 /** Whole-file line windows, produced by the JG-012 chunker and relabelled for this shape. */
 function fallbackWindows(snapshot: SourceSnapshot, limits: WindowLimits): ChunkResult {
-  const result = lineWindows(
+  const result = lineWindowsOf(
     { path: snapshot.relativePath, text: snapshot.text, sha256: snapshot.sha256 },
+    snapshot,
     limits,
+    countReferenceTokens,
   );
   if (result.kind === 'unsupported-long-line') {
     return result;
@@ -248,6 +250,15 @@ export function chunkSnapshot(
   snapshot: SourceSnapshot,
   limits: WindowLimits = DEFAULT_WINDOW_LIMITS,
 ): ChunkResult {
+  // Every chunker rejects a line above the byte ceiling; find it before parsing or BPE work.
+  // Blank-only files carry no fragment, so they never reach this refusal.
+  const longLine = snapshot.isBlank() ? null : snapshot.firstLineOverBytes(limits.maxBytes);
+  if (longLine !== null) {
+    return {
+      kind: 'unsupported-long-line', line: longLine, reason: 'unsupported_long_line',
+      byteCount: snapshot.rangeBytes(longLine, longLine), tokenCount: null,
+    };
+  }
   if (!usesSyntaxChunking(snapshot.relativePath)) {
     return fallbackWindows(snapshot, limits);
   }
