@@ -16,7 +16,7 @@ import { createHash } from 'node:crypto';
 import { REFERENCE_COUNTER_ID, countReferenceTokens } from '../response/token-counter.ts';
 import { countProfile, measureSync } from '../profiling.ts';
 import { AuthorizedRoot, UnauthorizedPathError } from './authorization.ts';
-import { DEFAULT_WINDOW_LIMITS, chunkSnapshot, chunkerVersionFor } from './chunker.ts';
+import { DEFAULT_WINDOW_LIMITS, chunkSnapshot, chunkerIdentityFor } from './chunker.ts';
 import type { ChunkResult, PreparedFragment, WindowLimits } from './chunker.ts';
 import { inventoryScope } from './inventory.ts';
 import type { InventoryOptions, InventoryResult } from './inventory.ts';
@@ -231,8 +231,9 @@ type ContentOutcome = { readonly changed: boolean; readonly rejected: boolean } 
 /**
  * Content checks and chunking of one file's bytes, in the order of section 5.2.
  *
- * With a cache entry for these exact bytes, a verdict from the current scanner is
- * reused, known line tokens seed the snapshot and boundaries from the current chunker
+ * With a cache entry for these exact bytes, an exclusion verdict from the current
+ * scanner is reused (an `ok` verdict is always re-checked, so a cache entry can only
+ * withhold content, never release it), known line tokens seed the snapshot and boundaries from the current chunker
  * and limits are re-sliced from the bytes. Anything missing is computed and recorded
  * in the entry, so each invalidation domain is rebuilt independently.
  */
@@ -246,7 +247,10 @@ function prepareContent(
 ): ContentOutcome {
   let changed = false;
   let rejected = false;
-  const scan = entry?.scan?.version === SCANNER_VERSION ? entry.scan : null;
+  const cachedScan = entry?.scan;
+  const scan = cachedScan?.version === SCANNER_VERSION && cachedScan.verdict !== 'ok'
+    ? { verdict: cachedScan.verdict, detail: cachedScan.detail }
+    : null;
   const exclusion = (reason: Exclude<ScanVerdict, 'ok'>, detail: string | null): ContentOutcome => {
     if (entry !== undefined && scan === null) {
       entry.scan = { version: SCANNER_VERSION, verdict: reason, detail };
@@ -256,7 +260,7 @@ function prepareContent(
   };
   if (scan !== null) {
     countProfile('preparation_cache_scan_reused');
-    if (scan.verdict !== 'ok') return { kind: 'excluded', reason: scan.verdict, detail: scan.detail, changed, rejected };
+    return { kind: 'excluded', reason: scan.verdict, detail: scan.detail, changed, rejected };
   }
 
   const knownTokens = entry?.tokens?.counter === REFERENCE_COUNTER_ID ? decodeLineTokens(entry.tokens.lines) : undefined;
@@ -277,13 +281,13 @@ function prepareContent(
     if (snapshot.isBlank()) return exclusion(snapshot.byteLength === 0 ? 'empty' : 'whitespace_only', null);
     const credential = measureSync('secret_scan', () => findCredentialPattern(snapshot.text));
     if (credential !== null) return exclusion('credential_pattern', credential);
-    if (entry !== undefined) {
+    if (entry !== undefined && (entry.scan?.version !== SCANNER_VERSION || entry.scan.verdict !== 'ok')) {
       entry.scan = { version: SCANNER_VERSION, verdict: 'ok', detail: null };
       changed = true;
     }
   }
 
-  const key = chunkKey(chunkerVersionFor(relativePath), windowLimits);
+  const key = chunkKey(chunkerIdentityFor(relativePath), windowLimits);
   const record = entry?.chunks[key];
   let chunked = record === undefined || rejected ? null : resultOf(record, snapshot);
   if (record !== undefined && chunked === null) rejected = true;

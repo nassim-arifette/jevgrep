@@ -11,6 +11,7 @@ import type { WindowLimits } from '../src/source/chunker.ts';
 import { PreparationCache } from '../src/source/preparation-cache.ts';
 import { prepareScope } from '../src/source/prepare.ts';
 import type { PreparedScope } from '../src/source/prepare.ts';
+import { SCANNER_VERSION } from '../src/source/prepare.ts';
 import { hashBytes } from '../src/source/snapshot.ts';
 import { createWorkspace } from './helpers/search-workspace.ts';
 
@@ -75,7 +76,7 @@ test('cold and warm cached preparation equal uncached preparation exactly', asyn
   assert.deepEqual(observable(warm.prepared), observable(reference.prepared));
   assert.ok(calls(cold, 'chunking') > 0);
   assert.equal(calls(warm, 'chunking'), 0);
-  assert.equal(calls(warm, 'secret_scan'), 0);
+  assert.equal(calls(warm, 'secret_scan'), reference.prepared.files.length);
   assert.equal(warm.profile.counters['preparation_cache_chunks_reused'], reference.prepared.files.length);
 });
 
@@ -130,11 +131,16 @@ test('content verdicts are reused by hash and scanner version; eligibility is al
 
   const sha = hashBytes(Buffer.from(files['src/leak.ts']));
   const entry = cache.get(sha, Buffer.byteLength(files['src/leak.ts']));
-  entry.scan = { version: 'older-scanner', verdict: 'ok', detail: null };
+  entry.scan = { version: 'older-scanner', verdict: 'whitespace_only', detail: null };
   cache.update(entry);
   const rescanned = await prepare(space.repositoryRoot, cache);
   assert.ok(rescanned.prepared.excluded.some((item) => item.relativePath === 'src/leak.ts' && item.reason === 'credential_pattern'));
-  assert.equal(calls(rescanned, 'secret_scan'), 1);
+
+  entry.scan = { version: SCANNER_VERSION, verdict: 'ok', detail: null };
+  cache.update(entry);
+  const forged = await prepare(space.repositoryRoot, cache);
+  assert.ok(forged.prepared.excluded.some((item) => item.relativePath === 'src/leak.ts' && item.reason === 'credential_pattern'));
+  assert.ok(!forged.prepared.fragments.some((fragment) => fragment.text.includes('ghp_')));
 });
 
 test('a limits change rechunks without remeasuring cached line tokens', async () => {
@@ -201,4 +207,45 @@ test('a disabled cache does no work and stores nothing', async () => {
   assert.deepEqual(observable(run.prepared), observable(reference.prepared));
   assert.equal(cache.stats.hits + cache.stats.misses + cache.stats.writes, 0);
   assert.throws(() => readdirSync(directory));
+});
+
+test('identical bytes under different extensions or chunkers never share fragments', async () => {
+  const body = 'export const view = (x: number) => x + 1;\nexport function other() {\n  return 2;\n}\n';
+  const space = workspace({ 'src/a.ts': body, 'src/b.tsx': body, 'src/c.md': body });
+  const cache = new PreparationCache({ directory: cacheDirectory(), enabled: true, maxBytes: 10_000_000 });
+  const reference = await prepare(space.repositoryRoot);
+  const cached = await prepare(space.repositoryRoot, cache);
+  assert.deepEqual(observable(cached.prepared), observable(reference.prepared));
+  const entry = cache.get(hashBytes(Buffer.from(body)), Buffer.byteLength(body));
+  assert.equal(Object.keys(entry.chunks).length, 3);
+});
+
+test('cached token counts that cannot match their bytes are rebuilt', async () => {
+  const space = workspace({ 'src/a.ts': files['src/a.ts'] });
+  const cache = new PreparationCache({ directory: cacheDirectory(), enabled: true, maxBytes: 10_000_000 });
+  const reference = await prepare(space.repositoryRoot);
+  await prepare(space.repositoryRoot, cache);
+  const entry = cache.get(hashBytes(Buffer.from(files['src/a.ts'])), Buffer.byteLength(files['src/a.ts']));
+  for (const record of Object.values(entry.chunks)) {
+    if (record.kind === 'fragments') Object.assign(record, { fragments: [[record.fragments[0]![0], record.fragments[0]![1], 0], ...record.fragments.slice(1)] });
+  }
+  cache.update(entry);
+  const run = await prepare(space.repositoryRoot, cache);
+  assert.deepEqual(observable(run.prepared), observable(reference.prepared));
+  assert.equal(cache.stats.corrupt, 1);
+  assert.equal(calls(await prepare(space.repositoryRoot, cache), 'chunking'), 0);
+});
+
+test('entries pending while another writer holds the lock are retried on the next flush', async () => {
+  const space = workspace({ 'src/a.ts': files['src/a.ts'] });
+  const directory = cacheDirectory();
+  const cache = new PreparationCache({ directory, enabled: true, maxBytes: 10_000_000 });
+  const lock = join(directory, '.write.lock');
+  mkdirSync(lock, { recursive: true, mode: 0o700 });
+  writeFileSync(join(lock, 'a'), '');
+  writeFileSync(join(lock, 'b'), '');
+  await prepare(space.repositoryRoot, cache);
+  assert.equal(cache.stats.writes, 0);
+  rmSync(lock, { recursive: true, force: true });
+  assert.equal(cache.flush(), 1);
 });

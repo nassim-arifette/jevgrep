@@ -103,8 +103,8 @@ export function isPreparationEntry(value: unknown, sha256: string, byteLength: n
 }
 
 /** Key of one chunking result: which code split the file, under which limits and counter. */
-export function chunkKey(chunkerVersion: string, limits: WindowLimits): string {
-  return createHash('sha256').update(JSON.stringify([chunkerVersion, limits, REFERENCE_COUNTER_ID])).digest('hex').slice(0, 32);
+export function chunkKey(chunkerIdentity: string, limits: WindowLimits): string {
+  return createHash('sha256').update(JSON.stringify([chunkerIdentity, limits, REFERENCE_COUNTER_ID])).digest('hex').slice(0, 32);
 }
 
 export function encodeLineTokens(values: Int32Array): string {
@@ -155,6 +155,7 @@ export function resultOf(record: ChunkRecord, snapshot: SourceSnapshot): ChunkRe
   for (const [startLine, endLine, tokenCount, label] of record.fragments) {
     if (endLine > snapshot.lineCount) return null;
     const slice = snapshot.sliceLines(startLine, endLine);
+    if (slice.byteLength > 0 ? tokenCount < 1 || tokenCount > slice.byteLength : tokenCount !== 0) return null;
     fragments.push({
       id: `${snapshot.relativePath}#L${String(startLine)}-L${String(endLine)}`,
       path: snapshot.relativePath, sha256: snapshot.sha256, startLine, endLine,
@@ -245,7 +246,6 @@ export class PreparationCache {
   flush(): number {
     if (this.#storage === null || this.#dirty.size === 0) { this.#dirty.clear(); return 0; }
     const pending = [...this.#dirty.values()];
-    this.#dirty.clear();
     let written = 0;
     try {
       this.#storage.withLock(() => {
@@ -257,6 +257,7 @@ export class PreparationCache {
         }
         this.#evict();
       });
+      this.#dirty.clear();
     } catch { this.stats.failures += 1; }
     this.stats.writes += written;
     return written;
