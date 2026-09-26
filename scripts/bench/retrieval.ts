@@ -1,8 +1,11 @@
 import type { Excerpt, SearchOutcome } from '../../src/contracts.ts';
-import type { Evidence, RetrievalQuestion } from './dataset.ts';
+import type { Evidence } from './dataset.ts';
+
+/** Any annotated question: an empty evidence list is a negative. */
+export type EvidenceQuestion = { readonly evidence: readonly Evidence[] };
 
 /** Full required lines must be covered; a duplicate/overlap cannot count twice. */
-function covered(evidence: Evidence, excerpts: readonly Excerpt[]): boolean {
+export function covered(evidence: Evidence, excerpts: readonly Excerpt[]): boolean {
   const ranges = excerpts.filter((excerpt) => excerpt.path === evidence.path)
     .sort((a, b) => a.start_line - b.start_line);
   let next = evidence.startLine;
@@ -14,7 +17,7 @@ function covered(evidence: Evidence, excerpts: readonly Excerpt[]): boolean {
   return false;
 }
 
-export function retrievalMetrics(question: RetrievalQuestion, outcome: SearchOutcome) {
+export function retrievalMetrics(question: EvidenceQuestion, outcome: SearchOutcome) {
   // Errors and partial scans are never successful negative answers.
   if (!('report' in outcome) || outcome.status !== 'complete' || !outcome.report.scope_fully_scanned) return null;
   const recall = (excerpts: readonly Excerpt[]): number =>
@@ -42,5 +45,29 @@ export function summarizeRetrieval(results: readonly ReturnType<typeof retrieval
     mrr: mean(complete.flatMap((row) => row.reciprocalRank === null ? [] : [row.reciprocalRank])),
     meanEvidenceCoverage: mean(complete.flatMap((row) => row.evidenceCoverage === null ? [] : [row.evidenceCoverage])),
     negativeAccuracy: mean(complete.flatMap((row) => row.negativeCorrect === null ? [] : [Number(row.negativeCorrect)])),
+  };
+}
+
+export type LocalizationQuestion = EvidenceQuestion & { readonly complementary: readonly Evidence[] };
+
+const overlaps = (unit: Evidence, excerpt: Excerpt): boolean =>
+  excerpt.path === unit.path && excerpt.start_line <= unit.endLine && excerpt.end_line >= unit.startLine;
+
+/**
+ * Real-task labels are patch sites, not exhaustive relevance: file recall and first
+ * overlapping hit are reported beside strict unit recall, and complementary context
+ * is measured separately instead of being required.
+ */
+export function localizationMetrics(question: LocalizationQuestion, outcome: SearchOutcome) {
+  const base = retrievalMetrics(question, outcome);
+  if (base === null || !('report' in outcome) || question.evidence.length === 0) return base === null ? null : { ...base, fileRecall: null, firstOverlapRank: null, complementaryCoverage: null };
+  const files = [...new Set(question.evidence.map((unit) => unit.path))];
+  const first = outcome.excerpts.findIndex((excerpt) => question.evidence.some((unit) => overlaps(unit, excerpt)));
+  return {
+    ...base,
+    fileRecall: files.filter((path) => outcome.excerpts.some((excerpt) => excerpt.path === path)).length / files.length,
+    firstOverlapRank: first === -1 ? null : first + 1,
+    complementaryCoverage: question.complementary.length === 0 ? null
+      : question.complementary.filter((unit) => outcome.excerpts.some((excerpt) => overlaps(unit, excerpt))).length / question.complementary.length,
   };
 }

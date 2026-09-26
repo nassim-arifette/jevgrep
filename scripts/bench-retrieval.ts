@@ -1,13 +1,10 @@
 import { createHash } from 'node:crypto';
 import { parseArgs } from 'node:util';
-import { loadConfiguration, resolveCredential } from '../src/config.ts';
 import { createSearchEngine } from '../src/engine.ts';
-import { createConfiguredProvider, serializeConfiguredBatch } from '../src/evaluation/provider.ts';
 import { SearchProfiler } from '../src/profiling.ts';
-import { environmentWithProfileSecrets } from '../src/init.ts';
 import { environment, positiveInteger, workspace, writeReport } from './bench/common.ts';
 import { datasetVersion, fixtureHashes, questions, validateDataset } from './bench/dataset.ts';
-import { limitProvider } from './bench/limited-provider.ts';
+import { liveProvider } from './bench/live-provider.ts';
 import { retrievalMetrics, summarizeRetrieval } from './bench/retrieval.ts';
 
 const { values } = parseArgs({ options: {
@@ -24,39 +21,23 @@ if (values.help) {
     console.log(`Validated ${questions.length} questions on ${repositories.size} pinned synthetic repositories (${datasetVersion}); no provider calls.`);
   } else {
     if (values.config === undefined) throw new Error('provide --config for live evaluation, or --validate-only for offline annotation checks');
-    const template = loadConfiguration(values.config);
-    const credential = resolveCredential(template, environmentWithProfileSecrets(
-      template.configPath, process.env, template.sourceRoot, template.config.provider.api_key_env,
-    ));
-    const caps = {
+    const live = liveProvider(values.config, {
       requests: positiveInteger(values['max-requests'], 60),
       estimatedInputTokens: positiveInteger(values['max-input-tokens'], 200_000),
-    };
+    });
+    const { template, provider, usage, caps } = live;
     const responseTokens = positiveInteger(values['response-tokens'], 4_000);
     if (responseTokens > template.config.search.max_response_tokens) throw new Error('response budget exceeds trusted configuration maximum');
-    const serialize = (batch: Parameters<typeof serializeConfiguredBatch>[1]) => serializeConfiguredBatch(template.config, batch);
-    const { provider, usage } = limitProvider(createConfiguredProvider(template.config, credential), serialize, caps);
     const host = environment();
     const rows = [];
     const notRun: string[] = [];
     for (const question of questions) {
-      if (usage.blocked || usage.attempts >= caps.requests || usage.reservedInputTokens >= caps.estimatedInputTokens) {
+      if (live.exhausted()) {
         notRun.push(question.id);
         continue;
       }
       console.error(`Retrieval ${question.id} (${question.repository})`);
-      const space = workspace(repositories.get(question.repository)!, (base) => ({
-        ...base,
-        remote_evaluation_enabled: template.config.remote_evaluation_enabled,
-        provider: template.config.provider,
-        search: template.config.search,
-        scan_caps: {
-          ...template.config.scan_caps,
-          request_attempts: Math.min(template.config.scan_caps.request_attempts ?? Infinity, caps.requests - usage.attempts),
-          estimated_input_tokens: Math.min(template.config.scan_caps.estimated_input_tokens ?? Infinity, caps.estimatedInputTokens - usage.reservedInputTokens),
-        },
-        cache: { ...base.cache, enabled: false },
-      }));
+      const space = workspace(repositories.get(question.repository)!, (base) => live.configure(base));
       try {
         const profile = new SearchProfiler();
         const result = await createSearchEngine({ configuration: space.loaded, provider }).search({
@@ -78,7 +59,7 @@ if (values.help) {
       schemaVersion: 1, kind: 'live-retrieval', createdAt: new Date().toISOString(), environment: host, sourceStable,
       dataset: { version: datasetVersion, fixtureHashes, questionsHash: createHash('sha256').update(JSON.stringify(questions)).digest('hex'), questions },
       settings: {
-        provider: { adapter: template.config.provider.adapter ?? 'typesafe-direct', model: provider.model, baseUrl: template.config.provider.base_url, pricing: template.config.provider.pricing ?? null },
+        provider: live.settings,
         search: template.config.search, scanCaps: template.config.scan_caps,
         responseTokens, caps, scoreCache: 'disabled', source: 'fixed fixture defaults; only copied synthetic fixtures are searched',
       },
