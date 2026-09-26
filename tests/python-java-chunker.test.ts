@@ -227,3 +227,13 @@ test('Python and Java chunking is deterministic', () => {
     assert.deepEqual(ids(), ids());
   }
 });
+
+test('Java documentation after a closing brace belongs to the next member, not the previous one', () => {
+  const text = 'class Docs {\n    void first() {\n        run();\n    } // trailing\n\n    /** Second. */\n    @Deprecated\n    void second() {\n    }\n}\n';
+  const outcome = parseJavaBoundaries(text, lineOf(text));
+  assert.ok(outcome.ok);
+  assert.deepEqual(
+    outcome.boundaries.filter((boundary) => boundary.depth === 1).map(({ line, label }) => [line, label]),
+    [[2, 'method:first'], [6, 'method:second']],
+  );
+});
