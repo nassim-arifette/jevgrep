@@ -1,8 +1,8 @@
 /**
- * Syntax-aware fragment preparation for JavaScript and TypeScript (JG-015).
+ * Syntax-aware fragment preparation for JavaScript, TypeScript, Python and Java (JG-015).
  *
  * The line-window chunker (JG-012, `line-windows.ts`) stays the reference and the
- * fallback; this module only improves *where* JS/TS fragments begin and end. It
+ * fallback; this module only improves *where* source fragments begin and end. It
  * produces the same fragment shape, so nothing downstream has to know which chunker
  * ran. A file this module cannot parse falls back to line windows with an
  * explicit reason instead of disappearing (specification section 5.4).
@@ -16,7 +16,10 @@
  */
 import { countReferenceTokens } from '../response/token-counter.ts';
 import { measureSync } from '../profiling.ts';
+import { parseJavaBoundaries } from './java-boundaries.ts';
 import { parseJavaScriptBoundaries } from './javascript-boundaries.ts';
+import type { ParseOutcome } from './javascript-boundaries.ts';
+import { parsePythonBoundaries } from './python-boundaries.ts';
 import type { Boundary } from './javascript-boundaries.ts';
 import { DEFAULT_WINDOW_LIMITS, LINE_WINDOW_CHUNKER_VERSION, lineWindows } from './line-windows.ts';
 import type { FragmentWindow, UnsupportedLongLine, WindowLimits } from './line-windows.ts';
@@ -25,8 +28,16 @@ import type { SourceSnapshot } from './snapshot.ts';
 export { DEFAULT_WINDOW_LIMITS, LINE_WINDOW_CHUNKER_VERSION };
 export type { WindowLimits };
 
-/** Bumped when syntax boundaries change; part of evaluation identity (JG-018). */
-export const SYNTAX_CHUNKER_VERSION = 'jevgrep-typescript-6.0.2-2';
+export type SyntaxLanguage = 'javascript' | 'python' | 'java';
+
+/** Bumped per language when its syntax boundaries change; part of evaluation identity (JG-018). */
+export const SYNTAX_CHUNKER_VERSIONS: Readonly<Record<SyntaxLanguage, string>> = {
+  javascript: 'jevgrep-typescript-6.0.2-2',
+  python: 'jevgrep-python-scan-1',
+  java: 'jevgrep-java-scan-1',
+};
+
+export const SYNTAX_CHUNKER_VERSION = SYNTAX_CHUNKER_VERSIONS.javascript;
 
 /**
  * A prepared fragment from either chunker.
@@ -46,13 +57,18 @@ export type ChunkResult =
   | {
     readonly kind: 'fragments';
     readonly strategy: 'syntax' | 'line-window';
-    /** Why a JS/TS file used windows instead of syntax units, when it did. */
+    /** Why a syntax-chunked file used windows instead of syntax units, when it did. */
     readonly fallback: ChunkFallback | null;
     readonly fragments: readonly PreparedFragment[];
   }
   | UnsupportedLongLine;
 
-const SYNTAX_EXTENSIONS = new Set(['.js', '.jsx', '.ts', '.tsx', '.mjs', '.cjs', '.mts', '.cts']);
+const SYNTAX_LANGUAGES: ReadonlyMap<string, SyntaxLanguage> = new Map([
+  ...['.js', '.jsx', '.ts', '.tsx', '.mjs', '.cjs', '.mts', '.cts'].map((extension) => [extension, 'javascript'] as const),
+  ['.py', 'python'],
+  ['.pyi', 'python'],
+  ['.java', 'java'],
+]);
 
 export function extensionOf(path: string): string {
   const name = path.slice(path.lastIndexOf('/') + 1);
@@ -60,14 +76,31 @@ export function extensionOf(path: string): string {
   return dot <= 0 ? '' : name.slice(dot).toLowerCase();
 }
 
-/** True for the eight JS/TS extensions the syntax chunker attempts. */
+/** The language whose syntax boundaries are attempted for `path`, if any. */
+export function syntaxLanguageOf(path: string): SyntaxLanguage | null {
+  return SYNTAX_LANGUAGES.get(extensionOf(path)) ?? null;
+}
+
+/** True for the JS/TS, Python and Java extensions the syntax chunker attempts. */
 export function usesSyntaxChunking(path: string): boolean {
-  return SYNTAX_EXTENSIONS.has(extensionOf(path));
+  return syntaxLanguageOf(path) !== null;
+}
+
+function parseBoundaries(language: SyntaxLanguage, snapshot: SourceSnapshot): ParseOutcome {
+  const lineOfOffset = (offset: number): number => snapshot.lineOfUtf16(offset);
+  switch (language) {
+    case 'javascript':
+      return parseJavaScriptBoundaries(snapshot.text, lineOfOffset, snapshot.relativePath);
+    case 'python':
+      return parsePythonBoundaries(snapshot.text, lineOfOffset);
+    case 'java':
+      return parseJavaBoundaries(snapshot.text, lineOfOffset);
+  }
 }
 
 type LineRange = { readonly startLine: number; readonly endLine: number; readonly label: string | null };
 
-function fragmentOf(snapshot: SourceSnapshot, range: LineRange): PreparedFragment {
+function fragmentOf(snapshot: SourceSnapshot, range: LineRange, chunker: string): PreparedFragment {
   const slice = snapshot.sliceLines(range.startLine, range.endLine);
   return {
     id: `${snapshot.relativePath}#L${String(range.startLine)}-L${String(range.endLine)}`,
@@ -83,7 +116,7 @@ function fragmentOf(snapshot: SourceSnapshot, range: LineRange): PreparedFragmen
     // whose merges cross line endings. The sums stay in the packing decisions, where
     // over-estimating is the safe direction.
     tokenCount: countReferenceTokens(slice.text),
-    chunker: SYNTAX_CHUNKER_VERSION,
+    chunker,
     classification: 'syntax-range',
     label: range.label,
   };
@@ -110,6 +143,7 @@ function windowsOfRange(
   snapshot: SourceSnapshot,
   range: LineRange,
   limits: WindowLimits,
+  chunker: string,
 ): PreparedFragment[] | UnsupportedLongLine {
   const fragments: PreparedFragment[] = [];
   let cursor = range.startLine;
@@ -134,7 +168,7 @@ function windowsOfRange(
     if (!isBlankRange(snapshot, cursor, end)) {
       fragments.push(fragmentOf(snapshot, {
         startLine: cursor, endLine: end, label: cursor === range.startLine ? range.label : null,
-      }));
+      }, chunker));
     }
     if (end >= range.endLine) {
       break;
@@ -181,6 +215,7 @@ function packUnits(
   snapshot: SourceSnapshot,
   units: readonly LineRange[],
   limits: WindowLimits,
+  chunker: string,
   refine: (unit: LineRange) => PreparedFragment[] | UnsupportedLongLine | null,
 ): PreparedFragment[] | UnsupportedLongLine {
   const fragments: PreparedFragment[] = [];
@@ -188,7 +223,7 @@ function packUnits(
 
   const flush = (): void => {
     if (pending !== null && !isBlankRange(snapshot, pending.startLine, pending.endLine)) {
-      fragments.push(fragmentOf(snapshot, pending));
+      fragments.push(fragmentOf(snapshot, pending, chunker));
     }
     pending = null;
   };
@@ -200,7 +235,7 @@ function packUnits(
 
     if (tokens > limits.maxTokens || bytes > limits.maxBytes || lines > limits.maxLines) {
       flush();
-      const refined = refine(unit) ?? windowsOfRange(snapshot, unit, limits);
+      const refined = refine(unit) ?? windowsOfRange(snapshot, unit, limits, chunker);
       if (!Array.isArray(refined)) {
         return refined as UnsupportedLongLine;
       }
@@ -240,23 +275,21 @@ function fallbackWindows(snapshot: SourceSnapshot, limits: WindowLimits): ChunkR
 /**
  * Prepare every fragment of one snapshot.
  *
- * Non-JS/TS text uses JG-012 directly. JS/TS text is parsed for statement
- * boundaries; if the parser refuses the file, the same JG-012 windows are returned
+ * Text in other languages uses JG-012 directly. JS/TS, Python and Java text is
+ * parsed for statement boundaries; if the parser refuses the file, the same JG-012 windows are returned
  * with `fallback: 'parse_failure'` so the caller can report it.
  */
 export function chunkSnapshot(
   snapshot: SourceSnapshot,
   limits: WindowLimits = DEFAULT_WINDOW_LIMITS,
 ): ChunkResult {
-  if (!usesSyntaxChunking(snapshot.relativePath)) {
+  const language = syntaxLanguageOf(snapshot.relativePath);
+  if (language === null) {
     return fallbackWindows(snapshot, limits);
   }
 
-  const scan = measureSync('parsing', () => parseJavaScriptBoundaries(
-    snapshot.text,
-    (offset) => snapshot.lineOfUtf16(offset),
-    snapshot.relativePath,
-  ));
+  const chunker = SYNTAX_CHUNKER_VERSIONS[language];
+  const scan = measureSync('parsing', () => parseBoundaries(language, snapshot));
   if (!scan.ok) {
     const windows = fallbackWindows(snapshot, limits);
     return windows.kind === 'unsupported-long-line'
@@ -274,11 +307,11 @@ export function chunkSnapshot(
     if (inner.length <= 1) {
       return refineAt(depth + 1)(unit);
     }
-    return packUnits(snapshot, inner, limits, refineAt(depth + 1));
+    return packUnits(snapshot, inner, limits, chunker, refineAt(depth + 1));
   };
 
   const units = unitsFromBoundaries(boundaries, 0, 1, snapshot.lineCount);
-  const packed = packUnits(snapshot, units, limits, refineAt(1));
+  const packed = packUnits(snapshot, units, limits, chunker, refineAt(1));
   if (!Array.isArray(packed)) {
     return packed as UnsupportedLongLine;
   }
