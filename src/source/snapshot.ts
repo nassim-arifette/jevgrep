@@ -59,7 +59,11 @@ export class SourceSnapshot {
   /** Start offsets of each line, indexed from 0 for line 1. */
   readonly #lineStartsUtf16: Int32Array;
   readonly #lineStartsBytes: Int32Array;
+  readonly #countTokens: LineTokenCounter;
+  /** Per-line reference tokens, measured on first use; -1 marks an unmeasured line. */
   readonly #lineTokens: Int32Array;
+  /** `#tokenPrefix[n]` is the token total of lines 1..n; built on the first range estimate. */
+  #tokenPrefix: Float64Array | null = null;
   #blankLines: Uint8Array | null = null;
 
   constructor(
@@ -69,7 +73,7 @@ export class SourceSnapshot {
     text: string,
     lineStartsUtf16: Int32Array,
     lineStartsBytes: Int32Array,
-    lineTokens: Int32Array,
+    countTokens: LineTokenCounter,
     sha256: string,
   ) {
     this.relativePath = relativePath;
@@ -79,8 +83,9 @@ export class SourceSnapshot {
     this.sha256 = sha256;
     this.#lineStartsUtf16 = lineStartsUtf16;
     this.#lineStartsBytes = lineStartsBytes;
-    this.#lineTokens = lineTokens;
+    this.#countTokens = countTokens;
     this.lineCount = lineStartsUtf16.length;
+    this.#lineTokens = new Int32Array(this.lineCount).fill(-1);
     this.hasBom = bytes.length >= 3 && bytes[0] === 0xef && bytes[1] === 0xbb && bytes[2] === 0xbf;
     this.endsWithNewline = text.endsWith('\n');
   }
@@ -133,10 +138,28 @@ export class SourceSnapshot {
     return low + 1;
   }
 
-  /** Reference tokens of one line, including its line ending. */
+  /** Reference tokens of one line, including its line ending; measured once, on demand. */
   lineTokens(line: number): number {
     this.#assertLine(line, 'line');
-    return this.#lineTokens[line - 1] ?? 0;
+    return this.#measuredLineTokens(line);
+  }
+
+  #measuredLineTokens(line: number): number {
+    const cached = this.#lineTokens[line - 1] ?? -1;
+    if (cached >= 0) {
+      return cached;
+    }
+    const tokens = this.#countTokens(this.text.slice(this.lineStartUtf16(line), this.lineEndUtf16(line)));
+    this.#lineTokens[line - 1] = tokens;
+    return tokens;
+  }
+
+  #computeTokenPrefix(): Float64Array {
+    const prefix = new Float64Array(this.lineCount + 1);
+    for (let line = 1; line <= this.lineCount; line += 1) {
+      prefix[line] = (prefix[line - 1] ?? 0) + this.#measuredLineTokens(line);
+    }
+    return prefix;
   }
 
   /**
@@ -149,11 +172,22 @@ export class SourceSnapshot {
   rangeTokens(startLine: number, endLine: number): number {
     this.#assertLine(startLine, 'start line');
     this.#assertLine(endLine, 'end line');
-    let total = 0;
-    for (let line = startLine; line <= endLine; line += 1) {
-      total += this.#lineTokens[line - 1] ?? 0;
+    if (endLine < startLine) {
+      return 0;
     }
-    return total;
+    this.#tokenPrefix ??= this.#computeTokenPrefix();
+    return (this.#tokenPrefix[endLine] ?? 0) - (this.#tokenPrefix[startLine - 1] ?? 0);
+  }
+
+  /** First line whose bytes, including its line ending, exceed `maxBytes`; null when none does. */
+  firstLineOverBytes(maxBytes: number): number | null {
+    for (let line = 1; line <= this.lineCount; line += 1) {
+      const end = line === this.lineCount ? this.bytes.length : (this.#lineStartsBytes[line] ?? this.bytes.length);
+      if (end - (this.#lineStartsBytes[line - 1] ?? 0) > maxBytes) {
+        return line;
+      }
+    }
+    return null;
   }
 
   rangeBytes(startLine: number, endLine: number): number {
@@ -207,11 +241,14 @@ export class SourceSnapshot {
   }
 }
 
-/** Reference-token cost of one character class boundary; mirrors the pinned counter. */
+/** Counter used for per-line reference tokens; production passes the pinned counter. */
 type LineTokenCounter = (text: string) => number;
 
 /**
  * Build a snapshot from bytes already read through the authorized root.
+ *
+ * Only cheap checks and indexes run here. Line tokens are measured lazily, so content
+ * exclusions (blank files, credential patterns, oversized lines) apply before any BPE work.
  *
  * Invalid UTF-8 and embedded NUL bytes are refused explicitly rather than replaced by
  * substitution characters: a file whose bytes cannot be reproduced exactly has no
@@ -258,17 +295,10 @@ export function createSnapshot(
     throw new SnapshotError('unsupported_encoding', `${relativePath} has inconsistent byte and text line indexes`);
   }
 
-  const lineTokens = new Int32Array(lineStartsUtf16.length);
-  for (let line = 0; line < lineStartsUtf16.length; line += 1) {
-    const start = lineStartsUtf16[line] ?? 0;
-    const end = line + 1 < lineStartsUtf16.length ? (lineStartsUtf16[line + 1] ?? text.length) : text.length;
-    lineTokens[line] = countTokens(text.slice(start, end));
-  }
-
   const sha256 = measureSync('hash', () => createHash('sha256').update(bytes).digest('hex'));
   return new SourceSnapshot(
     relativePath, absolutePath, bytes, text,
-    Int32Array.from(lineStartsUtf16), Int32Array.from(lineStartsBytes), lineTokens, sha256,
+    Int32Array.from(lineStartsUtf16), Int32Array.from(lineStartsBytes), countTokens, sha256,
   );
 }
 

@@ -273,3 +273,39 @@ test('invalid UTF-8 is refused explicitly', () => {
     (error: unknown) => error instanceof SnapshotError && error.refusal === 'binary',
   );
 });
+
+test('a snapshot measures line tokens only on demand and sums ranges from prefix totals', () => {
+  const measured: string[] = [];
+  const counter = (text: string): number => {
+    measured.push(text);
+    return countReferenceTokens(text);
+  };
+  const snapshot = createSnapshot('a.txt', '/tmp/a.txt', Buffer.from('alpha beta\ngamma\r\ndelta', 'utf8'), counter);
+  assert.deepEqual(measured, []);
+
+  const lines = [1, 2, 3].map((line) => countReferenceTokens(snapshot.sliceLines(line, line).text));
+  assert.equal(snapshot.lineTokens(2), lines[1]);
+  assert.equal(snapshot.rangeTokens(1, 3), lines[0]! + lines[1]! + lines[2]!);
+  assert.equal(snapshot.rangeTokens(2, 3), lines[1]! + lines[2]!);
+  assert.equal(snapshot.rangeTokens(3, 3), lines[2]);
+  assert.deepEqual(measured, ['gamma\r\n', 'alpha beta\n', 'delta'], 'each line is measured once');
+});
+
+test('the first line above a byte ceiling is found without measuring tokens', () => {
+  const snapshot = createSnapshot('a.txt', '/tmp/a.txt', Buffer.from('short\r\nlonger line\nx', 'utf8'), () => {
+    throw new Error('byte checks must not tokenize');
+  });
+  assert.equal(snapshot.firstLineOverBytes(7), 2);
+  assert.equal(snapshot.firstLineOverBytes(6), 1);
+  assert.equal(snapshot.firstLineOverBytes(13), null);
+});
+
+test('credential and blank exclusions are decided before any source text is tokenized', () => {
+  const counter = (): number => {
+    throw new Error('excluded content must not be tokenized');
+  };
+  const secret = createSnapshot('src/secret.ts', '/tmp/src/secret.ts', Buffer.from(`const token = "${'ghp_'}${'a'.repeat(36)}";\n`), counter);
+  assert.equal(findCredentialPattern(secret.text), 'github_token');
+  const blank = createSnapshot('src/blank.ts', '/tmp/src/blank.ts', Buffer.from('\n  \n'), counter);
+  assert.equal(blank.isBlank(), true);
+});
