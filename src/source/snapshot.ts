@@ -75,6 +75,7 @@ export class SourceSnapshot {
     lineStartsBytes: Int32Array,
     countTokens: LineTokenCounter,
     sha256: string,
+    knownLineTokens?: Int32Array,
   ) {
     this.relativePath = relativePath;
     this.absolutePath = absolutePath;
@@ -85,7 +86,9 @@ export class SourceSnapshot {
     this.#lineStartsBytes = lineStartsBytes;
     this.#countTokens = countTokens;
     this.lineCount = lineStartsUtf16.length;
-    this.#lineTokens = new Int32Array(this.lineCount).fill(-1);
+    this.#lineTokens = knownLineTokens?.length === this.lineCount
+      ? Int32Array.from(knownLineTokens)
+      : new Int32Array(this.lineCount).fill(-1);
     this.hasBom = bytes.length >= 3 && bytes[0] === 0xef && bytes[1] === 0xbb && bytes[2] === 0xbf;
     this.endsWithNewline = text.endsWith('\n');
   }
@@ -136,6 +139,11 @@ export class SourceSnapshot {
       }
     }
     return low + 1;
+  }
+
+  /** Copy of the per-line token measurements so far; -1 marks an unmeasured line. */
+  measuredLineTokens(): Int32Array {
+    return Int32Array.from(this.#lineTokens);
   }
 
   /** Reference tokens of one line, including its line ending; measured once, on demand. */
@@ -241,6 +249,12 @@ export class SourceSnapshot {
   }
 }
 
+/**
+ * Facts already established for these exact bytes. `sha256` must be the digest of the
+ * bytes passed with it; `lineTokens` are measurements by the same counter.
+ */
+export type KnownContent = { readonly sha256?: string; readonly lineTokens?: Int32Array };
+
 /** Counter used for per-line reference tokens; production passes the pinned counter. */
 type LineTokenCounter = (text: string) => number;
 
@@ -259,6 +273,7 @@ export function createSnapshot(
   absolutePath: string,
   bytes: Buffer,
   countTokens: LineTokenCounter,
+  known: KnownContent = {},
 ): SourceSnapshot {
   if (bytes.includes(0)) {
     throw new SnapshotError('binary', `${relativePath} contains NUL bytes`);
@@ -295,10 +310,10 @@ export function createSnapshot(
     throw new SnapshotError('unsupported_encoding', `${relativePath} has inconsistent byte and text line indexes`);
   }
 
-  const sha256 = measureSync('hash', () => createHash('sha256').update(bytes).digest('hex'));
+  const sha256 = known.sha256 ?? measureSync('hash', () => hashBytes(bytes));
   return new SourceSnapshot(
     relativePath, absolutePath, bytes, text,
-    Int32Array.from(lineStartsUtf16), Int32Array.from(lineStartsBytes), countTokens, sha256,
+    Int32Array.from(lineStartsUtf16), Int32Array.from(lineStartsBytes), countTokens, sha256, known.lineTokens,
   );
 }
 

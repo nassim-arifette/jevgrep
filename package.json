@@ -33,6 +33,7 @@
     "smoke": "node scripts/smoke.ts",
     "bench": "node scripts/bench.ts",
     "bench:cache": "node scripts/bench-cache-writes.ts",
+    "bench:preparation": "node scripts/bench-preparation.ts",
     "bench:retrieval": "node scripts/bench-retrieval.ts",
     "verify": "npm run typecheck && npm test && npm run build && npm run smoke",
     "prepublishOnly": "npm run verify"

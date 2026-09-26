@@ -12,14 +12,19 @@
  * unreadable eligible file or an interrupted walk means the scan can never claim full
  * coverage (requirement R8).
  */
-import { countReferenceTokens } from '../response/token-counter.ts';
-import { measureSync } from '../profiling.ts';
+import { createHash } from 'node:crypto';
+import { REFERENCE_COUNTER_ID, countReferenceTokens } from '../response/token-counter.ts';
+import { countProfile, measureSync } from '../profiling.ts';
 import { AuthorizedRoot, UnauthorizedPathError } from './authorization.ts';
-import { chunkSnapshot } from './chunker.ts';
-import type { PreparedFragment, WindowLimits } from './chunker.ts';
+import { DEFAULT_WINDOW_LIMITS, chunkSnapshot, chunkerVersionFor } from './chunker.ts';
+import type { ChunkResult, PreparedFragment, WindowLimits } from './chunker.ts';
 import { inventoryScope } from './inventory.ts';
 import type { InventoryOptions, InventoryResult } from './inventory.ts';
-import { SnapshotError, createSnapshot } from './snapshot.ts';
+import {
+  chunkKey, decodeLineTokens, encodeLineTokens, isRecordable, recordOf, resultOf,
+  type PreparationCache, type PreparationEntry, type ScanVerdict,
+} from './preparation-cache.ts';
+import { SnapshotError, createSnapshot, hashBytes } from './snapshot.ts';
 import type { SourceSnapshot } from './snapshot.ts';
 
 /**
@@ -39,6 +44,15 @@ export const CREDENTIAL_PATTERNS: readonly { readonly name: string; readonly pat
   { name: 'jwt', pattern: /\beyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\b/ },
   { name: 'assigned_secret', pattern: /\b(?:api[_-]?key|secret|password|passwd|token)\b\s*[:=]\s*["'][^"'\s]{16,}["']/i },
 ]);
+
+/**
+ * Identity of every content check whose verdict the preparation cache may reuse:
+ * the NUL and UTF-8 rules, the blank rule and each credential pattern.
+ */
+export const SCANNER_VERSION = createHash('sha256').update(JSON.stringify([
+  'nul-utf8-fatal-bom-kept-1', 'trim-blank-1',
+  CREDENTIAL_PATTERNS.map(({ name, pattern }) => [name, pattern.source, pattern.flags]),
+])).digest('hex').slice(0, 16);
 
 /** Name of the first credential pattern found in a text, or null. */
 export function findCredentialPattern(text: string): string | null {
@@ -94,6 +108,8 @@ export type PrepareOptions = {
   readonly limits?: PreparationLimits;
   /** Interrupts preparation between files; the result is then explicitly incomplete. */
   readonly shouldStop?: () => boolean;
+  /** Reuses content-derived work for byte-identical files; eligibility is always recomputed. */
+  readonly cache?: PreparationCache;
 };
 
 /**
@@ -152,28 +168,27 @@ export function prepareScope(
       break;
     }
 
-    let snapshot: SourceSnapshot;
-    try {
-      snapshot = measureSync('snapshot', () => createSnapshot(entry.relativePath, entry.absolutePath, bytes, countReferenceTokens));
-    } catch (cause) {
-      if (cause instanceof SnapshotError) {
-        excluded.push({ relativePath: entry.relativePath, reason: cause.refusal });
-        continue;
+    const cache = options.cache?.enabled === true ? options.cache : undefined;
+    const sha256 = cache === undefined ? undefined : measureSync('hash', () => hashBytes(bytes));
+    const cached = cache === undefined || sha256 === undefined ? undefined : measureSync('cache_lookup', () => cache.get(sha256, bytes.length));
+    const windowLimits = options.windowLimits ?? DEFAULT_WINDOW_LIMITS;
+    let outcome = prepareContent(entry.relativePath, entry.absolutePath, bytes, windowLimits, cached, sha256);
+    if (cache !== undefined && cached !== undefined && sha256 !== undefined) {
+      if (outcome.rejected) {
+        // An entry that does not fit its verified bytes is dropped and rebuilt from scratch.
+        cache.reject(sha256);
+        const rebuilt = cache.get(sha256, bytes.length);
+        outcome = prepareContent(entry.relativePath, entry.absolutePath, bytes, windowLimits, rebuilt, sha256);
+        if (outcome.changed && !outcome.rejected) cache.update(rebuilt);
+      } else if (outcome.changed) {
+        cache.update(cached);
       }
-      throw cause;
     }
-
-    if (snapshot.isBlank()) {
-      excluded.push({ relativePath: entry.relativePath, reason: snapshot.byteLength === 0 ? 'empty' : 'whitespace_only' });
+    if (outcome.kind === 'excluded') {
+      excluded.push({ relativePath: entry.relativePath, reason: outcome.reason, ...(outcome.detail === null ? {} : { detail: outcome.detail }) });
       continue;
     }
-    const credential = measureSync('secret_scan', () => findCredentialPattern(snapshot.text));
-    if (credential !== null) {
-      excluded.push({ relativePath: entry.relativePath, reason: 'credential_pattern', detail: credential });
-      continue;
-    }
-
-    const chunked = measureSync('chunking', () => chunkSnapshot(snapshot, options.windowLimits));
+    const { snapshot, chunked } = outcome;
     if (chunked.kind === 'unsupported-long-line') {
       excluded.push({
         relativePath: entry.relativePath, reason: 'unsupported_long_line',
@@ -197,10 +212,98 @@ export function prepareScope(
     preparedBytes += bytes.length;
   }
 
+  if (options.cache?.enabled === true) {
+    const cache = options.cache;
+    measureSync('cache_write', () => cache.flush());
+  }
+
   return {
     inventory, files, fragments, excluded, unreadable, preparedBytes,
     complete: complete && inventory.complete, parseFallbacks,
   };
+}
+
+type ContentOutcome = { readonly changed: boolean; readonly rejected: boolean } & (
+  | { readonly kind: 'excluded'; readonly reason: Exclude<ScanVerdict, 'ok'>; readonly detail: string | null }
+  | { readonly kind: 'chunked'; readonly snapshot: SourceSnapshot; readonly chunked: ChunkResult }
+);
+
+/**
+ * Content checks and chunking of one file's bytes, in the order of section 5.2.
+ *
+ * With a cache entry for these exact bytes, a verdict from the current scanner is
+ * reused, known line tokens seed the snapshot and boundaries from the current chunker
+ * and limits are re-sliced from the bytes. Anything missing is computed and recorded
+ * in the entry, so each invalidation domain is rebuilt independently.
+ */
+function prepareContent(
+  relativePath: string,
+  absolutePath: string,
+  bytes: Buffer,
+  windowLimits: WindowLimits,
+  entry: PreparationEntry | undefined,
+  sha256: string | undefined,
+): ContentOutcome {
+  let changed = false;
+  let rejected = false;
+  const scan = entry?.scan?.version === SCANNER_VERSION ? entry.scan : null;
+  const exclusion = (reason: Exclude<ScanVerdict, 'ok'>, detail: string | null): ContentOutcome => {
+    if (entry !== undefined && scan === null) {
+      entry.scan = { version: SCANNER_VERSION, verdict: reason, detail };
+      changed = true;
+    }
+    return { kind: 'excluded', reason, detail, changed, rejected };
+  };
+  if (scan !== null) {
+    countProfile('preparation_cache_scan_reused');
+    if (scan.verdict !== 'ok') return { kind: 'excluded', reason: scan.verdict, detail: scan.detail, changed, rejected };
+  }
+
+  const knownTokens = entry?.tokens?.counter === REFERENCE_COUNTER_ID ? decodeLineTokens(entry.tokens.lines) : undefined;
+  let snapshot: SourceSnapshot;
+  try {
+    snapshot = measureSync('snapshot', () => createSnapshot(relativePath, absolutePath, bytes, countReferenceTokens, {
+      ...(sha256 === undefined ? {} : { sha256 }), ...(knownTokens === undefined ? {} : { lineTokens: knownTokens }),
+    }));
+  } catch (cause) {
+    if (cause instanceof SnapshotError) return exclusion(cause.refusal, null);
+    throw cause;
+  }
+  if (entry?.tokens !== undefined && entry.tokens !== null && knownTokens?.length !== snapshot.lineCount) {
+    rejected = entry.tokens.counter === REFERENCE_COUNTER_ID;
+  }
+
+  if (scan === null) {
+    if (snapshot.isBlank()) return exclusion(snapshot.byteLength === 0 ? 'empty' : 'whitespace_only', null);
+    const credential = measureSync('secret_scan', () => findCredentialPattern(snapshot.text));
+    if (credential !== null) return exclusion('credential_pattern', credential);
+    if (entry !== undefined) {
+      entry.scan = { version: SCANNER_VERSION, verdict: 'ok', detail: null };
+      changed = true;
+    }
+  }
+
+  const key = chunkKey(chunkerVersionFor(relativePath), windowLimits);
+  const record = entry?.chunks[key];
+  let chunked = record === undefined || rejected ? null : resultOf(record, snapshot);
+  if (record !== undefined && chunked === null) rejected = true;
+  if (chunked !== null) {
+    countProfile('preparation_cache_chunks_reused');
+  } else {
+    chunked = measureSync('chunking', () => chunkSnapshot(snapshot, windowLimits));
+    if (entry !== undefined && isRecordable(chunked)) {
+      entry.chunks[key] = recordOf(chunked);
+      changed = true;
+    }
+  }
+  if (entry !== undefined) {
+    const lines = encodeLineTokens(snapshot.measuredLineTokens());
+    if (entry.tokens?.counter !== REFERENCE_COUNTER_ID || entry.tokens.lines !== lines) {
+      entry.tokens = { counter: REFERENCE_COUNTER_ID, lines };
+      changed = true;
+    }
+  }
+  return { kind: 'chunked', snapshot, chunked, changed, rejected };
 }
 
 /** Total exclusions by contract reason, combining both stages. */

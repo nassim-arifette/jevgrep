@@ -65,6 +65,11 @@ export function usesSyntaxChunking(path: string): boolean {
   return SYNTAX_EXTENSIONS.has(extensionOf(path));
 }
 
+/** Version of the chunker that prepares a path; part of preparation identity. */
+export function chunkerVersionFor(path: string): string {
+  return usesSyntaxChunking(path) ? SYNTAX_CHUNKER_VERSION : LINE_WINDOW_CHUNKER_VERSION;
+}
+
 type LineRange = { readonly startLine: number; readonly endLine: number; readonly label: string | null };
 
 function fragmentOf(snapshot: SourceSnapshot, range: LineRange): PreparedFragment {
