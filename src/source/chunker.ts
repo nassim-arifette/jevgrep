@@ -105,9 +105,10 @@ function parseBoundaries(language: SyntaxLanguage, snapshot: SourceSnapshot): Pa
  */
 export function chunkerIdentityFor(path: string): string {
   const extension = extensionOf(path);
-  return usesSyntaxChunking(path)
-    ? `${extension}|${SYNTAX_CHUNKER_VERSION}|${LINE_WINDOW_CHUNKER_VERSION}`
-    : `${extension}|${LINE_WINDOW_CHUNKER_VERSION}`;
+  const language = syntaxLanguageOf(path);
+  return language === null
+    ? `${extension}|${LINE_WINDOW_CHUNKER_VERSION}`
+    : `${extension}|${SYNTAX_CHUNKER_VERSIONS[language]}|${LINE_WINDOW_CHUNKER_VERSION}`;
 }
 
 type LineRange = { readonly startLine: number; readonly endLine: number; readonly label: string | null };

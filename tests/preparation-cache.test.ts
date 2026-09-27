@@ -6,7 +6,7 @@ import { after, test } from 'node:test';
 
 import { SearchProfiler } from '../src/profiling.ts';
 import { AuthorizedRoot } from '../src/source/authorization.ts';
-import { DEFAULT_WINDOW_LIMITS } from '../src/source/chunker.ts';
+import { DEFAULT_WINDOW_LIMITS, SYNTAX_CHUNKER_VERSIONS, chunkerIdentityFor } from '../src/source/chunker.ts';
 import type { WindowLimits } from '../src/source/chunker.ts';
 import { PreparationCache } from '../src/source/preparation-cache.ts';
 import { prepareScope } from '../src/source/prepare.ts';
@@ -218,6 +218,15 @@ test('identical bytes under different extensions or chunkers never share fragmen
   assert.deepEqual(observable(cached.prepared), observable(reference.prepared));
   const entry = cache.get(hashBytes(Buffer.from(body)), Buffer.byteLength(body));
   assert.equal(Object.keys(entry.chunks).length, 3);
+});
+
+test('each syntax language keys its chunks by its own chunker version', () => {
+  // A bump of one language's boundaries must not reuse that language's cached fragments.
+  assert.ok(chunkerIdentityFor('src/a.ts').includes(SYNTAX_CHUNKER_VERSIONS.javascript));
+  assert.ok(chunkerIdentityFor('src/a.py').includes(SYNTAX_CHUNKER_VERSIONS.python));
+  assert.ok(chunkerIdentityFor('src/A.java').includes(SYNTAX_CHUNKER_VERSIONS.java));
+  assert.ok(!chunkerIdentityFor('src/a.py').includes(SYNTAX_CHUNKER_VERSIONS.javascript));
+  assert.ok(!chunkerIdentityFor('src/A.java').includes(SYNTAX_CHUNKER_VERSIONS.javascript));
 });
 
 test('cached token counts that cannot match their bytes are rebuilt', async () => {
