@@ -328,15 +328,21 @@ using `jev-latest` or `jev-preview` use the same short-lived policy.
 Rolling reuse can briefly serve a score from an earlier model revision. `doctor`
 shows this policy and its effective TTL. Set `cache.rolling_ttl_seconds` to `0` to
 disable it, or to an integer from `1` to `900` to shorten it. `cache.enabled: false`
-disables all score reuse. Existing profiles do not need to be recreated.
+disables all score and preparation reuse. Existing profiles do not need to be recreated.
 
-Clear the cache for the current project with:
+File preparation is cached separately, by file content. Every search still inventories,
+reads and hashes each eligible file, so ignore rules, deny globs and authorization always
+apply; only the content checks, line token counts and fragment boundaries of unchanged
+bytes are reused. Each cache is bounded by `cache.max_bytes`.
+
+Clear both caches for the current project with:
 
 ```bash
 jevgrep cache clear
 ```
 
-Cached entries contain scores and identities, not source text, questions or credentials.
+Cached entries contain scores, identities, hashes, line numbers, token counts and
+structural labels such as function names, not source text, questions or credentials.
 
 ## Request batching
 
@@ -361,8 +367,8 @@ See [TypeSafe model limits](https://docs.typesafe.ai/models) and the
 
 `inspect` and search planning use the same serializer and token estimator; `inspect`
 uses a sample query, so its estimate can differ from an actual search. Estimates are
-not provider billing. File preparation still runs on every search: there is no
-persistent repository index.
+not provider billing. File preparation still runs on every search, reusing cached work
+only for unchanged file contents: there is no persistent repository index.
 
 ## Development
 

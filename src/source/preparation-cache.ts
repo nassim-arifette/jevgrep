@@ -24,7 +24,7 @@
  */
 import { createHash } from 'node:crypto';
 import { lstatSync } from 'node:fs';
-import { join } from 'node:path';
+import { basename, dirname, join } from 'node:path';
 import { LocalDirectory, isMissing } from '../local-directory.ts';
 import { REFERENCE_COUNTER_ID } from '../response/token-counter.ts';
 import type { ChunkResult, PreparedFragment, WindowLimits } from './chunker.ts';
@@ -63,6 +63,11 @@ export type PreparationCacheOptions = {
   readonly enabled: boolean;
   readonly maxBytes: number;
 };
+
+/** Preparation entries sit beside the score cache: `<home>/preparation/<key>` for `<home>/scores/<key>`. */
+export function preparationCacheDirectory(scoreCacheDirectory: string): string {
+  return join(dirname(dirname(scoreCacheDirectory)), 'preparation', basename(scoreCacheDirectory));
+}
 
 const isCount = (value: unknown): value is number => Number.isSafeInteger(value) && (value as number) >= 0;
 const isLine = (value: unknown): value is number => Number.isSafeInteger(value) && (value as number) >= 1;
@@ -263,10 +268,35 @@ export class PreparationCache {
     return written;
   }
 
+  /** Remove every stored entry, under the writer lock; returns how many files were removed. */
+  clear(): number {
+    this.#memory.clear();
+    this.#dirty.clear();
+    if (this.#storage === null) return 0;
+    try { this.#storage.root(); } catch (cause) {
+      // Nothing was ever stored; taking the lock would create the directory.
+      if (!isMissing(cause)) this.stats.failures += 1;
+      return 0;
+    }
+    try {
+      return this.#storage.withLock(() => this.#entries().filter((entry) => this.#discard(entry.name)).length);
+    } catch { this.stats.failures += 1; return 0; }
+  }
+
   /** Oldest-first eviction by modification time; only valid entry names are removed. */
   #evict(): void {
-    const storage = this.#storage!;
-    const root = storage.root();
+    const entries = this.#entries();
+    let total = entries.reduce((sum, entry) => sum + entry.size, 0);
+    entries.sort((a, b) => a.mtime - b.mtime || a.name.localeCompare(b.name));
+    for (const entry of entries) {
+      if (total <= this.#options.maxBytes) break;
+      if (this.#discard(entry.name)) { total -= entry.size; this.stats.evicted += 1; }
+    }
+  }
+
+  /** Stored entry files with valid names, their sizes and modification times. */
+  #entries(): { name: string; size: number; mtime: number }[] {
+    const root = this.#storage!.root();
     const entries: { name: string; size: number; mtime: number }[] = [];
     for (const shard of root.readDirectory('.')) {
       if (!/^[a-f0-9]{2}$/.test(shard.name)) continue;
@@ -279,12 +309,7 @@ export class PreparationCache {
         } catch (cause) { if (!isMissing(cause)) this.stats.failures += 1; }
       }
     }
-    let total = entries.reduce((sum, entry) => sum + entry.size, 0);
-    entries.sort((a, b) => a.mtime - b.mtime || a.name.localeCompare(b.name));
-    for (const entry of entries) {
-      if (total <= this.#options.maxBytes) break;
-      if (this.#discard(entry.name)) { total -= entry.size; this.stats.evicted += 1; }
-    }
+    return entries;
   }
 
   #discard(name: string): boolean {

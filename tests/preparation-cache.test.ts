@@ -198,6 +198,19 @@ test('storage stays within its byte bound, evicting oldest entries first', async
   assert.ok(cache.stats.evicted > 0);
 });
 
+test('clear removes stored entries and never creates a missing store', async () => {
+  const space = workspace(files);
+  const directory = cacheDirectory();
+  const open = (): PreparationCache => new PreparationCache({ directory, enabled: true, maxBytes: 10_000_000 });
+  assert.equal(open().clear(), 0);
+  assert.throws(() => readdirSync(directory));
+  await prepare(space.repositoryRoot, open());
+  const cleared = open();
+  assert.ok(cleared.clear() > 0);
+  assert.equal(cleared.stats.failures, 0);
+  assert.ok(calls(await prepare(space.repositoryRoot, open()), 'chunking') > 0, 'nothing is reused after a clear');
+});
+
 test('a disabled cache does no work and stores nothing', async () => {
   const space = workspace(files);
   const directory = cacheDirectory();

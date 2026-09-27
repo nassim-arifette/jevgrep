@@ -13,7 +13,7 @@ const COMMAND_SUMMARY: Record<string, string> = {
   inspect: 'Report the eligible scope, exclusions and estimated work without contacting the provider.',
   search: 'Return original excerpts that answer a behavior question, inside the response budget.',
   mcp: 'Serve semantic_search_code over the MCP stdio transport (one root per process).',
-  'cache clear': 'Remove recognized evaluations from the configured local score cache.',
+  'cache clear': 'Remove recognized evaluations and file preparations from the configured local caches.',
 };
 
 const OPTION_TEXT: Record<string, string> = {

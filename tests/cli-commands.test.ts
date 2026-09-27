@@ -1,4 +1,6 @@
 import assert from 'node:assert/strict';
+import { existsSync, readdirSync } from 'node:fs';
+import { join } from 'node:path';
 import { after, test } from 'node:test';
 
 import { parseCliArguments } from '../src/cli-args.ts';
@@ -10,6 +12,7 @@ import { createSearchEngine } from '../src/engine.ts';
 import { ScoreCache } from '../src/evaluation/cache.ts';
 import type { BatchEvaluation, EvaluationBatch, ProviderClient } from '../src/evaluation/jev.ts';
 import { CLI_EXIT_CODES } from '../src/search-response.ts';
+import { preparationCacheDirectory } from '../src/source/preparation-cache.ts';
 import { createWorkspace, withRemoteEnabled } from './helpers/search-workspace.ts';
 
 /**
@@ -269,11 +272,18 @@ test('cache clear removes only the configured cache and writes nothing to the re
     search.io, dependencies(space, provider),
   );
 
+  const preparation = preparationCacheDirectory(space.loaded.cacheDirectory);
+  const storedPreparations = (): number => (existsSync(preparation) ? readdirSync(preparation) : [])
+    .filter((shard) => /^[a-f0-9]{2}$/.test(shard)).reduce((sum, shard) => sum + readdirSync(join(preparation, shard)).length, 0);
+  assert.ok(storedPreparations() > 0, 'the search persisted file preparation');
+
   const cleared = capture();
   const code = await executeCommand(parsed(['cache', 'clear', '--config', space.configPath]), cleared.io, dependencies(space, provider));
   assert.equal(code, CLI_EXIT_CODES.complete);
   assert.ok(cleared.out.join('\n').includes('removed'));
   assert.ok(cleared.out.join('\n').includes(space.loaded.cacheDirectory));
+  assert.match(cleared.out.join('\n'), /removed [1-9]\d* cached file preparation\(s\)/);
+  assert.equal(storedPreparations(), 0, 'cache clear also removes the preparation cache');
 
   const again = capture();
   await executeCommand(

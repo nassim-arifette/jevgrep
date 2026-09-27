@@ -133,7 +133,7 @@ apply to disclosed content; JevGrep does not promise zero retention.
 | `source.max_file_bytes` | `1048576` | per-file eligibility limit |
 | `source.follow_links` | `false` | `true` is rejected |
 | `cache.ttl_seconds` | `604800` | seven days for pinned models |
-| `cache.max_bytes` | `104857600` | 100 MiB cache limit |
+| `cache.max_bytes` | `104857600` | 100 MiB limit for each of the score and preparation caches |
 | `cache.rolling_ttl_seconds` | `900` when omitted | at most 15 minutes for known rolling aliases |
 
 Response budgets use the bundled reference tokenizer, not the calling agent's tokenizer.
@@ -141,7 +141,7 @@ An enabled USD cap requires a matching dated provider rate card in the configura
 Inspect the configuration examples before setting a cost cap.
 
 Set `cache.rolling_ttl_seconds` to `0` to disable rolling reuse, or
-`cache.enabled` to `false` to disable all score reuse. `doctor` reports the active
+`cache.enabled` to `false` to disable all score and file-preparation reuse. `doctor` reports the active
 policy. Vercel and OpenRouter model aliases use this short-lived policy.
 Scores from a rolling alias can be stale within its reuse window.
 
@@ -228,7 +228,8 @@ client lists the tool, completes a search and shows the result without truncatio
 jevgrep cache clear
 ```
 
-Use `--config` to target an explicit profile. Cache clearing does not edit source files.
+Use `--config` to target an explicit profile. It clears both the score and the file-preparation
+cache. Cache clearing does not edit source files.
 Search reads the repository; initialization can create `.jevgrepignore`.
 
 ## Troubleshooting

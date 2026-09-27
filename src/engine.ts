@@ -19,7 +19,6 @@
  * - `scope_fully_scanned` is asserted only when preparation finished and every
  *   fragment has a validated evaluation.
  */
-import { basename, dirname, join } from 'node:path';
 import { createHash } from 'node:crypto';
 import {
   ContractValidationError, createSearchError, parseSearchRequest,
@@ -47,7 +46,7 @@ import { UnauthorizedPathError } from './source/authorization.ts';
 import type { PreparedFragment } from './source/chunker.ts';
 import { FreshnessTracker, rootReader } from './source/freshness.ts';
 import { exclusionCounts, prepareScope } from './source/prepare.ts';
-import { PreparationCache } from './source/preparation-cache.ts';
+import { PreparationCache, preparationCacheDirectory } from './source/preparation-cache.ts';
 import type { PreparedScope } from './source/prepare.ts';
 import type { SourceSnapshot } from './source/snapshot.ts';
 import { countProfile, measureAsync, measureSync, withSearchProfile, type SearchProfiler } from './profiling.ts';
@@ -149,7 +148,7 @@ export class SearchEngine {
       maxBytes: config.cache.max_bytes,
     });
     this.#preparationCache = options.preparationCache ?? new PreparationCache({
-      directory: join(dirname(dirname(cacheDirectory)), 'preparation', basename(cacheDirectory)),
+      directory: preparationCacheDirectory(cacheDirectory),
       enabled: config.cache.enabled,
       maxBytes: config.cache.max_bytes,
     });

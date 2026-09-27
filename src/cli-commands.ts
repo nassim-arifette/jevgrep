@@ -27,6 +27,7 @@ import type { LoadedConfiguration } from './config.ts';
 import { createSearchError } from './contracts.ts';
 import { SearchEngine, createSearchEngine } from './engine.ts';
 import { ScoreCache } from './evaluation/cache.ts';
+import { PreparationCache, preparationCacheDirectory } from './source/preparation-cache.ts';
 import { inspectScope, renderInspection } from './inspect.ts';
 import {
   configurationHome, configuredGlobalProvider, createGlobalProfile, createProfile, discoverProjectConfiguration,
@@ -261,11 +262,15 @@ function runCacheClear(
     maxBytes: loaded.config.cache.max_bytes,
   });
   const removed = cache.clear();
-  if (cache.stats.failures > 0) {
+  const preparationDirectory = preparationCacheDirectory(loaded.cacheDirectory);
+  const preparation = new PreparationCache({ directory: preparationDirectory, enabled: true, maxBytes: loaded.config.cache.max_bytes });
+  const prepared = preparation.clear();
+  if (cache.stats.failures > 0 || preparation.stats.failures > 0) {
     io.err('jevgrep: the configured cache could not be completely cleared; check local access or an active writer');
     return CLI_EXIT_CODES.error;
   }
   io.out(`removed ${String(removed)} cached evaluation(s) from ${loaded.cacheDirectory}`);
+  io.out(`removed ${String(prepared)} cached file preparation(s) from ${preparationDirectory}`);
   io.err('jevgrep: only the cache configured by this configuration was cleared; no repository file was written');
   return CLI_EXIT_CODES.complete;
 }
