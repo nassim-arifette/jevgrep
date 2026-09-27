@@ -79,6 +79,30 @@ test('init defaults to the current directory and TypeSafe provider selection rem
   assert.match(expectError(['init', '--provider', 'unknown']), /typesafe.*vercel/i);
 });
 
+test('init configures a System One compatible endpoint only through explicit flags', () => {
+  const init = expectCommand(['init', '--global', '--provider', 'systemone-compatible',
+    '--base-url', 'https://litellm.example.com/typesafe', '--api-key-env', 'LITELLM_API_KEY', '--model', 'jev-latest']);
+  assert.deepEqual(init.command, { kind: 'init', root: '.', global: true, provider: 'systemone-compatible', endpoint: {
+    base_url: 'https://litellm.example.com/typesafe', api_key_env: 'LITELLM_API_KEY', model: 'jev-latest',
+  } });
+  const defaults = expectCommand(['init', '--provider', 'systemone-compatible', '--base-url', 'http://localhost:4000']);
+  assert.deepEqual(defaults.command, { kind: 'init', root: '.', global: false, provider: 'systemone-compatible', endpoint: {
+    base_url: 'http://localhost:4000', api_key_env: 'SYSTEMONE_API_KEY', model: 'jev-1.13.0',
+  } });
+
+  assert.match(expectError(['init', '--provider', 'systemone-compatible']), /needs '--base-url <url>'/);
+  assert.match(expectError(['init', '--provider', 'systemone-compatible', '--base-url', 'http://litellm.example.com']), /https/);
+  assert.match(expectError(['init', '--provider', 'systemone-compatible', '--base-url', 'https://litellm.example.com?key=x']), /query/);
+  assert.match(expectError(['init', '--provider', 'systemone-compatible', '--base-url', 'https://u:p@litellm.example.com']), /credentials/);
+  assert.match(expectError(['init', '--provider', 'systemone-compatible', '--base-url', 'https://litellm.example.com',
+    '--api-key-env', 'litellm-key']), /environment variable/);
+  assert.match(expectError(['init', '--provider', 'systemone-compatible', '--base-url', 'https://a.example.com',
+    '--base-url', 'https://b.example.com']), /twice/);
+  assert.match(expectError(['init', '--provider', 'typesafe', '--base-url', 'https://litellm.example.com']), /systemone-compatible/);
+  assert.match(expectError(['init', '--model', 'jev-latest']), /systemone-compatible/);
+  assert.match(expectError(['search', '--query', 'q', '--base-url', 'https://litellm.example.com']), /not accepted/);
+});
+
 test('defaults follow the specification', () => {
   const search = expectCommand(['search', '--config', 'config.json', '--query', 'anything']);
   assert.equal(search.command.kind, 'search');

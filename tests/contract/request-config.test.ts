@@ -172,6 +172,43 @@ test('Vercel AI Gateway requires its explicit adapter, endpoint and Jev model id
     'an existing direct configuration remains valid without the selector');
 });
 
+test('a System One compatible gateway is an explicit opt-in with an operator-supplied endpoint', () => {
+  const compatible = {
+    ...validConfiguration,
+    provider: {
+      adapter: 'systemone-compatible',
+      base_url: 'https://litellm.example.com/typesafe',
+      api_key_env: 'LITELLM_API_KEY',
+      model: 'jev-1.13.0',
+    },
+  };
+  assert.deepEqual(configurationSchema.parse(compatible), compatible);
+  for (const base_url of ['https://gateway.example.com', 'https://gateway.example.com:8443/proxy/typesafe/',
+    'http://localhost:4000', 'http://127.0.0.1:4000/typesafe', 'http://[::1]:4000']) {
+    assert.equal(configurationSchema.parse({ ...compatible, provider: { ...compatible.provider, base_url } }).provider.base_url, base_url);
+  }
+  for (const base_url of ['http://litellm.example.com/typesafe', 'http://10.0.0.1/typesafe', 'https://litellm.example.com/typesafe?key=secret',
+    'https://litellm.example.com/typesafe#v1', 'https://user:secret@litellm.example.com/typesafe', 'https://key@litellm.example.com',
+    'https://litellm.example.com/a/../typesafe', 'https://LITELLM.example.com', 'https://litellm.example.com/type safe',
+    'ftp://litellm.example.com', 'litellm.example.com/typesafe', `https://litellm.example.com/${'a'.repeat(256)}`]) {
+    assert.throws(() => configurationSchema.parse({ ...compatible, provider: { ...compatible.provider, base_url } }), ContractValidationError, base_url);
+  }
+  assert.throws(() => configurationSchema.parse({ ...compatible, provider: { ...compatible.provider, api_key_env: 'LITELLM-KEY' } }),
+    ContractValidationError);
+
+  // The existing adapters keep their host pins, even for an endpoint the new adapter accepts.
+  for (const provider of [
+    { ...validConfiguration.provider, adapter: 'typesafe-direct', base_url: 'https://litellm.example.com/typesafe' },
+    { ...validConfiguration.provider, adapter: undefined, base_url: 'http://localhost:4000' },
+    { adapter: 'vercel-ai-gateway', base_url: 'https://litellm.example.com', api_key_env: 'AI_GATEWAY_API_KEY', model: 'typesafe-ai/jev' },
+    { adapter: 'openrouter', base_url: 'https://openrouter.ai/api', api_key_env: 'OPENROUTER_API_KEY', model: 'typesafe/jev-1.13' },
+  ]) {
+    const { adapter, ...rest } = provider;
+    assert.throws(() => configurationSchema.parse({ ...validConfiguration, provider: adapter === undefined ? rest : provider }),
+      ContractValidationError);
+  }
+});
+
 test('validators reject executable properties and do not echo unknown keys or values', () => {
   const secret = 'secret-synthetic-123';
   assert.throws(() => searchRequestSchema.parse({ query: 'q', [secret]: secret }), (error: unknown) => {

@@ -97,6 +97,9 @@ To use OpenRouter:
 jevgrep init --global --provider openrouter
 ```
 
+To use a self-hosted gateway that speaks the TypeSafe System One contract, see
+[Self-hosted gateways](#self-hosted-gateways-system-one-compatible).
+
 The command stores the credential in the user's JevGrep configuration directory, not
 in a repository. `TYPESAFE_API_KEY`, `AI_GATEWAY_API_KEY` and `OPENROUTER_API_KEY`
 environment variables take priority over the corresponding stored value.
@@ -180,6 +183,7 @@ explicit override.
 | TypeSafe AI       | `jevgrep init --global --provider typesafe` | `jev-1.13.0` (pinned) |
 | Vercel AI Gateway | `jevgrep init --global --provider vercel`   | `typesafe-ai/jev`     |
 | OpenRouter        | `jevgrep init --global --provider openrouter` | `typesafe/jev-1.13` |
+| System One compatible gateway | `jevgrep init --global --provider systemone-compatible --base-url <url>` | `jev-1.13.0` by default (`--model`) |
 
 The TypeSafe transport follows the documented System One HTTP contract and is covered
 with simulated responses. It has not been tested against a real account in this project.
@@ -205,6 +209,40 @@ jevgrep init --provider vercel
 ```
 
 Use `--provider openrouter` in both commands to switch to OpenRouter.
+
+### Self-hosted gateways (System One compatible)
+
+The `systemone-compatible` adapter sends the same request as TypeSafe direct to an
+endpoint that you operate, for example a LiteLLM proxy with a TypeSafe pass-through
+route. The gateway must expose the TypeSafe System One HTTP contract at
+`<base_url>/v1/systemone`: the same request and response bodies as
+`https://api.typesafe.ai/v1/systemone`, with `Authorization: Bearer <key>`.
+
+```bash
+jevgrep init --global --provider systemone-compatible \
+  --base-url https://litellm.example.com/typesafe \
+  --api-key-env LITELLM_API_KEY
+jevgrep init --provider systemone-compatible \
+  --base-url https://litellm.example.com/typesafe \
+  --api-key-env LITELLM_API_KEY
+```
+
+- `--base-url` is required. It must use `https://` and can contain a path prefix. A
+  query string, a fragment and credentials in the URL are refused. `http://` is
+  accepted only for `localhost`, `127.0.0.1` and `[::1]`.
+- `--api-key-env` names the key variable (default `SYSTEMONE_API_KEY`). The
+  environment variable takes priority over the stored key, as for the other providers.
+- `--model` sets the model id (default `jev-1.13.0`).
+
+The three other adapters keep their fixed hosts, so a stock profile cannot send source
+to an unexpected host. This adapter is an explicit opt-in. Remote evaluation consent
+still applies, and interactive `init` names the gateway host in its question. See the
+[example profile](docs/examples/jevgrep.systemone-compatible.config.json).
+
+Known limitation: status codes are mapped as for TypeSafe direct. 401 and 403 are
+`PROVIDER_AUTH`, 429 is `PROVIDER_RATE_LIMIT` and 5xx is `PROVIDER_UNAVAILABLE`.
+A gateway budget error that uses another status, for example 400, is reported as
+`INVALID_PROVIDER_RESPONSE`, not `PROVIDER_QUOTA`.
 
 ## Use through MCP
 
@@ -355,10 +393,12 @@ and metadata.
 | TypeSafe direct   | 64,000 tokens                             | 44,800 reference tokens        |
 | Vercel AI Gateway | 32,000 tokens (conservative local policy) | 22,400 reference tokens        |
 | OpenRouter        | 32,000 tokens (conservative local policy) | 22,400 reference tokens        |
+| System One compatible | 32,000 tokens (conservative local policy) | 22,400 reference tokens    |
 
 TypeSafe documents 64k total and 32k for shared state plus one question. Gateway and
 OpenRouter advertise a 32k context; using it as an aggregate ceiling is conservative,
-not a claim that they document the same total-question limit. All three paths keep
+not a claim that they document the same total-question limit. A System One compatible
+gateway gets the same 32k ceiling because its own limits are unknown. All paths keep
 30% headroom because the provider tokenizer is not public, and locally limit each
 request to 64 questions and 256 KiB. These last two limits are application safeguards.
 See [TypeSafe model limits](https://docs.typesafe.ai/models) and the

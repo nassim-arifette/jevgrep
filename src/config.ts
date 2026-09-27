@@ -19,7 +19,7 @@ import {
   CONFIG_SCHEMA_VERSION, ContractValidationError, SCAN_CAP_KEYS, configurationSchema,
   createDefaultConfiguration,
 } from './contracts.ts';
-import type { Configuration, ErrorCode, ScanCap } from './contracts.ts';
+import type { Configuration, ErrorCode, ProviderAdapter, ScanCap } from './contracts.ts';
 import { REFERENCE_COUNTER_ID } from './response/token-counter.ts';
 import { scoreCachePolicy } from './evaluation/policy.ts';
 import { AuthorizedRoot, assertSafeRelativePath } from './source/authorization.ts';
@@ -224,7 +224,7 @@ export type DoctorReport = {
   readonly repository_root_readable: boolean;
   readonly remote_evaluation_enabled: boolean;
   readonly provider: {
-    readonly adapter: 'typesafe-direct' | 'vercel-ai-gateway' | 'openrouter';
+    readonly adapter: ProviderAdapter;
     readonly base_url: string; readonly model: string;
     readonly api_key_env: string; readonly credential: CredentialState;
   };

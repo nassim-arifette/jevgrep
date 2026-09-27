@@ -64,6 +64,20 @@ inside that project.
 Existing limits are preserved. Interactive setup asks again for disclosure consent;
 non-interactive setup preserves the existing disclosure setting.
 
+A self-hosted gateway that exposes the TypeSafe System One contract at
+`<base_url>/v1/systemone` uses `adapter: "systemone-compatible"`:
+
+```bash
+jevgrep init --global --provider systemone-compatible \
+  --base-url https://litellm.example.com/typesafe --api-key-env LITELLM_API_KEY [--model jev-1.13.0]
+```
+
+The base URL must be `https://` (`http://` only for a loopback host), may carry a path
+prefix, and must not contain a query, a fragment or credentials. The adapter reuses the
+direct TypeSafe client with Bearer authentication. See the
+[example profile](examples/jevgrep.systemone-compatible.config.json) and the README section
+on self-hosted gateways.
+
 OpenRouter configuration uses `adapter: "openrouter"` and
 `base_url: "https://openrouter.ai"`. The adapter adds `/api/alpha/decisions`;
 do not include `/api/v1` in the base URL. It sends Bearer authentication and

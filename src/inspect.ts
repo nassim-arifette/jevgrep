@@ -128,6 +128,9 @@ export function inspectScope(configuration: LoadedConfiguration, options: Inspec
   if (adapter === 'vercel-ai-gateway') {
     notes.push('Gateway advertises a 32k context; its use as an aggregate batch ceiling is a conservative local policy');
   }
+  if (adapter === 'systemone-compatible') {
+    notes.push(`excerpts go to the operator-supplied System One endpoint ${config.provider.base_url}; its limits are unknown, so a 32k aggregate batch ceiling is a conservative local policy`);
+  }
 
   return {
     repository_root: configuration.repositoryRoot,

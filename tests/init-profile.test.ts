@@ -7,7 +7,7 @@ import { executeCommand } from '../src/cli-commands.ts';
 import { LocalDirectory } from '../src/local-directory.ts';
 
 import {
-  configuredGlobalProvider, createGlobalProfile, createProfile, DEFAULT_JEVGREPIGNORE, discoverProjectConfiguration,
+  configuredGlobalEndpoint, configuredGlobalProvider, createGlobalProfile, createProfile, DEFAULT_JEVGREPIGNORE, discoverProjectConfiguration,
   environmentWithProfileSecrets, updateGlobalProfile,
 } from '../src/init.ts';
 
@@ -188,4 +188,49 @@ test('a global provider and secret are reused by project profiles discovered fro
   assert.equal(discoverProjectConfiguration(nested, env), profile.configPath);
   assert.equal(environmentWithProfileSecrets(profile.configPath, {})['TYPESAFE_API_KEY'], 'global-secret');
   assert.ok(!readFileSync(profile.configPath, 'utf8').includes('global-secret'));
+});
+
+test('a System One compatible gateway is configured globally and named by host in the consent prompt', async () => {
+  const space = temporary('jevgrep-init-systemone-'); const root = join(space, 'repository'); mkdirSync(root);
+  const env = { JEVGREP_CONFIG_HOME: join(space, 'configuration') };
+  const endpoint = { base_url: 'https://litellm.example.com/typesafe', api_key_env: 'LITELLM_API_KEY', model: 'jev-1.13.0' };
+  const prompts: string[] = []; const output: string[] = [];
+  const io = { out: (line: string) => output.push(line), err: (line: string) => assert.fail(line) };
+  assert.equal(await executeCommand({ kind: 'init', root: '.', global: true, provider: 'systemone-compatible', endpoint }, io,
+    { cwd: space, env, prompt: async (question) => { prompts.push(question); return 'virtual-key'; } }), 0);
+  assert.deepEqual(prompts, ['LITELLM_API_KEY (stored outside repositories): ']);
+  assert.match(output.join('\n'), /provider: System One compatible endpoint at litellm\.example\.com/);
+  assert.equal(configuredGlobalProvider(env), 'systemone-compatible');
+  assert.deepEqual(configuredGlobalEndpoint(env), endpoint);
+
+  prompts.length = 0;
+  assert.equal(await executeCommand({ kind: 'init', root: '.', global: false }, io,
+    { cwd: root, env, prompt: async (question) => { prompts.push(question); return 'y'; } }), 0);
+  assert.equal(prompts.length, 1);
+  assert.match(prompts[0]!, /excerpts from this repository to System One compatible endpoint at litellm\.example\.com\? \[y\/N\]/);
+  const configPath = discoverProjectConfiguration(root, env);
+  const config = JSON.parse(readFileSync(configPath, 'utf8')) as { remote_evaluation_enabled: boolean; provider: Record<string, unknown> };
+  assert.deepEqual(config.provider, { adapter: 'systemone-compatible', ...endpoint });
+  assert.equal(config.remote_evaluation_enabled, true);
+  assert.equal(environmentWithProfileSecrets(configPath, {})['LITELLM_API_KEY'], 'virtual-key');
+  assert.equal(environmentWithProfileSecrets(configPath, { LITELLM_API_KEY: 'environment-key' })['LITELLM_API_KEY'], 'environment-key');
+  assert.ok(!readFileSync(configPath, 'utf8').includes('virtual-key'));
+});
+
+test('a changed System One endpoint replaces the saved one, and a tampered endpoint is refused', async () => {
+  const space = temporary('jevgrep-init-systemone-switch-');
+  const env = { JEVGREP_CONFIG_HOME: join(space, 'configuration'), LITELLM_API_KEY: 'synthetic' };
+  const endpoint = { base_url: 'http://127.0.0.1:4000', api_key_env: 'LITELLM_API_KEY', model: 'jev-1.13.0' };
+  createGlobalProfile({ provider: 'systemone-compatible', endpoint, apiKey: 'first', env });
+  const moved = { ...endpoint, base_url: 'https://litellm.example.com/typesafe' };
+  assert.equal(await executeCommand({ kind: 'init', root: '.', global: true, provider: 'systemone-compatible', endpoint: moved },
+    { out() {}, err: (line) => assert.fail(line) }, { cwd: space, env }), 0);
+  assert.deepEqual(configuredGlobalEndpoint(env), moved);
+
+  assert.throws(() => createGlobalProfile({ provider: 'systemone-compatible', apiKey: 'k', env: { JEVGREP_CONFIG_HOME: join(space, 'other') } }), /endpoint/);
+  writeFileSync(join(env.JEVGREP_CONFIG_HOME, 'global.json'), JSON.stringify({ schema_version: 1, provider: 'systemone-compatible',
+    endpoint: { ...moved, base_url: 'http://litellm.example.com' } }));
+  assert.throws(() => configuredGlobalProvider(env), /invalid global settings/);
+  writeFileSync(join(env.JEVGREP_CONFIG_HOME, 'global.json'), JSON.stringify({ schema_version: 1, provider: 'typesafe', endpoint: moved }));
+  assert.throws(() => configuredGlobalProvider(env), /invalid global settings/);
 });

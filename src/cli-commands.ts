@@ -30,8 +30,8 @@ import { ScoreCache } from './evaluation/cache.ts';
 import { PreparationCache, preparationCacheDirectory } from './source/preparation-cache.ts';
 import { inspectScope, renderInspection } from './inspect.ts';
 import {
-  configurationHome, configuredGlobalProvider, createGlobalProfile, createProfile, discoverProjectConfiguration,
-  environmentWithProfileSecrets, PROVIDER_KEY_VARIABLES, PROVIDER_LABELS, updateGlobalProfile, validateProfileLocation, type InitProvider,
+  configurationHome, configuredGlobalEndpoint, configuredGlobalProvider, createGlobalProfile, createProfile, discoverProjectConfiguration,
+  environmentWithProfileSecrets, providerKeyVariable, providerLabel, updateGlobalProfile, validateProfileLocation, type InitProvider,
 } from './init.ts';
 import { runMcpServer } from './mcp.ts';
 import { LocalDirectory } from './local-directory.ts';
@@ -126,37 +126,44 @@ async function runInit(command: Extract<CliCommand, { kind: 'init' }>, io: CliIo
     if (answer === '' || answer === '1' || answer === 'typesafe') provider = 'typesafe';
     else if (answer === '2' || answer === 'vercel') provider = 'vercel';
     else if (answer === '3' || answer === 'openrouter') provider = 'openrouter';
+    else if (answer === 'systemone-compatible') provider = 'systemone-compatible';
     else throw new Error('provider must be 1/typesafe, 2/vercel or 3/openrouter');
-    const variable = PROVIDER_KEY_VARIABLES[provider];
+    // The endpoint of a System One compatible gateway comes from explicit flags or the saved global settings.
+    const endpoint = command.provider !== undefined ? command.endpoint : configuredGlobalEndpoint(environment);
+    if (provider === 'systemone-compatible' && endpoint === undefined) {
+      throw new Error("systemone-compatible needs '--base-url <url>'");
+    }
+    const variable = providerKeyVariable(provider, endpoint);
+    const target = { provider, env: environment, ...(endpoint === undefined ? {} : { endpoint }), ...(root === undefined ? {} : { repositoryRoot: root }) };
     let globalCreated: ReturnType<typeof createGlobalProfile> | undefined;
-    if (savedProvider === undefined || (command.provider !== undefined && savedProvider !== provider)) {
+    if (savedProvider === undefined || (command.provider !== undefined
+      && (savedProvider !== provider || JSON.stringify(configuredGlobalEndpoint(environment)) !== JSON.stringify(endpoint)))) {
       const existing = environment[variable]?.trim();
       const apiKey = existing && existing.length > 0 ? existing : (await prompt(`${variable} (stored outside repositories): `)).trim();
-      globalCreated = savedProvider === undefined
-        ? createGlobalProfile({ provider, apiKey, env: environment, ...(root === undefined ? {} : { repositoryRoot: root }) })
-        : updateGlobalProfile({ provider, apiKey, env: environment, ...(root === undefined ? {} : { repositoryRoot: root }) });
+      globalCreated = savedProvider === undefined ? createGlobalProfile({ ...target, apiKey }) : updateGlobalProfile({ ...target, apiKey });
     }
+    const label = providerLabel(provider, endpoint);
     if (command.global) {
-      io.out(`configured JevGrep globally\nsettings: ${globalCreated?.settingsPath ?? 'already configured'}\nsecrets: ${globalCreated?.secretsPath ?? 'already configured'}\nprovider: ${PROVIDER_LABELS[provider]}\nnext: run 'jevgrep init' inside a repository`);
+      io.out(`configured JevGrep globally\nsettings: ${globalCreated?.settingsPath ?? 'already configured'}\nsecrets: ${globalCreated?.secretsPath ?? 'already configured'}\nprovider: ${label}\nnext: run 'jevgrep init' inside a repository`);
       return CLI_EXIT_CODES.complete;
     }
     if (root === undefined) throw new Error('project authorization is missing');
-    const providerLabel = PROVIDER_LABELS[provider];
     const input = (deps.input ?? process.stdin) as Readable & { isTTY?: boolean };
     const interactive = deps.prompt !== undefined || input.isTTY === true;
     let remoteEvaluationEnabled: boolean | undefined;
     if (interactive) {
       io.out(`repository: ${root.path}`);
-      const consent = await prompt(`Allow sending eligible source excerpts from this repository to ${providerLabel}? [y/N] `);
+      const consent = await prompt(`Allow sending eligible source excerpts from this repository to ${label}? [y/N] `);
       remoteEvaluationEnabled = /^(y|yes)$/i.test(consent.trim());
     }
     root.assertCurrent();
     const profile = createProfile({
       root: root.path, provider, env: environment,
+      ...(endpoint === undefined ? {} : { endpoint }),
       replaceProvider: command.provider !== undefined,
       ...(remoteEvaluationEnabled === undefined ? {} : { remoteEvaluationEnabled }),
     });
-    io.out(`authorized JevGrep project\nconfiguration: ${profile.configPath}\nprovider: ${providerLabel}\nremote evaluation: ${profile.remoteEvaluationEnabled ? 'enabled' : 'disabled'}\n${profile.remoteEvaluationEnabled ? 'next: jevgrep search --query "your question"' : 'next: jevgrep inspect; review the configuration before enabling remote_evaluation_enabled'}`);
+    io.out(`authorized JevGrep project\nconfiguration: ${profile.configPath}\nprovider: ${label}\nremote evaluation: ${profile.remoteEvaluationEnabled ? 'enabled' : 'disabled'}\n${profile.remoteEvaluationEnabled ? 'next: jevgrep search --query "your question"' : 'next: jevgrep inspect; review the configuration before enabling remote_evaluation_enabled'}`);
     return CLI_EXIT_CODES.complete;
   } catch (cause) {
     io.err(`jevgrep: init failed: ${cause instanceof Error ? cause.message : 'unknown failure'}`);

@@ -73,4 +73,12 @@ test('new direct profiles are pinned; rolling reuse is bounded, optional and ada
   assert.equal(scoreCachePolicy('typesafe-direct', 'typesafe-ai/jev', cache).mode, 'disabled');
   assert.equal(scoreCachePolicy('vercel-ai-gateway', 'typesafe-ai/jev', { ...cache, rolling_ttl_seconds: 0 }).mode, 'disabled');
   assert.equal(scoreCachePolicy('vercel-ai-gateway', 'typesafe-ai/jev', { ...cache, enabled: false }).mode, 'disabled');
+  assert.deepEqual(scoreCachePolicy('systemone-compatible', 'jev-1.13.0', cache), { mode: 'pinned', ttlSeconds: 604_800 });
+  assert.equal(scoreCachePolicy('systemone-compatible', 'jev-latest', cache).mode, 'rolling');
+  assert.equal(scoreCachePolicy('systemone-compatible', 'custom-alias', cache).mode, 'disabled');
+});
+
+test('a System One compatible gateway keeps the conservative 32k aggregate ceiling', () => {
+  assert.deepEqual(batchLimits('systemone-compatible'), batchLimits('vercel-ai-gateway'));
+  assert.equal(batchLimits('systemone-compatible').totalTokens, 32_000);
 });

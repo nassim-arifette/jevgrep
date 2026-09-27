@@ -140,6 +140,29 @@ test('doctor identifies Vercel AI Gateway and its credential without contacting 
   assert.equal(text.includes('synthetic-gateway-secret'), false);
 });
 
+test('doctor names a System One compatible endpoint and its operator-supplied key variable', () => {
+  const space = workspace({
+    files: { 'src/a.ts': 'export const a = 1;\n' },
+    configure: (config) => withRemoteEnabled({
+      ...config,
+      provider: {
+        adapter: 'systemone-compatible',
+        base_url: 'https://litellm.example.com/typesafe',
+        api_key_env: 'LITELLM_API_KEY',
+        model: 'jev-1.13.0',
+      },
+    }),
+  });
+  const report = doctorReport(space.loaded, { LITELLM_API_KEY: 'synthetic-virtual-key' });
+  const text = renderDoctorReport(report).join('\n');
+  assert.equal(report.provider.adapter, 'systemone-compatible');
+  assert.equal(report.provider.credential, 'present');
+  assert.equal(report.cache.policy, 'pinned');
+  assert.match(text, /systemone-compatible https:\/\/litellm\.example\.com\/typesafe model=jev-1\.13\.0/);
+  assert.ok(text.includes('LITELLM_API_KEY'));
+  assert.equal(text.includes('synthetic-virtual-key'), false);
+});
+
 test('doctor explains a disabled disclosure rather than reporting a missing key', () => {
   const space = workspace({ files: { 'src/a.ts': 'export const a = 1;\n' } });
   const report = doctorReport(space.loaded, {});
