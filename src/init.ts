@@ -3,19 +3,34 @@ import { homedir } from 'node:os';
 import { basename, dirname, isAbsolute, join, resolve } from 'node:path';
 import process from 'node:process';
 
-import { configurationSchema, createDefaultConfiguration, type Configuration } from './contracts.ts';
+import { configurationSchema, createDefaultConfiguration, systemOneEndpoint, type Configuration, type SystemOneEndpoint } from './contracts.ts';
 import { LocalDirectory, isMissing } from './local-directory.ts';
 import { DEFAULT_DIRECT_MODEL } from './evaluation/policy.ts';
 import { AuthorizedRoot } from './source/authorization.ts';
 
-export type InitProvider = 'typesafe' | 'vercel' | 'openrouter';
+export const INIT_PROVIDERS = ['typesafe', 'vercel', 'openrouter', 'systemone-compatible'] as const;
+export type InitProvider = typeof INIT_PROVIDERS[number];
+export type { SystemOneEndpoint };
 
 export const PROVIDER_LABELS: Readonly<Record<InitProvider, string>> = {
   typesafe: 'TypeSafe AI', vercel: 'Vercel AI Gateway', openrouter: 'OpenRouter',
+  'systemone-compatible': 'System One compatible endpoint',
 };
-export const PROVIDER_KEY_VARIABLES: Readonly<Record<InitProvider, string>> = {
+export const PROVIDER_KEY_VARIABLES: Readonly<Record<Exclude<InitProvider, 'systemone-compatible'>, string>> = {
   typesafe: 'TYPESAFE_API_KEY', vercel: 'AI_GATEWAY_API_KEY', openrouter: 'OPENROUTER_API_KEY',
 };
+
+/** Only an operator-supplied endpoint lacks a fixed provider; name its host for consent. */
+export function providerLabel(provider: InitProvider, endpoint?: SystemOneEndpoint): string {
+  return provider === 'systemone-compatible' && endpoint !== undefined
+    ? `${PROVIDER_LABELS[provider]} at ${new URL(endpoint.base_url).host}` : PROVIDER_LABELS[provider];
+}
+
+export function providerKeyVariable(provider: InitProvider, endpoint?: SystemOneEndpoint): string {
+  if (provider !== 'systemone-compatible') return PROVIDER_KEY_VARIABLES[provider];
+  if (endpoint === undefined) throw new Error('systemone-compatible requires an endpoint');
+  return endpoint.api_key_env;
+}
 
 export const DEFAULT_JEVGREPIGNORE = `# JevGrep already respects .gitignore.
 #
@@ -62,25 +77,37 @@ export function projectConfigurationPath(root: string, env: NodeJS.ProcessEnv = 
   return join(configurationHome(env), 'profiles', safeName(authorized.path), 'config.json');
 }
 
-type GlobalSettings = { readonly schema_version: 1; readonly provider: InitProvider };
+type GlobalSettings = { readonly schema_version: 1; readonly provider: InitProvider; readonly endpoint?: SystemOneEndpoint };
 function readGlobalSettings(env: NodeJS.ProcessEnv): GlobalSettings | undefined {
   const text = readOptional(new LocalDirectory(configurationHome(env)), 'global.json', 16_384);
   if (text === undefined) return undefined;
   const parsed = parseJson(text, globalSettingsPath(env));
   if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) throw new Error('invalid global settings');
   const value = parsed as Record<string, unknown>;
-  if (value['schema_version'] !== 1 || (value['provider'] !== 'typesafe' && value['provider'] !== 'vercel' && value['provider'] !== 'openrouter')
-    || Object.keys(value).some((key) => !['schema_version', 'provider'].includes(key))) throw new Error('invalid global settings');
-  return { schema_version: 1, provider: value['provider'] };
+  const provider = value['provider'];
+  if (value['schema_version'] !== 1 || !INIT_PROVIDERS.includes(provider as InitProvider)
+    || (provider === 'systemone-compatible') !== Object.hasOwn(value, 'endpoint')
+    || Object.keys(value).some((key) => !['schema_version', 'provider', 'endpoint'].includes(key))) throw new Error('invalid global settings');
+  if (provider !== 'systemone-compatible') return { schema_version: 1, provider: provider as InitProvider };
+  try { return { schema_version: 1, provider, endpoint: systemOneEndpoint(value['endpoint']) }; }
+  catch { throw new Error('invalid global settings'); }
 }
 
 export function configuredGlobalProvider(env: NodeJS.ProcessEnv = process.env): InitProvider | undefined { return readGlobalSettings(env)?.provider; }
+export function configuredGlobalEndpoint(env: NodeJS.ProcessEnv = process.env): SystemOneEndpoint | undefined { return readGlobalSettings(env)?.endpoint; }
 
 type GlobalProfileOptions = {
-  readonly provider: InitProvider; readonly apiKey: string; readonly env?: NodeJS.ProcessEnv;
-  readonly repositoryRoot?: AuthorizedRoot;
+  readonly provider: InitProvider; readonly env?: NodeJS.ProcessEnv;
+  /** Omitted: the key lives only in the environment and secrets.env is left untouched. */
+  readonly apiKey?: string;
+  readonly repositoryRoot?: AuthorizedRoot; readonly endpoint?: SystemOneEndpoint;
 };
-type GlobalProfile = { readonly settingsPath: string; readonly secretsPath: string; readonly variable: string };
+type GlobalProfile = {
+  readonly settingsPath: string; readonly secretsPath: string; readonly variable: string;
+  readonly keyStored: boolean;
+  /** Without a stored key, an older value for the same variable is kept: it applies only when the variable is unset. */
+  readonly storedKeyRetained: boolean;
+};
 
 function validateKey(key: string): void {
   if (key.trim().length === 0 || /[\r\n]/.test(key) || Buffer.byteLength(key) > 8_192) throw new Error('the API key must be non-empty, bounded and one line');
@@ -98,23 +125,35 @@ function parseSecrets(text: string, path: string): Record<string, string> {
 }
 
 function writeGlobalProfile(options: GlobalProfileOptions, replace: boolean): GlobalProfile {
-  validateKey(options.apiKey);
+  const apiKey = options.apiKey;
+  if (apiKey !== undefined) validateKey(apiKey);
   const env = options.env ?? process.env;
   const root = options.repositoryRoot;
   root?.assertCurrent();
   const storage = new LocalDirectory(configurationHome(env), root);
   const existingSettings = readOptional(storage, 'global.json', 16_384);
   const existingSecrets = readOptional(storage, 'secrets.env', 32_768);
-  if (!replace && (existingSettings !== undefined || existingSecrets !== undefined)) throw new Error(`global settings already exist at ${storage.path}`);
-  const variable = PROVIDER_KEY_VARIABLES[options.provider];
+  if (!replace && (existingSettings !== undefined || (apiKey !== undefined && existingSecrets !== undefined))) {
+    throw new Error(`global settings already exist at ${storage.path}`);
+  }
+  const variable = providerKeyVariable(options.provider, options.endpoint);
   // Retain the other providers' keys: existing project profiles may still use them.
   const secrets = parseSecrets(existingSecrets ?? '', join(storage.path, 'secrets.env'));
-  secrets[variable] = options.apiKey.trim();
+  const storedKeyRetained = apiKey === undefined && Object.hasOwn(secrets, variable);
+  if (apiKey !== undefined) {
+    secrets[variable] = apiKey.trim();
+    root?.assertCurrent();
+    storage.write('secrets.env', Object.entries(secrets).map(([key, value]) => `${key}=${value}\n`).join(''), !replace);
+  }
   root?.assertCurrent();
-  storage.write('secrets.env', Object.entries(secrets).map(([key, value]) => `${key}=${value}\n`).join(''), !replace);
-  try { storage.write('global.json', `${JSON.stringify({ schema_version: 1, provider: options.provider }, null, 2)}\n`, !replace); }
-  catch (cause) { if (!replace) storage.remove('secrets.env'); throw cause; }
-  return { settingsPath: join(storage.path, 'global.json'), secretsPath: join(storage.path, 'secrets.env'), variable };
+  const settings = { schema_version: 1, provider: options.provider,
+    ...(options.provider === 'systemone-compatible' ? { endpoint: options.endpoint } : {}) };
+  try { storage.write('global.json', `${JSON.stringify(settings, null, 2)}\n`, !replace); }
+  catch (cause) { if (!replace && apiKey !== undefined) storage.remove('secrets.env'); throw cause; }
+  return {
+    settingsPath: join(storage.path, 'global.json'), secretsPath: join(storage.path, 'secrets.env'), variable,
+    keyStored: apiKey !== undefined, storedKeyRetained,
+  };
 }
 
 export function createGlobalProfile(options: GlobalProfileOptions): GlobalProfile { return writeGlobalProfile(options, false); }
@@ -133,7 +172,12 @@ export function discoverProjectConfiguration(cwd: string, env: NodeJS.ProcessEnv
   throw new Error(`no JevGrep project is configured for ${resolve(cwd)}; run 'jevgrep init' in the repository first`);
 }
 
-export function buildInitialConfiguration(root: string, provider: InitProvider): Configuration {
+export function buildInitialConfiguration(root: string, provider: InitProvider, endpoint?: SystemOneEndpoint): Configuration {
+  if (provider === 'systemone-compatible') {
+    if (endpoint === undefined) throw new Error('systemone-compatible requires an endpoint');
+    const config = createDefaultConfiguration(root, DEFAULT_DIRECT_MODEL);
+    return configurationSchema.parse({ ...config, provider: { adapter: 'systemone-compatible', ...endpoint } });
+  }
   const config = createDefaultConfiguration(root, provider === 'typesafe' ? DEFAULT_DIRECT_MODEL : provider === 'vercel' ? 'typesafe-ai/jev' : 'typesafe/jev-1.13');
   return configurationSchema.parse({
     ...config,
@@ -166,7 +210,7 @@ function createDefaultIgnoreFile(root: AuthorizedRoot): boolean {
 
 export function createProfile(options: {
   readonly root: string; readonly provider: InitProvider; readonly apiKey?: string; readonly env?: NodeJS.ProcessEnv;
-  readonly replaceProvider?: boolean;
+  readonly replaceProvider?: boolean; readonly endpoint?: SystemOneEndpoint;
   readonly remoteEvaluationEnabled?: boolean;
 }): CreatedProfile {
   if (options.apiKey !== undefined) validateKey(options.apiKey);
@@ -176,7 +220,7 @@ export function createProfile(options: {
   const configPath = join(storage.path, 'config.json');
   const secretsPath = options.apiKey === undefined ? globalSecretsPath(env) : join(storage.path, 'secrets.env');
   const existing = readOptional(storage, 'config.json', 1_048_576);
-  const desired = { ...buildInitialConfiguration(root.path, options.provider), remote_evaluation_enabled: options.remoteEvaluationEnabled === true };
+  const desired = { ...buildInitialConfiguration(root.path, options.provider, options.endpoint), remote_evaluation_enabled: options.remoteEvaluationEnabled === true };
   if (existing !== undefined) {
     if (options.replaceProvider !== true || options.apiKey !== undefined) throw new Error(`a profile already exists at ${storage.path}`);
     const current = configurationSchema.parse(parseJson(existing, configPath));

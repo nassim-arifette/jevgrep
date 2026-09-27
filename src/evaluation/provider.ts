@@ -1,7 +1,7 @@
 /** Select the configured Jev transport after configuration and credential validation. */
 import { OPENROUTER_JEV_MODEL, OpenRouterAdapter, serializeOpenRouterBatch, type OpenRouterAdapterOptions } from './openrouter.ts';
 import { ConfigurationError } from '../config.ts';
-import type { Configuration } from '../contracts.ts';
+import type { Configuration, ProviderAdapter } from '../contracts.ts';
 import { JevAdapter, buildRequestPayload, type EvaluationBatch, type JevAdapterOptions, type ProviderClient } from './jev.ts';
 import {
   VERCEL_JEV_MODEL,
@@ -9,8 +9,9 @@ import {
   serializeGatewayBatch,
   type VercelGatewayAdapterOptions,
 } from './vercel-gateway.ts';
+import { speaksSystemOne } from './policy.ts';
 
-export type ProviderAdapterKind = 'typesafe-direct' | 'vercel-ai-gateway' | 'openrouter';
+export type ProviderAdapterKind = ProviderAdapter;
 
 export type ProviderFactories = {
   /** Optional to preserve existing callers that inject only the original adapters. */
@@ -42,7 +43,8 @@ export function createConfiguredProvider(
   apiKey: string,
   factories: ProviderFactories = defaultFactories,
 ): ProviderClient {
-  if (configuredAdapter(config) === 'typesafe-direct') {
+  // A System One compatible gateway reuses the direct client at its own base URL.
+  if (speaksSystemOne(configuredAdapter(config))) {
     return factories.direct({
       baseUrl: config.provider.base_url,
       model: config.provider.model,

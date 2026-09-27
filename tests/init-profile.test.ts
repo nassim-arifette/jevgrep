@@ -4,10 +4,11 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test, { after } from 'node:test';
 import { executeCommand } from '../src/cli-commands.ts';
+import { ConfigurationError, loadConfiguration, resolveCredential } from '../src/config.ts';
 import { LocalDirectory } from '../src/local-directory.ts';
 
 import {
-  configuredGlobalProvider, createGlobalProfile, createProfile, DEFAULT_JEVGREPIGNORE, discoverProjectConfiguration,
+  configuredGlobalEndpoint, configuredGlobalProvider, createGlobalProfile, createProfile, DEFAULT_JEVGREPIGNORE, discoverProjectConfiguration,
   environmentWithProfileSecrets, updateGlobalProfile,
 } from '../src/init.ts';
 
@@ -188,4 +189,112 @@ test('a global provider and secret are reused by project profiles discovered fro
   assert.equal(discoverProjectConfiguration(nested, env), profile.configPath);
   assert.equal(environmentWithProfileSecrets(profile.configPath, {})['TYPESAFE_API_KEY'], 'global-secret');
   assert.ok(!readFileSync(profile.configPath, 'utf8').includes('global-secret'));
+});
+
+test('a System One compatible gateway is configured globally and named by host in the consent prompt', async () => {
+  const space = temporary('jevgrep-init-systemone-'); const root = join(space, 'repository'); mkdirSync(root);
+  const env = { JEVGREP_CONFIG_HOME: join(space, 'configuration') };
+  const endpoint = { base_url: 'https://litellm.example.com/typesafe', api_key_env: 'LITELLM_API_KEY', model: 'jev-1.13.0' };
+  const prompts: string[] = []; const output: string[] = [];
+  const io = { out: (line: string) => output.push(line), err: (line: string) => assert.fail(line) };
+  assert.equal(await executeCommand({ kind: 'init', root: '.', global: true, provider: 'systemone-compatible', endpoint }, io,
+    { cwd: space, env, prompt: async (question) => { prompts.push(question); return 'virtual-key'; } }), 0);
+  assert.deepEqual(prompts, ['LITELLM_API_KEY (stored outside repositories): ']);
+  assert.match(output.join('\n'), /provider: System One compatible endpoint at litellm\.example\.com/);
+  assert.equal(configuredGlobalProvider(env), 'systemone-compatible');
+  assert.deepEqual(configuredGlobalEndpoint(env), endpoint);
+
+  prompts.length = 0;
+  assert.equal(await executeCommand({ kind: 'init', root: '.', global: false }, io,
+    { cwd: root, env, prompt: async (question) => { prompts.push(question); return 'y'; } }), 0);
+  assert.equal(prompts.length, 1);
+  assert.match(prompts[0]!, /excerpts from this repository to System One compatible endpoint at litellm\.example\.com\? \[y\/N\]/);
+  const configPath = discoverProjectConfiguration(root, env);
+  const config = JSON.parse(readFileSync(configPath, 'utf8')) as { remote_evaluation_enabled: boolean; provider: Record<string, unknown> };
+  assert.deepEqual(config.provider, { adapter: 'systemone-compatible', ...endpoint });
+  assert.equal(config.remote_evaluation_enabled, true);
+  assert.equal(environmentWithProfileSecrets(configPath, {})['LITELLM_API_KEY'], 'virtual-key');
+  assert.equal(environmentWithProfileSecrets(configPath, { LITELLM_API_KEY: 'environment-key' })['LITELLM_API_KEY'], 'environment-key');
+  assert.ok(!readFileSync(configPath, 'utf8').includes('virtual-key'));
+});
+
+test('a changed System One endpoint replaces the saved one, and a tampered endpoint is refused', async () => {
+  const space = temporary('jevgrep-init-systemone-switch-');
+  const env = { JEVGREP_CONFIG_HOME: join(space, 'configuration'), LITELLM_API_KEY: 'synthetic' };
+  const endpoint = { base_url: 'http://127.0.0.1:4000', api_key_env: 'LITELLM_API_KEY', model: 'jev-1.13.0' };
+  createGlobalProfile({ provider: 'systemone-compatible', endpoint, apiKey: 'first', env });
+  const moved = { ...endpoint, base_url: 'https://litellm.example.com/typesafe' };
+  assert.equal(await executeCommand({ kind: 'init', root: '.', global: true, provider: 'systemone-compatible', endpoint: moved },
+    { out() {}, err: (line) => assert.fail(line) }, { cwd: space, env }), 0);
+  assert.deepEqual(configuredGlobalEndpoint(env), moved);
+
+  assert.throws(() => createGlobalProfile({ provider: 'systemone-compatible', apiKey: 'k', env: { JEVGREP_CONFIG_HOME: join(space, 'other') } }), /endpoint/);
+  writeFileSync(join(env.JEVGREP_CONFIG_HOME, 'global.json'), JSON.stringify({ schema_version: 1, provider: 'systemone-compatible',
+    endpoint: { ...moved, base_url: 'http://litellm.example.com' } }));
+  assert.throws(() => configuredGlobalProvider(env), /invalid global settings/);
+  writeFileSync(join(env.JEVGREP_CONFIG_HOME, 'global.json'), JSON.stringify({ schema_version: 1, provider: 'typesafe', endpoint: moved }));
+  assert.throws(() => configuredGlobalProvider(env), /invalid global settings/);
+});
+
+test('--no-store-key writes the global settings but never a secret, and the environment supplies the key', async () => {
+  const space = temporary('jevgrep-init-no-store-'); const root = join(space, 'repository'); mkdirSync(root);
+  const env = { JEVGREP_CONFIG_HOME: join(space, 'configuration') };
+  const endpoint = { base_url: 'https://litellm.example.com/typesafe', api_key_env: 'LITELLM_API_KEY', model: 'jev-1.13.0' };
+  const output: string[] = [];
+  const io = { out: (line: string) => output.push(line), err: (line: string) => assert.fail(line) };
+  const noPrompt = async (question: string): Promise<string> => assert.fail(`unexpected prompt: ${question}`);
+  assert.equal(await executeCommand({ kind: 'init', root: '.', global: true, provider: 'systemone-compatible', endpoint, storeKey: false },
+    io, { cwd: space, env, prompt: noPrompt }), 0);
+  assert.deepEqual(configuredGlobalEndpoint(env), endpoint);
+  assert.equal(existsSync(join(env.JEVGREP_CONFIG_HOME, 'secrets.env')), false);
+  assert.match(output.join('\n'), /secrets: not stored \(LITELLM_API_KEY is read from the environment\)/);
+
+  assert.equal(await executeCommand({ kind: 'init', root: '.', global: false }, io,
+    { cwd: root, env, prompt: async () => 'y' }), 0);
+  const configPath = discoverProjectConfiguration(root, env);
+  const loaded = loadConfiguration(configPath);
+  assert.throws(() => resolveCredential(loaded, environmentWithProfileSecrets(configPath, env)),
+    (cause: unknown) => cause instanceof ConfigurationError && cause.code === 'CREDENTIAL_MISSING');
+  assert.equal(resolveCredential(loaded, environmentWithProfileSecrets(configPath, { ...env, LITELLM_API_KEY: 'injected' })), 'injected');
+
+  for (const [variables, state] of [[{}, 'missing'], [{ LITELLM_API_KEY: 'injected' }, 'present']] as const) {
+    const lines: string[] = [];
+    assert.equal(await executeCommand({ kind: 'doctor', config: configPath }, { out: (line) => lines.push(line), err() {} },
+      { cwd: root, env: { ...env, ...variables } }), 0);
+    assert.match(lines.join('\n'), new RegExp(`credential\\s+LITELLM_API_KEY \\(${state};`));
+    assert.ok(!lines.join('\n').includes('injected'));
+  }
+  const streams: string[] = [];
+  assert.equal(await executeCommand({ kind: 'search', config: configPath, json: true,
+    request: { query: 'Where is the session refreshed?', scope: ['.'], allow_partial_scan: false } },
+  { out: (line) => streams.push(line), err: (line) => streams.push(line) }, { cwd: root, env }), 2);
+  assert.match(streams.join('\n'), /CREDENTIAL_MISSING/, 'without the variable the search stops before any request');
+});
+
+test('--no-store-key keeps an existing stored value for the variable and says when it applies', async () => {
+  const space = temporary('jevgrep-init-no-store-retain-');
+  const env = { JEVGREP_CONFIG_HOME: join(space, 'configuration') };
+  createGlobalProfile({ provider: 'typesafe', apiKey: 'stored-secret', env });
+  const output: string[] = [];
+  assert.equal(await executeCommand({ kind: 'init', root: '.', global: true, provider: 'vercel', storeKey: false },
+    { out: (line) => output.push(line), err: (line) => assert.fail(line) }, { cwd: space, env }), 0);
+  assert.equal(configuredGlobalProvider(env), 'vercel');
+  assert.equal(readFileSync(join(env.JEVGREP_CONFIG_HOME, 'secrets.env'), 'utf8'), 'TYPESAFE_API_KEY=stored-secret\n');
+  assert.ok(!output.join('\n').includes('note:'));
+
+  output.length = 0;
+  assert.equal(await executeCommand({ kind: 'init', root: '.', global: true, provider: 'typesafe', storeKey: false },
+    { out: (line) => output.push(line), err: (line) => assert.fail(line) }, { cwd: space, env }), 0);
+  assert.equal(readFileSync(join(env.JEVGREP_CONFIG_HOME, 'secrets.env'), 'utf8'), 'TYPESAFE_API_KEY=stored-secret\n');
+  assert.match(output.join('\n'), /note: .*secrets\.env still holds TYPESAFE_API_KEY; it is used only when TYPESAFE_API_KEY is unset/);
+  assert.ok(!output.join('\n').includes('stored-secret'));
+});
+
+test('the interactive provider menu points systemone-compatible to its flags', async () => {
+  const space = temporary('jevgrep-init-menu-');
+  const errors: string[] = [];
+  assert.equal(await executeCommand({ kind: 'init', root: '.', global: true }, { out() {}, err: (line) => errors.push(line) },
+    { cwd: space, env: { JEVGREP_CONFIG_HOME: join(space, 'configuration') }, prompt: async () => 'systemone-compatible' }), 2);
+  assert.match(errors.join(''), /configured with flags: jevgrep init --provider systemone-compatible --base-url <url>/);
+  assert.equal(existsSync(join(space, 'configuration', 'global.json')), false);
 });

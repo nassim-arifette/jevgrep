@@ -1,7 +1,8 @@
 /** Provider limits and local safety policies; estimates are not billing tokens. */
+import type { ProviderAdapter } from '../contracts.ts';
 import { countReferenceTokens } from '../response/token-counter.ts';
 
-export type AdapterKind = 'typesafe-direct' | 'vercel-ai-gateway' | 'openrouter';
+export type AdapterKind = ProviderAdapter;
 export const DEFAULT_DIRECT_MODEL = 'jev-1.13.0';
 export const MAX_ROLLING_TTL_SECONDS = 900;
 
@@ -16,7 +17,8 @@ export type BatchLimits = {
 export function batchLimits(adapter: AdapterKind = 'typesafe-direct'): BatchLimits {
   return {
     // TypeSafe documents 64k total and 32k per question. Gateway and OpenRouter advertise a
-    // 32k context; treating that as an aggregate cap is our conservative policy.
+    // 32k context; treating that as an aggregate cap is our conservative policy. A System One
+    // compatible gateway gets the same 32k policy: its own limits are unknown.
     totalTokens: adapter === 'typesafe-direct' ? 64_000 : 32_000,
     perQuestionTokens: 32_000,
     headroomRatio: 0.7, // Provider tokenizer is not public.
@@ -48,6 +50,11 @@ export function measureSerializedBatch(
     <= limits.perQuestionTokens * limits.headroomRatio), bytes, tokens };
 }
 
+/** Adapters that send the System One envelope with the direct TypeSafe client. */
+export function speaksSystemOne(adapter: AdapterKind): boolean {
+  return adapter === 'typesafe-direct' || adapter === 'systemone-compatible';
+}
+
 export function isPinnedModelRevision(model: string): boolean {
   return /^jev-\d+\.\d+\.\d+$/.test(model);
 }
@@ -65,7 +72,7 @@ export function scoreCachePolicy(adapter: AdapterKind, model: string, cache: {
   readonly enabled: boolean; readonly ttl_seconds: number; readonly rolling_ttl_seconds?: number;
 }): { mode: 'pinned' | 'rolling' | 'disabled'; ttlSeconds: number } {
   if (!cache.enabled) return { mode: 'disabled', ttlSeconds: 0 };
-  if (adapter === 'typesafe-direct' && isPinnedModelRevision(model)) {
+  if (speaksSystemOne(adapter) && isPinnedModelRevision(model)) {
     return { mode: 'pinned', ttlSeconds: cache.ttl_seconds };
   }
   const rolling = adapter === 'vercel-ai-gateway' ? model === 'typesafe-ai/jev'

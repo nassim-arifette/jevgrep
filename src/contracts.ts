@@ -75,10 +75,51 @@ const usd = refine(numberValue(0, Number.MAX_SAFE_INTEGER / 1_000_000_000, false
     && Math.abs(units - rounded) <= Number.EPSILON * Math.max(1, units) * 2,
   path, 'USD amounts must be representable as integer nanodollars');
 });
+export const IDENTIFIER = /^[A-Za-z0-9][A-Za-z0-9._:@/+\-]*$/;
 const identifier = refine(textValue(128), (value, path) => {
-  requireContract(/^[A-Za-z0-9][A-Za-z0-9._:@/+\-]*$/.test(value), path, 'expected a bounded identifier');
+  requireContract(IDENTIFIER.test(value), path, 'expected a bounded identifier');
 });
 const version = literal(SCHEMA_VERSION);
+
+export const PROVIDER_ADAPTERS = ['typesafe-direct', 'vercel-ai-gateway', 'openrouter', 'systemone-compatible'] as const;
+export type ProviderAdapter = typeof PROVIDER_ADAPTERS[number];
+export const ENVIRONMENT_VARIABLE = /^[A-Za-z_][A-Za-z0-9_]*$/;
+const LOOPBACK_HOSTS: readonly string[] = ['localhost', '127.0.0.1', '[::1]'];
+
+/**
+ * An operator-supplied System One endpoint. Excerpts and the credential go wherever it
+ * points, so it must be exactly the URL that is called: https (http for loopback only),
+ * normalized, with an optional path prefix and no credentials, query or fragment.
+ */
+export function systemOneBaseUrlProblem(value: string): string | undefined {
+  if (value.length > 256 || /[\s\u0000-\u001f\u007f\\]/.test(value)) return 'expected a bounded URL without whitespace or control characters';
+  let url: URL;
+  try { url = new URL(value); } catch { return 'expected an absolute URL'; }
+  if (url.username !== '' || url.password !== '' || value.includes('@')) return 'credentials in the endpoint URL are forbidden';
+  if (url.search !== '' || url.hash !== '' || /[?#]/.test(value)) return 'a query string or fragment is forbidden';
+  if (url.protocol !== 'https:' && !(url.protocol === 'http:' && LOOPBACK_HOSTS.includes(url.hostname))) {
+    return 'expected https:// (http:// only for a loopback host)';
+  }
+  if (value.replace(/\/$/, '') !== `${url.origin}${url.pathname}`.replace(/\/$/, '')) return 'expected a normalized URL';
+  return undefined;
+}
+
+/** Operator-supplied endpoint of a gateway that speaks TypeSafe's System One contract. */
+export type SystemOneEndpoint = { readonly base_url: string; readonly api_key_env: string; readonly model: string };
+
+/** Validated before any prompt or write; the secrets file stores upper-case names only. */
+export function systemOneEndpoint(value: unknown): SystemOneEndpoint {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) throw new Error('invalid System One endpoint');
+  const { base_url, api_key_env, model, ...extra } = value as Record<string, unknown>;
+  if (Object.keys(extra).length > 0) throw new Error('invalid System One endpoint');
+  const problem = typeof base_url === 'string' ? systemOneBaseUrlProblem(base_url) : 'expected a URL';
+  if (problem !== undefined) throw new Error(`invalid base URL: ${problem}`);
+  if (typeof api_key_env !== 'string' || !/^[A-Z][A-Z0-9_]*$/.test(api_key_env) || api_key_env.length > 128) {
+    throw new Error('the API key variable must be an upper-case environment variable name');
+  }
+  if (typeof model !== 'string' || !IDENTIFIER.test(model) || model.length > 128) throw new Error('invalid model identifier');
+  return { base_url: base_url as string, api_key_env, model };
+}
 const responseTokens = numberValue(CONTRACT_LIMITS.min_response_tokens, Number.MAX_SAFE_INTEGER);
 
 function normalizedPath(input: string, path: string): string {
@@ -184,16 +225,16 @@ export const configurationSchema = refine(object({
   }),
   remote_evaluation_enabled: booleanValue,
   provider: object({
+    // Hosts are pinned per adapter below; only systemone-compatible accepts another host.
     base_url: refine(textValue(256), (value, path) => {
-      requireContract(/^https:\/\/(?:api\.typesafe\.ai|ai-gateway\.vercel\.sh|openrouter\.ai)\/?$/.test(value), path,
-        'unsupported provider endpoint');
+      requireContract(systemOneBaseUrlProblem(value) === undefined, path, 'unsupported provider endpoint');
     }),
     api_key_env: refine(textValue(128), (value, path) => {
-      requireContract(/^[A-Za-z_][A-Za-z0-9_]*$/.test(value), path, 'expected an environment variable name');
+      requireContract(ENVIRONMENT_VARIABLE.test(value), path, 'expected an environment variable name');
     }),
     model: identifier,
   }, {
-    adapter: enumeration(['typesafe-direct', 'vercel-ai-gateway', 'openrouter']),
+    adapter: enumeration(PROVIDER_ADAPTERS),
     pricing: nullable(pricingSchema),
   }),
   search: object({
@@ -241,12 +282,13 @@ export const configurationSchema = refine(object({
       'vercel-ai-gateway requires https://ai-gateway.vercel.sh');
     requireContract(value.provider.model === 'typesafe-ai/jev', `${path}.provider.model`,
       'vercel-ai-gateway requires the typesafe-ai/jev model id');
-  } else {
+  } else if (adapter === 'openrouter') {
     requireContract(/^https:\/\/openrouter\.ai\/?$/.test(value.provider.base_url), `${path}.provider.base_url`,
       'openrouter requires https://openrouter.ai');
     requireContract(value.provider.model === 'typesafe/jev-1.13', `${path}.provider.model`,
       'openrouter requires the typesafe/jev-1.13 model id');
   }
+  // systemone-compatible is the explicit opt-in: its operator-supplied base_url passed the checks above.
 });
 export type Configuration = Infer<typeof configurationSchema>;
 

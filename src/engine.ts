@@ -33,7 +33,7 @@ import {
 } from './evaluation/jev.ts';
 import type { BatchItem, EvaluationBatch, ProviderClient } from './evaluation/jev.ts';
 import { createConfiguredProvider } from './evaluation/provider.ts';
-import { batchLimits, measureSerializedBatch, isOpenRouterModelRevision, scoreCachePolicy, MAX_ROLLING_TTL_SECONDS, type BatchLimits, type SerializedBatchMeasure } from './evaluation/policy.ts';
+import { batchLimits, measureSerializedBatch, isOpenRouterModelRevision, scoreCachePolicy, speaksSystemOne, MAX_ROLLING_TTL_SECONDS, type BatchLimits, type SerializedBatchMeasure } from './evaluation/policy.ts';
 import { runEvaluations } from './evaluation/scheduler.ts';
 import { SearchContext, SearchLogger, isAbortError, runPhase, systemClock } from './lifecycle.ts';
 import type { Clock } from './lifecycle.ts';
@@ -401,7 +401,7 @@ export class SearchEngine {
           onScores: (batch, evaluation) => {
             const cacheable = cachePolicy.mode !== 'disabled' && evaluation.requestedModel === model
               && (evaluation.returnedModel === null || evaluation.returnedModel === model
-                || (cachePolicy.mode === 'rolling' && adapter === 'typesafe-direct'
+                || (cachePolicy.mode === 'rolling' && speaksSystemOne(adapter)
                   && isPinnedModelRevision(evaluation.returnedModel))
                 || (cachePolicy.mode === 'rolling' && adapter === 'openrouter'
                   && isOpenRouterModelRevision(evaluation.returnedModel)));

@@ -55,6 +55,10 @@ Credentials are stored in the user's JevGrep configuration directory, outside th
 repository. `TYPESAFE_API_KEY`, `AI_GATEWAY_API_KEY` and `OPENROUTER_API_KEY`
 override the corresponding stored credentials.
 Use environment variables in automated environments; do not commit keys in project files.
+Add `--no-store-key` to any `init` command to skip the key prompt and never write the key
+to disk; the key must then be in the environment of each `jevgrep` process, for example
+from a secrets manager (`<secrets-manager> run -- jevgrep search ...`). An existing stored
+value for the same variable is kept, and applies only when the variable is unset.
 
 New direct profiles use `jev-1.13.0`; Vercel profiles use `typesafe-ai/jev`;
 OpenRouter profiles use `typesafe/jev-1.13`.
@@ -63,6 +67,20 @@ To switch an existing project, run the corresponding global setup, then
 inside that project.
 Existing limits are preserved. Interactive setup asks again for disclosure consent;
 non-interactive setup preserves the existing disclosure setting.
+
+A self-hosted gateway that exposes the TypeSafe System One contract at
+`<base_url>/v1/systemone` uses `adapter: "systemone-compatible"`:
+
+```bash
+jevgrep init --global --provider systemone-compatible \
+  --base-url https://litellm.example.com/typesafe --api-key-env LITELLM_API_KEY [--model jev-1.13.0]
+```
+
+The base URL must be `https://` (`http://` only for a loopback host), may carry a path
+prefix, and must not contain a query, a fragment or credentials. The adapter reuses the
+direct TypeSafe client with Bearer authentication. See the
+[example profile](examples/jevgrep.systemone-compatible.config.json) and the README section
+on self-hosted gateways.
 
 OpenRouter configuration uses `adapter: "openrouter"` and
 `base_url: "https://openrouter.ai"`. The adapter adds `/api/alpha/decisions`;

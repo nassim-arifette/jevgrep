@@ -9,11 +9,23 @@
  *
  * Exit code ownership stays with src/cli.ts (specification 4.5).
  */
-import { CONTRACT_LIMITS, parseSearchRequest, type SearchRequest } from './contracts.ts';
+import { CONTRACT_LIMITS, parseSearchRequest, systemOneEndpoint, type SearchRequest, type SystemOneEndpoint } from './contracts.ts';
+import { DEFAULT_DIRECT_MODEL } from './evaluation/policy.ts';
+import type { InitProvider } from './init.ts';
+
+const INIT_PROVIDER_NAMES: readonly string[] = ['typesafe', 'vercel', 'openrouter', 'systemone-compatible'] satisfies readonly InitProvider[];
+/** Key variable of a System One compatible endpoint when '--api-key-env' is omitted. */
+export const DEFAULT_SYSTEMONE_KEY_VARIABLE = 'SYSTEMONE_API_KEY';
 
 /** Commands of the documented CLI surface (specification 4.5). */
 export type CliCommand =
-  | { readonly kind: 'init'; readonly root: string; readonly provider?: 'typesafe' | 'vercel' | 'openrouter'; readonly global: boolean }
+  | {
+    readonly kind: 'init'; readonly root: string; readonly provider?: InitProvider; readonly global: boolean;
+    /** Present only with '--no-store-key': the key comes from the environment and is never written. */
+    readonly storeKey?: false;
+    /** Present exactly when the provider is systemone-compatible. */
+    readonly endpoint?: SystemOneEndpoint;
+  }
   | { readonly kind: 'search'; readonly config?: string; readonly request: SearchRequest; readonly json: boolean }
   | { readonly kind: 'inspect'; readonly config?: string; readonly scope: readonly string[]; readonly json: boolean }
   | { readonly kind: 'doctor'; readonly config?: string }
@@ -40,11 +52,15 @@ type OptionState = {
   readonly root: string | undefined;
   readonly provider: string | undefined;
   readonly global: boolean;
+  readonly noStoreKey: boolean;
+  readonly baseUrl: string | undefined;
+  readonly apiKeyEnv: string | undefined;
+  readonly model: string | undefined;
 };
 
 /** Options each command accepts, so a misplaced flag is refused instead of ignored. */
 const ALLOWED_OPTIONS: Record<string, readonly string[]> = {
-  init: ['--root', '--provider', '--global'],
+  init: ['--root', '--provider', '--global', '--base-url', '--api-key-env', '--model', '--no-store-key'],
   search: ['--config', '--query', '--query-file', '--scope', '--max-context-tokens', '--allow-partial', '--json'],
   inspect: ['--config', '--scope', '--json'],
   doctor: ['--config'],
@@ -121,7 +137,14 @@ function readOptions(
     root: string | undefined;
     provider: string | undefined;
     global: boolean;
-  } = { config: undefined, query: undefined, queryFile: undefined, scope: [], maxContextTokens: undefined, allowPartial: false, json: false, root: undefined, provider: undefined, global: false };
+    noStoreKey: boolean;
+    baseUrl: string | undefined;
+    apiKeyEnv: string | undefined;
+    model: string | undefined;
+  } = {
+    config: undefined, query: undefined, queryFile: undefined, scope: [], maxContextTokens: undefined, allowPartial: false, json: false,
+    root: undefined, provider: undefined, global: false, noStoreKey: false, baseUrl: undefined, apiKeyEnv: undefined, model: undefined,
+  };
   const state = mutable;
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -147,6 +170,10 @@ function readOptions(
       state.global = true;
       continue;
     }
+    if (option === '--no-store-key') {
+      state.noStoreKey = true;
+      continue;
+    }
 
     const value = argv[index + 1];
     if (value === undefined) {
@@ -161,8 +188,20 @@ function readOptions(
         break;
       case '--provider':
         if (state.provider !== undefined) return { state, error: "option '--provider' was given twice" };
-        if (value !== 'typesafe' && value !== 'vercel' && value !== 'openrouter') return { state, error: "option '--provider' must be 'typesafe', 'vercel' or 'openrouter'" };
+        if (!INIT_PROVIDER_NAMES.includes(value)) return { state, error: "option '--provider' must be 'typesafe', 'vercel', 'openrouter' or 'systemone-compatible'" };
         state.provider = value;
+        break;
+      case '--base-url':
+        if (state.baseUrl !== undefined) return { state, error: "option '--base-url' was given twice" };
+        state.baseUrl = value;
+        break;
+      case '--api-key-env':
+        if (state.apiKeyEnv !== undefined) return { state, error: "option '--api-key-env' was given twice" };
+        state.apiKeyEnv = value;
+        break;
+      case '--model':
+        if (state.model !== undefined) return { state, error: "option '--model' was given twice" };
+        state.model = value;
         break;
       case '--config':
         if (state.config !== undefined) {
@@ -253,10 +292,25 @@ export function parseCliArguments(
   }
   if (command === 'init') {
     if (state.global && state.root !== undefined) return refuse("option '--root' cannot be used with '--global'");
+    let endpoint: SystemOneEndpoint | undefined;
+    if (state.provider === 'systemone-compatible') {
+      if (state.baseUrl === undefined) return refuse("option '--provider systemone-compatible' needs '--base-url <url>'");
+      try {
+        endpoint = systemOneEndpoint({
+          base_url: state.baseUrl, api_key_env: state.apiKeyEnv ?? DEFAULT_SYSTEMONE_KEY_VARIABLE, model: state.model ?? DEFAULT_DIRECT_MODEL,
+        });
+      } catch (validationError) {
+        return refuse(messageOf(validationError));
+      }
+    } else if (state.baseUrl !== undefined || state.apiKeyEnv !== undefined || state.model !== undefined) {
+      return refuse("options '--base-url', '--api-key-env' and '--model' need '--provider systemone-compatible'");
+    }
     return { kind: 'command', command: {
       kind: 'init', root: state.root ?? '.',
       global: state.global,
-      ...(state.provider === undefined ? {} : { provider: state.provider as 'typesafe' | 'vercel' | 'openrouter' }),
+      ...(state.provider === undefined ? {} : { provider: state.provider as InitProvider }),
+      ...(endpoint === undefined ? {} : { endpoint }),
+      ...(state.noStoreKey ? { storeKey: false as const } : {}),
     } };
   }
   const config = state.config;
