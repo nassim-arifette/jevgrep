@@ -24,6 +24,12 @@ test('patch parsing maps hunks to pre-change lines and classifies non-edits', ()
   assert.deepEqual(file!.hunks[0]!.lines, [3, 3]);
   assert.equal(classifyHunk({ removed: ['x = 1'], added: ['x  =  1'], lines: [1] }, 'x = 1\n'), 'ignored');
   assert.equal(classifyHunk({ removed: [], added: ['import os'], lines: [1] }, 'x = 1\n'), 'ignored');
+  assert.equal(classifyHunk({
+    removed: ['from .compat import (quote, urlparse,', '    is_py2, is_py3)'],
+    added: ['from .compat import (quote, unquote as uq,', '    is_py2,', ')'], lines: [1, 2, 2, 2],
+  }, 'from .compat import (quote, urlparse,\n    is_py2, is_py3)\n'), 'ignored');
+  // A code change next to an import is an edit, even when its lines are bare words.
+  assert.equal(classifyHunk({ removed: ['    return x'], added: ['import os', '    return y'], lines: [2, 2] }, 'def f():\n    return x\n'), 'edit');
   assert.equal(classifyHunk({ removed: [], added: ['def added():', '    pass'], lines: [1] }, 'x = 1\n'), 'placement');
   assert.equal(classifyHunk({ removed: ['    return a'], added: ['    return b'], lines: [2] }, 'def f():\n    return a\n'), 'edit');
   assert.deepEqual(unitsFromLines('m.py', [5, 1, 2, 9]), [{ path: 'm.py', startLine: 1, endLine: 5 }, { path: 'm.py', startLine: 9, endLine: 9 }]);

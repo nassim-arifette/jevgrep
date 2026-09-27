@@ -15,7 +15,7 @@ need neither.
 ## Selection
 
 `swe-bench-sample-1.json` is produced by `npm run bench:real:import` from a JSONL
-subset of the dataset, with a seeded, per-repository ordering, at most 2 edited
+subset of the dataset, with a seeded, per-repository ordering, at most 3 edited
 non-test files per task and a bounded problem statement. Repositories and splits:
 
 | Repository | Split | Tasks |

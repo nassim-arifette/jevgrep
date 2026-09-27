@@ -120,6 +120,10 @@ function documentationLines(text: string): Set<number> {
 
 export type HunkRole = 'edit' | 'placement' | 'ignored';
 
+const importName = String.raw`\w+(?:\s+as\s+\w+)?`;
+/** An import statement, or a continuation line listing imported names: `a, b as c,` or `d)`. */
+const importLine = new RegExp(String.raw`^\s*(?:from\s+\S+\s+import\b|import\s|(?:${importName}\s*,\s*)*(?:${importName}\s*,?)?\s*\)?\s*$)`);
+
 /**
  * Whitespace-only, import-only and documentation-only hunks are ignored. A pure
  * insertion of a new `def`/`class` only marks where new code was placed.
@@ -128,8 +132,7 @@ export function classifyHunk(hunk: Hunk, preChangeText: string): HunkRole {
   const squash = (lines: readonly string[]): string => lines.map((line) => line.replace(/\s+/g, '')).join('\n');
   if (squash(hunk.removed) === squash(hunk.added)) return 'ignored';
   const changed = [...hunk.removed, ...hunk.added].filter((line) => line.trim() !== '');
-  if (changed.every((line) => /^\s*(from\s+\S+\s+import\b|import\s|[\w\s,]*\)?\s*$)/.test(line))
-    && changed.some((line) => /\bimport\b/.test(line))) return 'ignored';
+  if (changed.every((line) => importLine.test(line)) && changed.some((line) => /\bimport\b/.test(line))) return 'ignored';
   const documentation = documentationLines(preChangeText);
   const inside = (line: number): boolean => documentation.has(line) && (hunk.removed.length > 0 || documentation.has(line + 1));
   if (hunk.lines.every(inside)) return 'ignored';
