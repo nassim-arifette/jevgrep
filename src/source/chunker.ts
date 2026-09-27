@@ -98,6 +98,18 @@ function parseBoundaries(language: SyntaxLanguage, snapshot: SourceSnapshot): Pa
   }
 }
 
+/**
+ * Everything besides content and limits that determines a path's fragments: its
+ * extension (which selects the parser mode) and every chunker that may produce them,
+ * including the line-window fallback of syntax chunking.
+ */
+export function chunkerIdentityFor(path: string): string {
+  const extension = extensionOf(path);
+  return usesSyntaxChunking(path)
+    ? `${extension}|${SYNTAX_CHUNKER_VERSION}|${LINE_WINDOW_CHUNKER_VERSION}`
+    : `${extension}|${LINE_WINDOW_CHUNKER_VERSION}`;
+}
+
 type LineRange = { readonly startLine: number; readonly endLine: number; readonly label: string | null };
 
 function fragmentOf(snapshot: SourceSnapshot, range: LineRange, chunker: string): PreparedFragment {

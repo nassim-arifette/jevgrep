@@ -19,6 +19,7 @@
  * - `scope_fully_scanned` is asserted only when preparation finished and every
  *   fragment has a validated evaluation.
  */
+import { basename, dirname, join } from 'node:path';
 import { createHash } from 'node:crypto';
 import {
   ContractValidationError, createSearchError, parseSearchRequest,
@@ -46,6 +47,7 @@ import { UnauthorizedPathError } from './source/authorization.ts';
 import type { PreparedFragment } from './source/chunker.ts';
 import { FreshnessTracker, rootReader } from './source/freshness.ts';
 import { exclusionCounts, prepareScope } from './source/prepare.ts';
+import { PreparationCache } from './source/preparation-cache.ts';
 import type { PreparedScope } from './source/prepare.ts';
 import type { SourceSnapshot } from './source/snapshot.ts';
 import { countProfile, measureAsync, measureSync, withSearchProfile, type SearchProfiler } from './profiling.ts';
@@ -64,6 +66,8 @@ export type EngineOptions = {
   /** Inject a provider adapter for deterministic or offline execution. */
   readonly provider?: ProviderClient;
   readonly cache?: ScoreCache;
+  /** Content-verified preparation reuse; defaults to a bounded store beside the score cache. */
+  readonly preparationCache?: PreparationCache;
   readonly clock?: Clock;
   readonly logger?: SearchLogger;
   readonly env?: NodeJS.ProcessEnv;
@@ -132,6 +136,7 @@ function estimateCost(tokens: number, pricePerMillion: number | null): number | 
 export class SearchEngine {
   readonly #options: EngineOptions;
   readonly #cache: ScoreCache;
+  readonly #preparationCache: PreparationCache;
 
   constructor(options: EngineOptions) {
     this.#options = options;
@@ -143,6 +148,15 @@ export class SearchEngine {
       rollingTtlSeconds: config.cache.rolling_ttl_seconds ?? MAX_ROLLING_TTL_SECONDS,
       maxBytes: config.cache.max_bytes,
     });
+    this.#preparationCache = options.preparationCache ?? new PreparationCache({
+      directory: join(dirname(dirname(cacheDirectory)), 'preparation', basename(cacheDirectory)),
+      enabled: config.cache.enabled,
+      maxBytes: config.cache.max_bytes,
+    });
+  }
+
+  get preparationCache(): PreparationCache {
+    return this.#preparationCache;
   }
 
   get cache(): ScoreCache {
@@ -218,6 +232,7 @@ export class SearchEngine {
         fragments: config.scan_caps.fragments,
       },
       shouldStop: () => !context.canStartWork(),
+      cache: this.#preparationCache,
     })));
 
     // A lost authorization cannot become permission to send an earlier partial
