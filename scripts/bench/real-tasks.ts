@@ -1,9 +1,8 @@
 import { createHash } from 'node:crypto';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import { lstatSync, mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join, relative, sep } from 'node:path';
+import { lstatSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { projectRoot, treeHash } from './common.ts';
 import type { Evidence } from './dataset.ts';
 
@@ -202,29 +201,64 @@ function docstringSummary(lines: readonly string[], from: number): string | null
   return sentence.split(' ').length >= 5 ? sentence : null;
 }
 
+/** Path from a pax extended header, whose records are `<length> <key>=<value>\n`. */
+function paxPath(body: Buffer): string | null {
+  let path: string | null = null;
+  for (let offset = 0; offset < body.length;) {
+    const space = body.indexOf(0x20, offset);
+    const length = space === -1 ? Number.NaN : Number(body.toString('latin1', offset, space));
+    if (!Number.isSafeInteger(length) || length <= space - offset) break;
+    const record = body.toString('utf8', space + 1, offset + length - 1);
+    const equals = record.indexOf('=');
+    if (record.slice(0, equals) === 'path') path = record.slice(equals + 1);
+    offset += length;
+  }
+  return path;
+}
+
+/**
+ * Regular files of a `git archive --format=tar` stream, read in memory so no external
+ * `tar` or shell is involved. Directories, links and pax headers are not files; a pax
+ * `path` record names the entry that follows it.
+ */
+export function tarFiles(archive: Buffer): { readonly path: string; readonly bytes: Buffer }[] {
+  const files: { path: string; bytes: Buffer }[] = [];
+  let longPath: string | null = null;
+  for (let offset = 0; offset + 512 <= archive.length;) {
+    const header = archive.subarray(offset, offset + 512);
+    if (header.every((byte) => byte === 0)) break;
+    const field = (start: number, length: number): string => {
+      const end = header.indexOf(0, start);
+      return header.toString('utf8', start, end === -1 || end > start + length ? start + length : end);
+    };
+    const size = Number.parseInt(field(124, 12).trim() || '0', 8);
+    if (!Number.isSafeInteger(size) || offset + 512 + size > archive.length) throw new Error('malformed tar entry');
+    const type = field(156, 1) || '0';
+    const body = archive.subarray(offset + 512, offset + 512 + size);
+    offset += 512 + Math.ceil(size / 512) * 512;
+    if (type === 'x') { longPath = paxPath(body); continue; }
+    const prefix = field(345, 155);
+    const path = longPath ?? (prefix === '' ? field(0, 100) : `${prefix}/${field(0, 100)}`);
+    longPath = null;
+    if (type === '0') files.push({ path, bytes: body });
+  }
+  return files;
+}
+
 /** Deterministic, visibility-bounded export of one pre-change snapshot. Links, binaries and excluded paths are dropped. */
 export async function exportSnapshot(mirror: string, repository: RealRepository, commit: string): Promise<Record<string, string>> {
-  const directory = mkdtempSync(join(tmpdir(), 'jevgrep-real-'));
-  try {
-    await promisify(execFile)('sh', ['-c', 'git -C "$1" archive --format=tar "$2" | tar -x -C "$3"', 'export', mirror, commit, directory]);
-    const files: Record<string, string> = {};
-    const decoder = new TextDecoder('utf-8', { fatal: true });
-    const walk = (current: string): void => {
-      for (const entry of readdirSync(current, { withFileTypes: true })) {
-        const path = join(current, entry.name);
-        const local = relative(directory, path).split(sep).join('/');
-        if (entry.isDirectory()) { walk(path); continue; }
-        if (!entry.isFile() || lstatSync(path).size > 1_000_000 || excluded(repository, local)) continue;
-        const bytes = readFileSync(path);
-        if (bytes.includes(0)) continue;
-        try { files[local] = decoder.decode(bytes); } catch { /* not UTF-8 */ }
-      }
-    };
-    walk(directory);
-    return Object.fromEntries(Object.entries(files).sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0));
-  } finally {
-    rmSync(directory, { recursive: true, force: true });
+  // Line endings follow the tree's own attributes, never this host's autocrlf/eol settings,
+  // so pinned snapshot hashes reproduce on every platform.
+  const { stdout } = await promisify(execFile)('git', [
+    '-c', 'core.autocrlf=false', '-c', 'core.eol=lf', '-C', mirror, 'archive', '--format=tar', commit,
+  ], { encoding: 'buffer', maxBuffer: 1024 * 1024 * 1024 });
+  const files: Record<string, string> = {};
+  const decoder = new TextDecoder('utf-8', { fatal: true });
+  for (const { path, bytes } of tarFiles(stdout)) {
+    if (bytes.length > 1_000_000 || excluded(repository, path) || bytes.includes(0)) continue;
+    try { files[path] = decoder.decode(bytes); } catch { /* not UTF-8 */ }
   }
+  return Object.fromEntries(Object.entries(files).sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0));
 }
 
 export type SweInstance = {

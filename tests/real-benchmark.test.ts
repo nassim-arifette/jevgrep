@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import { analyzePairedRuns, bootstrapMeanDifference, scoreSubmission, type AgentRun } from '../scripts/bench/agent.ts';
 import { runAgent, type ChatModel } from '../scripts/bench/agent-loop.ts';
 import { freezeMismatches, type Freeze } from '../scripts/bench/freeze.ts';
-import { classifyHunk, loadManifest, parsePatch, unitsFromLines } from '../scripts/bench/real-tasks.ts';
+import { classifyHunk, loadManifest, parsePatch, tarFiles, unitsFromLines } from '../scripts/bench/real-tasks.ts';
 import { latencySummary, plannedSummary } from '../scripts/bench/report.ts';
 import { localizationMetrics } from '../scripts/bench/retrieval.ts';
 
@@ -27,6 +27,38 @@ test('patch parsing maps hunks to pre-change lines and classifies non-edits', ()
   assert.equal(classifyHunk({ removed: [], added: ['def added():', '    pass'], lines: [1] }, 'x = 1\n'), 'placement');
   assert.equal(classifyHunk({ removed: ['    return a'], added: ['    return b'], lines: [2] }, 'def f():\n    return a\n'), 'edit');
   assert.deepEqual(unitsFromLines('m.py', [5, 1, 2, 9]), [{ path: 'm.py', startLine: 1, endLine: 5 }, { path: 'm.py', startLine: 9, endLine: 9 }]);
+});
+
+test('snapshot export reads regular files from a git tar stream without an external tar', () => {
+  const entry = (name: string, type: string, body: Buffer = Buffer.alloc(0), prefix = ''): Buffer => {
+    const header = Buffer.alloc(512);
+    header.write(name, 0, 'utf8');
+    header.write(`${body.length.toString(8).padStart(11, '0')}\0`, 124, 'latin1');
+    header.write(type, 156, 'latin1');
+    header.write(prefix, 345, 'utf8');
+    return Buffer.concat([header, body, Buffer.alloc((512 - (body.length % 512)) % 512)]);
+  };
+  const pax = (key: string, value: string): Buffer => {
+    const text = ` ${key}=${value}\n`;
+    let length = Buffer.byteLength(text);
+    while (String(length).length + Buffer.byteLength(text) !== length) length = String(length).length + Buffer.byteLength(text);
+    return Buffer.from(`${String(length)}${text}`);
+  };
+  const long = `${'nested/'.repeat(30)}long.py`;
+  const archive = Buffer.concat([
+    entry('pax_global_header', 'g', pax('comment', '0'.repeat(40))),
+    entry('pkg/', '5'),
+    entry('pkg/a.py', '0', Buffer.from('a = 1\n')),
+    entry('b.py', '0', Buffer.from('b = 2\n'), 'pkg/deep'),
+    entry('0123.paxheader', 'x', pax('path', long)),
+    entry('0123.data', '0', Buffer.from('c = 3\n')),
+    entry('pkg/link.py', '2'),
+    Buffer.alloc(1024),
+  ]);
+  assert.deepEqual(tarFiles(archive).map(({ path, bytes }) => [path, bytes.toString()]), [
+    ['pkg/a.py', 'a = 1\n'], ['pkg/deep/b.py', 'b = 2\n'], [long, 'c = 3\n'],
+  ]);
+  assert.throws(() => tarFiles(archive.subarray(0, archive.indexOf('a = 1') + 3)), /malformed tar entry/);
 });
 
 test('localization metrics keep complementary evidence out of strict recall', () => {
