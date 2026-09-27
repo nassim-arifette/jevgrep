@@ -112,8 +112,11 @@ export function chunkKey(chunkerIdentity: string, limits: WindowLimits): string 
   return createHash('sha256').update(JSON.stringify([chunkerIdentity, limits, REFERENCE_COUNTER_ID])).digest('hex').slice(0, 32);
 }
 
+/** Little-endian like `decodeLineTokens`, whatever the host byte order. */
 export function encodeLineTokens(values: Int32Array): string {
-  return Buffer.from(values.buffer, values.byteOffset, values.byteLength).toString('base64');
+  const bytes = Buffer.alloc(values.length * 4);
+  values.forEach((value, index) => { bytes.writeInt32LE(value, index * 4); });
+  return bytes.toString('base64');
 }
 
 export function decodeLineTokens(encoded: string): Int32Array | undefined {

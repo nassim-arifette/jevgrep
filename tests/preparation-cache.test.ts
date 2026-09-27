@@ -8,7 +8,7 @@ import { SearchProfiler } from '../src/profiling.ts';
 import { AuthorizedRoot } from '../src/source/authorization.ts';
 import { DEFAULT_WINDOW_LIMITS, SYNTAX_CHUNKER_VERSIONS, chunkerIdentityFor } from '../src/source/chunker.ts';
 import type { WindowLimits } from '../src/source/chunker.ts';
-import { PreparationCache } from '../src/source/preparation-cache.ts';
+import { PreparationCache, decodeLineTokens, encodeLineTokens } from '../src/source/preparation-cache.ts';
 import { prepareScope } from '../src/source/prepare.ts';
 import type { PreparedScope } from '../src/source/prepare.ts';
 import { SCANNER_VERSION } from '../src/source/prepare.ts';
@@ -231,6 +231,13 @@ test('identical bytes under different extensions or chunkers never share fragmen
   assert.deepEqual(observable(cached.prepared), observable(reference.prepared));
   const entry = cache.get(hashBytes(Buffer.from(body)), Buffer.byteLength(body));
   assert.equal(Object.keys(entry.chunks).length, 3);
+});
+
+test('line tokens persist little-endian on every host', () => {
+  const values = Int32Array.of(1, -1, 256);
+  const encoded = encodeLineTokens(values);
+  assert.equal(encoded, Buffer.from([1, 0, 0, 0, 255, 255, 255, 255, 0, 1, 0, 0]).toString('base64'));
+  assert.deepEqual(decodeLineTokens(encoded), values);
 });
 
 test('each syntax language keys its chunks by its own chunker version', () => {
