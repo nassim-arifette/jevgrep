@@ -13,7 +13,7 @@ import { execFileSync, spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { appendFileSync, cpSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { dirname, join } from 'node:path';
+import { basename, dirname, join } from 'node:path';
 import { performance } from 'node:perf_hooks';
 import { fileURLToPath } from 'node:url';
 import { SearchProfiler } from '../src/profiling.ts';
@@ -121,7 +121,7 @@ async function sequence(name: string, source: string, repeat: number) {
     const trees = { uncached: join(work, 'uncached', 'repo'), cached: join(work, 'cached', 'repo') };
     for (const tree of Object.values(trees)) {
       mkdirSync(dirname(tree), { recursive: true });
-      cpSync(source, tree, { recursive: true, filter: (path) => !path.endsWith('/.git') });
+      cpSync(source, tree, { recursive: true, filter: (path) => basename(path) !== '.git' });
     }
     const files = sourceFiles(source);
     const cacheDir = join(work, 'prep-cache');
