@@ -82,13 +82,22 @@ export type LineWindowResult =
 /** Replaceable token counter so tests can pin the limits; production uses the pinned one. */
 export type TokenCounter = (text: string) => number;
 
-type LineRecord = {
-  readonly number: number;
-  readonly startOffset: number;
-  readonly endOffset: number;
-  readonly byteStart: number;
-  readonly byteEnd: number;
-  readonly byteCount: number;
+/**
+ * Line metadata the window builder consumes. `SourceSnapshot` satisfies it directly, so
+ * preparation reuses the snapshot's offsets, cached line costs and blank-line flags
+ * instead of re-reading the text.
+ */
+export type LineIndex = {
+  readonly lineCount: number;
+  /** UTF-16 offset where a 1-based line starts, and just past its line ending. */
+  lineStartUtf16(line: number): number;
+  lineEndUtf16(line: number): number;
+  /** UTF-8 offsets of the same boundaries. */
+  lineStartByte(line: number): number;
+  lineEndByte(line: number): number;
+  /** Tokens of one line, including its ending, measured with the chunker's counter. */
+  lineTokens(line: number): number;
+  isBlankLine(line: number): boolean;
 };
 
 function isBlank(text: string): boolean {
@@ -96,136 +105,120 @@ function isBlank(text: string): boolean {
 }
 
 /**
- * Split the decoded text into lines with UTF-16 and UTF-8 boundaries. A CRLF pair counts
+ * Index the decoded text by line with UTF-16 and UTF-8 boundaries. A CRLF pair counts
  * as one line ending, and a terminal newline does not invent a trailing empty line.
  */
-function readLines(text: string): readonly LineRecord[] {
-  const lines: LineRecord[] = [];
+function indexLines(text: string, count: TokenCounter): LineIndex {
+  const startsUtf16: number[] = [];
+  const startsBytes: number[] = [];
   let byteOffset = 0;
   let lineStart = 0;
   let lineByteStart = 0;
-  let lineNumber = 0;
-
-  const pushLine = (endOffset: number, byteEndIncludingEnding: number): void => {
-    lineNumber += 1;
-    lines.push({
-      number: lineNumber,
-      startOffset: lineStart,
-      endOffset: endOffset,
-      byteStart: lineByteStart,
-      byteEnd: byteEndIncludingEnding,
-      byteCount: byteEndIncludingEnding - lineByteStart,
-    });
-  };
 
   for (let index = 0; index < text.length; index += 1) {
     const codePoint = text.codePointAt(index) ?? 0;
     const characterLength = codePoint > 0xffff ? 2 : 1;
-    const characterBytes = codePoint < 0x80 ? 1 : codePoint < 0x800 ? 2 : codePoint < 0x10000 ? 3 : 4;
-    byteOffset += characterBytes;
-
+    byteOffset += codePoint < 0x80 ? 1 : codePoint < 0x800 ? 2 : codePoint < 0x10000 ? 3 : 4;
     if (codePoint === 10) {
-      pushLine(index + 1, byteOffset);
+      startsUtf16.push(lineStart);
+      startsBytes.push(lineByteStart);
       lineStart = index + 1;
       lineByteStart = byteOffset;
     }
     index += characterLength - 1;
   }
-
   if (lineStart < text.length) {
-    pushLine(text.length, byteOffset);
+    startsUtf16.push(lineStart);
+    startsBytes.push(lineByteStart);
   }
-  return lines;
+
+  const lineCount = startsUtf16.length;
+  const endUtf16 = (line: number): number => (line < lineCount ? (startsUtf16[line] ?? text.length) : text.length);
+  const endByte = (line: number): number => (line < lineCount ? (startsBytes[line] ?? byteOffset) : byteOffset);
+  const sliceOf = (line: number): string => text.slice(startsUtf16[line - 1] ?? 0, endUtf16(line));
+  return {
+    lineCount,
+    lineStartUtf16: (line) => startsUtf16[line - 1] ?? 0,
+    lineEndUtf16: endUtf16,
+    lineStartByte: (line) => startsBytes[line - 1] ?? 0,
+    lineEndByte: endByte,
+    lineTokens: (line) => count(sliceOf(line)),
+    isBlankLine: (line) => isBlank(sliceOf(line)),
+  };
 }
 
-function textOf(lines: readonly LineRecord[], text: string, startIndex: number, endIndex: number): string {
-  const start = lines[startIndex];
-  const end = lines[endIndex];
-  if (start === undefined || end === undefined) {
-    return '';
+function isBlankRange(lines: LineIndex, startLine: number, endLine: number): boolean {
+  for (let line = startLine; line <= endLine; line += 1) {
+    if (!lines.isBlankLine(line)) {
+      return false;
+    }
   }
-  return text.slice(start.startOffset, end.endOffset);
+  return true;
+}
+
+function lineBytes(lines: LineIndex, line: number): number {
+  return lines.lineEndByte(line) - lines.lineStartByte(line);
 }
 
 /** One window, verified against the active limits before it is returned. */
 function buildWindow(
-  lines: readonly LineRecord[],
-  text: string,
+  lines: LineIndex,
   snapshot: SnapshotText,
-  startIndex: number,
+  startLine: number,
   limits: WindowLimits,
   count: TokenCounter,
-): { readonly window: FragmentWindow | undefined; readonly oversized: UnsupportedLongLine | undefined } {
-  const first = lines[startIndex];
-  if (first === undefined) {
-    return { window: undefined, oversized: undefined };
-  }
+): FragmentWindow | UnsupportedLongLine {
+  const firstBytes = lineBytes(lines, startLine);
   // Tokenizing an arbitrarily long word can be expensive. Apply the byte limit before
   // invoking BPE, and report an unmeasured token count rather than inventing a value.
-  if (first.byteCount > limits.maxBytes) {
-    return {
-      window: undefined,
-      oversized: { kind: 'unsupported-long-line', line: first.number, reason: 'unsupported_long_line', byteCount: first.byteCount, tokenCount: null },
-    };
+  if (firstBytes > limits.maxBytes) {
+    return { kind: 'unsupported-long-line', line: startLine, reason: 'unsupported_long_line', byteCount: firstBytes, tokenCount: null };
   }
-  let candidate = textOf(lines, text, startIndex, startIndex);
-  let tokenCount = count(candidate);
+  const startOffset = lines.lineStartUtf16(startLine);
+  let tokenCount = lines.lineTokens(startLine);
   if (tokenCount > limits.maxTokens) {
-    return {
-      window: undefined,
-      oversized: { kind: 'unsupported-long-line', line: first.number, reason: 'unsupported_long_line', byteCount: first.byteCount, tokenCount },
-    };
+    return { kind: 'unsupported-long-line', line: startLine, reason: 'unsupported_long_line', byteCount: firstBytes, tokenCount };
   }
 
-  let endIndex = startIndex;
-  let bytes = first.byteCount;
-  while (endIndex + 1 < lines.length) {
-    const next = lines[endIndex + 1];
-    if (next === undefined) {
-      break;
-    }
-    const lineCount = endIndex - startIndex + 1;
+  let endLine = startLine;
+  let bytes = firstBytes;
+  while (endLine < lines.lineCount) {
+    const lineCount = endLine - startLine + 1;
     if (lineCount >= limits.targetLines || tokenCount >= limits.targetTokens) {
       break;
     }
-    if (endIndex + 1 - startIndex + 1 > limits.maxLines) {
+    if (lineCount + 1 > limits.maxLines) {
       break;
     }
-    if (bytes + next.byteCount > limits.maxBytes) {
+    const nextBytes = lineBytes(lines, endLine + 1);
+    if (bytes + nextBytes > limits.maxBytes) {
       break;
     }
-    const expanded = textOf(lines, text, startIndex, endIndex + 1);
-    const expandedTokens = count(expanded);
+    // BPE merges can cross line endings, so each candidate is measured on its own text.
+    const expandedTokens = count(snapshot.text.slice(startOffset, lines.lineEndUtf16(endLine + 1)));
     if (expandedTokens > limits.maxTokens) {
       break;
     }
-    endIndex += 1;
-    bytes += next.byteCount;
-    candidate = expanded;
+    endLine += 1;
+    bytes += nextBytes;
     tokenCount = expandedTokens;
   }
 
-  const last = lines[endIndex];
-  if (last === undefined) {
-    return { window: undefined, oversized: undefined };
-  }
-
+  const byteStart = lines.lineStartByte(startLine);
+  const byteEnd = lines.lineEndByte(endLine);
   return {
-    window: {
-      id: `${snapshot.path}#L${String(first.number)}-L${String(last.number)}`,
-      path: snapshot.path,
-      sha256: snapshot.sha256,
-      startLine: first.number,
-      endLine: last.number,
-      byteStart: first.byteStart,
-      byteEnd: last.byteEnd,
-      text: candidate,
-      byteCount: last.byteEnd - first.byteStart,
-      tokenCount,
-      chunker: LINE_WINDOW_CHUNKER_VERSION,
-      classification: 'line-window',
-    },
-    oversized: undefined,
+    id: `${snapshot.path}#L${String(startLine)}-L${String(endLine)}`,
+    path: snapshot.path,
+    sha256: snapshot.sha256,
+    startLine,
+    endLine,
+    byteStart,
+    byteEnd,
+    text: snapshot.text.slice(startOffset, lines.lineEndUtf16(endLine)),
+    byteCount: byteEnd - byteStart,
+    tokenCount,
+    chunker: LINE_WINDOW_CHUNKER_VERSION,
+    classification: 'line-window',
   };
 }
 
@@ -241,6 +234,19 @@ export function lineWindows(
   limits: WindowLimits = DEFAULT_WINDOW_LIMITS,
   count: TokenCounter = countReferenceTokens,
 ): LineWindowResult {
+  return lineWindowsOf(snapshot, null, limits, count);
+}
+
+/**
+ * Same windows as `lineWindows`, built on an existing line index. `lines.lineTokens`
+ * must measure with `count`, so single-line costs are shared with the index's cache.
+ */
+export function lineWindowsOf(
+  snapshot: SnapshotText,
+  lines: LineIndex | null,
+  limits: WindowLimits = DEFAULT_WINDOW_LIMITS,
+  count: TokenCounter = countReferenceTokens,
+): LineWindowResult {
   if (limits.targetLines < 1 || limits.targetTokens < 1 || limits.maxLines < 1 || limits.maxBytes < 1
     || limits.maxTokens < 1 || limits.overlapLines < 0 || limits.overlapLines > MAX_WINDOW_OVERLAP_LINES) {
     throw new RangeError(`window targets and limits must be positive, and overlap must be between 0 and ${String(MAX_WINDOW_OVERLAP_LINES)} lines`);
@@ -252,28 +258,22 @@ export function lineWindows(
     return { kind: 'windows', windows: [] };
   }
 
-  const lines = readLines(snapshot.text);
+  const index = lines ?? indexLines(snapshot.text, count);
   const windows: FragmentWindow[] = [];
-  let index = 0;
+  let line = 1;
 
-  while (index < lines.length) {
-    const { window, oversized } = buildWindow(lines, snapshot.text, snapshot, index, limits, count);
-    if (oversized !== undefined) {
-      return oversized;
+  while (line <= index.lineCount) {
+    const built = buildWindow(index, snapshot, line, limits, count);
+    if ('kind' in built) {
+      return built;
     }
-    if (window === undefined) {
+    if (!isBlankRange(index, built.startLine, built.endLine)) {
+      windows.push(built);
+    }
+    if (built.endLine >= index.lineCount) {
       break;
     }
-    const lastIndex = index + (window.endLine - window.startLine);
-    const blank = textOf(lines, snapshot.text, index, lastIndex);
-    if (!isBlank(blank)) {
-      windows.push(window);
-    }
-    if (lastIndex + 1 >= lines.length) {
-      break;
-    }
-    const nextIndex = Math.max(index + 1, lastIndex + 1 - limits.overlapLines);
-    index = nextIndex;
+    line = Math.max(line + 1, built.endLine + 1 - limits.overlapLines);
   }
 
   return { kind: 'windows', windows };

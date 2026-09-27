@@ -4,7 +4,7 @@ import { test } from 'node:test';
 import { countReferenceTokens } from '../src/response/token-counter.ts';
 import { chunkSnapshot, uncoveredNonBlankLines, usesSyntaxChunking } from '../src/source/chunker.ts';
 import type { ChunkResult, PreparedFragment } from '../src/source/chunker.ts';
-import { DEFAULT_WINDOW_LIMITS } from '../src/source/line-windows.ts';
+import { DEFAULT_WINDOW_LIMITS, lineWindows } from '../src/source/line-windows.ts';
 import { createSnapshot } from '../src/source/snapshot.ts';
 import type { SourceSnapshot } from '../src/source/snapshot.ts';
 
@@ -226,4 +226,30 @@ test('fragment metadata carries the identity a cache and a report need', () => {
   assert.ok(fragment.chunker.length > 0, 'the chunker version is part of evaluation identity');
   assert.ok(fragment.byteEnd > fragment.byteStart);
   assert.equal(fragment.byteCount, fragment.byteEnd - fragment.byteStart);
+});
+
+test('a line above the byte ceiling is refused before parsing or tokenizing the file', () => {
+  const text = `const ok = 1;\nconst broken = (;\nconst data = "${'a'.repeat(DEFAULT_WINDOW_LIMITS.maxBytes)}";\n`;
+  const snapshot = createSnapshot('src/minified.ts', '/tmp/src/minified.ts', Buffer.from(text, 'utf8'), () => {
+    throw new Error('an ineligible file must not be tokenized');
+  });
+  const result = chunkSnapshot(snapshot);
+  assert.equal(result.kind, 'unsupported-long-line');
+  if (result.kind !== 'unsupported-long-line') {
+    return;
+  }
+  assert.equal(result.line, 3);
+  assert.equal(result.tokenCount, null);
+  assert.equal(result.byteCount, snapshot.rangeBytes(3, 3));
+});
+
+test('line-window fragments of a snapshot match the text-only chunker exactly', () => {
+  const text = `\uFEFF${Array.from({ length: 150 }, (_, index) => (index % 7 === 0 ? '\r\n' : `row ${String(index)} "é😀" value\r\n`)).join('')}tail`;
+  const snapshot = snapshotOf('docs/table.md', text);
+  const limits = { ...DEFAULT_WINDOW_LIMITS, targetTokens: 40, maxTokens: 90, targetLines: 12, maxLines: 16, overlapLines: 3 };
+  const fromSnapshot = fragmentsOf(chunkSnapshot(snapshot, limits));
+  const fromText = lineWindows({ path: 'docs/table.md', text, sha256: snapshot.sha256 }, limits);
+  assert.ok(fromText.kind === 'windows');
+  assert.deepEqual(fromSnapshot, fromText.windows);
+  assert.deepEqual(uncoveredNonBlankLines(snapshot, fromSnapshot), []);
 });
