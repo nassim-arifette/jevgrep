@@ -120,8 +120,13 @@ async function ripgrep(tree: Tree, query: string): Promise<Answer> {
     .flatMap((word) => word.split('.'))
     .filter((word) => word.length >= 4 && !stop.has(word.toLowerCase()) && (/[_A-Z]/.test(word.slice(1)) || /[a-z][A-Z]/.test(word) || word.includes('_') || !/^[A-Z]?[a-z]+$/.test(word) || word.length >= 8)))];
   if (named.length === 0) return { ranges: [], complete: true, returnedChars: 0, detail: { terms: [] } };
-  const args = ['-n', '--no-heading', '-i', '-w', '-F', ...named.flatMap((term) => ['-e', term]), '.'];
-  const { stdout } = await run('rg', args, { cwd: tree.root, maxBuffer: 1 << 28 }).catch((cause: { stdout?: string }) => ({ stdout: cause.stdout ?? '' }));
+  // `/` separators on every platform: Windows rg prints `.\dir\file` by default.
+  const args = ['-n', '--no-heading', '-i', '-w', '-F', '--path-separator', '/', ...named.flatMap((term) => ['-e', term]), '.'];
+  const { stdout } = await run('rg', args, { cwd: tree.root, maxBuffer: 1 << 28 }).catch((cause: { code?: unknown; stdout?: string }) => {
+    // rg exits 1 when nothing matches; a missing binary or any other failure is an error, not an empty answer.
+    if (cause.code === 1) return { stdout: cause.stdout ?? '' };
+    throw cause;
+  });
   const hits = new Map<string, { line: number; text: string }[]>();
   for (const row of stdout.split('\n')) {
     const match = /^\.\/(.+?):(\d+):(.*)$/.exec(row);
