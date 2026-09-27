@@ -32,7 +32,6 @@ export function providerKeyVariable(provider: InitProvider, endpoint?: SystemOne
   return endpoint.api_key_env;
 }
 
-
 export const DEFAULT_JEVGREPIGNORE = `# JevGrep already respects .gitignore.
 #
 # The following are also excluded automatically for security:
@@ -98,10 +97,17 @@ export function configuredGlobalProvider(env: NodeJS.ProcessEnv = process.env): 
 export function configuredGlobalEndpoint(env: NodeJS.ProcessEnv = process.env): SystemOneEndpoint | undefined { return readGlobalSettings(env)?.endpoint; }
 
 type GlobalProfileOptions = {
-  readonly provider: InitProvider; readonly apiKey: string; readonly env?: NodeJS.ProcessEnv;
+  readonly provider: InitProvider; readonly env?: NodeJS.ProcessEnv;
+  /** Omitted: the key lives only in the environment and secrets.env is left untouched. */
+  readonly apiKey?: string;
   readonly repositoryRoot?: AuthorizedRoot; readonly endpoint?: SystemOneEndpoint;
 };
-type GlobalProfile = { readonly settingsPath: string; readonly secretsPath: string; readonly variable: string };
+type GlobalProfile = {
+  readonly settingsPath: string; readonly secretsPath: string; readonly variable: string;
+  readonly keyStored: boolean;
+  /** Without a stored key, an older value for the same variable is kept: it applies only when the variable is unset. */
+  readonly storedKeyRetained: boolean;
+};
 
 function validateKey(key: string): void {
   if (key.trim().length === 0 || /[\r\n]/.test(key) || Buffer.byteLength(key) > 8_192) throw new Error('the API key must be non-empty, bounded and one line');
@@ -119,25 +125,35 @@ function parseSecrets(text: string, path: string): Record<string, string> {
 }
 
 function writeGlobalProfile(options: GlobalProfileOptions, replace: boolean): GlobalProfile {
-  validateKey(options.apiKey);
+  const apiKey = options.apiKey;
+  if (apiKey !== undefined) validateKey(apiKey);
   const env = options.env ?? process.env;
   const root = options.repositoryRoot;
   root?.assertCurrent();
   const storage = new LocalDirectory(configurationHome(env), root);
   const existingSettings = readOptional(storage, 'global.json', 16_384);
   const existingSecrets = readOptional(storage, 'secrets.env', 32_768);
-  if (!replace && (existingSettings !== undefined || existingSecrets !== undefined)) throw new Error(`global settings already exist at ${storage.path}`);
+  if (!replace && (existingSettings !== undefined || (apiKey !== undefined && existingSecrets !== undefined))) {
+    throw new Error(`global settings already exist at ${storage.path}`);
+  }
   const variable = providerKeyVariable(options.provider, options.endpoint);
   // Retain the other providers' keys: existing project profiles may still use them.
   const secrets = parseSecrets(existingSecrets ?? '', join(storage.path, 'secrets.env'));
-  secrets[variable] = options.apiKey.trim();
+  const storedKeyRetained = apiKey === undefined && Object.hasOwn(secrets, variable);
+  if (apiKey !== undefined) {
+    secrets[variable] = apiKey.trim();
+    root?.assertCurrent();
+    storage.write('secrets.env', Object.entries(secrets).map(([key, value]) => `${key}=${value}\n`).join(''), !replace);
+  }
   root?.assertCurrent();
-  storage.write('secrets.env', Object.entries(secrets).map(([key, value]) => `${key}=${value}\n`).join(''), !replace);
   const settings = { schema_version: 1, provider: options.provider,
     ...(options.provider === 'systemone-compatible' ? { endpoint: options.endpoint } : {}) };
   try { storage.write('global.json', `${JSON.stringify(settings, null, 2)}\n`, !replace); }
-  catch (cause) { if (!replace) storage.remove('secrets.env'); throw cause; }
-  return { settingsPath: join(storage.path, 'global.json'), secretsPath: join(storage.path, 'secrets.env'), variable };
+  catch (cause) { if (!replace && apiKey !== undefined) storage.remove('secrets.env'); throw cause; }
+  return {
+    settingsPath: join(storage.path, 'global.json'), secretsPath: join(storage.path, 'secrets.env'), variable,
+    keyStored: apiKey !== undefined, storedKeyRetained,
+  };
 }
 
 export function createGlobalProfile(options: GlobalProfileOptions): GlobalProfile { return writeGlobalProfile(options, false); }

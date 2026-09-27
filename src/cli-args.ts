@@ -21,6 +21,8 @@ export const DEFAULT_SYSTEMONE_KEY_VARIABLE = 'SYSTEMONE_API_KEY';
 export type CliCommand =
   | {
     readonly kind: 'init'; readonly root: string; readonly provider?: InitProvider; readonly global: boolean;
+    /** Present only with '--no-store-key': the key comes from the environment and is never written. */
+    readonly storeKey?: false;
     /** Present exactly when the provider is systemone-compatible. */
     readonly endpoint?: SystemOneEndpoint;
   }
@@ -50,6 +52,7 @@ type OptionState = {
   readonly root: string | undefined;
   readonly provider: string | undefined;
   readonly global: boolean;
+  readonly noStoreKey: boolean;
   readonly baseUrl: string | undefined;
   readonly apiKeyEnv: string | undefined;
   readonly model: string | undefined;
@@ -57,7 +60,7 @@ type OptionState = {
 
 /** Options each command accepts, so a misplaced flag is refused instead of ignored. */
 const ALLOWED_OPTIONS: Record<string, readonly string[]> = {
-  init: ['--root', '--provider', '--global', '--base-url', '--api-key-env', '--model'],
+  init: ['--root', '--provider', '--global', '--base-url', '--api-key-env', '--model', '--no-store-key'],
   search: ['--config', '--query', '--query-file', '--scope', '--max-context-tokens', '--allow-partial', '--json'],
   inspect: ['--config', '--scope', '--json'],
   doctor: ['--config'],
@@ -134,12 +137,13 @@ function readOptions(
     root: string | undefined;
     provider: string | undefined;
     global: boolean;
+    noStoreKey: boolean;
     baseUrl: string | undefined;
     apiKeyEnv: string | undefined;
     model: string | undefined;
   } = {
     config: undefined, query: undefined, queryFile: undefined, scope: [], maxContextTokens: undefined, allowPartial: false, json: false,
-    root: undefined, provider: undefined, global: false, baseUrl: undefined, apiKeyEnv: undefined, model: undefined,
+    root: undefined, provider: undefined, global: false, noStoreKey: false, baseUrl: undefined, apiKeyEnv: undefined, model: undefined,
   };
   const state = mutable;
 
@@ -164,6 +168,10 @@ function readOptions(
     }
     if (option === '--global') {
       state.global = true;
+      continue;
+    }
+    if (option === '--no-store-key') {
+      state.noStoreKey = true;
       continue;
     }
 
@@ -302,6 +310,7 @@ export function parseCliArguments(
       global: state.global,
       ...(state.provider === undefined ? {} : { provider: state.provider as InitProvider }),
       ...(endpoint === undefined ? {} : { endpoint }),
+      ...(state.noStoreKey ? { storeKey: false as const } : {}),
     } };
   }
   const config = state.config;

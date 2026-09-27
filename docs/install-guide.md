@@ -55,6 +55,10 @@ Credentials are stored in the user's JevGrep configuration directory, outside th
 repository. `TYPESAFE_API_KEY`, `AI_GATEWAY_API_KEY` and `OPENROUTER_API_KEY`
 override the corresponding stored credentials.
 Use environment variables in automated environments; do not commit keys in project files.
+Add `--no-store-key` to any `init` command to skip the key prompt and never write the key
+to disk; the key must then be in the environment of each `jevgrep` process, for example
+from a secrets manager (`<secrets-manager> run -- jevgrep search ...`). An existing stored
+value for the same variable is kept, and applies only when the variable is unset.
 
 New direct profiles use `jev-1.13.0`; Vercel profiles use `typesafe-ai/jev`;
 OpenRouter profiles use `typesafe/jev-1.13`.

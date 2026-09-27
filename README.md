@@ -102,7 +102,8 @@ To use a self-hosted gateway that speaks the TypeSafe System One contract, see
 
 The command stores the credential in the user's JevGrep configuration directory, not
 in a repository. `TYPESAFE_API_KEY`, `AI_GATEWAY_API_KEY` and `OPENROUTER_API_KEY`
-environment variables take priority over the corresponding stored value.
+environment variables take priority over the corresponding stored value. Add
+`--no-store-key` to skip the prompt and keep the key only in the environment.
 
 ### 2. Authorize a repository
 
@@ -233,6 +234,19 @@ jevgrep init --provider systemone-compatible \
 - `--api-key-env` names the key variable (default `SYSTEMONE_API_KEY`). The
   environment variable takes priority over the stored key, as for the other providers.
 - `--model` sets the model id (default `jev-1.13.0`).
+- `--no-store-key` skips the key prompt and never writes the key to disk. Use it when
+  a secrets manager injects the key into the process environment:
+
+  ```bash
+  jevgrep init --global --provider systemone-compatible \
+    --base-url https://litellm.example.com/typesafe \
+    --api-key-env LITELLM_API_KEY --no-store-key
+  <secrets-manager> run -- jevgrep search --query "Where is the session refreshed?"
+  ```
+
+  `--no-store-key` works with every provider. If the secrets file already holds a
+  value for the same variable, `init` keeps it and prints a note: that value is used
+  only when the variable is not set in the environment.
 
 The three other adapters keep their fixed hosts, so a stock profile cannot send source
 to an unexpected host. This adapter is an explicit opt-in. Remote evaluation consent

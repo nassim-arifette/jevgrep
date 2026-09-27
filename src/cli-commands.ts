@@ -121,13 +121,17 @@ async function runInit(command: Extract<CliCommand, { kind: 'init' }>, io: CliIo
     const root = command.global ? undefined : validateProfileLocation(resolve(deps.cwd ?? process.cwd(), command.root), environment);
     if (command.global) new LocalDirectory(configurationHome(environment));
     const savedProvider = configuredGlobalProvider(environment);
-    const answer = command.provider ?? savedProvider ?? (await prompt('Provider [1 TypeSafe AI, 2 Vercel AI Gateway, 3 OpenRouter] (1): ')).trim();
     let provider: InitProvider;
-    if (answer === '' || answer === '1' || answer === 'typesafe') provider = 'typesafe';
-    else if (answer === '2' || answer === 'vercel') provider = 'vercel';
-    else if (answer === '3' || answer === 'openrouter') provider = 'openrouter';
-    else if (answer === 'systemone-compatible') provider = 'systemone-compatible';
-    else throw new Error('provider must be 1/typesafe, 2/vercel or 3/openrouter');
+    const chosen = command.provider ?? savedProvider;
+    if (chosen !== undefined) provider = chosen;
+    else {
+      const answer = (await prompt('Provider [1 TypeSafe AI, 2 Vercel AI Gateway, 3 OpenRouter] (1): ')).trim();
+      if (answer === '' || answer === '1' || answer === 'typesafe') provider = 'typesafe';
+      else if (answer === '2' || answer === 'vercel') provider = 'vercel';
+      else if (answer === '3' || answer === 'openrouter') provider = 'openrouter';
+      else if (answer === 'systemone-compatible') throw new Error("systemone-compatible is configured with flags: jevgrep init --provider systemone-compatible --base-url <url>");
+      else throw new Error('provider must be 1/typesafe, 2/vercel or 3/openrouter');
+    }
     // The endpoint of a System One compatible gateway comes from explicit flags or the saved global settings.
     const endpoint = command.provider !== undefined ? command.endpoint : configuredGlobalEndpoint(environment);
     if (provider === 'systemone-compatible' && endpoint === undefined) {
@@ -138,13 +142,22 @@ async function runInit(command: Extract<CliCommand, { kind: 'init' }>, io: CliIo
     let globalCreated: ReturnType<typeof createGlobalProfile> | undefined;
     if (savedProvider === undefined || (command.provider !== undefined
       && (savedProvider !== provider || JSON.stringify(configuredGlobalEndpoint(environment)) !== JSON.stringify(endpoint)))) {
-      const existing = environment[variable]?.trim();
-      const apiKey = existing && existing.length > 0 ? existing : (await prompt(`${variable} (stored outside repositories): `)).trim();
-      globalCreated = savedProvider === undefined ? createGlobalProfile({ ...target, apiKey }) : updateGlobalProfile({ ...target, apiKey });
+      let apiKey: string | undefined;
+      if (command.storeKey !== false) {
+        const existing = environment[variable]?.trim();
+        apiKey = existing && existing.length > 0 ? existing : (await prompt(`${variable} (stored outside repositories): `)).trim();
+      }
+      const options = { ...target, ...(apiKey === undefined ? {} : { apiKey }) };
+      globalCreated = savedProvider === undefined ? createGlobalProfile(options) : updateGlobalProfile(options);
+      if (globalCreated.storedKeyRetained) {
+        io.out(`note: ${globalCreated.secretsPath} still holds ${variable}; it is used only when ${variable} is unset in the environment`);
+      }
     }
+    const secretsLine = globalCreated === undefined ? 'already configured'
+      : globalCreated.keyStored ? globalCreated.secretsPath : `not stored (${variable} is read from the environment)`;
     const label = providerLabel(provider, endpoint);
     if (command.global) {
-      io.out(`configured JevGrep globally\nsettings: ${globalCreated?.settingsPath ?? 'already configured'}\nsecrets: ${globalCreated?.secretsPath ?? 'already configured'}\nprovider: ${label}\nnext: run 'jevgrep init' inside a repository`);
+      io.out(`configured JevGrep globally\nsettings: ${globalCreated?.settingsPath ?? 'already configured'}\nsecrets: ${secretsLine}\nprovider: ${label}\nnext: run 'jevgrep init' inside a repository`);
       return CLI_EXIT_CODES.complete;
     }
     if (root === undefined) throw new Error('project authorization is missing');

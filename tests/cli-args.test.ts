@@ -103,6 +103,17 @@ test('init configures a System One compatible endpoint only through explicit fla
   assert.match(expectError(['search', '--query', 'q', '--base-url', 'https://litellm.example.com']), /not accepted/);
 });
 
+test('--no-store-key is an init flag for every provider', () => {
+  assert.deepEqual(expectCommand(['init', '--global', '--provider', 'vercel', '--no-store-key']).command,
+    { kind: 'init', root: '.', global: true, provider: 'vercel', storeKey: false });
+  const compatible = expectCommand(['init', '--global', '--no-store-key', '--provider', 'systemone-compatible',
+    '--base-url', 'https://litellm.example.com/typesafe', '--api-key-env', 'LITELLM_API_KEY']);
+  assert.equal(compatible.command.kind === 'init' ? compatible.command.storeKey : undefined, false);
+  assert.equal(expectCommand(['init']).command.kind === 'init' && 'storeKey' in expectCommand(['init']).command, false);
+  assert.match(expectError(['init', '--no-store-key', 'extra']), /unexpected argument/);
+  assert.match(expectError(['doctor', '--no-store-key']), /not accepted/);
+});
+
 test('defaults follow the specification', () => {
   const search = expectCommand(['search', '--config', 'config.json', '--query', 'anything']);
   assert.equal(search.command.kind, 'search');

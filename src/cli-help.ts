@@ -22,6 +22,7 @@ const OPTION_TEXT: Record<string, string> = {
   '--base-url': '--base-url <url>           systemone-compatible only: gateway serving <url>/v1/systemone (https; http for loopback)',
   '--api-key-env': '--api-key-env <name>       systemone-compatible only: key variable (default SYSTEMONE_API_KEY)',
   '--model': '--model <id>               systemone-compatible only: model id (default jev-1.13.0)',
+  '--no-store-key': '--no-store-key             never prompt for or store the key; read it from the environment at run time',
   '--global': '--global                  configure provider credentials for this computer only',
   '--config': '--config <path>            override automatic project-profile discovery',
   '--query': '--query <text>             the search question, kept verbatim',
@@ -34,7 +35,7 @@ const OPTION_TEXT: Record<string, string> = {
 
 /** Usage line of each command, written by hand so a choice is shown as a choice. */
 const COMMAND_USAGE: Record<string, string> = {
-  init: 'jevgrep init [--global] [--root <path>] [--provider typesafe|vercel|openrouter]\n       jevgrep init [--global] [--root <path>] --provider systemone-compatible --base-url <url> [--api-key-env <name>] [--model <id>]',
+  init: 'jevgrep init [--global] [--root <path>] [--provider typesafe|vercel|openrouter] [--no-store-key]\n       jevgrep init [--global] [--root <path>] --provider systemone-compatible --base-url <url> [--api-key-env <name>] [--model <id>] [--no-store-key]',
   search:
     'jevgrep search [--config <path>] (--query <text> | --query-file <path>) [--scope <path>]... [--max-context-tokens <n>] [--json] [--allow-partial]',
   inspect: 'jevgrep inspect [--config <path>] [--scope <path>]... [--json]',
@@ -86,7 +87,7 @@ export function commandHelp(command: string): string | undefined {
     lines.push('starting the local stdio server performs no scan and no provider call. Tool calls may');
     lines.push('request remote evaluation only when the trusted configuration allows it and a credential exists.');
   } else if (command === 'init') {
-    lines.push('this command stores a supplied credential locally but never contacts the provider.');
+    lines.push('this command stores a supplied credential locally (never with --no-store-key) but never contacts the provider.');
     lines.push('new project profiles disable remote evaluation; review the profile before enabling remote_evaluation_enabled.');
   } else {
     lines.push('this command is local: it never needs a credential and never contacts the provider.');
