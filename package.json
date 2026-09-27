@@ -1,6 +1,6 @@
 {
   "name": "@nassim-arifette/jevgrep",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Semantic code search for coding agents: evaluates authorized repository fragments with Jev and returns original excerpts under a response budget.",
   "type": "module",
   "license": "MIT",
@@ -13,7 +13,15 @@
   "bugs": {
     "url": "https://github.com/nassim-arifette/jevgrep/issues"
   },
-  "keywords": ["jev", "semantic-search", "code-search", "coding-agents", "mcp", "cli", "typesafe"],
+  "keywords": [
+    "jev",
+    "semantic-search",
+    "code-search",
+    "coding-agents",
+    "mcp",
+    "cli",
+    "typesafe"
+  ],
   "publishConfig": {
     "access": "public"
   },
