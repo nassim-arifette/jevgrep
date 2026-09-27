@@ -17,9 +17,10 @@ const { values } = parseArgs({ options: {
   'validate-only': { type: 'boolean' }, help: { type: 'boolean' },
 } });
 
-type Summaryrow = { id: string; category: string; repository: string; metrics: ReturnType<typeof localizationMetrics> };
+type Planned = { id: string; category: string; repository: string };
+type Summaryrow = Planned & { metrics: ReturnType<typeof localizationMetrics> };
 
-function summarize(rows: readonly Summaryrow[], planned: readonly string[]) {
+function summarize(rows: readonly Summaryrow[], planned: readonly Planned[]) {
   const pick = (key: 'recallAt1' | 'recallAt5' | 'reciprocalRank' | 'evidenceCoverage' | 'fileRecall' | 'complementaryCoverage', group: readonly Summaryrow[]) =>
     mean(group.flatMap((row) => row.metrics?.[key] == null ? [] : [row.metrics[key]!]));
   const one = (group: readonly Summaryrow[], ids: readonly string[]) => ({
@@ -27,9 +28,11 @@ function summarize(rows: readonly Summaryrow[], planned: readonly string[]) {
     mrr: pick('reciprocalRank', group), evidenceCoverage: pick('evidenceCoverage', group),
     fileRecall: pick('fileRecall', group), complementaryCoverage: pick('complementaryCoverage', group),
   });
-  const slice = (key: (row: Summaryrow) => string) => Object.fromEntries([...groupBy(rows, key)].map(([name, group]) =>
-    [name, one(group, planned.filter((id) => group.some((row) => row.id === id)))]));
-  return { overall: one(rows, planned), byCategory: slice((row) => row.category), byRepository: slice((row) => row.repository) };
+  const ids = (entries: readonly Planned[]) => entries.map((entry) => entry.id);
+  // Slices take their denominators from the plan, so a query that never ran still counts in its slice.
+  const slice = (key: (entry: Planned) => string) => Object.fromEntries([...groupBy(planned, key)].map(([name, entries]) =>
+    [name, one(rows.filter((row) => key(row) === name), ids(entries))]));
+  return { overall: one(rows, ids(planned)), byCategory: slice((entry) => entry.category), byRepository: slice((entry) => entry.repository) };
 }
 
 if (values.help) {
@@ -66,7 +69,7 @@ if (values.help) {
       console.log(`Frozen ${split} manifest: ${writeFreeze(values.freeze, identity)}`);
     } else {
       const frozen = split === 'heldout' ? assertFrozen(values.frozen, identity) : null;
-      const planned = queries.map(({ query }) => query.id);
+      const planned = queries.map(({ task, query }) => ({ id: query.id, category: query.category, repository: task.repository }));
       const notRun: string[] = [];
       const rows = (await mapLimit(queries, positiveInteger(values.jobs, 1), async ({ task, query }) => {
         if (live.exhausted()) { notRun.push(query.id); return null; }

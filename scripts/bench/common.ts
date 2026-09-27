@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { cpus, tmpdir, totalmem } from 'node:os';
 import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -76,9 +76,9 @@ export function environment() {
     catch { return null; }
   };
   const harness = readTree(join(projectRoot, 'scripts/bench'));
-  for (const name of ['bench.ts', 'bench-retrieval.ts', 'bench-real.ts', 'bench-agent.ts', 'bench-real-import.ts']) {
-    const path = join(projectRoot, 'scripts', name);
-    if (existsSync(path)) harness[`entry/${name}`] = readFileSync(path, 'utf8').replaceAll('\r\n', '\n');
+  // Every benchmark entry point, so a new one cannot drift outside the frozen harness identity.
+  for (const name of readdirSync(join(projectRoot, 'scripts')).filter((entry) => /^bench.*\.ts$/.test(entry))) {
+    harness[`entry/${name}`] = readFileSync(join(projectRoot, 'scripts', name), 'utf8').replaceAll('\r\n', '\n');
   }
   return {
     node: process.version, platform: process.platform, architecture: process.arch,
