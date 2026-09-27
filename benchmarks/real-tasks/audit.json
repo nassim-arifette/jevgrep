@@ -1,0 +1,9 @@
+{
+  "psf__requests-1657:change": { "verdict": "accepted", "note": "Line 264 is the faulty merge_setting(request.hooks, ...) call named in the issue. The new merge_hooks helper insertion point (line 67) is kept as complementary placement, not required." },
+  "psf__requests-1768:change": { "verdict": "accepted", "note": "get_auth_from_url is the edit site. The import-list hunk is correctly ignored; a search does not need to find an import to localize this change." },
+  "psf__requests-1962:change": { "verdict": "accepted", "note": "Single-line fix at r.history = tuple(history); the issue even links this line, so it is an easy lexical case." },
+  "psf__requests-4718:change": { "verdict": "accepted", "note": "rebuild_auth condition (239-246) is the required site; the new should_strip_auth method placement is complementary." },
+  "pallets__flask-4544:change": { "verdict": "amended", "note": "The patch only makes --cert eager (line 766), but the issue explains the failure through _validate_key, which is equally valid evidence for understanding the change. Kept the patched option as required and added _validate_key as complementary.", "complementary": [{ "path": "src/flask/cli.py", "startLine": 719, "endLine": 747 }, { "path": "tests/test_cli.py", "startLine": 555, "endLine": 558 }] },
+  "pallets__flask-4045:change": { "verdict": "accepted", "note": "Blueprint.__init__ name assignment (190) and add_url_rule dot assertions (363-368) are both required edit sites." },
+  "pallets__flask-4074:change": { "verdict": "accepted", "note": "Broad refactor across app.py, blueprints.py and wrappers.py (19 units). Full recall is not expected; read file-level recall and first-hit metrics for this task. Labels are patch sites, not every useful range." }
+}

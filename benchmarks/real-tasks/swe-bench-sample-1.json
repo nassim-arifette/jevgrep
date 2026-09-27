@@ -1,0 +1,696 @@
+{
+  "version": "swe-bench-sample-1",
+  "source": {
+    "dataset": "princeton-nlp/SWE-bench",
+    "split": "test",
+    "license": "MIT (dataset); issue text and code from the upstream repositories",
+    "revision": "e48e2bd1e9fecd5bbd641e9414ac59da9f2e69f6"
+  },
+  "selection": {
+    "seed": "jevgrep-real-1",
+    "perRepository": {
+      "psf/requests": 8,
+      "pallets/flask": 4
+    },
+    "maxEditFiles": 3,
+    "maxQueryBytes": 7000
+  },
+  "tasks": [
+    {
+      "id": "psf__requests-1657",
+      "repository": "psf/requests",
+      "split": "dev",
+      "baseCommit": "43477edc91a8f49de1e9d96117f9cc6d087e71d9",
+      "snapshotHash": "ba935a7c499b2cfaa63a7c955ab183b456a90c345af9be87f3f3666807e9df26",
+      "createdAt": "2013-10-08T00:23:48Z",
+      "queries": [
+        {
+          "id": "psf__requests-1657:change",
+          "category": "change-localization",
+          "query": "Which existing code must change to resolve this issue?\n\nSession hooks broken\nRequest hooks are being [merged](https://github.com/kennethreitz/requests/blob/master/requests/sessions.py#L264) with session hooks; since both hook dicts have a list as the value, one simply overwrites the other.",
+          "evidence": [
+            {
+              "path": "requests/sessions.py",
+              "startLine": 264,
+              "endLine": 264
+            }
+          ],
+          "complementary": [
+            {
+              "path": "requests/sessions.py",
+              "startLine": 67,
+              "endLine": 67
+            },
+            {
+              "path": "test_requests.py",
+              "startLine": 451,
+              "endLine": 451
+            }
+          ],
+          "label": "patch"
+        },
+        {
+          "id": "psf__requests-1657:understand",
+          "category": "code-understanding",
+          "query": "Where is the code that does this: Constructs a PreparedRequest <PreparedRequest> for transmission and returns it.",
+          "evidence": [
+            {
+              "path": "requests/sessions.py",
+              "startLine": 229,
+              "endLine": 267
+            }
+          ],
+          "complementary": [],
+          "label": "docstring"
+        }
+      ]
+    },
+    {
+      "id": "psf__requests-2821",
+      "repository": "psf/requests",
+      "split": "dev",
+      "baseCommit": "978a89d5a32f6e91acf0812f7f2b29c9f97d6a0c",
+      "snapshotHash": "4519c2f1fb45fedd2c2257aa4a39b22ac8f2ce75f02866d93dc609ac2f3e6d23",
+      "createdAt": "2015-10-12T09:49:35Z",
+      "queries": [
+        {
+          "id": "psf__requests-2821:change",
+          "category": "change-localization",
+          "query": "Which existing code must change to resolve this issue?\n\nTypeError after 2.7.0 -> 2.8.0 upgrade (cannot make memory view...)\nI'm running into this traceback after upgrading to 2.8.0 from 2.7.0:\n\n```\n<snip>\n    response = self.session.send(request)\n  File \"/home/travis/virtualenv/python2.7.9/lib/python2.7/site-packages/requests/sessions.py\", line 579, in send\n    r = adapter.send(request, **kwargs)\n  File \"/home/travis/virtualenv/python2.7.9/lib/python2.7/site-packages/requests/adapters.py\", line 369, in send\n    timeout=timeout\n  File \"/home/travis/virtualenv/python2.7.9/lib/python2.7/site-packages/requests/packages/urllib3/connectionpool.py\", line 559, in urlopen\n    body=body, headers=headers)\n  File \"/home/travis/virtualenv/python2.7.9/lib/python2.7/site-packages/requests/packages/urllib3/connectionpool.py\", line 353, in _make_request\n    conn.request(method, url, **httplib_request_kw)\n  File \"/opt/python/2.7.9/lib/python2.7/httplib.py\", line 1001, in request\n    self._send_request(method, url, body, headers)\n  File \"/opt/python/2.7.9/lib/python2.7/httplib.py\", line 1035, in _send_request\n    self.endheaders(body)\n  File \"/opt/python/2.7.9/lib/python2.7/httplib.py\", line 997, in endheaders\n    self._send_output(message_body)\n  File \"/opt/python/2.7.9/lib/python2.7/httplib.py\", line 850, in _send_output\n    self.send(msg)\n  File \"/opt/python/2.7.9/lib/python2.7/httplib.py\", line 826, in send\n    self.sock.sendall(data)\n  File \"/home/travis/virtualenv/python2.7.9/lib/python2.7/site-packages/requests/packages/urllib3/contrib/pyopenssl.py\", line 216, in sendall\n    data = memoryview(data)\nTypeError: cannot make memory view because object does not have the buffer interface\n```\n\nThe problem goes away after downgrading to 2.7.0.\n\nA full traceback can be found [here](https://travis-ci.org/simon-weber/gmusicapi/jobs/82365307).\n\nHere are the versions of relevant packages:\n\n```\nhttplib2-0.9.2\nndg-httpsclient-0.4.0\npyasn1-0.1.9\npyasn1-modules-0.0.8\npyopenssl-0.15.1\nrequests-2.8.0\n```\n\nAnd a full list of packages:\n\n```\nMechanicalSoup-0.3.1\nappdirs-1.4.0\nbeautifulsoup4-4.4.1\ncffi-1.2.1\ncryptography-1.0.2\ndecorator-4.0.4\nenum34-1.0.4\ngmusicapi-7.0.1.dev0\ngpsoauth-0.0.4\nhttplib2-0.9.2\nidna-2.0\nipaddress-1.0.14\nmutagen-1.31\nndg-httpsclient-0.4.0\noauth2client-1.5.1\nproboscis-1.2.6.0\nprotobuf-2.6.1\npyasn1-0.1.9\npyasn1-modules-0.0.8\npycparser-2.14\npycrypto-2.6.1\npyopenssl-0.15.1\npython-dateutil-2.4.2\nrequests-2.8.0\nrsa-3.2\nsix-1.10.0\nvalidictory-1.0.1\n```\n\nAny ideas?",
+          "evidence": [
+            {
+              "path": "requests/models.py",
+              "startLine": 322,
+              "endLine": 322
+            },
+            {
+              "path": "requests/sessions.py",
+              "startLine": 441,
+              "endLine": 443
+            }
+          ],
+          "complementary": [
+            {
+              "path": "test_requests.py",
+              "startLine": 570,
+              "endLine": 570
+            }
+          ],
+          "label": "patch"
+        },
+        {
+          "id": "psf__requests-2821:understand",
+          "category": "code-understanding",
+          "query": "Where is the code that does this: Prepares the given HTTP method.",
+          "evidence": [
+            {
+              "path": "requests/models.py",
+              "startLine": 318,
+              "endLine": 322
+            }
+          ],
+          "complementary": [],
+          "label": "docstring"
+        }
+      ]
+    },
+    {
+      "id": "psf__requests-774",
+      "repository": "psf/requests",
+      "split": "dev",
+      "baseCommit": "27b55a74d7b9bd2f8c60fd0ee342bcbbf40e0a66",
+      "snapshotHash": "ce44752a6c90c2d0448fdce459ec983020db3735268e17f7cfd77bceb900a97e",
+      "createdAt": "2012-08-10T16:49:52Z",
+      "queries": [
+        {
+          "id": "psf__requests-774:change",
+          "category": "change-localization",
+          "query": "Which existing code must change to resolve this issue?\n\nCatch UnicodeError coming from encodings/idna.py\nHere's a Python 2.6 Requests 0.13.1 traceback.  Looks like the call to `netloc.encode('idna').decode('utf-8')` needs a try/except.\n\n```\nFile \"/srv/import-service/lib/python2.6/site-packages/requests/api.py\", line 76, in head\n    return request('head', url, **kwargs)\n  File \"/srv/import-service/lib/python2.6/site-packages/requests/safe_mode.py\", line 37, in wrapped\n    return function(method, url, **kwargs)\n  File \"/srv/import-service/lib/python2.6/site-packages/requests/api.py\", line 42, in request\n    return s.request(method=method, url=url, **kwargs)\n  File \"/srv/import-service/lib/python2.6/site-packages/requests/sessions.py\", line 230, in request\n    r.send(prefetch=prefetch)\n  File \"/srv/import-service/lib/python2.6/site-packages/requests/models.py\", line 618, in send\n    self._build_response(r)\n  File \"/srv/import-service/lib/python2.6/site-packages/requests/models.py\", line 305, in _build_response\n    request.send()\n  File \"/srv/import-service/lib/python2.6/site-packages/requests/models.py\", line 474, in send\n    url = self.full_url\n  File \"/srv/import-service/lib/python2.6/site-packages/requests/models.py\", line 388, in full_url\n    netloc = netloc.encode('idna').decode('utf-8')\n  File \"/srv/import-service/lib/python2.6/encodings/idna.py\", line 164, in encode\n    result.append(ToASCII(label))\n  File \"/srv/import-service/lib/python2.6/encodings/idna.py\", line 73, in ToASCII\n    raise UnicodeError(\"label empty or too long\")\nUnicodeError: label empty or too long\n```",
+          "evidence": [
+            {
+              "path": "requests/models.py",
+              "startLine": 416,
+              "endLine": 416
+            }
+          ],
+          "complementary": [
+            {
+              "path": "tests/test_requests.py",
+              "startLine": 21,
+              "endLine": 21
+            },
+            {
+              "path": "tests/test_requests.py",
+              "startLine": 1064,
+              "endLine": 1064
+            }
+          ],
+          "label": "patch"
+        },
+        {
+          "id": "psf__requests-774:understand",
+          "category": "code-understanding",
+          "query": "Where is the code that does this: Build the actual URL to use.",
+          "evidence": [
+            {
+              "path": "requests/models.py",
+              "startLine": 398,
+              "endLine": 447
+            }
+          ],
+          "complementary": [],
+          "label": "docstring"
+        }
+      ]
+    },
+    {
+      "id": "psf__requests-4718",
+      "repository": "psf/requests",
+      "split": "dev",
+      "baseCommit": "dd754d13de250a6af8a68a6a83a8b4419fd429c6",
+      "snapshotHash": "d111b6c3700c87a6cee524b74b4c1969937b89ed7a14ef67b6560db66f36b6e8",
+      "createdAt": "2018-06-28T14:48:34Z",
+      "queries": [
+        {
+          "id": "psf__requests-4718:change",
+          "category": "change-localization",
+          "query": "Which existing code must change to resolve this issue?\n\nShould Authorization header be cleared in https -> http redirect?\nThis may be considered intentional behaviour (in which case feel free to close this), but if a request is made to an https endpoint with authorization and it redirects to http on the same host, the Authorization header is not stripped and will be exposed on the wire.\r\n\r\n## Expected Result\r\n\r\nrebuild_auth would strip the Authorization header if the scheme is changed from https to http.\r\n\r\n## Actual Result\r\n\r\nThe credentials that were intended to be sent over TLS were transmitted in plaintext with the redirected request.\r\n\r\n## Reproduction Steps\r\n\r\nRun an HTTPS server on localhost:4443 that replies with a 302 redirect to `http://localhost:8000`, and a plain HTTP server (or netcat) on localhost:8000. Then run\r\n```python\r\nimport requests\r\nrequests.get('https://localhost:4443', auth=('hello', 'world'), verify=False)\r\n```\r\nThe basic auth credentials are sent in plaintext to `http://localhost:8000` (the `verify=False` is just because I had a self-signed cert).\r\n\r\nHere's the code I used for the SSL server:\r\n```python\r\nimport BaseHTTPServer\r\nimport ssl\r\n\r\nclass Handler(BaseHTTPServer.BaseHTTPRequestHandler):\r\n    def do_GET(self):\r\n        self.send_response(302)\r\n        self.send_header('Location', 'http://localhost:8000/')\r\n        self.end_headers()\r\n        self.wfile.write('')\r\n\r\nhttpd = BaseHTTPServer.HTTPServer(('localhost', 4443), Handler)\r\nhttpd.socket = ssl.wrap_socket (httpd.socket, server_side=True,\r\n                                certfile='yourpemfile.pem')\r\nhttpd.serve_forever()\r\n```\r\n\r\n## System Information\r\n\r\n```\r\n{\r\n  \"chardet\": {\r\n    \"version\": \"3.0.4\"\r\n  }, \r\n  \"cryptography\": {\r\n    \"version\": \"2.2.2\"\r\n  }, \r\n  \"idna\": {\r\n    \"version\": \"2.7\"\r\n  }, \r\n  \"implementation\": {\r\n    \"name\": \"CPython\", \r\n    \"version\": \"2.7.12\"\r\n  }, \r\n  \"platform\": {\r\n    \"release\": \"4.15.0-23-generic\", \r\n    \"system\": \"Linux\"\r\n  }, \r\n  \"pyOpenSSL\": {\r\n    \"openssl_version\": \"1010008f\", \r\n    \"version\": \"18.0.0\"\r\n  }, \r\n  \"requests\": {\r\n    \"version\": \"2.19.1\"\r\n  }, \r\n  \"system_ssl\": {\r\n    \"version\": \"1000207f\"\r\n  }, \r\n  \"urllib3\": {\r\n    \"version\": \"1.23\"\r\n  }, \r\n  \"using_pyopenssl\": true\r\n}\r\n```",
+          "evidence": [
+            {
+              "path": "requests/sessions.py",
+              "startLine": 239,
+              "endLine": 246
+            }
+          ],
+          "complementary": [
+            {
+              "path": "requests/sessions.py",
+              "startLine": 117,
+              "endLine": 117
+            },
+            {
+              "path": "tests/test_requests.py",
+              "startLine": 1576,
+              "endLine": 1584
+            },
+            {
+              "path": "tests/test_requests.py",
+              "startLine": 1592,
+              "endLine": 1592
+            }
+          ],
+          "label": "patch"
+        },
+        {
+          "id": "psf__requests-4718:understand",
+          "category": "code-understanding",
+          "query": "Where is the code that does this: When being redirected we may want to strip authentication from the request to avoid leaking credentials.",
+          "evidence": [
+            {
+              "path": "requests/sessions.py",
+              "startLine": 231,
+              "endLine": 253
+            }
+          ],
+          "complementary": [],
+          "label": "docstring"
+        }
+      ]
+    },
+    {
+      "id": "psf__requests-3718",
+      "repository": "psf/requests",
+      "split": "dev",
+      "baseCommit": "ccabcf1fca906bfa6b65a3189c1c41061e6c1042",
+      "snapshotHash": "167898aafd2b18fd6e5d3e9f66a97681d1ea50c014801459e0860fab3544bf34",
+      "createdAt": "2016-11-23T21:26:30Z",
+      "queries": [
+        {
+          "id": "psf__requests-3718:change",
+          "category": "change-localization",
+          "query": "Which existing code must change to resolve this issue?\n\nAttributeError: 'NoneType' object has no attribute 'read'\nHello :)\r\n\r\nAfter a recent upgrade for our [coala](https://github.com/coala/coala) project to `requests` 2.12.1 we encounter an exception in our test suites which seems to be caused by `requests`.\r\n\r\nBuild: https://ci.appveyor.com/project/coala/coala-bears/build/1.0.3537/job/1wm7b4u9yhgkxkgn\r\n\r\nRelevant part:\r\n```\r\n================================== FAILURES ===================================\r\n_________________ InvalidLinkBearTest.test_redirect_threshold _________________\r\nself = <tests.general.InvalidLinkBearTest.InvalidLinkBearTest testMethod=test_redirect_threshold>\r\n    def test_redirect_threshold(self):\r\n    \r\n        long_url_redirect = \"\"\"\r\n            https://bitbucket.org/api/301\r\n            https://bitbucket.org/api/302\r\n            \"\"\".splitlines()\r\n    \r\n        short_url_redirect = \"\"\"\r\n            http://httpbin.org/status/301\r\n            \"\"\".splitlines()\r\n    \r\n        self.assertResult(valid_file=long_url_redirect,\r\n                          invalid_file=short_url_redirect,\r\n>                         settings={'follow_redirects': 'yeah'})\r\ntests\\general\\InvalidLinkBearTest.py:157: \r\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _\r\ntests\\general\\InvalidLinkBearTest.py:75: in assertResult\r\n    out = list(uut.run(\"valid\", valid_file, **settings))\r\nbears\\general\\InvalidLinkBear.py:80: in run\r\n    file, timeout, link_ignore_regex):\r\nbears\\general\\InvalidLinkBear.py:53: in find_links_in_file\r\n    code = InvalidLinkBear.get_status_code(link, timeout)\r\nbears\\general\\InvalidLinkBear.py:37: in get_status_code\r\n    timeout=timeout).status_code\r\nC:\\Python34\\lib\\site-packages\\requests\\api.py:96: in head\r\n    return request('head', url, **kwargs)\r\nC:\\Python34\\lib\\site-packages\\requests\\api.py:56: in request\r\n    return session.request(method=method, url=url, **kwargs)\r\nC:\\Python34\\lib\\site-packages\\requests\\sessions.py:488: in request\r\n    resp = self.send(prep, **send_kwargs)\r\nC:\\Python34\\lib\\site-packages\\requests_mock\\mocker.py:69: in _fake_send\r\n    return self._real_send(session, request, **kwargs)\r\nC:\\Python34\\lib\\site-packages\\requests\\sessions.py:641: in send\r\n    r.content\r\nC:\\Python34\\lib\\site-packages\\requests\\models.py:772: in content\r\n    self._content = bytes().join(self.iter_content(CONTENT_CHUNK_SIZE)) or bytes()\r\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _\r\n    def generate():\r\n        # Special case for urllib3.\r\n        if hasattr(self.raw, 'stream'):\r\n            try:\r\n                for chunk in self.raw.stream(chunk_size, decode_content=True):\r\n                    yield chunk\r\n            except ProtocolError as e:\r\n                raise ChunkedEncodingError(e)\r\n            except DecodeError as e:\r\n                raise ContentDecodingError(e)\r\n            except ReadTimeoutError as e:\r\n                raise ConnectionError(e)\r\n        else:\r\n            # Standard file-like object.\r\n            while True:\r\n>               chunk = self.raw.read(chunk_size)\r\nE               AttributeError: 'NoneType' object has no attribute 'read'\r\nC:\\Python34\\lib\\site-packages\\requests\\models.py:705: AttributeError\r\n```\r\nhappens on Windows and Linux.\r\n\r\nThanks in advance :)",
+          "evidence": [
+            {
+              "path": "requests/models.py",
+              "startLine": 772,
+              "endLine": 772
+            }
+          ],
+          "complementary": [
+            {
+              "path": "tests/test_requests.py",
+              "startLine": 1096,
+              "endLine": 1096
+            }
+          ],
+          "label": "patch"
+        },
+        {
+          "id": "psf__requests-3718:understand",
+          "category": "code-understanding",
+          "query": "Where is the code that does this: Content of the response, in bytes.",
+          "evidence": [
+            {
+              "path": "requests/models.py",
+              "startLine": 762,
+              "endLine": 780
+            }
+          ],
+          "complementary": [],
+          "label": "docstring"
+        }
+      ]
+    },
+    {
+      "id": "psf__requests-1962",
+      "repository": "psf/requests",
+      "split": "dev",
+      "baseCommit": "110048f9837f8441ea536804115e80b69f400277",
+      "snapshotHash": "39bbf2a740fb7bbb77b58b7f0a48402a0cf119e325d31fbd275325cd5c2d00c1",
+      "createdAt": "2014-03-15T16:35:33Z",
+      "queries": [
+        {
+          "id": "psf__requests-1962:change",
+          "category": "change-localization",
+          "query": "Which existing code must change to resolve this issue?\n\nrequest.history can be either a list or a tuple\nIMHO r.history should always be a list for least surprise. In _some_ cases, it is returned as a tuple:\nhttps://github.com/kennethreitz/requests/blob/master/requests/sessions.py#L530\n\nThanks!",
+          "evidence": [
+            {
+              "path": "requests/sessions.py",
+              "startLine": 530,
+              "endLine": 530
+            }
+          ],
+          "complementary": [
+            {
+              "path": "test_requests.py",
+              "startLine": 213,
+              "endLine": 213
+            }
+          ],
+          "label": "patch"
+        }
+      ]
+    },
+    {
+      "id": "psf__requests-1768",
+      "repository": "psf/requests",
+      "split": "dev",
+      "baseCommit": "847735553aeda6e6633f2b32e14ba14ba86887a4",
+      "snapshotHash": "fc9e02f6c63a15e0a096fc97e2c89d7ceb7e99d86dc8c47a6dc7df685d12c1a1",
+      "createdAt": "2013-12-01T11:34:25Z",
+      "queries": [
+        {
+          "id": "psf__requests-1768:change",
+          "category": "change-localization",
+          "query": "Which existing code must change to resolve this issue?\n\nHTTP Basic Auth credentials extracted from URL are %-encoded\nI was relying on credential auto-extraction from the hostname [1] to perform HTTP Basic Auth but I was getting \"401 Unauthorized\": the spaces in the password were substituted by `%20`. Manually extracting them with `urlsplit` and passing them to the `auth` parameter as a tuple works.\n\n[1] http://docs.python-requests.org/en/latest/user/authentication/#netrc-authentication (second paragraph)",
+          "evidence": [
+            {
+              "path": "requests/utils.py",
+              "startLine": 560,
+              "endLine": 560
+            }
+          ],
+          "complementary": [
+            {
+              "path": "test_requests.py",
+              "startLine": 565,
+              "endLine": 565
+            }
+          ],
+          "label": "patch"
+        },
+        {
+          "id": "psf__requests-1768:understand",
+          "category": "code-understanding",
+          "query": "Where is the code that does this: Given a url with authentication components, extract them into a tuple of username,password.",
+          "evidence": [
+            {
+              "path": "requests/utils.py",
+              "startLine": 557,
+              "endLine": 564
+            }
+          ],
+          "complementary": [],
+          "label": "docstring"
+        }
+      ]
+    },
+    {
+      "id": "psf__requests-2617",
+      "repository": "psf/requests",
+      "split": "dev",
+      "baseCommit": "636b946af5eac8ba4cffa63a727523cd8c2c01ab",
+      "snapshotHash": "437aed1efe267ea53df701cb0e5a1892025e550b9c5571e70b641676ac242cdd",
+      "createdAt": "2015-05-28T17:09:51Z",
+      "queries": [
+        {
+          "id": "psf__requests-2617:change",
+          "category": "change-localization",
+          "query": "Which existing code must change to resolve this issue?\n\nPrepared requests containing binary files will not send when unicode_literals is imported\n``` python\n#!/usr/bin/env python                                                                                                                                                              \nfrom __future__ import unicode_literals\nimport requests\nimport sys\n\n\ndef main():\n    request = requests.Request(method='PUT', url='https://httpbin.org/put')\n    with open(sys.argv[1], 'rb') as fp:\n        request.files = {'hello': fp}\n        prepared = request.prepare()\n        requests.Session().send(prepared)\n\nif __name__ == '__main__':\n    sys.exit(main())\n```\n\nThe above program works perfectly in python3, and in python2 when `unicode_literals` is not imported. If the request isn't prepared it works without a problem unfortunately, I require both prepared requests and `unicode_literals` in my project.\n\nThe exception raised is:\n\n``````\nTraceback (most recent call last):\n  File \"./test.py\", line 15, in <module>\n    sys.exit(main())\n  File \"./test.py\", line 12, in main\n    requests.Session().send(prepared)\n  File \"/Users/bboe/.venv/p27/lib/python2.7/site-packages/requests-2.7.0-py2.7.egg/requests/sessions.py\", line 573, in send\n    r = adapter.send(request, **kwargs)\n  File \"/Users/bboe/.venv/p27/lib/python2.7/site-packages/requests-2.7.0-py2.7.egg/requests/adapters.py\", line 370, in send\n    timeout=timeout\n  File \"/Users/bboe/.venv/p27/lib/python2.7/site-packages/requests-2.7.0-py2.7.egg/requests/packages/urllib3/connectionpool.py\", line 544, in urlopen\n    body=body, headers=headers)\n  File \"/Users/bboe/.venv/p27/lib/python2.7/site-packages/requests-2.7.0-py2.7.egg/requests/packages/urllib3/connectionpool.py\", line 349, in _make_request\n    conn.request(method, url, **httplib_request_kw)\n  File \"/usr/local/Cellar/python/2.7.9/Frameworks/Python.framework/Versions/2.7/lib/python2.7/httplib.py\", line 1001, in request\n    self._send_request(method, url, body, headers)\n  File \"/usr/local/Cellar/python/2.7.9/Frameworks/Python.framework/Versions/2.7/lib/python2.7/httplib.py\", line 1035, in _send_request\n    self.endheaders(body)\n  File \"/usr/local/Cellar/python/2.7.9/Frameworks/Python.framework/Versions/2.7/lib/python2.7/httplib.py\", line 997, in endheaders\n    self._send_output(message_body)\n  File \"/usr/local/Cellar/python/2.7.9/Frameworks/Python.framework/Versions/2.7/lib/python2.7/httplib.py\", line 848, in _send_output\n    msg += message_body\nUnicodeDecodeError: 'ascii' codec can't decode byte 0xff in position 109: ordinal not in range(128)```\n``````",
+          "evidence": [
+            {
+              "path": "requests/models.py",
+              "startLine": 331,
+              "endLine": 332
+            },
+            {
+              "path": "requests/sessions.py",
+              "startLine": 435,
+              "endLine": 437
+            }
+          ],
+          "complementary": [
+            {
+              "path": "test_requests.py",
+              "startLine": 92,
+              "endLine": 92
+            },
+            {
+              "path": "test_requests.py",
+              "startLine": 816,
+              "endLine": 816
+            },
+            {
+              "path": "test_requests.py",
+              "startLine": 1619,
+              "endLine": 1619
+            }
+          ],
+          "label": "patch"
+        },
+        {
+          "id": "psf__requests-2617:understand",
+          "category": "code-understanding",
+          "query": "Where is the code that does this: Prepares the given HTTP method.",
+          "evidence": [
+            {
+              "path": "requests/models.py",
+              "startLine": 328,
+              "endLine": 332
+            }
+          ],
+          "complementary": [],
+          "label": "docstring"
+        }
+      ]
+    },
+    {
+      "id": "pallets__flask-4074",
+      "repository": "pallets/flask",
+      "split": "heldout",
+      "baseCommit": "a541c2ac8b05c2b23e11bd8540088fce1abc2373",
+      "snapshotHash": "2c6150c24658d85b318673d8aa5a842d26d368a5db929e66559ee6e3fa08304e",
+      "createdAt": "2021-05-18T12:40:47Z",
+      "queries": [
+        {
+          "id": "pallets__flask-4074:change",
+          "category": "change-localization",
+          "query": "Which existing code must change to resolve this issue?\n\nurl_for can't distinguish a blueprint mounted two times\nBased on blueprint concept, I expected it to handle relative `url_for` nicely:\n\n```\nfrom flask import Blueprint, Flask, url_for\n\nbp = Blueprint('foo', __name__)\n\n@bp.route('/')\ndef func():\n    return url_for('.func')\n\napp = Flask(__name__)\napp.register_blueprint(bp, url_prefix='/foo')\napp.register_blueprint(bp, url_prefix='/bar')\n\nclient = app.test_client()\nprint client.get('/foo/').data\nprint client.get('/bar/').data\n```\n\nBoth prints write the URL to the first blueprint registered (`/foo/`). Is it possible to mount two times the same blueprint and make relative `url_for` work? Is this behaviour expected?",
+          "evidence": [
+            {
+              "path": "src/flask/app.py",
+              "startLine": 750,
+              "endLine": 750
+            },
+            {
+              "path": "src/flask/app.py",
+              "startLine": 1270,
+              "endLine": 1270
+            },
+            {
+              "path": "src/flask/app.py",
+              "startLine": 1790,
+              "endLine": 1793
+            },
+            {
+              "path": "src/flask/app.py",
+              "startLine": 1834,
+              "endLine": 1834
+            },
+            {
+              "path": "src/flask/app.py",
+              "startLine": 1841,
+              "endLine": 1841
+            },
+            {
+              "path": "src/flask/app.py",
+              "startLine": 1866,
+              "endLine": 1866
+            },
+            {
+              "path": "src/flask/app.py",
+              "startLine": 1905,
+              "endLine": 1905
+            },
+            {
+              "path": "src/flask/app.py",
+              "startLine": 2077,
+              "endLine": 2082
+            },
+            {
+              "path": "src/flask/blueprints.py",
+              "startLine": 69,
+              "endLine": 69
+            },
+            {
+              "path": "src/flask/blueprints.py",
+              "startLine": 98,
+              "endLine": 101
+            },
+            {
+              "path": "src/flask/blueprints.py",
+              "startLine": 254,
+              "endLine": 256
+            },
+            {
+              "path": "src/flask/blueprints.py",
+              "startLine": 269,
+              "endLine": 285
+            },
+            {
+              "path": "src/flask/blueprints.py",
+              "startLine": 301,
+              "endLine": 302
+            },
+            {
+              "path": "src/flask/blueprints.py",
+              "startLine": 306,
+              "endLine": 306
+            },
+            {
+              "path": "src/flask/blueprints.py",
+              "startLine": 340,
+              "endLine": 340
+            },
+            {
+              "path": "src/flask/blueprints.py",
+              "startLine": 357,
+              "endLine": 360
+            },
+            {
+              "path": "src/flask/wrappers.py",
+              "startLine": 62,
+              "endLine": 65
+            },
+            {
+              "path": "src/flask/wrappers.py",
+              "startLine": 69,
+              "endLine": 70
+            },
+            {
+              "path": "src/flask/wrappers.py",
+              "startLine": 74,
+              "endLine": 78
+            }
+          ],
+          "complementary": [
+            {
+              "path": "src/flask/helpers.py",
+              "startLine": 823,
+              "endLine": 823
+            },
+            {
+              "path": "tests/test_blueprints.py",
+              "startLine": 143,
+              "endLine": 143
+            },
+            {
+              "path": "tests/test_blueprints.py",
+              "startLine": 840,
+              "endLine": 884
+            }
+          ],
+          "label": "patch"
+        },
+        {
+          "id": "pallets__flask-4074:understand",
+          "category": "code-understanding",
+          "query": "Where is the code that does this: Update the template context with some commonly used variables.",
+          "evidence": [
+            {
+              "path": "src/flask/app.py",
+              "startLine": 734,
+              "endLine": 759
+            }
+          ],
+          "complementary": [],
+          "label": "docstring"
+        }
+      ]
+    },
+    {
+      "id": "pallets__flask-4544",
+      "repository": "pallets/flask",
+      "split": "heldout",
+      "baseCommit": "dba2be9311d2abfd1b973c6bb578f416ee771fda",
+      "snapshotHash": "16c0eacd0e61530c11abfd182cde50b783bf00388cae08c2ca41a566997ac807",
+      "createdAt": "2022-04-18T13:39:46Z",
+      "queries": [
+        {
+          "id": "pallets__flask-4544:change",
+          "category": "change-localization",
+          "query": "Which existing code must change to resolve this issue?\n\n`flask run` rejects `--key foo.pem --cert foo.cert`\nWhen trying the development server, I find that `flask run --cert foo.cert --key foo.pem` works fine, but `flask run --key foo.pem --cert foo.cert` fails with:\r\n\r\n```\r\nError: Invalid value for '--key': \"--cert\" must also be specified.\r\n```\r\n\r\nIsn't this somewhat counterintuitive?\r\n\r\nIn flask/cli.py, [`_validate_key()`](https://github.com/pallets/flask/blob/3897a518014931a82c77a353e1e9c2248529b856/src/flask/cli.py#L711) function insists the certificate file should have been specified, and it feels too restrictive. But I'm not familiar with Click to contribute a pretty PR...\r\n\r\nEnvironment:\r\n\r\n- Python version: 3.9.10\r\n- Flask version: 2.0.3",
+          "evidence": [
+            {
+              "path": "src/flask/cli.py",
+              "startLine": 766,
+              "endLine": 766
+            }
+          ],
+          "complementary": [
+            {
+              "path": "tests/test_cli.py",
+              "startLine": 555,
+              "endLine": 558
+            }
+          ],
+          "label": "patch"
+        }
+      ]
+    },
+    {
+      "id": "pallets__flask-4992",
+      "repository": "pallets/flask",
+      "split": "heldout",
+      "baseCommit": "4c288bc97ea371817199908d0d9b12de9dae327e",
+      "snapshotHash": "dcb749b521a591990f42e9d0e88588819dc15a62f0c92946fe1409f4dfd39041",
+      "createdAt": "2023-02-22T14:00:17Z",
+      "queries": [
+        {
+          "id": "pallets__flask-4992:change",
+          "category": "change-localization",
+          "query": "Which existing code must change to resolve this issue?\n\nAdd a file mode parameter to flask.Config.from_file()\nPython 3.11 introduced native TOML support with the `tomllib` package. This could work nicely with the `flask.Config.from_file()` method as an easy way to load TOML config files:\r\n\r\n```python\r\napp.config.from_file(\"config.toml\", tomllib.load)\r\n```\r\n\r\nHowever, `tomllib.load()` takes an object readable in binary mode, while `flask.Config.from_file()` opens a file in text mode, resulting in this error:\r\n\r\n```\r\nTypeError: File must be opened in binary mode, e.g. use `open('foo.toml', 'rb')`\r\n```\r\n\r\nWe can get around this with a more verbose expression, like loading from a file opened with the built-in `open()` function and passing the `dict` to `app.Config.from_mapping()`:\r\n\r\n```python\r\n# We have to repeat the path joining that from_file() does\r\nwith open(os.path.join(app.config.root_path, \"config.toml\"), \"rb\") as file:\r\n    app.config.from_mapping(tomllib.load(file))\r\n```\r\n\r\nBut adding a file mode parameter to `flask.Config.from_file()` would enable the use of a simpler expression. E.g.:\r\n\r\n```python\r\napp.config.from_file(\"config.toml\", tomllib.load, mode=\"b\")\r\n```",
+          "evidence": [
+            {
+              "path": "src/flask/config.py",
+              "startLine": 236,
+              "endLine": 236
+            },
+            {
+              "path": "src/flask/config.py",
+              "startLine": 256,
+              "endLine": 258
+            },
+            {
+              "path": "src/flask/config.py",
+              "startLine": 264,
+              "endLine": 264
+            }
+          ],
+          "complementary": [
+            {
+              "path": "tests/test_config.py",
+              "startLine": 9,
+              "endLine": 9
+            },
+            {
+              "path": "tests/test_config.py",
+              "startLine": 33,
+              "endLine": 33
+            },
+            {
+              "path": "tests/test_config.py",
+              "startLine": 39,
+              "endLine": 39
+            }
+          ],
+          "label": "patch"
+        },
+        {
+          "id": "pallets__flask-4992:understand",
+          "category": "code-understanding",
+          "query": "Where is the code that does this: Update the values in the config from a file that is loaded using the load parameter.",
+          "evidence": [
+            {
+              "path": "src/flask/config.py",
+              "startLine": 232,
+              "endLine": 273
+            }
+          ],
+          "complementary": [],
+          "label": "docstring"
+        }
+      ]
+    },
+    {
+      "id": "pallets__flask-4045",
+      "repository": "pallets/flask",
+      "split": "heldout",
+      "baseCommit": "d8c37f43724cd9fb0870f77877b7c4c7e38a19e0",
+      "snapshotHash": "1681391b702248ad6b352681932165f68f8829fd51af01490b81ef621c86d3e6",
+      "createdAt": "2021-05-13T21:32:41Z",
+      "queries": [
+        {
+          "id": "pallets__flask-4045:change",
+          "category": "change-localization",
+          "query": "Which existing code must change to resolve this issue?\n\nRaise error when blueprint name contains a dot\nThis is required since every dot is now significant since blueprints can be nested. An error was already added for endpoint names in 1.0, but should have been added for this as well.",
+          "evidence": [
+            {
+              "path": "src/flask/blueprints.py",
+              "startLine": 190,
+              "endLine": 190
+            },
+            {
+              "path": "src/flask/blueprints.py",
+              "startLine": 363,
+              "endLine": 368
+            }
+          ],
+          "complementary": [
+            {
+              "path": "tests/test_basic.py",
+              "startLine": 1634,
+              "endLine": 1634
+            },
+            {
+              "path": "tests/test_basic.py",
+              "startLine": 1647,
+              "endLine": 1647
+            },
+            {
+              "path": "tests/test_basic.py",
+              "startLine": 1652,
+              "endLine": 1652
+            },
+            {
+              "path": "tests/test_blueprints.py",
+              "startLine": 1,
+              "endLine": 2
+            },
+            {
+              "path": "tests/test_blueprints.py",
+              "startLine": 256,
+              "endLine": 277
+            },
+            {
+              "path": "tests/test_blueprints.py",
+              "startLine": 346,
+              "endLine": 401
+            }
+          ],
+          "label": "patch"
+        }
+      ]
+    }
+  ]
+}
