@@ -36,7 +36,9 @@ while ($null -ne ($requestLine = [Console]::ReadLine())) {
 
 if (parentPort === null) throw new Error('attribute helper requires a worker');
 const port = parentPort;
-const systemRoot = process.env['SystemRoot'] ?? 'C:\\Windows';
+// A worker's copy of the environment is case-sensitive, unlike Windows itself; MSYS and
+// Cygwin shells (Git Bash) pass the variable as `SYSTEMROOT`.
+const systemRoot = Object.entries(process.env).find(([name]) => name.toUpperCase() === 'SYSTEMROOT')?.[1] ?? 'C:\\Windows';
 if (!/^[A-Za-z]:[\\/]/.test(systemRoot)) throw new Error('invalid Windows installation path');
 const executable = join(systemRoot, 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe');
 const modules = join(systemRoot, 'System32', 'WindowsPowerShell', 'v1.0', 'Modules');
