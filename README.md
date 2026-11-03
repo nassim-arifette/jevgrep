@@ -2,240 +2,162 @@
 
 [![npm version](https://img.shields.io/npm/v/%40nassim-arifette%2Fjevgrep?logo=npm&label=npm)](https://www.npmjs.com/package/@nassim-arifette/jevgrep)
 [![Node.js 24+](https://img.shields.io/badge/node-%3E%3D24-339933?logo=nodedotjs&logoColor=white)](https://nodejs.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![MCP](https://img.shields.io/badge/MCP-compatible-7C3AED?logo=modelcontextprotocol&logoColor=white)](https://modelcontextprotocol.io/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-**Find code by what it does.** JevGrep helps coding agents find relevant code when
-they do not know the file name or symbol to search for.
+**Find code by what it does, not by what it is called.**
 
-Ask a question such as “Where is session expiry handled?” and JevGrep scans the
-authorized repository, asks Jev to score all eligible fragments, then returns the
-original source excerpts with their paths and line numbers. The calling agent can read
-those files in detail and continue its work with less exploratory context.
+Ask a question in plain English, such as *“Where is session expiry handled?”*, and
+JevGrep returns the exact source lines that answer it, with file paths and line
+numbers. Use it from your terminal, or plug it into Claude Code, Codex or any MCP
+client so your coding agent stops opening file after file to find its way around.
 
-Use the CLI or connect a coding agent
-through the local MCP server.
+<p align="center">
+  <a href="https://github.com/nassim-arifette/jevgrep/blob/main/docs/assets/jevgrep-demo.mp4">
+    <img src="https://raw.githubusercontent.com/nassim-arifette/jevgrep/main/docs/assets/jevgrep-demo-poster.png" alt="JevGrep demo: a plain-English question returns the exact source lines, paths and scores" width="900">
+  </a>
+  <br>
+  <sub>▶ <a href="https://github.com/nassim-arifette/jevgrep/blob/main/docs/assets/jevgrep-demo.mp4">Watch the 45-second demo</a>. Every result shown comes from a real search on this repository.</sub>
+</p>
 
-## Demos
+## Why JevGrep
 
-### CLI
+`grep` and `rg` are perfect when you know the name to search for. Most of the time,
+you only know the behaviour:
 
-![Initialize JevGrep, approve remote evaluation, and search source code from the terminal](docs/assets/jevgrep-cli-demo.gif)
+- *“Where do we check that a user can access this project?”*
+- *“What happens when a payment webhook arrives twice?”*
+- *“Which code decides whether a file is too big to index?”*
 
-### MCP
+JevGrep answers these questions directly:
 
-![Files explored without JevGrep compared with the relevant source located through JevGrep](docs/assets/jevgrep-tree-demo.gif)
+- **Original code, never a summary.** Results are verbatim excerpts with `path:start-end`, so you or your agent can open the file and keep going.
+- **Less context for agents.** One tool call replaces a long exploration of the repository; the answer fits a token budget you choose.
+- **Whole repository, any language.** Every eligible UTF-8 text file is scored, including configuration and tests, not just a pre-filtered shortlist.
+- **You stay in control.** Nothing is sent anywhere until you authorize a repository and review what would leave your computer.
 
-## What it is for
+## Get started in 2 minutes
 
-JevGrep is useful when a coding agent needs to:
+You need **Node.js 24** and an API key from one of the supported providers:
+[TypeSafe AI](https://typesafe.ai), [Vercel AI Gateway](https://vercel.com/ai-gateway)
+or [OpenRouter](https://openrouter.ai/settings/keys).
 
-- locate behaviour without knowing the exact identifier;
-- understand a feature spread across implementation, configuration and tests;
-- reduce the amount of repository exploration placed in the agent's main context;
-- retrieve exact source excerpts instead of a generated summary.
-
-It complements exact tools such as `rg`. If you already know the symbol or literal,
-ordinary text search is usually faster.
-
-## Requirements
-
-- Node.js 24
-- npm
-- a TypeSafe AI, Vercel AI Gateway or OpenRouter API key
-
-JevGrep searches every valid UTF-8 text file, regardless of repository language or
-extension.
-
-## Install
-
-Install the public package from npm:
+**1. Install**
 
 ```bash
 npm install -g @nassim-arifette/jevgrep
-jevgrep --version
 ```
 
-The unscoped package name `jevgrep` belongs to a different project. Use the complete
-scoped name above when installing. The installed command is still `jevgrep`.
+> The unscoped `jevgrep` package on npm is a different project. Install the scoped name above; the command is still `jevgrep`.
 
-Package: [@nassim-arifette/jevgrep](https://www.npmjs.com/package/@nassim-arifette/jevgrep)
-
-To install a development checkout instead:
+**2. Add your provider key** (once per computer)
 
 ```bash
-git clone https://github.com/nassim-arifette/jevgrep.git
-cd jevgrep
-npm ci
-npm run build
-npm link
-jevgrep --version
+jevgrep init --global                       # TypeSafe AI (default)
+jevgrep init --global --provider vercel     # or Vercel AI Gateway
+jevgrep init --global --provider openrouter # or OpenRouter
 ```
 
-`npm link` makes the `jevgrep` command available from any directory on the computer.
+The key is stored in your user configuration directory, never in a repository.
 
-## Quick start
-
-### 1. Configure a provider
-
-Configure the provider and key once for the computer:
-
-```bash
-jevgrep init --global
-```
-
-TypeSafe AI is proposed first. To use Vercel AI Gateway instead:
-
-```bash
-jevgrep init --global --provider vercel
-```
-
-To use OpenRouter:
-
-```bash
-jevgrep init --global --provider openrouter
-```
-
-The command stores the credential in the user's JevGrep configuration directory, not
-in a repository. `TYPESAFE_API_KEY`, `AI_GATEWAY_API_KEY` and `OPENROUTER_API_KEY`
-environment variables take priority over the corresponding stored value.
-
-### 2. Authorize a repository
-
-Run `init` once from the repository root:
+**3. Authorize a project** (once per repository)
 
 ```bash
 cd path/to/my-project
 jevgrep init
 ```
 
-The default root is the current directory. You can also provide it explicitly:
-
-```bash
-jevgrep init --root path/to/my-project
-```
-
-Provider credentials are global, but repository authorization is not. Each repository
-must be authorized separately. Its trusted profile is stored outside the repository.
-Interactive `init` asks before enabling remote evaluation for this repository:
+JevGrep asks before anything leaves your computer:
 
 ```text
 Allow sending eligible source excerpts from this repository to Vercel AI Gateway? [y/N]
 ```
 
-Answer `y` to search immediately. Enter or `n` keeps remote evaluation disabled.
-Non-interactive initialization also leaves new profiles disabled. Optional scan caps are disabled by default;
-configure them if you want to limit usage.
-`init` also creates a commented `.jevgrepignore` in the repository when one does not
-already exist. Existing exclusions are preserved; `.gitignore` is already respected.
+Answer `y` to search right away. Not sure yet? Press Enter, then run `jevgrep inspect`
+to see exactly which files would be sent (see [Privacy](#privacy-what-leaves-your-computer)).
 
-### 3. Inspect before sending code
-
-```bash
-jevgrep doctor
-jevgrep inspect
-```
-
-`doctor` checks the selected provider, credential state, authorized root, limits and
-cache without making a network request.
-
-`inspect` shows which files and fragments are eligible, what was excluded and how much
-work a search would perform. It also stays offline.
-
-If you did not enable remote evaluation during `init`, review the scope and limits,
-then edit the profile path printed by `init` and set
-`remote_evaluation_enabled` to `true` to allow source disclosure to the selected provider.
-
-### 4. Search by behaviour
+**4. Ask a question**
 
 ```bash
 jevgrep search --query "Where is session expiry handled?"
 ```
 
-Useful options:
+JevGrep prints every matching excerpt with its location and a relevance score.
+A real run on this repository:
+
+```text
+$ jevgrep search --scope src --query "Where is filesystem access controlled, and what prevents path escapes?"
+jevgrep: complete
+coverage: scope src | files 45/45 eligible | 170 fragments | coverage complete
+
+4 excerpts
+
+src/source/authorization.ts:201-281 score 0.96
+  #resolveWalk(normalized: string): Walk {
+    this.assertCurrent();
+    ...
+      const canonical = fs.realpathSync.native(candidate);
+      if (!contained(canonical, this.path)) return fail('outside_root', normalized);
+    ...
+
+src/cli-args.ts:57-108 score 0.95
+...
+```
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/nassim-arifette/jevgrep/main/docs/assets/jevgrep-result.png" alt="The top excerpt: src/source/authorization.ts lines 201 to 281, score 0.96, with the path containment check highlighted" width="900">
+</p>
+
+## Everyday use
 
 ```bash
-# Search only selected directories
+# Look only in some folders
 jevgrep search --query "How are permissions checked?" --scope src --scope tests
 
-# Return the canonical JSON response
+# Machine-readable JSON for scripts and agents
 jevgrep search --query "Where is the cache invalidated?" --json
 
-# Read a multiline question from a file
+# Long, multi-line question
 jevgrep search --query-file question.txt
 
-# Allow a deterministic partial scan when an enabled scan cap is exceeded
-jevgrep search --query "How does synchronization work?" --allow-partial
+# Check your setup without sending anything
+jevgrep doctor
+
+# See what a search would scan and roughly what it would cost
+jevgrep inspect
 ```
 
-JevGrep automatically finds the authorized project for the current directory, including
-when the command runs from a subdirectory. `--config <path>` remains available as an
-explicit override.
+Run JevGrep from anywhere inside an authorized project, including subfolders.
+Repeat searches are faster and cheaper: scores and file preparation are cached outside
+the repository (`jevgrep cache clear` resets them).
 
-## Providers
+**Tip:** if you already know the exact function name or string, `rg` is faster.
+Use JevGrep when you know *what the code does* but not *where it is*.
 
-| Provider          | Setup                                       | Model                 |
-| ----------------- | ------------------------------------------- | --------------------- |
-| TypeSafe AI       | `jevgrep init --global --provider typesafe` | `jev-1.13.0` (pinned) |
-| Vercel AI Gateway | `jevgrep init --global --provider vercel`   | `typesafe-ai/jev`     |
-| OpenRouter        | `jevgrep init --global --provider openrouter` | `typesafe/jev-1.13` |
+## Connect your coding agent
 
-The TypeSafe transport follows the documented System One HTTP contract and is covered
-with simulated responses. It has not been tested against a real account in this project.
-Vercel AI Gateway has been checked on a small authentication example, including a
-repeat search served entirely from the score cache.
+JevGrep ships a local [MCP](https://modelcontextprotocol.io/) server with a single tool,
+`semantic_search_code`. Your agent calls it with a question and gets back the same
+excerpts as the CLI.
 
-OpenRouter uses its alpha Decisions endpoint, `POST https://openrouter.ai/api/alpha/decisions`,
-with Bearer authentication and structured Noul questions. The adapter supplies both
-`true` and `false` criteria, reads `answers[id].noul`, `usage.input_tokens`,
-`usage.output_tokens` and the response `id`, and disables provider fallback.
-Its request and response handling were reviewed against the
-[official OpenRouter OpenAPI specification](https://openrouter.ai/openapi.json)
-(`DecisionsRequest`, `DecisionsNoulQuestion`, `DecisionsResponse`) on 2026-09-20.
-No live OpenRouter request or automated test was run for this integration.
-The alpha API may change. See the [Jev model page](https://openrouter.ai/typesafe/jev-1.13)
-and [OpenRouter configuration example](docs/examples/jevgrep.openrouter.config.json).
+First authorize the repository with `jevgrep init`. It prints the absolute path of the
+project profile; use that path below. One server serves one repository.
 
-To switch an existing global and project profile to Vercel:
-
-```bash
-jevgrep init --global --provider vercel
-jevgrep init --provider vercel
-```
-
-Use `--provider openrouter` in both commands to switch to OpenRouter.
-
-## Use through MCP
-
-JevGrep exposes the same search engine through a stdio MCP server:
-
-```bash
-jevgrep mcp
-```
-
-The server exposes one tool, `semantic_search_code`. Starting it does not scan files or
-contact a provider. A tool call performs a search using the authorization associated
-with the current directory.
-
-Configure and authorize the repository first. One server process serves one repository.
-Use the absolute profile path printed by `jevgrep init` so the server does not depend
-on the client's working directory. Replace the example paths below.
-
-### Claude Code
-
-After installing JevGrep:
+<details open>
+<summary><b>Claude Code</b></summary>
 
 ```bash
 claude mcp add --transport stdio jevgrep -- jevgrep mcp --config "/absolute/path/to/config.json"
 ```
 
-Check `claude mcp get jevgrep` and `/mcp` in Claude Code. See the
-[Claude Code MCP documentation](https://code.claude.com/docs/en/mcp).
+Check it with `claude mcp get jevgrep`, or `/mcp` inside Claude Code.
+See the [Claude Code MCP documentation](https://code.claude.com/docs/en/mcp).
+</details>
 
-### Codex
+<details>
+<summary><b>Codex</b></summary>
 
-Add an entry to your Codex `config.toml`:
+Add to your Codex `config.toml`:
 
 ```toml
 [mcp_servers.jevgrep]
@@ -244,13 +166,13 @@ args = ["mcp", "--config", "/absolute/path/to/config.json"]
 tool_timeout_sec = 360
 ```
 
-The suggested client timeout leaves a margin over JevGrep's default 300-second search
-deadline. Adjust both for your workload. See the
-[Codex MCP documentation](https://developers.openai.com/codex/mcp).
+See the [Codex MCP documentation](https://developers.openai.com/codex/mcp).
+</details>
 
-### Other clients
+<details>
+<summary><b>Any other MCP client</b></summary>
 
-For clients that accept `mcpServers` configuration:
+For clients that use an `mcpServers` JSON configuration:
 
 ```json
 {
@@ -263,141 +185,82 @@ For clients that accept `mcpServers` configuration:
 }
 ```
 
-Credentials saved by `init --global` are available to clients running as the same OS
-user. Environment keys must be available to the client process. Do not commit keys
-in MCP configuration.
+On Windows, if the client cannot start the `jevgrep` command, use the absolute paths of
+`node.exe` and the installed `dist/cli.js`
+([how](docs/install-guide.md#connect-an-mcp-client)).
+</details>
 
-If the client cannot find `jevgrep` or launch an npm shim on Windows, use absolute
-paths to `node` and the installed `dist/cli.js`. See the
-[installation guide](https://github.com/nassim-arifette/jevgrep/blob/main/docs/install-guide.md#connect-an-mcp-client).
+A search can take up to 5 minutes on a large repository, so give the tool call a
+client timeout of about 6 minutes. Never put API keys in MCP configuration files:
+the client reuses the key saved by `jevgrep init --global` when it runs as the same user.
 
-These examples have not yet been qualified with real Codex and Claude Code sessions.
-Confirm that your client lists `semantic_search_code` and completes a search.
+## Privacy: what leaves your computer
 
-## What leaves your computer
+JevGrep reads your files locally. Scoring is done by the provider you chose, so a search
+sends it:
 
-Search evaluation is remote. When you run `jevgrep search`, eligible source fragments
-are sent to the configured provider together with:
+- the eligible source fragments of the authorized repository;
+- your question;
+- repository-relative paths and line ranges.
 
-- your search question;
-- repository-relative paths and line ranges;
-- the relevance criterion used for scoring.
+Before that, JevGrep:
 
-JevGrep excludes common credential files, `.env` files, dependencies, build output,
-generated files, minified files and files that match credential patterns. Links and
-junctions are not followed. Run `jevgrep inspect` to review the eligible scope before
-the first live search.
+- skips `.env` files, common credential files, dependencies, build output, generated and minified files, and files that look like they contain secrets;
+- respects `.gitignore` and a `.jevgrepignore` file it creates for your own exclusions;
+- never follows links, and never puts your API key in a request body, result or cache.
 
-Credential filters cannot detect every secret; add repository-specific exclusions in
-`.jevgrepignore` where needed.
+Secret detection cannot be perfect: run `jevgrep inspect` before your first search and
+add anything sensitive to `.jevgrepignore`. The provider's own privacy and retention
+policies apply to what it receives.
 
-The credential is never placed in the search payload, result or cache. Redirects are
-not followed by either transport. Provider retention and privacy policies
-still apply to anything sent remotely.
+## Providers
 
-## Results and exit codes
+| Provider          | Setup                                         | Model                 |
+| ----------------- | --------------------------------------------- | --------------------- |
+| TypeSafe AI       | `jevgrep init --global --provider typesafe`   | `jev-1.13.0` (pinned) |
+| Vercel AI Gateway | `jevgrep init --global --provider vercel`     | `typesafe-ai/jev`     |
+| OpenRouter        | `jevgrep init --global --provider openrouter` | `typesafe/jev-1.13`   |
 
-Human-readable output is the default. Pass `--json` for the validated response contract.
-The result includes coverage information, exclusions, stop reasons and exact excerpts,
-so an empty or partial result is not presented as proof that code does not exist.
+Environment variables `TYPESAFE_API_KEY`, `AI_GATEWAY_API_KEY` and `OPENROUTER_API_KEY`
+take priority over saved keys, which is handy in CI. To switch an existing project to
+another provider, run the global setup for it, then `jevgrep init --provider <name>` in
+the project. Validation status and API details for each provider are in the
+[reference](docs/reference.md#providers).
 
-| Code  | Meaning                                                      |
-| ----- | ------------------------------------------------------------ |
-| `0`   | complete result                                              |
-| `2`   | invalid request, configuration problem or rejected preflight |
-| `3`   | partial result                                               |
-| `4`   | fatal runtime failure                                        |
-| `130` | interrupted                                                  |
+## Troubleshooting
 
-Results go to stdout. Diagnostics and measurements go to stderr.
+| Message or symptom | What to do |
+| --- | --- |
+| `jevgrep: command not found` | check that npm's global `bin` folder is on your `PATH` |
+| `REMOTE_DISABLED` | you have not allowed remote evaluation yet: run `jevgrep inspect`, then rerun `jevgrep init` and answer `y` |
+| `CREDENTIAL_MISSING` | run `jevgrep init --global`, or set the provider's environment variable |
+| `PROVIDER_AUTH` | check the key and that it has access to the Jev model |
+| No result, `no_score_above_threshold` | rephrase the question or widen `--scope`; it does not prove the code is absent |
+| MCP tool times out | raise the client timeout to about 6 minutes |
 
-## Cache
+More cases are covered in the [installation guide](docs/install-guide.md#troubleshooting).
+Exit codes: `0` complete, `2` invalid request or configuration, `3` partial result,
+`4` failure, `130` interrupted.
 
-JevGrep caches provider scores outside the repository, independently for each question
-and fragment. Changing another fragment does not invalidate an unchanged score.
-Provider, endpoint, model, query, source, location, criterion and layout remain part
-of the identity. Only misses are grouped into requests.
+## Learn more
 
-New TypeSafe direct profiles pin `jev-1.13.0` and use the configured cache TTL (seven
-days by default). Vercel's `typesafe-ai/jev` and OpenRouter's `typesafe/jev-1.13`
-use the conservative rolling policy: scores can be reused for up to 15 minutes.
-OpenRouter may resolve the requested model to a dated revision in its response;
-the version alias is not treated as an immutable cache identity. Existing direct profiles
-using `jev-latest` or `jev-preview` use the same short-lived policy.
-
-Rolling reuse can briefly serve a score from an earlier model revision. `doctor`
-shows this policy and its effective TTL. Set `cache.rolling_ttl_seconds` to `0` to
-disable it, or to an integer from `1` to `900` to shorten it. `cache.enabled: false`
-disables all score and preparation reuse. Existing profiles do not need to be recreated.
-
-File preparation is cached separately, by file content. Every search still inventories,
-reads and hashes each eligible file, so ignore rules, deny globs and authorization always
-apply; only the content checks, line token counts and fragment boundaries of unchanged
-bytes are reused. Each cache is bounded by `cache.max_bytes`.
-
-Clear both caches for the current project with:
-
-```bash
-jevgrep cache clear
-```
-
-Cached entries contain scores, identities, hashes, line numbers, token counts and
-structural labels such as function names, not source text, questions or credentials.
-
-## Request batching
-
-Fragments remain small enough to return precise excerpts. Requests pack fragments by
-the estimated tokens in the complete serialized payload, including the query, criteria
-and metadata.
-
-| Transport         | Aggregate ceiling used                    | Target with tokenizer headroom |
-| ----------------- | ----------------------------------------- | ------------------------------ |
-| TypeSafe direct   | 64,000 tokens                             | 44,800 reference tokens        |
-| Vercel AI Gateway | 32,000 tokens (conservative local policy) | 22,400 reference tokens        |
-| OpenRouter        | 32,000 tokens (conservative local policy) | 22,400 reference tokens        |
-
-TypeSafe documents 64k total and 32k for shared state plus one question. Gateway and
-OpenRouter advertise a 32k context; using it as an aggregate ceiling is conservative,
-not a claim that they document the same total-question limit. All three paths keep
-30% headroom because the provider tokenizer is not public, and locally limit each
-request to 64 questions and 256 KiB. These last two limits are application safeguards.
-See [TypeSafe model limits](https://docs.typesafe.ai/models) and the
-[Gateway model catalog](https://ai-gateway.vercel.sh/v1/models) and
-[OpenRouter Jev model page](https://openrouter.ai/typesafe/jev-1.13).
-
-`inspect` and search planning use the same serializer and token estimator; `inspect`
-uses a sample query, so its estimate can differ from an actual search. Estimates are
-not provider billing. File preparation still runs on every search, reusing cached work
-only for unchanged file contents: there is no persistent repository index.
-
-## Development
-
-```bash
-npm ci
-npm run typecheck
-npm test
-npm run build
-npm run smoke
-```
-
-Run the complete local verification gate with:
-
-```bash
-npm run verify
-```
-
-The test suite is offline and does not use provider credentials. Run `npm run bench`
-for the local performance baseline, or `npm run bench:retrieval -- --validate-only`
-to check the annotated retrieval pilot without network access. Real retrieval runs
-use an explicit provider configuration. See [benchmark commands and interpretation](benchmarks/README.md).
-CI verifies benchmark correctness without enforcing machine-dependent timing limits.
-
-## Documentation
-
-- [Installation and troubleshooting](https://github.com/nassim-arifette/jevgrep/blob/main/docs/install-guide.md)
-- [Configuration examples](https://github.com/nassim-arifette/jevgrep/tree/main/docs/examples)
+- [Installation and configuration guide](docs/install-guide.md): manual profiles, limits, cost caps, retries, Windows notes
+- [Reference](docs/reference.md): providers, JSON output, cache policy, request batching, development
+- [Benchmarks](benchmarks/README.md): retrieval quality and performance measurements
 - [Report an issue](https://github.com/nassim-arifette/jevgrep/issues)
+
+## Contributing
+
+```bash
+git clone https://github.com/nassim-arifette/jevgrep.git
+cd jevgrep
+npm ci
+npm run verify   # type check, offline tests, build and smoke checks
+npm link         # use your checkout as the global `jevgrep` command
+```
+
+The test suite runs offline and needs no provider key.
 
 ## License
 
-[MIT](https://github.com/nassim-arifette/jevgrep/blob/main/LICENSE) © 2026 Nassim Arifette.
+[MIT](LICENSE)
