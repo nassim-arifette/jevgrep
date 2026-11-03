@@ -22,7 +22,7 @@ import ts from 'typescript-parser';
 import type { WindowLimits } from './line-windows.ts';
 import type { SourceSnapshot } from './snapshot.ts';
 
-export type JavaScriptContextPolicy = 'enclosing' | 'local';
+export type JavaScriptContextPolicy = 'enclosing' | 'compact' | 'local';
 
 export type PlannedRange = {
   readonly startLine: number;
@@ -424,6 +424,20 @@ function enclosingLabel(chunk: Chunk): string | null {
   return bounded(label, MAX_LABEL_CHARACTERS);
 }
 
+/** Enclosing symbol names only: no signatures and no line spans. */
+function compactLabel(chunk: Chunk): string | null {
+  const symbols = chunk.own !== null && !chunk.ancestry.includes(chunk.own) ? [...chunk.ancestry, chunk.own] : [...chunk.ancestry];
+  if (symbols.length === 0) return null;
+  const parts = symbols.map((symbol) => render(symbol, false));
+  let label = parts.join(' > ');
+  while (label.length > MAX_LABEL_CHARACTERS && parts.length > 3) {
+    if (parts[1] === '…') parts.splice(2, 1);
+    else parts.splice(1, 1, '…');
+    label = parts.join(' > ');
+  }
+  return bounded(label, MAX_LABEL_CHARACTERS);
+}
+
 /** The previous convention: the outermost symbol that starts inside the range, without context. */
 function localLabel(chunk: Chunk): string | null {
   const starting = [...chunk.ancestry, ...(chunk.own === null ? [] : [chunk.own])]
@@ -455,13 +469,13 @@ export function planJavaScriptRanges(
         .reduce((sum, chunk) => sum + chunk.endLine - chunk.startLine + 1, 0);
       if (lines > snapshot.lineCount * MAX_RECOVERED_SHARE) return { ok: false, reason: 'parse_failure' };
     }
-    const labelOf = policy === 'enclosing' ? enclosingLabel : localLabel;
+    const labelOf = policy === 'enclosing' ? enclosingLabel : policy === 'compact' ? compactLabel : localLabel;
     return {
       ok: true,
       recovered: damaged !== undefined,
       ranges: chunks.map((chunk) => ({
         startLine: chunk.startLine, endLine: chunk.endLine, windows: chunk.windows,
-        label: labelOf(chunk), labelEveryWindow: policy === 'enclosing',
+        label: labelOf(chunk), labelEveryWindow: policy !== 'local',
       })),
     };
   } catch {
