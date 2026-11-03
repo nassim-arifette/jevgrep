@@ -114,6 +114,8 @@ export type PrepareOptions = {
   readonly shouldStop?: () => boolean;
   /** Reuses content-derived work for byte-identical files; eligibility is always recomputed. */
   readonly cache?: PreparationCache;
+  /** Order in which inventoried files are prepared; only matters when a limit stops preparation early. */
+  readonly fileOrder?: <T extends { readonly relativePath: string }>(files: readonly T[]) => readonly T[];
 };
 
 /**
@@ -182,7 +184,7 @@ function* preparationSteps(
   let parseFallbacks = 0;
   let complete = inventory.complete;
 
-  for (const entry of inventory.files) {
+  for (const entry of options.fileOrder?.(inventory.files) ?? inventory.files) {
     yield;
     if (options.shouldStop?.() === true) {
       complete = false;
@@ -242,6 +244,15 @@ function* preparationSteps(
   if (options.cache?.enabled === true) {
     const cache = options.cache;
     measureSync('cache_write', () => cache.flush());
+  }
+
+  if (options.fileOrder !== undefined) {
+    // Results keep inventory order whatever order the files were read in.
+    const rank = new Map(inventory.files.map((entry, index) => [entry.relativePath, index]));
+    const of = (path: string): number => rank.get(path) ?? Infinity;
+    files.sort((left, right) => of(left.snapshot.relativePath) - of(right.snapshot.relativePath));
+    const ordered = files.flatMap((file) => file.fragments);
+    fragments.splice(0, fragments.length, ...ordered);
   }
 
   return {

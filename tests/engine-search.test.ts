@@ -606,3 +606,71 @@ test('repository text is carried as data, never obeyed as an instruction (R11)',
   assert.equal(result.report.files.excluded_by_reason['credential_pattern'], undefined,
     'a sentence about credentials is not a credential');
 });
+
+test('a prioritized partial scan evaluates matching candidates first and still reports partial coverage', async () => {
+  const files: Record<string, string> = Object.fromEntries(Array.from({ length: 70 }, (_, index) => [
+    `src/file-${String(index).padStart(2, '0')}.ts`, `export const value${String(index)} = ${String(index)};\n`,
+  ]));
+  files['src/zz-session-cache.ts'] = 'export function invalidateSession(id) {\n  sessions.delete(id);\n}\n';
+  const space = workspace({ files, configure: (config) => withRemoteEnabled({
+    ...config, scan_caps: { ...config.scan_caps, request_attempts: 1 },
+  }) });
+  const order = { kind: 'priority', reserve: 0.25 } as const;
+  const provider = new ScriptedProviderClient(() => 0.9);
+  const engine = createSearchEngine({ configuration: space.loaded, provider, candidateOrder: order });
+  const result = asResult((await engine.search({ query: 'Where is a session invalidated?', allow_partial_scan: true })).outcome);
+  assert.equal(provider.calls, 1);
+  assert.equal(result.status, 'partial');
+  assert.equal(result.report.scope_fully_scanned, false);
+  assert.ok(result.report.stop_reasons.includes('SCAN_CAP_REACHED'));
+  assert.equal(provider.seenPaths[0], 'src/zz-session-cache.ts');
+  assert.equal(provider.seenPaths.length, 64);
+
+  // Repeating the search continues it: cached scores are reused, only the rest is sent.
+  const next = asResult((await engine.search({ query: 'Where is a session invalidated?' })).outcome);
+  assert.equal(next.status, 'complete');
+  assert.equal(next.report.fragments.cache_reused, 64);
+  assert.equal(next.report.fragments.remote_evaluated, 7);
+  assert.equal(provider.calls, 2);
+});
+
+test('candidate priority does not reorder a complete scan', async () => {
+  const space = workspace();
+  const provider = new ScriptedProviderClient(() => 0.9);
+  const engine = createSearchEngine({ configuration: space.loaded, provider, candidateOrder: { kind: 'priority', reserve: 0 } });
+  const result = asResult((await engine.search({ query: 'version', allow_partial_scan: true })).outcome);
+  assert.equal(result.status, 'complete');
+  assert.deepEqual(provider.seenPaths, ['src/cache.ts', 'src/handler.ts', 'src/unrelated.ts']);
+});
+
+test('a prioritized partial preparation reads matching files before a file cap stops it', async () => {
+  const space = workspace({ configure: (config) => withRemoteEnabled({
+    ...config, scan_caps: { ...config.scan_caps, candidate_files: 1 },
+  }) });
+  const provider = new ScriptedProviderClient(() => 0.9);
+  const engine = createSearchEngine({ configuration: space.loaded, provider, candidateOrder: { kind: 'priority', reserve: 0 } });
+  const result = asResult((await engine.search({ query: 'Which handler reacts to a subscription change?', allow_partial_scan: true })).outcome);
+  assert.equal(result.status, 'partial');
+  assert.ok(result.report.stop_reasons.includes('PREPARATION_LIMIT'));
+  assert.deepEqual(provider.seenPaths, ['src/handler.ts']);
+});
+
+test('a partial scan under a token cap smaller than one batch sends the leading part that fits', async () => {
+  const files = Object.fromEntries(Array.from({ length: 70 }, (_, index) => [
+    `src/file-${String(index).padStart(2, '0')}.ts`, `export const value${String(index)} = ${String(index)};\n`,
+  ]));
+  const space = workspace({ files, configure: (config) => withRemoteEnabled({
+    ...config, scan_caps: { ...config.scan_caps, estimated_input_tokens: 1_000 },
+  }) });
+  const provider = new ScriptedProviderClient(() => 0.9);
+  const engine = createSearchEngine({ configuration: space.loaded, provider });
+  const result = asResult((await engine.search({ query: 'values', allow_partial_scan: true })).outcome);
+  assert.equal(provider.calls, 1);
+  assert.equal(result.status, 'partial');
+  assert.equal(result.report.scope_fully_scanned, false);
+  assert.ok(result.report.stop_reasons.includes('SCAN_CAP_REACHED'));
+  assert.ok(provider.seenPaths.length > 0 && provider.seenPaths.length < 64);
+  assert.deepEqual(provider.seenPaths, Object.keys(files).slice(0, provider.seenPaths.length));
+  assert.equal(result.report.fragments.not_evaluated, 70 - provider.seenPaths.length);
+  assert.ok(result.report.usage.provider_input_tokens_estimated <= 1_000);
+});
