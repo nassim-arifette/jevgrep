@@ -249,6 +249,26 @@ older commit to measure a stale graph. The report adds paired per-question
 differences against `e7-hop0` and cold/sync index costs. The
 [2026-11-03 report](baselines/2026-11-03-graph-expansion.md) found no robust gain.
 
+## Supplied candidates
+
+Roadmap section 9 compares a complete authorized scan with lexical and externally
+supplied file candidates (E4) and measures focused reading in fixed files (E5). Each
+arm runs the real engine with the existing file-level `scope`, answered by the scores
+captured during the full scan, so arms differ only in the supplied files and no
+provider request is made:
+
+```sh
+npm run bench:candidates -- --config /path/to/config.json --pools benchmarks/pools/swe-bench-sample-1-dev.json [--sizes 1,3,5,10]
+```
+
+Candidates are ranked only among files the full scan prepared, so a list never widens
+authorization. The report separates evidence missed because its file was never
+supplied from evidence missed by selection inside supplied files, and states that a
+scoped search's coverage refers to the supplied files only. `--live "<arm>"` reruns one
+arm against the configured provider under `--max-requests` and `--max-input-tokens`
+caps and compares fresh scores with the captured ones. The
+[2026-11-03 report](baselines/2026-11-03-supplied-candidates.md) records the first run.
+
 ## Verification
 
 `npm run verify` includes tests for profile isolation and outcome equivalence, the

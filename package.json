@@ -53,7 +53,8 @@
     "bench:criteria": "node scripts/bench-criteria.ts",
     "bench:replay": "node scripts/bench-replay.ts",
     "verify": "npm run format:check && npm run typecheck && npm test && npm run build && npm run smoke",
-    "prepublishOnly": "npm run verify"
+    "prepublishOnly": "npm run verify",
+    "bench:candidates": "node scripts/bench-candidates.ts"
   },
   "devDependencies": {
     "@types/node": "24.13.6",
