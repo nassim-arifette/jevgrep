@@ -71,20 +71,21 @@ export function questionInstructions(item: BatchItem): string {
 
 /** Exact request payload for a batch; also the object cache identity hashes (JG-018). */
 export function buildRequestPayload(batch: EvaluationBatch, model: string): RequestPayload {
+  const criterion = batch.criterion?.text ?? RELEVANCE_CRITERION;
   const questions: Record<string, QuestionPayload> = {};
   for (const item of batch.items) {
     questions[item.id] = {
       type: 'noul',
       instructions: questionInstructions(item),
-      criteria: { true: RELEVANCE_CRITERION },
+      criteria: { true: criterion },
     };
   }
   return {
     model,
     state: {
       search_question: batch.query,
-      criterion: RELEVANCE_CRITERION,
-      criterion_version: CRITERION_VERSION,
+      criterion,
+      criterion_version: batch.criterion?.version ?? CRITERION_VERSION,
       layout: LAYOUT_VERSION,
     },
     questions,

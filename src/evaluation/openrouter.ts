@@ -27,7 +27,9 @@ export function serializeOpenRouterBatch(batch: EvaluationBatch): string {
       // DecisionsNoulQuestion requires both keys when criteria are supplied.
       criteria: {
         ...question.criteria,
-        false: 'This excerpt contains no concrete evidence useful for investigating the search question.',
+        false: batch.criterion === undefined
+          ? 'This excerpt contains no concrete evidence useful for investigating the search question.'
+          : 'The criterion does not hold for this excerpt.',
       },
     }])),
     provider: { allow_fallbacks: false },

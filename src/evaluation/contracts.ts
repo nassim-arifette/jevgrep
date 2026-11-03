@@ -14,9 +14,17 @@ export type BatchItem = {
   readonly label?: string | null;
 };
 
+/** A versioned model-visible judgment; its text and version are part of the request body. */
+export type JudgmentCriterion = { readonly version: string; readonly text: string };
+
 export type EvaluationBatch = {
   readonly query: string;
   readonly items: readonly BatchItem[];
+  /**
+   * Experimental judgment replacing the relevance criterion for every item (roadmap
+   * section 14, E8). Absent in production searches, whose payload is unchanged.
+   */
+  readonly criterion?: JudgmentCriterion;
 };
 
 export type ProviderUsage = {

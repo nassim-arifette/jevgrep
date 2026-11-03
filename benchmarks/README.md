@@ -210,6 +210,22 @@ repetitions and per query; near-tied fragments decide many Recall@1 differences.
 captured candidate pool cannot replay a chunking change, because the pool itself is
 made of fragments, so arms must be run live.
 
+## Additional criteria on ambiguous candidates (E8)
+
+Focused Jev judgments are compared with the single relevance judgment on a bounded
+set of ambiguous candidates from captured pools, including false-premise questions
+whose useful evidence refutes the question:
+
+```sh
+npm run bench:criteria -- capture --config /path/to/config.json   # false-premise pools, live
+npm run bench:criteria -- judge --config /path/to/config.json --output benchmark-results/criteria-judgments-1.json
+npm run bench:criteria -- analyze --judgments benchmark-results/criteria-judgments-1.json[,...]
+```
+
+`judge` sends one request per search and focused criterion; `analyze` makes no
+request. Each criterion is versioned in the request state. See the
+[2026-11-03 results](baselines/2026-11-03-ambiguous-criteria.md).
+
 ## Verification
 
 `npm run verify` includes tests for profile isolation and outcome equivalence, the
