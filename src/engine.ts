@@ -41,6 +41,8 @@ import type { BatchCost, ScanPlan } from './planning.ts';
 import { estimateInputCostUsd } from './pricing.ts';
 import { excerptBudget, excerptCost, renderSearchResult, ResponseBudgetError } from './response/render.ts';
 import type { ReportInputs, RenderedResponse } from './response/render.ts';
+import { CANDIDATE_POOL_VERSION } from './response/candidate-pool.ts';
+import type { CandidatePool } from './response/candidate-pool.ts';
 import { selectRanges } from './response/selection.ts';
 import type { SelectedRange } from './response/selection.ts';
 import { REFERENCE_COUNTER_ID } from './response/token-counter.ts';
@@ -82,6 +84,8 @@ export type SearchInvocation = {
   readonly searchId?: string;
   /** Trusted local admission time; never taken from tool arguments. */
   readonly startedAtMs?: number;
+  /** Local benchmark capture of the evaluated candidates; never part of the response. */
+  readonly onCandidatePool?: (pool: CandidatePool) => void;
 };
 
 export type SearchOutcomeWithDiagnostics = {
@@ -153,7 +157,7 @@ export class SearchEngine {
     });
 
     try {
-      return await this.#run(request, context);
+      return await this.#run(request, context, invocation.onCandidatePool);
     } catch (cause) {
       const code = errorCodeOf(cause);
       if (code === null) {
@@ -165,7 +169,7 @@ export class SearchEngine {
     }
   }
 
-  async #run(rawRequest: unknown, context: SearchContext): Promise<SearchOutcomeWithDiagnostics> {
+  async #run(rawRequest: unknown, context: SearchContext, capture?: (pool: CandidatePool) => void): Promise<SearchOutcomeWithDiagnostics> {
     const { config, sourceRoot } = this.#options.configuration;
     let request;
     try {
@@ -424,7 +428,9 @@ export class SearchEngine {
       }));
     }
 
-    return this.#render(context, request, prepared, scored, usage, plan, available, false);
+    return this.#render(context, request, prepared, scored, usage, plan, available, false, capture === undefined ? undefined : (inputs) => {
+      capture(candidatePool(request, inputs, scored, available, config.search.threshold, { adapter, model }));
+    });
   }
 
   /** Selection, freshness and the measured rendering, in that order. */
@@ -437,6 +443,7 @@ export class SearchEngine {
     plan: ScanPlan,
     availableTokens: number,
     rejected: boolean,
+    capture?: (inputs: ReportInputs) => void,
   ): SearchOutcomeWithDiagnostics {
     const { config } = this.#options.configuration;
     const snapshots = new Map<string, SourceSnapshot>();
@@ -453,13 +460,15 @@ export class SearchEngine {
       return snapshot === undefined ? null : snapshot.sliceLines(startLine, endLine).text;
     };
 
-    let selection = measureSync('selection', () => selectRanges(candidates, {
+    const select = () => measureSync('selection', () => selectRanges(candidates, {
       threshold: config.search.threshold,
       availableTokens,
       measure: excerptCost,
       sliceLines,
       unavailablePaths: freshness.unavailablePaths,
+      policy: config.search.selection_policy ?? 'relevance',
     }));
+    let selection = select();
 
     // Revalidate the files a range came from, at most once each, and fill the freed
     // space from candidates already evaluated. No new provider work is ever started.
@@ -479,13 +488,7 @@ export class SearchEngine {
       }
       context.addStopReason('SOURCE_CHANGED');
       context.diagnostics.record('SOURCE_CHANGED', context.elapsedMs, { count: staleFiles });
-      selection = measureSync('selection', () => selectRanges(candidates, {
-        threshold: config.search.threshold,
-        availableTokens,
-        measure: excerptCost,
-        sliceLines,
-        unavailablePaths: freshness.unavailablePaths,
-      }));
+      selection = select();
     }
 
     const evaluated = scored.length;
@@ -549,6 +552,7 @@ export class SearchEngine {
       ...(rejected ? { rejected: true } : {}),
     };
 
+    capture?.(inputs);
     const representedFor = (ranges: readonly SelectedRange[]): number => countRepresented(candidates, ranges, config.search.threshold, freshness.unavailablePaths);
     const rendered: RenderedResponse = measureSync('rendering', () => renderSearchResult(inputs, rejected ? [] : selection.ranges, representedFor));
     context.diagnostics.setResponseTokensMeasured(rendered.measuredTokens);
@@ -560,6 +564,26 @@ export class SearchEngine {
     });
     return { outcome: rendered.result, measuredTokens: rendered.measuredTokens, searchId: context.searchId };
   }
+}
+
+function candidatePool(
+  request: { query: string; scope: string[]; max_context_tokens: number },
+  inputs: ReportInputs,
+  scored: readonly Scored[],
+  availableTokens: number,
+  threshold: number,
+  provider: { adapter: string; model: string },
+): CandidatePool {
+  return {
+    version: CANDIDATE_POOL_VERSION, searchId: inputs.searchId, query: request.query, scope: [...request.scope],
+    versions: { ...provider, criterion: CRITERION_VERSION, layout: LAYOUT_VERSION, counter: REFERENCE_COUNTER_ID },
+    threshold, requestedTokens: request.max_context_tokens, availableTokens,
+    candidates: scored.map(({ fragment, score }) => ({
+      id: fragment.id, path: fragment.path, sha256: fragment.sha256, startLine: fragment.startLine, endLine: fragment.endLine,
+      score, chunker: fragment.chunker, classification: fragment.classification, label: fragment.label ?? null,
+    })),
+    inputs,
+  };
 }
 
 /** Qualifying fragments fully covered by the given ranges. */

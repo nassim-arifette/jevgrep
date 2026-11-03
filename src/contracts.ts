@@ -21,6 +21,10 @@ export const CONTRACT_LIMITS = Object.freeze({
   diagnostic_events: 64,
 });
 
+/** Local selection orders (roadmap section 8); `relevance` is the default. */
+export const SELECTION_POLICIES = ['relevance', 'mmr', 'marginal'] as const;
+export type SelectionPolicy = typeof SELECTION_POLICIES[number];
+
 export const SCAN_CAP_KEYS = [
   'estimated_cost_usd', 'estimated_input_tokens', 'transmitted_bytes',
   'request_attempts', 'prepared_source_bytes', 'candidate_files', 'fragments',
@@ -207,6 +211,7 @@ export const configurationSchema = refine(object({
     max_response_tokens: responseTokens,
     threshold: probability,
   }, {
+    selection_policy: enumeration(SELECTION_POLICIES),
     retry: refine(object({
       max_retries: numberValue(0, 10),
       base_delay_ms: numberValue(1, 60_000),

@@ -48,6 +48,7 @@
     "bench:real:import": "node scripts/bench-real-import.ts",
     "bench:agent": "node scripts/bench-agent.ts",
     "bench:compare": "node scripts/bench-compare.ts",
+    "bench:replay": "node scripts/bench-replay.ts",
     "verify": "npm run format:check && npm run typecheck && npm test && npm run build && npm run smoke",
     "prepublishOnly": "npm run verify"
   },

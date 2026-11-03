@@ -130,6 +130,7 @@ apply to disclosed content; JevGrep does not promise zero retention.
 | `search.default_response_tokens` | `4000` | default response budget |
 | `search.max_response_tokens` | `16000` | maximum response budget |
 | `search.threshold` | `0.5` | score threshold for selection |
+| `search.selection_policy` | `relevance` when omitted | order in which qualifying excerpts fill the budget; `mmr` and `marginal` are experimental diversity orders that did not beat `relevance` in the [selection replay](../benchmarks/baselines/2026-11-03-selection-replay.md) |
 | `source.max_file_bytes` | `1048576` | per-file eligibility limit |
 | `source.follow_links` | `false` | `true` is rejected |
 | `cache.ttl_seconds` | `604800` | seven days for pinned models |

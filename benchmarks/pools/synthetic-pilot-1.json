@@ -1,0 +1,4488 @@
+{
+  "schemaVersion": 1,
+  "kind": "candidate-pools",
+  "capture": "synthetic",
+  "dataset": "synthetic-pilot-1",
+  "environment": {
+    "node": "v24.22.2",
+    "platform": "linux",
+    "architecture": "x64",
+    "cpu": "Intel(R) Xeon(R) Processor",
+    "logicalCpus": 8,
+    "totalMemoryBytes": 33654874112,
+    "revision": "9514636c2fb37cebb4f6c377a32312ca8fb6aedf",
+    "workingTree": "M scripts/bench-real.ts\n M scripts/bench-retrieval.ts\n M src/contracts.ts\n M src/engine.ts\n M src/response/selection.ts\n?? scripts/bench/replay.ts\n?? src/response/candidate-pool.ts",
+    "sourceHash": "82b3679ce221914ba901b3b4104b558ba293e33bef0b0aa5ba897f06572e03c5",
+    "harnessHash": "f655505fbed0d27911517ea72567447f44b833dce10081586f979f3d93b6ebe4",
+    "packageLockHash": "8140c20b32d758ef031a81dfa41397625a0be9a79b95575825bcfc3a4b944c78"
+  },
+  "settings": {
+    "provider": {
+      "adapter": "vercel-ai-gateway",
+      "model": "typesafe-ai/jev",
+      "baseUrl": "https://ai-gateway.vercel.sh",
+      "pricing": {
+        "model": "typesafe-ai/jev",
+        "verified_at": "2026-09-20",
+        "input_usd_per_million_tokens": 0.042,
+        "output_usd_per_million_tokens": 0
+      }
+    },
+    "search": {
+      "deadline_ms": 300000,
+      "concurrency": 4,
+      "require_fit": true,
+      "default_response_tokens": 4000,
+      "max_response_tokens": 16000,
+      "threshold": 0.5
+    },
+    "scanCaps": {
+      "estimated_cost_usd": null,
+      "estimated_input_tokens": null,
+      "transmitted_bytes": null,
+      "request_attempts": null,
+      "prepared_source_bytes": null,
+      "candidate_files": null,
+      "fragments": null
+    },
+    "responseTokens": 4000,
+    "caps": {
+      "requests": 60,
+      "estimatedInputTokens": 200000
+    },
+    "scoreCache": "disabled",
+    "source": "fixed fixture defaults; only copied synthetic fixtures are searched"
+  },
+  "pools": [
+    {
+      "id": "access-01",
+      "source": "access-gateway",
+      "pool": {
+        "version": 1,
+        "searchId": "access-01",
+        "query": "Where is possession of a required role checked?",
+        "scope": [
+          "."
+        ],
+        "versions": {
+          "adapter": "vercel-ai-gateway",
+          "model": "typesafe-ai/jev",
+          "criterion": "criterion-1",
+          "layout": "layout-a-1",
+          "counter": "tiktoken@1.0.22/cl100k_base"
+        },
+        "threshold": 0.5,
+        "requestedTokens": 4000,
+        "availableTokens": 3095,
+        "candidates": [
+          {
+            "id": ".gitignore#L1-L2",
+            "path": ".gitignore",
+            "sha256": "a4418746be60a83b80f22cffe9dfa46e940a473c2597ce10e6c2b7f61c8fad61",
+            "startLine": 1,
+            "endLine": 2,
+            "score": 0.03,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "config/routes.json#L1-L4",
+            "path": "config/routes.json",
+            "sha256": "9111c28932d65d152df330ed17cb65ec65a488b08378a3457d7b60b10b3c60c7",
+            "startLine": 1,
+            "endLine": 4,
+            "score": 0.32,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "docs/untrusted-note.md#L1-L4",
+            "path": "docs/untrusted-note.md",
+            "sha256": "b3defae77e4c313f89e1ea9e963d60b6362925eb49c23e01a7b4b9d542f4e1fe",
+            "startLine": 1,
+            "endLine": 4,
+            "score": 0.03,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "package.json#L1-L1",
+            "path": "package.json",
+            "sha256": "929496e14d1e8d7156cffa37c42a3641712f621d26dbc8c0f228e3ad55740167",
+            "startLine": 1,
+            "endLine": 1,
+            "score": 0.05,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "src/audit.ts#L1-L9",
+            "path": "src/audit.ts",
+            "sha256": "689ade84eecf2c3f0e49ba43b3570b78658bd1dd569d1631a01d5cfb7a340975",
+            "startLine": 1,
+            "endLine": 9,
+            "score": 0.11,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": "type:AuditRecord"
+          },
+          {
+            "id": "src/broken.ts#L1-L4",
+            "path": "src/broken.ts",
+            "sha256": "d7d49379c391868c8b67aca4776223937823f2a373d7771763b1b6577e65b67c",
+            "startLine": 1,
+            "endLine": 4,
+            "score": 0.03,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "src/index.ts#L1-L14",
+            "path": "src/index.ts",
+            "sha256": "6c79beb5c1c1a7c560d77483c1c9f26bb132ec6b202855ae831b98ffd2bf9d95",
+            "startLine": 1,
+            "endLine": 14,
+            "score": 0.83,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": "function:authorize"
+          },
+          {
+            "id": "src/policy.ts#L1-L9",
+            "path": "src/policy.ts",
+            "sha256": "91fc022b00c40f5e7ec7b39581f28ad6eef2edf26d96954eb56e5d190d4989da",
+            "startLine": 1,
+            "endLine": 9,
+            "score": 0.95,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": "type:Actor"
+          },
+          {
+            "id": "tests/policy.test.ts#L1-L7",
+            "path": "tests/policy.test.ts",
+            "sha256": "d22f84ca215dd66527806258540a6934d236fbb1daf545bb7b0e0ce67f42e274",
+            "startLine": 1,
+            "endLine": 7,
+            "score": 0.91,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": null
+          }
+        ],
+        "inputs": {
+          "searchId": "access-01",
+          "scope": [
+            "."
+          ],
+          "inventoryComplete": true,
+          "files": {
+            "discovered": 9,
+            "eligible": 9,
+            "excludedByReason": {},
+            "unreadable": 0,
+            "changedBeforeReturn": 0
+          },
+          "fragments": {
+            "total": 9,
+            "remoteEvaluated": 9,
+            "cacheReused": 0,
+            "notEvaluated": 0,
+            "belowThreshold": 6,
+            "aboveThreshold": 3,
+            "omittedStale": 0
+          },
+          "threshold": 0.5,
+          "duplicateRangesCollapsed": 0,
+          "usage": {
+            "providerRequestAttempts": 1,
+            "inputTokensKnownSubtotal": 1770,
+            "inputTokensEstimated": 1770,
+            "estimatedCostUsd": 0.00007434,
+            "reportedCostUsd": null,
+            "attemptsWithUnknownUsage": 0,
+            "transmittedBytes": 7259,
+            "elapsedMs": 791
+          },
+          "preflight": {
+            "plannedRemoteFragments": 9,
+            "plannedCacheHits": 0,
+            "estimatedFirstAttemptTokens": 1563,
+            "estimatedFirstAttemptCostUsd": 0.000065646,
+            "estimatedFirstAttemptRequests": 1,
+            "enabledCaps": {
+              "estimated_input_tokens": 200000,
+              "request_attempts": 60
+            },
+            "estimatedRequiredCaps": {
+              "estimated_input_tokens": 1563,
+              "request_attempts": 1
+            }
+          },
+          "requestedTokens": 4000,
+          "counterId": "tiktoken@1.0.22/cl100k_base",
+          "stopReasons": [],
+          "diagnosticsTruncated": false
+        }
+      }
+    },
+    {
+      "id": "access-02",
+      "source": "access-gateway",
+      "pool": {
+        "version": 1,
+        "searchId": "access-02",
+        "query": "What makes a visitor eligible to enter a protected route?",
+        "scope": [
+          "."
+        ],
+        "versions": {
+          "adapter": "vercel-ai-gateway",
+          "model": "typesafe-ai/jev",
+          "criterion": "criterion-1",
+          "layout": "layout-a-1",
+          "counter": "tiktoken@1.0.22/cl100k_base"
+        },
+        "threshold": 0.5,
+        "requestedTokens": 4000,
+        "availableTokens": 3095,
+        "candidates": [
+          {
+            "id": ".gitignore#L1-L2",
+            "path": ".gitignore",
+            "sha256": "a4418746be60a83b80f22cffe9dfa46e940a473c2597ce10e6c2b7f61c8fad61",
+            "startLine": 1,
+            "endLine": 2,
+            "score": 0.03,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "config/routes.json#L1-L4",
+            "path": "config/routes.json",
+            "sha256": "9111c28932d65d152df330ed17cb65ec65a488b08378a3457d7b60b10b3c60c7",
+            "startLine": 1,
+            "endLine": 4,
+            "score": 0.28,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "docs/untrusted-note.md#L1-L4",
+            "path": "docs/untrusted-note.md",
+            "sha256": "b3defae77e4c313f89e1ea9e963d60b6362925eb49c23e01a7b4b9d542f4e1fe",
+            "startLine": 1,
+            "endLine": 4,
+            "score": 0.04,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "package.json#L1-L1",
+            "path": "package.json",
+            "sha256": "929496e14d1e8d7156cffa37c42a3641712f621d26dbc8c0f228e3ad55740167",
+            "startLine": 1,
+            "endLine": 1,
+            "score": 0.05,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "src/audit.ts#L1-L9",
+            "path": "src/audit.ts",
+            "sha256": "689ade84eecf2c3f0e49ba43b3570b78658bd1dd569d1631a01d5cfb7a340975",
+            "startLine": 1,
+            "endLine": 9,
+            "score": 0.27,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": "type:AuditRecord"
+          },
+          {
+            "id": "src/broken.ts#L1-L4",
+            "path": "src/broken.ts",
+            "sha256": "d7d49379c391868c8b67aca4776223937823f2a373d7771763b1b6577e65b67c",
+            "startLine": 1,
+            "endLine": 4,
+            "score": 0.03,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "src/index.ts#L1-L14",
+            "path": "src/index.ts",
+            "sha256": "6c79beb5c1c1a7c560d77483c1c9f26bb132ec6b202855ae831b98ffd2bf9d95",
+            "startLine": 1,
+            "endLine": 14,
+            "score": 0.76,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": "function:authorize"
+          },
+          {
+            "id": "src/policy.ts#L1-L9",
+            "path": "src/policy.ts",
+            "sha256": "91fc022b00c40f5e7ec7b39581f28ad6eef2edf26d96954eb56e5d190d4989da",
+            "startLine": 1,
+            "endLine": 9,
+            "score": 0.84,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": "type:Actor"
+          },
+          {
+            "id": "tests/policy.test.ts#L1-L7",
+            "path": "tests/policy.test.ts",
+            "sha256": "d22f84ca215dd66527806258540a6934d236fbb1daf545bb7b0e0ce67f42e274",
+            "startLine": 1,
+            "endLine": 7,
+            "score": 0.85,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": null
+          }
+        ],
+        "inputs": {
+          "searchId": "access-02",
+          "scope": [
+            "."
+          ],
+          "inventoryComplete": true,
+          "files": {
+            "discovered": 9,
+            "eligible": 9,
+            "excludedByReason": {},
+            "unreadable": 0,
+            "changedBeforeReturn": 0
+          },
+          "fragments": {
+            "total": 9,
+            "remoteEvaluated": 9,
+            "cacheReused": 0,
+            "notEvaluated": 0,
+            "belowThreshold": 6,
+            "aboveThreshold": 3,
+            "omittedStale": 0
+          },
+          "threshold": 0.5,
+          "duplicateRangesCollapsed": 0,
+          "usage": {
+            "providerRequestAttempts": 1,
+            "inputTokensKnownSubtotal": 1772,
+            "inputTokensEstimated": 1772,
+            "estimatedCostUsd": 0.000074424,
+            "reportedCostUsd": null,
+            "attemptsWithUnknownUsage": 0,
+            "transmittedBytes": 7269,
+            "elapsedMs": 267
+          },
+          "preflight": {
+            "plannedRemoteFragments": 9,
+            "plannedCacheHits": 0,
+            "estimatedFirstAttemptTokens": 1565,
+            "estimatedFirstAttemptCostUsd": 0.00006573,
+            "estimatedFirstAttemptRequests": 1,
+            "enabledCaps": {
+              "estimated_input_tokens": 198230,
+              "request_attempts": 59
+            },
+            "estimatedRequiredCaps": {
+              "estimated_input_tokens": 1565,
+              "request_attempts": 1
+            }
+          },
+          "requestedTokens": 4000,
+          "counterId": "tiktoken@1.0.22/cl100k_base",
+          "stopReasons": [],
+          "diagnosticsTruncated": false
+        }
+      }
+    },
+    {
+      "id": "access-03",
+      "source": "access-gateway",
+      "pool": {
+        "version": 1,
+        "searchId": "access-03",
+        "query": "Find the implementation of explainDenial.",
+        "scope": [
+          "."
+        ],
+        "versions": {
+          "adapter": "vercel-ai-gateway",
+          "model": "typesafe-ai/jev",
+          "criterion": "criterion-1",
+          "layout": "layout-a-1",
+          "counter": "tiktoken@1.0.22/cl100k_base"
+        },
+        "threshold": 0.5,
+        "requestedTokens": 4000,
+        "availableTokens": 3095,
+        "candidates": [
+          {
+            "id": ".gitignore#L1-L2",
+            "path": ".gitignore",
+            "sha256": "a4418746be60a83b80f22cffe9dfa46e940a473c2597ce10e6c2b7f61c8fad61",
+            "startLine": 1,
+            "endLine": 2,
+            "score": 0.04,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "config/routes.json#L1-L4",
+            "path": "config/routes.json",
+            "sha256": "9111c28932d65d152df330ed17cb65ec65a488b08378a3457d7b60b10b3c60c7",
+            "startLine": 1,
+            "endLine": 4,
+            "score": 0.09,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "docs/untrusted-note.md#L1-L4",
+            "path": "docs/untrusted-note.md",
+            "sha256": "b3defae77e4c313f89e1ea9e963d60b6362925eb49c23e01a7b4b9d542f4e1fe",
+            "startLine": 1,
+            "endLine": 4,
+            "score": 0.05,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "package.json#L1-L1",
+            "path": "package.json",
+            "sha256": "929496e14d1e8d7156cffa37c42a3641712f621d26dbc8c0f228e3ad55740167",
+            "startLine": 1,
+            "endLine": 1,
+            "score": 0.05,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "src/audit.ts#L1-L9",
+            "path": "src/audit.ts",
+            "sha256": "689ade84eecf2c3f0e49ba43b3570b78658bd1dd569d1631a01d5cfb7a340975",
+            "startLine": 1,
+            "endLine": 9,
+            "score": 0.09,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": "type:AuditRecord"
+          },
+          {
+            "id": "src/broken.ts#L1-L4",
+            "path": "src/broken.ts",
+            "sha256": "d7d49379c391868c8b67aca4776223937823f2a373d7771763b1b6577e65b67c",
+            "startLine": 1,
+            "endLine": 4,
+            "score": 0.04,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "src/index.ts#L1-L14",
+            "path": "src/index.ts",
+            "sha256": "6c79beb5c1c1a7c560d77483c1c9f26bb132ec6b202855ae831b98ffd2bf9d95",
+            "startLine": 1,
+            "endLine": 14,
+            "score": 0.91,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": "function:authorize"
+          },
+          {
+            "id": "src/policy.ts#L1-L9",
+            "path": "src/policy.ts",
+            "sha256": "91fc022b00c40f5e7ec7b39581f28ad6eef2edf26d96954eb56e5d190d4989da",
+            "startLine": 1,
+            "endLine": 9,
+            "score": 0.98,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": "type:Actor"
+          },
+          {
+            "id": "tests/policy.test.ts#L1-L7",
+            "path": "tests/policy.test.ts",
+            "sha256": "d22f84ca215dd66527806258540a6934d236fbb1daf545bb7b0e0ce67f42e274",
+            "startLine": 1,
+            "endLine": 7,
+            "score": 0.17,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": null
+          }
+        ],
+        "inputs": {
+          "searchId": "access-03",
+          "scope": [
+            "."
+          ],
+          "inventoryComplete": true,
+          "files": {
+            "discovered": 9,
+            "eligible": 9,
+            "excludedByReason": {},
+            "unreadable": 0,
+            "changedBeforeReturn": 0
+          },
+          "fragments": {
+            "total": 9,
+            "remoteEvaluated": 9,
+            "cacheReused": 0,
+            "notEvaluated": 0,
+            "belowThreshold": 7,
+            "aboveThreshold": 2,
+            "omittedStale": 0
+          },
+          "threshold": 0.5,
+          "duplicateRangesCollapsed": 0,
+          "usage": {
+            "providerRequestAttempts": 1,
+            "inputTokensKnownSubtotal": 1770,
+            "inputTokensEstimated": 1770,
+            "estimatedCostUsd": 0.00007434,
+            "reportedCostUsd": null,
+            "attemptsWithUnknownUsage": 0,
+            "transmittedBytes": 7253,
+            "elapsedMs": 256
+          },
+          "preflight": {
+            "plannedRemoteFragments": 9,
+            "plannedCacheHits": 0,
+            "estimatedFirstAttemptTokens": 1561,
+            "estimatedFirstAttemptCostUsd": 0.000065562,
+            "estimatedFirstAttemptRequests": 1,
+            "enabledCaps": {
+              "estimated_input_tokens": 196458,
+              "request_attempts": 58
+            },
+            "estimatedRequiredCaps": {
+              "estimated_input_tokens": 1561,
+              "request_attempts": 1
+            }
+          },
+          "requestedTokens": 4000,
+          "counterId": "tiktoken@1.0.22/cl100k_base",
+          "stopReasons": [],
+          "diagnosticsTruncated": false
+        }
+      }
+    },
+    {
+      "id": "access-04",
+      "source": "access-gateway",
+      "pool": {
+        "version": 1,
+        "searchId": "access-04",
+        "query": "Where are allowed and denied access decisions recorded?",
+        "scope": [
+          "."
+        ],
+        "versions": {
+          "adapter": "vercel-ai-gateway",
+          "model": "typesafe-ai/jev",
+          "criterion": "criterion-1",
+          "layout": "layout-a-1",
+          "counter": "tiktoken@1.0.22/cl100k_base"
+        },
+        "threshold": 0.5,
+        "requestedTokens": 4000,
+        "availableTokens": 3095,
+        "candidates": [
+          {
+            "id": ".gitignore#L1-L2",
+            "path": ".gitignore",
+            "sha256": "a4418746be60a83b80f22cffe9dfa46e940a473c2597ce10e6c2b7f61c8fad61",
+            "startLine": 1,
+            "endLine": 2,
+            "score": 0.03,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "config/routes.json#L1-L4",
+            "path": "config/routes.json",
+            "sha256": "9111c28932d65d152df330ed17cb65ec65a488b08378a3457d7b60b10b3c60c7",
+            "startLine": 1,
+            "endLine": 4,
+            "score": 0.58,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "docs/untrusted-note.md#L1-L4",
+            "path": "docs/untrusted-note.md",
+            "sha256": "b3defae77e4c313f89e1ea9e963d60b6362925eb49c23e01a7b4b9d542f4e1fe",
+            "startLine": 1,
+            "endLine": 4,
+            "score": 0.03,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "package.json#L1-L1",
+            "path": "package.json",
+            "sha256": "929496e14d1e8d7156cffa37c42a3641712f621d26dbc8c0f228e3ad55740167",
+            "startLine": 1,
+            "endLine": 1,
+            "score": 0.05,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "src/audit.ts#L1-L9",
+            "path": "src/audit.ts",
+            "sha256": "689ade84eecf2c3f0e49ba43b3570b78658bd1dd569d1631a01d5cfb7a340975",
+            "startLine": 1,
+            "endLine": 9,
+            "score": 0.9,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": "type:AuditRecord"
+          },
+          {
+            "id": "src/broken.ts#L1-L4",
+            "path": "src/broken.ts",
+            "sha256": "d7d49379c391868c8b67aca4776223937823f2a373d7771763b1b6577e65b67c",
+            "startLine": 1,
+            "endLine": 4,
+            "score": 0.03,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "src/index.ts#L1-L14",
+            "path": "src/index.ts",
+            "sha256": "6c79beb5c1c1a7c560d77483c1c9f26bb132ec6b202855ae831b98ffd2bf9d95",
+            "startLine": 1,
+            "endLine": 14,
+            "score": 0.96,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": "function:authorize"
+          },
+          {
+            "id": "src/policy.ts#L1-L9",
+            "path": "src/policy.ts",
+            "sha256": "91fc022b00c40f5e7ec7b39581f28ad6eef2edf26d96954eb56e5d190d4989da",
+            "startLine": 1,
+            "endLine": 9,
+            "score": 0.48,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": "type:Actor"
+          },
+          {
+            "id": "tests/policy.test.ts#L1-L7",
+            "path": "tests/policy.test.ts",
+            "sha256": "d22f84ca215dd66527806258540a6934d236fbb1daf545bb7b0e0ce67f42e274",
+            "startLine": 1,
+            "endLine": 7,
+            "score": 0.41,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": null
+          }
+        ],
+        "inputs": {
+          "searchId": "access-04",
+          "scope": [
+            "."
+          ],
+          "inventoryComplete": true,
+          "files": {
+            "discovered": 9,
+            "eligible": 9,
+            "excludedByReason": {},
+            "unreadable": 0,
+            "changedBeforeReturn": 0
+          },
+          "fragments": {
+            "total": 9,
+            "remoteEvaluated": 9,
+            "cacheReused": 0,
+            "notEvaluated": 0,
+            "belowThreshold": 6,
+            "aboveThreshold": 3,
+            "omittedStale": 0
+          },
+          "threshold": 0.5,
+          "duplicateRangesCollapsed": 0,
+          "usage": {
+            "providerRequestAttempts": 1,
+            "inputTokensKnownSubtotal": 1770,
+            "inputTokensEstimated": 1770,
+            "estimatedCostUsd": 0.00007434,
+            "reportedCostUsd": null,
+            "attemptsWithUnknownUsage": 0,
+            "transmittedBytes": 7267,
+            "elapsedMs": 221
+          },
+          "preflight": {
+            "plannedRemoteFragments": 9,
+            "plannedCacheHits": 0,
+            "estimatedFirstAttemptTokens": 1563,
+            "estimatedFirstAttemptCostUsd": 0.000065646,
+            "estimatedFirstAttemptRequests": 1,
+            "enabledCaps": {
+              "estimated_input_tokens": 194688,
+              "request_attempts": 57
+            },
+            "estimatedRequiredCaps": {
+              "estimated_input_tokens": 1563,
+              "request_attempts": 1
+            }
+          },
+          "requestedTokens": 4000,
+          "counterId": "tiktoken@1.0.22/cl100k_base",
+          "stopReasons": [],
+          "diagnosticsTruncated": false
+        }
+      }
+    },
+    {
+      "id": "access-05",
+      "source": "access-gateway",
+      "pool": {
+        "version": 1,
+        "searchId": "access-05",
+        "query": "Trace the authorization decision from the role check to its audit record.",
+        "scope": [
+          "."
+        ],
+        "versions": {
+          "adapter": "vercel-ai-gateway",
+          "model": "typesafe-ai/jev",
+          "criterion": "criterion-1",
+          "layout": "layout-a-1",
+          "counter": "tiktoken@1.0.22/cl100k_base"
+        },
+        "threshold": 0.5,
+        "requestedTokens": 4000,
+        "availableTokens": 3095,
+        "candidates": [
+          {
+            "id": ".gitignore#L1-L2",
+            "path": ".gitignore",
+            "sha256": "a4418746be60a83b80f22cffe9dfa46e940a473c2597ce10e6c2b7f61c8fad61",
+            "startLine": 1,
+            "endLine": 2,
+            "score": 0.03,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "config/routes.json#L1-L4",
+            "path": "config/routes.json",
+            "sha256": "9111c28932d65d152df330ed17cb65ec65a488b08378a3457d7b60b10b3c60c7",
+            "startLine": 1,
+            "endLine": 4,
+            "score": 0.82,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "docs/untrusted-note.md#L1-L4",
+            "path": "docs/untrusted-note.md",
+            "sha256": "b3defae77e4c313f89e1ea9e963d60b6362925eb49c23e01a7b4b9d542f4e1fe",
+            "startLine": 1,
+            "endLine": 4,
+            "score": 0.03,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "package.json#L1-L1",
+            "path": "package.json",
+            "sha256": "929496e14d1e8d7156cffa37c42a3641712f621d26dbc8c0f228e3ad55740167",
+            "startLine": 1,
+            "endLine": 1,
+            "score": 0.07,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "src/audit.ts#L1-L9",
+            "path": "src/audit.ts",
+            "sha256": "689ade84eecf2c3f0e49ba43b3570b78658bd1dd569d1631a01d5cfb7a340975",
+            "startLine": 1,
+            "endLine": 9,
+            "score": 0.82,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": "type:AuditRecord"
+          },
+          {
+            "id": "src/broken.ts#L1-L4",
+            "path": "src/broken.ts",
+            "sha256": "d7d49379c391868c8b67aca4776223937823f2a373d7771763b1b6577e65b67c",
+            "startLine": 1,
+            "endLine": 4,
+            "score": 0.02,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "src/index.ts#L1-L14",
+            "path": "src/index.ts",
+            "sha256": "6c79beb5c1c1a7c560d77483c1c9f26bb132ec6b202855ae831b98ffd2bf9d95",
+            "startLine": 1,
+            "endLine": 14,
+            "score": 0.96,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": "function:authorize"
+          },
+          {
+            "id": "src/policy.ts#L1-L9",
+            "path": "src/policy.ts",
+            "sha256": "91fc022b00c40f5e7ec7b39581f28ad6eef2edf26d96954eb56e5d190d4989da",
+            "startLine": 1,
+            "endLine": 9,
+            "score": 0.82,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": "type:Actor"
+          },
+          {
+            "id": "tests/policy.test.ts#L1-L7",
+            "path": "tests/policy.test.ts",
+            "sha256": "d22f84ca215dd66527806258540a6934d236fbb1daf545bb7b0e0ce67f42e274",
+            "startLine": 1,
+            "endLine": 7,
+            "score": 0.79,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": null
+          }
+        ],
+        "inputs": {
+          "searchId": "access-05",
+          "scope": [
+            "."
+          ],
+          "inventoryComplete": true,
+          "files": {
+            "discovered": 9,
+            "eligible": 9,
+            "excludedByReason": {},
+            "unreadable": 0,
+            "changedBeforeReturn": 0
+          },
+          "fragments": {
+            "total": 9,
+            "remoteEvaluated": 9,
+            "cacheReused": 0,
+            "notEvaluated": 0,
+            "belowThreshold": 4,
+            "aboveThreshold": 5,
+            "omittedStale": 0
+          },
+          "threshold": 0.5,
+          "duplicateRangesCollapsed": 0,
+          "usage": {
+            "providerRequestAttempts": 1,
+            "inputTokensKnownSubtotal": 1774,
+            "inputTokensEstimated": 1774,
+            "estimatedCostUsd": 0.000074508,
+            "reportedCostUsd": null,
+            "attemptsWithUnknownUsage": 0,
+            "transmittedBytes": 7285,
+            "elapsedMs": 176
+          },
+          "preflight": {
+            "plannedRemoteFragments": 9,
+            "plannedCacheHits": 0,
+            "estimatedFirstAttemptTokens": 1566,
+            "estimatedFirstAttemptCostUsd": 0.000065772,
+            "estimatedFirstAttemptRequests": 1,
+            "enabledCaps": {
+              "estimated_input_tokens": 192918,
+              "request_attempts": 56
+            },
+            "estimatedRequiredCaps": {
+              "estimated_input_tokens": 1566,
+              "request_attempts": 1
+            }
+          },
+          "requestedTokens": 4000,
+          "counterId": "tiktoken@1.0.22/cl100k_base",
+          "stopReasons": [],
+          "diagnosticsTruncated": false
+        }
+      }
+    },
+    {
+      "id": "access-06",
+      "source": "access-gateway",
+      "pool": {
+        "version": 1,
+        "searchId": "access-06",
+        "query": "Which role is configured for the admin route?",
+        "scope": [
+          "."
+        ],
+        "versions": {
+          "adapter": "vercel-ai-gateway",
+          "model": "typesafe-ai/jev",
+          "criterion": "criterion-1",
+          "layout": "layout-a-1",
+          "counter": "tiktoken@1.0.22/cl100k_base"
+        },
+        "threshold": 0.5,
+        "requestedTokens": 4000,
+        "availableTokens": 3095,
+        "candidates": [
+          {
+            "id": ".gitignore#L1-L2",
+            "path": ".gitignore",
+            "sha256": "a4418746be60a83b80f22cffe9dfa46e940a473c2597ce10e6c2b7f61c8fad61",
+            "startLine": 1,
+            "endLine": 2,
+            "score": 0.03,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "config/routes.json#L1-L4",
+            "path": "config/routes.json",
+            "sha256": "9111c28932d65d152df330ed17cb65ec65a488b08378a3457d7b60b10b3c60c7",
+            "startLine": 1,
+            "endLine": 4,
+            "score": 0.97,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "docs/untrusted-note.md#L1-L4",
+            "path": "docs/untrusted-note.md",
+            "sha256": "b3defae77e4c313f89e1ea9e963d60b6362925eb49c23e01a7b4b9d542f4e1fe",
+            "startLine": 1,
+            "endLine": 4,
+            "score": 0.04,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "package.json#L1-L1",
+            "path": "package.json",
+            "sha256": "929496e14d1e8d7156cffa37c42a3641712f621d26dbc8c0f228e3ad55740167",
+            "startLine": 1,
+            "endLine": 1,
+            "score": 0.05,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "src/audit.ts#L1-L9",
+            "path": "src/audit.ts",
+            "sha256": "689ade84eecf2c3f0e49ba43b3570b78658bd1dd569d1631a01d5cfb7a340975",
+            "startLine": 1,
+            "endLine": 9,
+            "score": 0.16,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": "type:AuditRecord"
+          },
+          {
+            "id": "src/broken.ts#L1-L4",
+            "path": "src/broken.ts",
+            "sha256": "d7d49379c391868c8b67aca4776223937823f2a373d7771763b1b6577e65b67c",
+            "startLine": 1,
+            "endLine": 4,
+            "score": 0.04,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "src/index.ts#L1-L14",
+            "path": "src/index.ts",
+            "sha256": "6c79beb5c1c1a7c560d77483c1c9f26bb132ec6b202855ae831b98ffd2bf9d95",
+            "startLine": 1,
+            "endLine": 14,
+            "score": 0.21,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": "function:authorize"
+          },
+          {
+            "id": "src/policy.ts#L1-L9",
+            "path": "src/policy.ts",
+            "sha256": "91fc022b00c40f5e7ec7b39581f28ad6eef2edf26d96954eb56e5d190d4989da",
+            "startLine": 1,
+            "endLine": 9,
+            "score": 0.24,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": "type:Actor"
+          },
+          {
+            "id": "tests/policy.test.ts#L1-L7",
+            "path": "tests/policy.test.ts",
+            "sha256": "d22f84ca215dd66527806258540a6934d236fbb1daf545bb7b0e0ce67f42e274",
+            "startLine": 1,
+            "endLine": 7,
+            "score": 0.76,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": null
+          }
+        ],
+        "inputs": {
+          "searchId": "access-06",
+          "scope": [
+            "."
+          ],
+          "inventoryComplete": true,
+          "files": {
+            "discovered": 9,
+            "eligible": 9,
+            "excludedByReason": {},
+            "unreadable": 0,
+            "changedBeforeReturn": 0
+          },
+          "fragments": {
+            "total": 9,
+            "remoteEvaluated": 9,
+            "cacheReused": 0,
+            "notEvaluated": 0,
+            "belowThreshold": 7,
+            "aboveThreshold": 2,
+            "omittedStale": 0
+          },
+          "threshold": 0.5,
+          "duplicateRangesCollapsed": 0,
+          "usage": {
+            "providerRequestAttempts": 1,
+            "inputTokensKnownSubtotal": 1770,
+            "inputTokensEstimated": 1770,
+            "estimatedCostUsd": 0.00007434,
+            "reportedCostUsd": null,
+            "attemptsWithUnknownUsage": 0,
+            "transmittedBytes": 7257,
+            "elapsedMs": 218
+          },
+          "preflight": {
+            "plannedRemoteFragments": 9,
+            "plannedCacheHits": 0,
+            "estimatedFirstAttemptTokens": 1563,
+            "estimatedFirstAttemptCostUsd": 0.000065646,
+            "estimatedFirstAttemptRequests": 1,
+            "enabledCaps": {
+              "estimated_input_tokens": 191144,
+              "request_attempts": 55
+            },
+            "estimatedRequiredCaps": {
+              "estimated_input_tokens": 1563,
+              "request_attempts": 1
+            }
+          },
+          "requestedTokens": 4000,
+          "counterId": "tiktoken@1.0.22/cl100k_base",
+          "stopReasons": [],
+          "diagnosticsTruncated": false
+        }
+      }
+    },
+    {
+      "id": "access-07",
+      "source": "access-gateway",
+      "pool": {
+        "version": 1,
+        "searchId": "access-07",
+        "query": "Show the role check and the test that rejects a member when administrator is required.",
+        "scope": [
+          "."
+        ],
+        "versions": {
+          "adapter": "vercel-ai-gateway",
+          "model": "typesafe-ai/jev",
+          "criterion": "criterion-1",
+          "layout": "layout-a-1",
+          "counter": "tiktoken@1.0.22/cl100k_base"
+        },
+        "threshold": 0.5,
+        "requestedTokens": 4000,
+        "availableTokens": 3095,
+        "candidates": [
+          {
+            "id": ".gitignore#L1-L2",
+            "path": ".gitignore",
+            "sha256": "a4418746be60a83b80f22cffe9dfa46e940a473c2597ce10e6c2b7f61c8fad61",
+            "startLine": 1,
+            "endLine": 2,
+            "score": 0.02,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "config/routes.json#L1-L4",
+            "path": "config/routes.json",
+            "sha256": "9111c28932d65d152df330ed17cb65ec65a488b08378a3457d7b60b10b3c60c7",
+            "startLine": 1,
+            "endLine": 4,
+            "score": 0.5,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "docs/untrusted-note.md#L1-L4",
+            "path": "docs/untrusted-note.md",
+            "sha256": "b3defae77e4c313f89e1ea9e963d60b6362925eb49c23e01a7b4b9d542f4e1fe",
+            "startLine": 1,
+            "endLine": 4,
+            "score": 0.03,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "package.json#L1-L1",
+            "path": "package.json",
+            "sha256": "929496e14d1e8d7156cffa37c42a3641712f621d26dbc8c0f228e3ad55740167",
+            "startLine": 1,
+            "endLine": 1,
+            "score": 0.05,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "src/audit.ts#L1-L9",
+            "path": "src/audit.ts",
+            "sha256": "689ade84eecf2c3f0e49ba43b3570b78658bd1dd569d1631a01d5cfb7a340975",
+            "startLine": 1,
+            "endLine": 9,
+            "score": 0.12,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": "type:AuditRecord"
+          },
+          {
+            "id": "src/broken.ts#L1-L4",
+            "path": "src/broken.ts",
+            "sha256": "d7d49379c391868c8b67aca4776223937823f2a373d7771763b1b6577e65b67c",
+            "startLine": 1,
+            "endLine": 4,
+            "score": 0.04,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "src/index.ts#L1-L14",
+            "path": "src/index.ts",
+            "sha256": "6c79beb5c1c1a7c560d77483c1c9f26bb132ec6b202855ae831b98ffd2bf9d95",
+            "startLine": 1,
+            "endLine": 14,
+            "score": 0.6,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": "function:authorize"
+          },
+          {
+            "id": "src/policy.ts#L1-L9",
+            "path": "src/policy.ts",
+            "sha256": "91fc022b00c40f5e7ec7b39581f28ad6eef2edf26d96954eb56e5d190d4989da",
+            "startLine": 1,
+            "endLine": 9,
+            "score": 0.79,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": "type:Actor"
+          },
+          {
+            "id": "tests/policy.test.ts#L1-L7",
+            "path": "tests/policy.test.ts",
+            "sha256": "d22f84ca215dd66527806258540a6934d236fbb1daf545bb7b0e0ce67f42e274",
+            "startLine": 1,
+            "endLine": 7,
+            "score": 0.95,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": null
+          }
+        ],
+        "inputs": {
+          "searchId": "access-07",
+          "scope": [
+            "."
+          ],
+          "inventoryComplete": true,
+          "files": {
+            "discovered": 9,
+            "eligible": 9,
+            "excludedByReason": {},
+            "unreadable": 0,
+            "changedBeforeReturn": 0
+          },
+          "fragments": {
+            "total": 9,
+            "remoteEvaluated": 9,
+            "cacheReused": 0,
+            "notEvaluated": 0,
+            "belowThreshold": 5,
+            "aboveThreshold": 4,
+            "omittedStale": 0
+          },
+          "threshold": 0.5,
+          "duplicateRangesCollapsed": 0,
+          "usage": {
+            "providerRequestAttempts": 1,
+            "inputTokensKnownSubtotal": 1777,
+            "inputTokensEstimated": 1777,
+            "estimatedCostUsd": 0.000074634,
+            "reportedCostUsd": null,
+            "attemptsWithUnknownUsage": 0,
+            "transmittedBytes": 7298,
+            "elapsedMs": 180
+          },
+          "preflight": {
+            "plannedRemoteFragments": 9,
+            "plannedCacheHits": 0,
+            "estimatedFirstAttemptTokens": 1569,
+            "estimatedFirstAttemptCostUsd": 0.000065898,
+            "estimatedFirstAttemptRequests": 1,
+            "enabledCaps": {
+              "estimated_input_tokens": 189374,
+              "request_attempts": 54
+            },
+            "estimatedRequiredCaps": {
+              "estimated_input_tokens": 1569,
+              "request_attempts": 1
+            }
+          },
+          "requestedTokens": 4000,
+          "counterId": "tiktoken@1.0.22/cl100k_base",
+          "stopReasons": [],
+          "diagnosticsTruncated": false
+        }
+      }
+    },
+    {
+      "id": "access-08",
+      "source": "access-gateway",
+      "pool": {
+        "version": 1,
+        "searchId": "access-08",
+        "query": "How can a caller retrieve the accumulated audit trail?",
+        "scope": [
+          "."
+        ],
+        "versions": {
+          "adapter": "vercel-ai-gateway",
+          "model": "typesafe-ai/jev",
+          "criterion": "criterion-1",
+          "layout": "layout-a-1",
+          "counter": "tiktoken@1.0.22/cl100k_base"
+        },
+        "threshold": 0.5,
+        "requestedTokens": 4000,
+        "availableTokens": 3095,
+        "candidates": [
+          {
+            "id": ".gitignore#L1-L2",
+            "path": ".gitignore",
+            "sha256": "a4418746be60a83b80f22cffe9dfa46e940a473c2597ce10e6c2b7f61c8fad61",
+            "startLine": 1,
+            "endLine": 2,
+            "score": 0.03,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "config/routes.json#L1-L4",
+            "path": "config/routes.json",
+            "sha256": "9111c28932d65d152df330ed17cb65ec65a488b08378a3457d7b60b10b3c60c7",
+            "startLine": 1,
+            "endLine": 4,
+            "score": 0.34,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "docs/untrusted-note.md#L1-L4",
+            "path": "docs/untrusted-note.md",
+            "sha256": "b3defae77e4c313f89e1ea9e963d60b6362925eb49c23e01a7b4b9d542f4e1fe",
+            "startLine": 1,
+            "endLine": 4,
+            "score": 0.05,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "package.json#L1-L1",
+            "path": "package.json",
+            "sha256": "929496e14d1e8d7156cffa37c42a3641712f621d26dbc8c0f228e3ad55740167",
+            "startLine": 1,
+            "endLine": 1,
+            "score": 0.04,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "src/audit.ts#L1-L9",
+            "path": "src/audit.ts",
+            "sha256": "689ade84eecf2c3f0e49ba43b3570b78658bd1dd569d1631a01d5cfb7a340975",
+            "startLine": 1,
+            "endLine": 9,
+            "score": 0.56,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": "type:AuditRecord"
+          },
+          {
+            "id": "src/broken.ts#L1-L4",
+            "path": "src/broken.ts",
+            "sha256": "d7d49379c391868c8b67aca4776223937823f2a373d7771763b1b6577e65b67c",
+            "startLine": 1,
+            "endLine": 4,
+            "score": 0.03,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "src/index.ts#L1-L14",
+            "path": "src/index.ts",
+            "sha256": "6c79beb5c1c1a7c560d77483c1c9f26bb132ec6b202855ae831b98ffd2bf9d95",
+            "startLine": 1,
+            "endLine": 14,
+            "score": 0.96,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": "function:authorize"
+          },
+          {
+            "id": "src/policy.ts#L1-L9",
+            "path": "src/policy.ts",
+            "sha256": "91fc022b00c40f5e7ec7b39581f28ad6eef2edf26d96954eb56e5d190d4989da",
+            "startLine": 1,
+            "endLine": 9,
+            "score": 0.05,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": "type:Actor"
+          },
+          {
+            "id": "tests/policy.test.ts#L1-L7",
+            "path": "tests/policy.test.ts",
+            "sha256": "d22f84ca215dd66527806258540a6934d236fbb1daf545bb7b0e0ce67f42e274",
+            "startLine": 1,
+            "endLine": 7,
+            "score": 0.06,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": null
+          }
+        ],
+        "inputs": {
+          "searchId": "access-08",
+          "scope": [
+            "."
+          ],
+          "inventoryComplete": true,
+          "files": {
+            "discovered": 9,
+            "eligible": 9,
+            "excludedByReason": {},
+            "unreadable": 0,
+            "changedBeforeReturn": 0
+          },
+          "fragments": {
+            "total": 9,
+            "remoteEvaluated": 9,
+            "cacheReused": 0,
+            "notEvaluated": 0,
+            "belowThreshold": 7,
+            "aboveThreshold": 2,
+            "omittedStale": 0
+          },
+          "threshold": 0.5,
+          "duplicateRangesCollapsed": 0,
+          "usage": {
+            "providerRequestAttempts": 1,
+            "inputTokensKnownSubtotal": 1771,
+            "inputTokensEstimated": 1771,
+            "estimatedCostUsd": 0.000074382,
+            "reportedCostUsd": null,
+            "attemptsWithUnknownUsage": 0,
+            "transmittedBytes": 7266,
+            "elapsedMs": 233
+          },
+          "preflight": {
+            "plannedRemoteFragments": 9,
+            "plannedCacheHits": 0,
+            "estimatedFirstAttemptTokens": 1564,
+            "estimatedFirstAttemptCostUsd": 0.000065688,
+            "estimatedFirstAttemptRequests": 1,
+            "enabledCaps": {
+              "estimated_input_tokens": 187597,
+              "request_attempts": 53
+            },
+            "estimatedRequiredCaps": {
+              "estimated_input_tokens": 1564,
+              "request_attempts": 1
+            }
+          },
+          "requestedTokens": 4000,
+          "counterId": "tiktoken@1.0.22/cl100k_base",
+          "stopReasons": [],
+          "diagnosticsTruncated": false
+        }
+      }
+    },
+    {
+      "id": "access-09",
+      "source": "access-gateway",
+      "pool": {
+        "version": 1,
+        "searchId": "access-09",
+        "query": "Where are login attempts rate-limited by IP address?",
+        "scope": [
+          "."
+        ],
+        "versions": {
+          "adapter": "vercel-ai-gateway",
+          "model": "typesafe-ai/jev",
+          "criterion": "criterion-1",
+          "layout": "layout-a-1",
+          "counter": "tiktoken@1.0.22/cl100k_base"
+        },
+        "threshold": 0.5,
+        "requestedTokens": 4000,
+        "availableTokens": 3095,
+        "candidates": [
+          {
+            "id": ".gitignore#L1-L2",
+            "path": ".gitignore",
+            "sha256": "a4418746be60a83b80f22cffe9dfa46e940a473c2597ce10e6c2b7f61c8fad61",
+            "startLine": 1,
+            "endLine": 2,
+            "score": 0.03,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "config/routes.json#L1-L4",
+            "path": "config/routes.json",
+            "sha256": "9111c28932d65d152df330ed17cb65ec65a488b08378a3457d7b60b10b3c60c7",
+            "startLine": 1,
+            "endLine": 4,
+            "score": 0.04,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "docs/untrusted-note.md#L1-L4",
+            "path": "docs/untrusted-note.md",
+            "sha256": "b3defae77e4c313f89e1ea9e963d60b6362925eb49c23e01a7b4b9d542f4e1fe",
+            "startLine": 1,
+            "endLine": 4,
+            "score": 0.04,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "package.json#L1-L1",
+            "path": "package.json",
+            "sha256": "929496e14d1e8d7156cffa37c42a3641712f621d26dbc8c0f228e3ad55740167",
+            "startLine": 1,
+            "endLine": 1,
+            "score": 0.05,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "src/audit.ts#L1-L9",
+            "path": "src/audit.ts",
+            "sha256": "689ade84eecf2c3f0e49ba43b3570b78658bd1dd569d1631a01d5cfb7a340975",
+            "startLine": 1,
+            "endLine": 9,
+            "score": 0.07,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": "type:AuditRecord"
+          },
+          {
+            "id": "src/broken.ts#L1-L4",
+            "path": "src/broken.ts",
+            "sha256": "d7d49379c391868c8b67aca4776223937823f2a373d7771763b1b6577e65b67c",
+            "startLine": 1,
+            "endLine": 4,
+            "score": 0.03,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "src/index.ts#L1-L14",
+            "path": "src/index.ts",
+            "sha256": "6c79beb5c1c1a7c560d77483c1c9f26bb132ec6b202855ae831b98ffd2bf9d95",
+            "startLine": 1,
+            "endLine": 14,
+            "score": 0.05,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": "function:authorize"
+          },
+          {
+            "id": "src/policy.ts#L1-L9",
+            "path": "src/policy.ts",
+            "sha256": "91fc022b00c40f5e7ec7b39581f28ad6eef2edf26d96954eb56e5d190d4989da",
+            "startLine": 1,
+            "endLine": 9,
+            "score": 0.05,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": "type:Actor"
+          },
+          {
+            "id": "tests/policy.test.ts#L1-L7",
+            "path": "tests/policy.test.ts",
+            "sha256": "d22f84ca215dd66527806258540a6934d236fbb1daf545bb7b0e0ce67f42e274",
+            "startLine": 1,
+            "endLine": 7,
+            "score": 0.05,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": null
+          }
+        ],
+        "inputs": {
+          "searchId": "access-09",
+          "scope": [
+            "."
+          ],
+          "inventoryComplete": true,
+          "files": {
+            "discovered": 9,
+            "eligible": 9,
+            "excludedByReason": {},
+            "unreadable": 0,
+            "changedBeforeReturn": 0
+          },
+          "fragments": {
+            "total": 9,
+            "remoteEvaluated": 9,
+            "cacheReused": 0,
+            "notEvaluated": 0,
+            "belowThreshold": 9,
+            "aboveThreshold": 0,
+            "omittedStale": 0
+          },
+          "threshold": 0.5,
+          "duplicateRangesCollapsed": 0,
+          "usage": {
+            "providerRequestAttempts": 1,
+            "inputTokensKnownSubtotal": 1773,
+            "inputTokensEstimated": 1773,
+            "estimatedCostUsd": 0.000074466,
+            "reportedCostUsd": null,
+            "attemptsWithUnknownUsage": 0,
+            "transmittedBytes": 7264,
+            "elapsedMs": 248
+          },
+          "preflight": {
+            "plannedRemoteFragments": 9,
+            "plannedCacheHits": 0,
+            "estimatedFirstAttemptTokens": 1565,
+            "estimatedFirstAttemptCostUsd": 0.00006573,
+            "estimatedFirstAttemptRequests": 1,
+            "enabledCaps": {
+              "estimated_input_tokens": 185826,
+              "request_attempts": 52
+            },
+            "estimatedRequiredCaps": {
+              "estimated_input_tokens": 1565,
+              "request_attempts": 1
+            }
+          },
+          "requestedTokens": 4000,
+          "counterId": "tiktoken@1.0.22/cl100k_base",
+          "stopReasons": [],
+          "diagnosticsTruncated": false
+        }
+      }
+    },
+    {
+      "id": "access-10",
+      "source": "access-gateway",
+      "pool": {
+        "version": 1,
+        "searchId": "access-10",
+        "query": "Where does this application generate PDF invoices?",
+        "scope": [
+          "."
+        ],
+        "versions": {
+          "adapter": "vercel-ai-gateway",
+          "model": "typesafe-ai/jev",
+          "criterion": "criterion-1",
+          "layout": "layout-a-1",
+          "counter": "tiktoken@1.0.22/cl100k_base"
+        },
+        "threshold": 0.5,
+        "requestedTokens": 4000,
+        "availableTokens": 3095,
+        "candidates": [
+          {
+            "id": ".gitignore#L1-L2",
+            "path": ".gitignore",
+            "sha256": "a4418746be60a83b80f22cffe9dfa46e940a473c2597ce10e6c2b7f61c8fad61",
+            "startLine": 1,
+            "endLine": 2,
+            "score": 0.06,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "config/routes.json#L1-L4",
+            "path": "config/routes.json",
+            "sha256": "9111c28932d65d152df330ed17cb65ec65a488b08378a3457d7b60b10b3c60c7",
+            "startLine": 1,
+            "endLine": 4,
+            "score": 0.06,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "docs/untrusted-note.md#L1-L4",
+            "path": "docs/untrusted-note.md",
+            "sha256": "b3defae77e4c313f89e1ea9e963d60b6362925eb49c23e01a7b4b9d542f4e1fe",
+            "startLine": 1,
+            "endLine": 4,
+            "score": 0.04,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "package.json#L1-L1",
+            "path": "package.json",
+            "sha256": "929496e14d1e8d7156cffa37c42a3641712f621d26dbc8c0f228e3ad55740167",
+            "startLine": 1,
+            "endLine": 1,
+            "score": 0.06,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "src/audit.ts#L1-L9",
+            "path": "src/audit.ts",
+            "sha256": "689ade84eecf2c3f0e49ba43b3570b78658bd1dd569d1631a01d5cfb7a340975",
+            "startLine": 1,
+            "endLine": 9,
+            "score": 0.06,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": "type:AuditRecord"
+          },
+          {
+            "id": "src/broken.ts#L1-L4",
+            "path": "src/broken.ts",
+            "sha256": "d7d49379c391868c8b67aca4776223937823f2a373d7771763b1b6577e65b67c",
+            "startLine": 1,
+            "endLine": 4,
+            "score": 0.04,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "src/index.ts#L1-L14",
+            "path": "src/index.ts",
+            "sha256": "6c79beb5c1c1a7c560d77483c1c9f26bb132ec6b202855ae831b98ffd2bf9d95",
+            "startLine": 1,
+            "endLine": 14,
+            "score": 0.05,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": "function:authorize"
+          },
+          {
+            "id": "src/policy.ts#L1-L9",
+            "path": "src/policy.ts",
+            "sha256": "91fc022b00c40f5e7ec7b39581f28ad6eef2edf26d96954eb56e5d190d4989da",
+            "startLine": 1,
+            "endLine": 9,
+            "score": 0.04,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": "type:Actor"
+          },
+          {
+            "id": "tests/policy.test.ts#L1-L7",
+            "path": "tests/policy.test.ts",
+            "sha256": "d22f84ca215dd66527806258540a6934d236fbb1daf545bb7b0e0ce67f42e274",
+            "startLine": 1,
+            "endLine": 7,
+            "score": 0.04,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": null
+          }
+        ],
+        "inputs": {
+          "searchId": "access-10",
+          "scope": [
+            "."
+          ],
+          "inventoryComplete": true,
+          "files": {
+            "discovered": 9,
+            "eligible": 9,
+            "excludedByReason": {},
+            "unreadable": 0,
+            "changedBeforeReturn": 0
+          },
+          "fragments": {
+            "total": 9,
+            "remoteEvaluated": 9,
+            "cacheReused": 0,
+            "notEvaluated": 0,
+            "belowThreshold": 9,
+            "aboveThreshold": 0,
+            "omittedStale": 0
+          },
+          "threshold": 0.5,
+          "duplicateRangesCollapsed": 0,
+          "usage": {
+            "providerRequestAttempts": 1,
+            "inputTokensKnownSubtotal": 1769,
+            "inputTokensEstimated": 1769,
+            "estimatedCostUsd": 0.000074298,
+            "reportedCostUsd": null,
+            "attemptsWithUnknownUsage": 0,
+            "transmittedBytes": 7262,
+            "elapsedMs": 270
+          },
+          "preflight": {
+            "plannedRemoteFragments": 9,
+            "plannedCacheHits": 0,
+            "estimatedFirstAttemptTokens": 1562,
+            "estimatedFirstAttemptCostUsd": 0.000065604,
+            "estimatedFirstAttemptRequests": 1,
+            "enabledCaps": {
+              "estimated_input_tokens": 184053,
+              "request_attempts": 51
+            },
+            "estimatedRequiredCaps": {
+              "estimated_input_tokens": 1562,
+              "request_attempts": 1
+            }
+          },
+          "requestedTokens": 4000,
+          "counterId": "tiktoken@1.0.22/cl100k_base",
+          "stopReasons": [],
+          "diagnosticsTruncated": false
+        }
+      }
+    },
+    {
+      "id": "subscription-01",
+      "source": "subscription-cache",
+      "pool": {
+        "version": 1,
+        "searchId": "subscription-01",
+        "query": "Where is a user removed from the in-memory cache?",
+        "scope": [
+          "."
+        ],
+        "versions": {
+          "adapter": "vercel-ai-gateway",
+          "model": "typesafe-ai/jev",
+          "criterion": "criterion-1",
+          "layout": "layout-a-1",
+          "counter": "tiktoken@1.0.22/cl100k_base"
+        },
+        "threshold": 0.5,
+        "requestedTokens": 4000,
+        "availableTokens": 3095,
+        "candidates": [
+          {
+            "id": "package.json#L1-L1",
+            "path": "package.json",
+            "sha256": "bc2ec7e1cf555b4f5af5afc1f7d926bb6848ffc0f08402f74e0990573ea9bc07",
+            "startLine": 1,
+            "endLine": 1,
+            "score": 0.05,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "src/cache.ts#L1-L13",
+            "path": "src/cache.ts",
+            "sha256": "3f20ccea9e6c98281fb3fb785df4e4f0ef89857905177e0de4697929f7d485c5",
+            "startLine": 1,
+            "endLine": 13,
+            "score": 0.95,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": "function:cacheUser"
+          },
+          {
+            "id": "src/events.ts#L1-L9",
+            "path": "src/events.ts",
+            "sha256": "e5a88190125d0b0770e3898de3c7eb61a391be2b4e930f5babdb461e347ff511",
+            "startLine": 1,
+            "endLine": 9,
+            "score": 0.1,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": "type:SubscriptionChanged"
+          },
+          {
+            "id": "src/handler.ts#L1-L9",
+            "path": "src/handler.ts",
+            "sha256": "29e1140247c95f3554602eddf61ea935a89a33a6d62fc484bfe278d31e99afea",
+            "startLine": 1,
+            "endLine": 9,
+            "score": 0.93,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": "function:handleWebhook"
+          },
+          {
+            "id": "tests/handler.test.ts#L1-L10",
+            "path": "tests/handler.test.ts",
+            "sha256": "bb79cea40da625132dc4f9c213eea6c3e44161b3b5e2bb129771f63e2b257d05",
+            "startLine": 1,
+            "endLine": 10,
+            "score": 0.93,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": null
+          }
+        ],
+        "inputs": {
+          "searchId": "subscription-01",
+          "scope": [
+            "."
+          ],
+          "inventoryComplete": true,
+          "files": {
+            "discovered": 5,
+            "eligible": 5,
+            "excludedByReason": {},
+            "unreadable": 0,
+            "changedBeforeReturn": 0
+          },
+          "fragments": {
+            "total": 5,
+            "remoteEvaluated": 5,
+            "cacheReused": 0,
+            "notEvaluated": 0,
+            "belowThreshold": 2,
+            "aboveThreshold": 3,
+            "omittedStale": 0
+          },
+          "threshold": 0.5,
+          "duplicateRangesCollapsed": 0,
+          "usage": {
+            "providerRequestAttempts": 1,
+            "inputTokensKnownSubtotal": 1259,
+            "inputTokensEstimated": 1259,
+            "estimatedCostUsd": 0.000052878,
+            "reportedCostUsd": null,
+            "attemptsWithUnknownUsage": 0,
+            "transmittedBytes": 4655,
+            "elapsedMs": 206
+          },
+          "preflight": {
+            "plannedRemoteFragments": 5,
+            "plannedCacheHits": 0,
+            "estimatedFirstAttemptTokens": 1014,
+            "estimatedFirstAttemptCostUsd": 0.000042588,
+            "estimatedFirstAttemptRequests": 1,
+            "enabledCaps": {
+              "estimated_input_tokens": 182284,
+              "request_attempts": 50
+            },
+            "estimatedRequiredCaps": {
+              "estimated_input_tokens": 1014,
+              "request_attempts": 1
+            }
+          },
+          "requestedTokens": 4000,
+          "counterId": "tiktoken@1.0.22/cl100k_base",
+          "stopReasons": [],
+          "diagnosticsTruncated": false
+        }
+      }
+    },
+    {
+      "id": "subscription-02",
+      "source": "subscription-cache",
+      "pool": {
+        "version": 1,
+        "searchId": "subscription-02",
+        "query": "How is stale cached user data discarded after a plan update?",
+        "scope": [
+          "."
+        ],
+        "versions": {
+          "adapter": "vercel-ai-gateway",
+          "model": "typesafe-ai/jev",
+          "criterion": "criterion-1",
+          "layout": "layout-a-1",
+          "counter": "tiktoken@1.0.22/cl100k_base"
+        },
+        "threshold": 0.5,
+        "requestedTokens": 4000,
+        "availableTokens": 3095,
+        "candidates": [
+          {
+            "id": "package.json#L1-L1",
+            "path": "package.json",
+            "sha256": "bc2ec7e1cf555b4f5af5afc1f7d926bb6848ffc0f08402f74e0990573ea9bc07",
+            "startLine": 1,
+            "endLine": 1,
+            "score": 0.06,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "src/cache.ts#L1-L13",
+            "path": "src/cache.ts",
+            "sha256": "3f20ccea9e6c98281fb3fb785df4e4f0ef89857905177e0de4697929f7d485c5",
+            "startLine": 1,
+            "endLine": 13,
+            "score": 0.76,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": "function:cacheUser"
+          },
+          {
+            "id": "src/events.ts#L1-L9",
+            "path": "src/events.ts",
+            "sha256": "e5a88190125d0b0770e3898de3c7eb61a391be2b4e930f5babdb461e347ff511",
+            "startLine": 1,
+            "endLine": 9,
+            "score": 0.44,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": "type:SubscriptionChanged"
+          },
+          {
+            "id": "src/handler.ts#L1-L9",
+            "path": "src/handler.ts",
+            "sha256": "29e1140247c95f3554602eddf61ea935a89a33a6d62fc484bfe278d31e99afea",
+            "startLine": 1,
+            "endLine": 9,
+            "score": 0.96,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": "function:handleWebhook"
+          },
+          {
+            "id": "tests/handler.test.ts#L1-L10",
+            "path": "tests/handler.test.ts",
+            "sha256": "bb79cea40da625132dc4f9c213eea6c3e44161b3b5e2bb129771f63e2b257d05",
+            "startLine": 1,
+            "endLine": 10,
+            "score": 0.95,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": null
+          }
+        ],
+        "inputs": {
+          "searchId": "subscription-02",
+          "scope": [
+            "."
+          ],
+          "inventoryComplete": true,
+          "files": {
+            "discovered": 5,
+            "eligible": 5,
+            "excludedByReason": {},
+            "unreadable": 0,
+            "changedBeforeReturn": 0
+          },
+          "fragments": {
+            "total": 5,
+            "remoteEvaluated": 5,
+            "cacheReused": 0,
+            "notEvaluated": 0,
+            "belowThreshold": 2,
+            "aboveThreshold": 3,
+            "omittedStale": 0
+          },
+          "threshold": 0.5,
+          "duplicateRangesCollapsed": 0,
+          "usage": {
+            "providerRequestAttempts": 1,
+            "inputTokensKnownSubtotal": 1260,
+            "inputTokensEstimated": 1260,
+            "estimatedCostUsd": 0.00005292,
+            "reportedCostUsd": null,
+            "attemptsWithUnknownUsage": 0,
+            "transmittedBytes": 4666,
+            "elapsedMs": 202
+          },
+          "preflight": {
+            "plannedRemoteFragments": 5,
+            "plannedCacheHits": 0,
+            "estimatedFirstAttemptTokens": 1015,
+            "estimatedFirstAttemptCostUsd": 0.00004263,
+            "estimatedFirstAttemptRequests": 1,
+            "enabledCaps": {
+              "estimated_input_tokens": 181025,
+              "request_attempts": 49
+            },
+            "estimatedRequiredCaps": {
+              "estimated_input_tokens": 1015,
+              "request_attempts": 1
+            }
+          },
+          "requestedTokens": 4000,
+          "counterId": "tiktoken@1.0.22/cl100k_base",
+          "stopReasons": [],
+          "diagnosticsTruncated": false
+        }
+      }
+    },
+    {
+      "id": "subscription-03",
+      "source": "subscription-cache",
+      "pool": {
+        "version": 1,
+        "searchId": "subscription-03",
+        "query": "Find the implementation of decodeEvent.",
+        "scope": [
+          "."
+        ],
+        "versions": {
+          "adapter": "vercel-ai-gateway",
+          "model": "typesafe-ai/jev",
+          "criterion": "criterion-1",
+          "layout": "layout-a-1",
+          "counter": "tiktoken@1.0.22/cl100k_base"
+        },
+        "threshold": 0.5,
+        "requestedTokens": 4000,
+        "availableTokens": 3095,
+        "candidates": [
+          {
+            "id": "package.json#L1-L1",
+            "path": "package.json",
+            "sha256": "bc2ec7e1cf555b4f5af5afc1f7d926bb6848ffc0f08402f74e0990573ea9bc07",
+            "startLine": 1,
+            "endLine": 1,
+            "score": 0.04,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "src/cache.ts#L1-L13",
+            "path": "src/cache.ts",
+            "sha256": "3f20ccea9e6c98281fb3fb785df4e4f0ef89857905177e0de4697929f7d485c5",
+            "startLine": 1,
+            "endLine": 13,
+            "score": 0.03,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": "function:cacheUser"
+          },
+          {
+            "id": "src/events.ts#L1-L9",
+            "path": "src/events.ts",
+            "sha256": "e5a88190125d0b0770e3898de3c7eb61a391be2b4e930f5babdb461e347ff511",
+            "startLine": 1,
+            "endLine": 9,
+            "score": 0.97,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": "type:SubscriptionChanged"
+          },
+          {
+            "id": "src/handler.ts#L1-L9",
+            "path": "src/handler.ts",
+            "sha256": "29e1140247c95f3554602eddf61ea935a89a33a6d62fc484bfe278d31e99afea",
+            "startLine": 1,
+            "endLine": 9,
+            "score": 0.83,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": "function:handleWebhook"
+          },
+          {
+            "id": "tests/handler.test.ts#L1-L10",
+            "path": "tests/handler.test.ts",
+            "sha256": "bb79cea40da625132dc4f9c213eea6c3e44161b3b5e2bb129771f63e2b257d05",
+            "startLine": 1,
+            "endLine": 10,
+            "score": 0.41,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": null
+          }
+        ],
+        "inputs": {
+          "searchId": "subscription-03",
+          "scope": [
+            "."
+          ],
+          "inventoryComplete": true,
+          "files": {
+            "discovered": 5,
+            "eligible": 5,
+            "excludedByReason": {},
+            "unreadable": 0,
+            "changedBeforeReturn": 0
+          },
+          "fragments": {
+            "total": 5,
+            "remoteEvaluated": 5,
+            "cacheReused": 0,
+            "notEvaluated": 0,
+            "belowThreshold": 3,
+            "aboveThreshold": 2,
+            "omittedStale": 0
+          },
+          "threshold": 0.5,
+          "duplicateRangesCollapsed": 0,
+          "usage": {
+            "providerRequestAttempts": 1,
+            "inputTokensKnownSubtotal": 1257,
+            "inputTokensEstimated": 1257,
+            "estimatedCostUsd": 0.000052794,
+            "reportedCostUsd": null,
+            "attemptsWithUnknownUsage": 0,
+            "transmittedBytes": 4645,
+            "elapsedMs": 193
+          },
+          "preflight": {
+            "plannedRemoteFragments": 5,
+            "plannedCacheHits": 0,
+            "estimatedFirstAttemptTokens": 1009,
+            "estimatedFirstAttemptCostUsd": 0.000042378,
+            "estimatedFirstAttemptRequests": 1,
+            "enabledCaps": {
+              "estimated_input_tokens": 179765,
+              "request_attempts": 48
+            },
+            "estimatedRequiredCaps": {
+              "estimated_input_tokens": 1009,
+              "request_attempts": 1
+            }
+          },
+          "requestedTokens": 4000,
+          "counterId": "tiktoken@1.0.22/cl100k_base",
+          "stopReasons": [],
+          "diagnosticsTruncated": false
+        }
+      }
+    },
+    {
+      "id": "subscription-04",
+      "source": "subscription-cache",
+      "pool": {
+        "version": 1,
+        "searchId": "subscription-04",
+        "query": "Trace a subscription.changed webhook from JSON decoding to cache deletion.",
+        "scope": [
+          "."
+        ],
+        "versions": {
+          "adapter": "vercel-ai-gateway",
+          "model": "typesafe-ai/jev",
+          "criterion": "criterion-1",
+          "layout": "layout-a-1",
+          "counter": "tiktoken@1.0.22/cl100k_base"
+        },
+        "threshold": 0.5,
+        "requestedTokens": 4000,
+        "availableTokens": 3095,
+        "candidates": [
+          {
+            "id": "package.json#L1-L1",
+            "path": "package.json",
+            "sha256": "bc2ec7e1cf555b4f5af5afc1f7d926bb6848ffc0f08402f74e0990573ea9bc07",
+            "startLine": 1,
+            "endLine": 1,
+            "score": 0.14,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "src/cache.ts#L1-L13",
+            "path": "src/cache.ts",
+            "sha256": "3f20ccea9e6c98281fb3fb785df4e4f0ef89857905177e0de4697929f7d485c5",
+            "startLine": 1,
+            "endLine": 13,
+            "score": 0.38,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": "function:cacheUser"
+          },
+          {
+            "id": "src/events.ts#L1-L9",
+            "path": "src/events.ts",
+            "sha256": "e5a88190125d0b0770e3898de3c7eb61a391be2b4e930f5babdb461e347ff511",
+            "startLine": 1,
+            "endLine": 9,
+            "score": 0.87,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": "type:SubscriptionChanged"
+          },
+          {
+            "id": "src/handler.ts#L1-L9",
+            "path": "src/handler.ts",
+            "sha256": "29e1140247c95f3554602eddf61ea935a89a33a6d62fc484bfe278d31e99afea",
+            "startLine": 1,
+            "endLine": 9,
+            "score": 0.97,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": "function:handleWebhook"
+          },
+          {
+            "id": "tests/handler.test.ts#L1-L10",
+            "path": "tests/handler.test.ts",
+            "sha256": "bb79cea40da625132dc4f9c213eea6c3e44161b3b5e2bb129771f63e2b257d05",
+            "startLine": 1,
+            "endLine": 10,
+            "score": 0.95,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": null
+          }
+        ],
+        "inputs": {
+          "searchId": "subscription-04",
+          "scope": [
+            "."
+          ],
+          "inventoryComplete": true,
+          "files": {
+            "discovered": 5,
+            "eligible": 5,
+            "excludedByReason": {},
+            "unreadable": 0,
+            "changedBeforeReturn": 0
+          },
+          "fragments": {
+            "total": 5,
+            "remoteEvaluated": 5,
+            "cacheReused": 0,
+            "notEvaluated": 0,
+            "belowThreshold": 2,
+            "aboveThreshold": 3,
+            "omittedStale": 0
+          },
+          "threshold": 0.5,
+          "duplicateRangesCollapsed": 0,
+          "usage": {
+            "providerRequestAttempts": 1,
+            "inputTokensKnownSubtotal": 1260,
+            "inputTokensEstimated": 1260,
+            "estimatedCostUsd": 0.00005292,
+            "reportedCostUsd": null,
+            "attemptsWithUnknownUsage": 0,
+            "transmittedBytes": 4680,
+            "elapsedMs": 177
+          },
+          "preflight": {
+            "plannedRemoteFragments": 5,
+            "plannedCacheHits": 0,
+            "estimatedFirstAttemptTokens": 1014,
+            "estimatedFirstAttemptCostUsd": 0.000042588,
+            "estimatedFirstAttemptRequests": 1,
+            "enabledCaps": {
+              "estimated_input_tokens": 178508,
+              "request_attempts": 47
+            },
+            "estimatedRequiredCaps": {
+              "estimated_input_tokens": 1014,
+              "request_attempts": 1
+            }
+          },
+          "requestedTokens": 4000,
+          "counterId": "tiktoken@1.0.22/cl100k_base",
+          "stopReasons": [],
+          "diagnosticsTruncated": false
+        }
+      }
+    },
+    {
+      "id": "subscription-05",
+      "source": "subscription-cache",
+      "pool": {
+        "version": 1,
+        "searchId": "subscription-05",
+        "query": "Where is a user payload inserted into the cache?",
+        "scope": [
+          "."
+        ],
+        "versions": {
+          "adapter": "vercel-ai-gateway",
+          "model": "typesafe-ai/jev",
+          "criterion": "criterion-1",
+          "layout": "layout-a-1",
+          "counter": "tiktoken@1.0.22/cl100k_base"
+        },
+        "threshold": 0.5,
+        "requestedTokens": 4000,
+        "availableTokens": 3095,
+        "candidates": [
+          {
+            "id": "package.json#L1-L1",
+            "path": "package.json",
+            "sha256": "bc2ec7e1cf555b4f5af5afc1f7d926bb6848ffc0f08402f74e0990573ea9bc07",
+            "startLine": 1,
+            "endLine": 1,
+            "score": 0.04,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "src/cache.ts#L1-L13",
+            "path": "src/cache.ts",
+            "sha256": "3f20ccea9e6c98281fb3fb785df4e4f0ef89857905177e0de4697929f7d485c5",
+            "startLine": 1,
+            "endLine": 13,
+            "score": 0.96,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": "function:cacheUser"
+          },
+          {
+            "id": "src/events.ts#L1-L9",
+            "path": "src/events.ts",
+            "sha256": "e5a88190125d0b0770e3898de3c7eb61a391be2b4e930f5babdb461e347ff511",
+            "startLine": 1,
+            "endLine": 9,
+            "score": 0.09,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": "type:SubscriptionChanged"
+          },
+          {
+            "id": "src/handler.ts#L1-L9",
+            "path": "src/handler.ts",
+            "sha256": "29e1140247c95f3554602eddf61ea935a89a33a6d62fc484bfe278d31e99afea",
+            "startLine": 1,
+            "endLine": 9,
+            "score": 0.34,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": "function:handleWebhook"
+          },
+          {
+            "id": "tests/handler.test.ts#L1-L10",
+            "path": "tests/handler.test.ts",
+            "sha256": "bb79cea40da625132dc4f9c213eea6c3e44161b3b5e2bb129771f63e2b257d05",
+            "startLine": 1,
+            "endLine": 10,
+            "score": 0.83,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": null
+          }
+        ],
+        "inputs": {
+          "searchId": "subscription-05",
+          "scope": [
+            "."
+          ],
+          "inventoryComplete": true,
+          "files": {
+            "discovered": 5,
+            "eligible": 5,
+            "excludedByReason": {},
+            "unreadable": 0,
+            "changedBeforeReturn": 0
+          },
+          "fragments": {
+            "total": 5,
+            "remoteEvaluated": 5,
+            "cacheReused": 0,
+            "notEvaluated": 0,
+            "belowThreshold": 3,
+            "aboveThreshold": 2,
+            "omittedStale": 0
+          },
+          "threshold": 0.5,
+          "duplicateRangesCollapsed": 0,
+          "usage": {
+            "providerRequestAttempts": 1,
+            "inputTokensKnownSubtotal": 1258,
+            "inputTokensEstimated": 1258,
+            "estimatedCostUsd": 0.000052836,
+            "reportedCostUsd": null,
+            "attemptsWithUnknownUsage": 0,
+            "transmittedBytes": 4654,
+            "elapsedMs": 272
+          },
+          "preflight": {
+            "plannedRemoteFragments": 5,
+            "plannedCacheHits": 0,
+            "estimatedFirstAttemptTokens": 1013,
+            "estimatedFirstAttemptCostUsd": 0.000042546,
+            "estimatedFirstAttemptRequests": 1,
+            "enabledCaps": {
+              "estimated_input_tokens": 177248,
+              "request_attempts": 46
+            },
+            "estimatedRequiredCaps": {
+              "estimated_input_tokens": 1013,
+              "request_attempts": 1
+            }
+          },
+          "requestedTokens": 4000,
+          "counterId": "tiktoken@1.0.22/cl100k_base",
+          "stopReasons": [],
+          "diagnosticsTruncated": false
+        }
+      }
+    },
+    {
+      "id": "subscription-06",
+      "source": "subscription-cache",
+      "pool": {
+        "version": 1,
+        "searchId": "subscription-06",
+        "query": "How is a cached payload looked up by user ID?",
+        "scope": [
+          "."
+        ],
+        "versions": {
+          "adapter": "vercel-ai-gateway",
+          "model": "typesafe-ai/jev",
+          "criterion": "criterion-1",
+          "layout": "layout-a-1",
+          "counter": "tiktoken@1.0.22/cl100k_base"
+        },
+        "threshold": 0.5,
+        "requestedTokens": 4000,
+        "availableTokens": 3095,
+        "candidates": [
+          {
+            "id": "package.json#L1-L1",
+            "path": "package.json",
+            "sha256": "bc2ec7e1cf555b4f5af5afc1f7d926bb6848ffc0f08402f74e0990573ea9bc07",
+            "startLine": 1,
+            "endLine": 1,
+            "score": 0.05,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "src/cache.ts#L1-L13",
+            "path": "src/cache.ts",
+            "sha256": "3f20ccea9e6c98281fb3fb785df4e4f0ef89857905177e0de4697929f7d485c5",
+            "startLine": 1,
+            "endLine": 13,
+            "score": 0.96,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": "function:cacheUser"
+          },
+          {
+            "id": "src/events.ts#L1-L9",
+            "path": "src/events.ts",
+            "sha256": "e5a88190125d0b0770e3898de3c7eb61a391be2b4e930f5babdb461e347ff511",
+            "startLine": 1,
+            "endLine": 9,
+            "score": 0.19,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": "type:SubscriptionChanged"
+          },
+          {
+            "id": "src/handler.ts#L1-L9",
+            "path": "src/handler.ts",
+            "sha256": "29e1140247c95f3554602eddf61ea935a89a33a6d62fc484bfe278d31e99afea",
+            "startLine": 1,
+            "endLine": 9,
+            "score": 0.36,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": "function:handleWebhook"
+          },
+          {
+            "id": "tests/handler.test.ts#L1-L10",
+            "path": "tests/handler.test.ts",
+            "sha256": "bb79cea40da625132dc4f9c213eea6c3e44161b3b5e2bb129771f63e2b257d05",
+            "startLine": 1,
+            "endLine": 10,
+            "score": 0.91,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": null
+          }
+        ],
+        "inputs": {
+          "searchId": "subscription-06",
+          "scope": [
+            "."
+          ],
+          "inventoryComplete": true,
+          "files": {
+            "discovered": 5,
+            "eligible": 5,
+            "excludedByReason": {},
+            "unreadable": 0,
+            "changedBeforeReturn": 0
+          },
+          "fragments": {
+            "total": 5,
+            "remoteEvaluated": 5,
+            "cacheReused": 0,
+            "notEvaluated": 0,
+            "belowThreshold": 3,
+            "aboveThreshold": 2,
+            "omittedStale": 0
+          },
+          "threshold": 0.5,
+          "duplicateRangesCollapsed": 0,
+          "usage": {
+            "providerRequestAttempts": 1,
+            "inputTokensKnownSubtotal": 1259,
+            "inputTokensEstimated": 1259,
+            "estimatedCostUsd": 0.000052878,
+            "reportedCostUsd": null,
+            "attemptsWithUnknownUsage": 0,
+            "transmittedBytes": 4651,
+            "elapsedMs": 361
+          },
+          "preflight": {
+            "plannedRemoteFragments": 5,
+            "plannedCacheHits": 0,
+            "estimatedFirstAttemptTokens": 1014,
+            "estimatedFirstAttemptCostUsd": 0.000042588,
+            "estimatedFirstAttemptRequests": 1,
+            "enabledCaps": {
+              "estimated_input_tokens": 175990,
+              "request_attempts": 45
+            },
+            "estimatedRequiredCaps": {
+              "estimated_input_tokens": 1014,
+              "request_attempts": 1
+            }
+          },
+          "requestedTokens": 4000,
+          "counterId": "tiktoken@1.0.22/cl100k_base",
+          "stopReasons": [],
+          "diagnosticsTruncated": false
+        }
+      }
+    },
+    {
+      "id": "subscription-07",
+      "source": "subscription-cache",
+      "pool": {
+        "version": 1,
+        "searchId": "subscription-07",
+        "query": "Show the cache invalidation triggered by a subscription change and the assertion that verifies it.",
+        "scope": [
+          "."
+        ],
+        "versions": {
+          "adapter": "vercel-ai-gateway",
+          "model": "typesafe-ai/jev",
+          "criterion": "criterion-1",
+          "layout": "layout-a-1",
+          "counter": "tiktoken@1.0.22/cl100k_base"
+        },
+        "threshold": 0.5,
+        "requestedTokens": 4000,
+        "availableTokens": 3095,
+        "candidates": [
+          {
+            "id": "package.json#L1-L1",
+            "path": "package.json",
+            "sha256": "bc2ec7e1cf555b4f5af5afc1f7d926bb6848ffc0f08402f74e0990573ea9bc07",
+            "startLine": 1,
+            "endLine": 1,
+            "score": 0.07,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "src/cache.ts#L1-L13",
+            "path": "src/cache.ts",
+            "sha256": "3f20ccea9e6c98281fb3fb785df4e4f0ef89857905177e0de4697929f7d485c5",
+            "startLine": 1,
+            "endLine": 13,
+            "score": 0.35,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": "function:cacheUser"
+          },
+          {
+            "id": "src/events.ts#L1-L9",
+            "path": "src/events.ts",
+            "sha256": "e5a88190125d0b0770e3898de3c7eb61a391be2b4e930f5babdb461e347ff511",
+            "startLine": 1,
+            "endLine": 9,
+            "score": 0.28,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": "type:SubscriptionChanged"
+          },
+          {
+            "id": "src/handler.ts#L1-L9",
+            "path": "src/handler.ts",
+            "sha256": "29e1140247c95f3554602eddf61ea935a89a33a6d62fc484bfe278d31e99afea",
+            "startLine": 1,
+            "endLine": 9,
+            "score": 0.94,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": "function:handleWebhook"
+          },
+          {
+            "id": "tests/handler.test.ts#L1-L10",
+            "path": "tests/handler.test.ts",
+            "sha256": "bb79cea40da625132dc4f9c213eea6c3e44161b3b5e2bb129771f63e2b257d05",
+            "startLine": 1,
+            "endLine": 10,
+            "score": 0.97,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": null
+          }
+        ],
+        "inputs": {
+          "searchId": "subscription-07",
+          "scope": [
+            "."
+          ],
+          "inventoryComplete": true,
+          "files": {
+            "discovered": 5,
+            "eligible": 5,
+            "excludedByReason": {},
+            "unreadable": 0,
+            "changedBeforeReturn": 0
+          },
+          "fragments": {
+            "total": 5,
+            "remoteEvaluated": 5,
+            "cacheReused": 0,
+            "notEvaluated": 0,
+            "belowThreshold": 3,
+            "aboveThreshold": 2,
+            "omittedStale": 0
+          },
+          "threshold": 0.5,
+          "duplicateRangesCollapsed": 0,
+          "usage": {
+            "providerRequestAttempts": 1,
+            "inputTokensKnownSubtotal": 1267,
+            "inputTokensEstimated": 1267,
+            "estimatedCostUsd": 0.000053214,
+            "reportedCostUsd": null,
+            "attemptsWithUnknownUsage": 0,
+            "transmittedBytes": 4704,
+            "elapsedMs": 160
+          },
+          "preflight": {
+            "plannedRemoteFragments": 5,
+            "plannedCacheHits": 0,
+            "estimatedFirstAttemptTokens": 1019,
+            "estimatedFirstAttemptCostUsd": 0.000042798,
+            "estimatedFirstAttemptRequests": 1,
+            "enabledCaps": {
+              "estimated_input_tokens": 174731,
+              "request_attempts": 44
+            },
+            "estimatedRequiredCaps": {
+              "estimated_input_tokens": 1019,
+              "request_attempts": 1
+            }
+          },
+          "requestedTokens": 4000,
+          "counterId": "tiktoken@1.0.22/cl100k_base",
+          "stopReasons": [],
+          "diagnosticsTruncated": false
+        }
+      }
+    },
+    {
+      "id": "subscription-08",
+      "source": "subscription-cache",
+      "pool": {
+        "version": 1,
+        "searchId": "subscription-08",
+        "query": "What fields make up a subscription-change event?",
+        "scope": [
+          "."
+        ],
+        "versions": {
+          "adapter": "vercel-ai-gateway",
+          "model": "typesafe-ai/jev",
+          "criterion": "criterion-1",
+          "layout": "layout-a-1",
+          "counter": "tiktoken@1.0.22/cl100k_base"
+        },
+        "threshold": 0.5,
+        "requestedTokens": 4000,
+        "availableTokens": 3095,
+        "candidates": [
+          {
+            "id": "package.json#L1-L1",
+            "path": "package.json",
+            "sha256": "bc2ec7e1cf555b4f5af5afc1f7d926bb6848ffc0f08402f74e0990573ea9bc07",
+            "startLine": 1,
+            "endLine": 1,
+            "score": 0.06,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "src/cache.ts#L1-L13",
+            "path": "src/cache.ts",
+            "sha256": "3f20ccea9e6c98281fb3fb785df4e4f0ef89857905177e0de4697929f7d485c5",
+            "startLine": 1,
+            "endLine": 13,
+            "score": 0.04,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": "function:cacheUser"
+          },
+          {
+            "id": "src/events.ts#L1-L9",
+            "path": "src/events.ts",
+            "sha256": "e5a88190125d0b0770e3898de3c7eb61a391be2b4e930f5babdb461e347ff511",
+            "startLine": 1,
+            "endLine": 9,
+            "score": 0.97,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": "type:SubscriptionChanged"
+          },
+          {
+            "id": "src/handler.ts#L1-L9",
+            "path": "src/handler.ts",
+            "sha256": "29e1140247c95f3554602eddf61ea935a89a33a6d62fc484bfe278d31e99afea",
+            "startLine": 1,
+            "endLine": 9,
+            "score": 0.84,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": "function:handleWebhook"
+          },
+          {
+            "id": "tests/handler.test.ts#L1-L10",
+            "path": "tests/handler.test.ts",
+            "sha256": "bb79cea40da625132dc4f9c213eea6c3e44161b3b5e2bb129771f63e2b257d05",
+            "startLine": 1,
+            "endLine": 10,
+            "score": 0.92,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": null
+          }
+        ],
+        "inputs": {
+          "searchId": "subscription-08",
+          "scope": [
+            "."
+          ],
+          "inventoryComplete": true,
+          "files": {
+            "discovered": 5,
+            "eligible": 5,
+            "excludedByReason": {},
+            "unreadable": 0,
+            "changedBeforeReturn": 0
+          },
+          "fragments": {
+            "total": 5,
+            "remoteEvaluated": 5,
+            "cacheReused": 0,
+            "notEvaluated": 0,
+            "belowThreshold": 2,
+            "aboveThreshold": 3,
+            "omittedStale": 0
+          },
+          "threshold": 0.5,
+          "duplicateRangesCollapsed": 0,
+          "usage": {
+            "providerRequestAttempts": 1,
+            "inputTokensKnownSubtotal": 1257,
+            "inputTokensEstimated": 1257,
+            "estimatedCostUsd": 0.000052794,
+            "reportedCostUsd": null,
+            "attemptsWithUnknownUsage": 0,
+            "transmittedBytes": 4654,
+            "elapsedMs": 311
+          },
+          "preflight": {
+            "plannedRemoteFragments": 5,
+            "plannedCacheHits": 0,
+            "estimatedFirstAttemptTokens": 1012,
+            "estimatedFirstAttemptCostUsd": 0.000042504,
+            "estimatedFirstAttemptRequests": 1,
+            "enabledCaps": {
+              "estimated_input_tokens": 173464,
+              "request_attempts": 43
+            },
+            "estimatedRequiredCaps": {
+              "estimated_input_tokens": 1012,
+              "request_attempts": 1
+            }
+          },
+          "requestedTokens": 4000,
+          "counterId": "tiktoken@1.0.22/cl100k_base",
+          "stopReasons": [],
+          "diagnosticsTruncated": false
+        }
+      }
+    },
+    {
+      "id": "subscription-09",
+      "source": "subscription-cache",
+      "pool": {
+        "version": 1,
+        "searchId": "subscription-09",
+        "query": "Where are cached users automatically expired using a timer?",
+        "scope": [
+          "."
+        ],
+        "versions": {
+          "adapter": "vercel-ai-gateway",
+          "model": "typesafe-ai/jev",
+          "criterion": "criterion-1",
+          "layout": "layout-a-1",
+          "counter": "tiktoken@1.0.22/cl100k_base"
+        },
+        "threshold": 0.5,
+        "requestedTokens": 4000,
+        "availableTokens": 3095,
+        "candidates": [
+          {
+            "id": "package.json#L1-L1",
+            "path": "package.json",
+            "sha256": "bc2ec7e1cf555b4f5af5afc1f7d926bb6848ffc0f08402f74e0990573ea9bc07",
+            "startLine": 1,
+            "endLine": 1,
+            "score": 0.05,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "src/cache.ts#L1-L13",
+            "path": "src/cache.ts",
+            "sha256": "3f20ccea9e6c98281fb3fb785df4e4f0ef89857905177e0de4697929f7d485c5",
+            "startLine": 1,
+            "endLine": 13,
+            "score": 0.36,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": "function:cacheUser"
+          },
+          {
+            "id": "src/events.ts#L1-L9",
+            "path": "src/events.ts",
+            "sha256": "e5a88190125d0b0770e3898de3c7eb61a391be2b4e930f5babdb461e347ff511",
+            "startLine": 1,
+            "endLine": 9,
+            "score": 0.04,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": "type:SubscriptionChanged"
+          },
+          {
+            "id": "src/handler.ts#L1-L9",
+            "path": "src/handler.ts",
+            "sha256": "29e1140247c95f3554602eddf61ea935a89a33a6d62fc484bfe278d31e99afea",
+            "startLine": 1,
+            "endLine": 9,
+            "score": 0.4,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": "function:handleWebhook"
+          },
+          {
+            "id": "tests/handler.test.ts#L1-L10",
+            "path": "tests/handler.test.ts",
+            "sha256": "bb79cea40da625132dc4f9c213eea6c3e44161b3b5e2bb129771f63e2b257d05",
+            "startLine": 1,
+            "endLine": 10,
+            "score": 0.4,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": null
+          }
+        ],
+        "inputs": {
+          "searchId": "subscription-09",
+          "scope": [
+            "."
+          ],
+          "inventoryComplete": true,
+          "files": {
+            "discovered": 5,
+            "eligible": 5,
+            "excludedByReason": {},
+            "unreadable": 0,
+            "changedBeforeReturn": 0
+          },
+          "fragments": {
+            "total": 5,
+            "remoteEvaluated": 5,
+            "cacheReused": 0,
+            "notEvaluated": 0,
+            "belowThreshold": 5,
+            "aboveThreshold": 0,
+            "omittedStale": 0
+          },
+          "threshold": 0.5,
+          "duplicateRangesCollapsed": 0,
+          "usage": {
+            "providerRequestAttempts": 1,
+            "inputTokensKnownSubtotal": 1258,
+            "inputTokensEstimated": 1258,
+            "estimatedCostUsd": 0.000052836,
+            "reportedCostUsd": null,
+            "attemptsWithUnknownUsage": 0,
+            "transmittedBytes": 4665,
+            "elapsedMs": 181
+          },
+          "preflight": {
+            "plannedRemoteFragments": 5,
+            "plannedCacheHits": 0,
+            "estimatedFirstAttemptTokens": 1013,
+            "estimatedFirstAttemptCostUsd": 0.000042546,
+            "estimatedFirstAttemptRequests": 1,
+            "enabledCaps": {
+              "estimated_input_tokens": 172207,
+              "request_attempts": 42
+            },
+            "estimatedRequiredCaps": {
+              "estimated_input_tokens": 1013,
+              "request_attempts": 1
+            }
+          },
+          "requestedTokens": 4000,
+          "counterId": "tiktoken@1.0.22/cl100k_base",
+          "stopReasons": [],
+          "diagnosticsTruncated": false
+        }
+      }
+    },
+    {
+      "id": "subscription-10",
+      "source": "subscription-cache",
+      "pool": {
+        "version": 1,
+        "searchId": "subscription-10",
+        "query": "Where does the webhook handler send notification emails?",
+        "scope": [
+          "."
+        ],
+        "versions": {
+          "adapter": "vercel-ai-gateway",
+          "model": "typesafe-ai/jev",
+          "criterion": "criterion-1",
+          "layout": "layout-a-1",
+          "counter": "tiktoken@1.0.22/cl100k_base"
+        },
+        "threshold": 0.5,
+        "requestedTokens": 4000,
+        "availableTokens": 3095,
+        "candidates": [
+          {
+            "id": "package.json#L1-L1",
+            "path": "package.json",
+            "sha256": "bc2ec7e1cf555b4f5af5afc1f7d926bb6848ffc0f08402f74e0990573ea9bc07",
+            "startLine": 1,
+            "endLine": 1,
+            "score": 0.05,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "src/cache.ts#L1-L13",
+            "path": "src/cache.ts",
+            "sha256": "3f20ccea9e6c98281fb3fb785df4e4f0ef89857905177e0de4697929f7d485c5",
+            "startLine": 1,
+            "endLine": 13,
+            "score": 0.04,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": "function:cacheUser"
+          },
+          {
+            "id": "src/events.ts#L1-L9",
+            "path": "src/events.ts",
+            "sha256": "e5a88190125d0b0770e3898de3c7eb61a391be2b4e930f5babdb461e347ff511",
+            "startLine": 1,
+            "endLine": 9,
+            "score": 0.14,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": "type:SubscriptionChanged"
+          },
+          {
+            "id": "src/handler.ts#L1-L9",
+            "path": "src/handler.ts",
+            "sha256": "29e1140247c95f3554602eddf61ea935a89a33a6d62fc484bfe278d31e99afea",
+            "startLine": 1,
+            "endLine": 9,
+            "score": 0.21,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": "function:handleWebhook"
+          },
+          {
+            "id": "tests/handler.test.ts#L1-L10",
+            "path": "tests/handler.test.ts",
+            "sha256": "bb79cea40da625132dc4f9c213eea6c3e44161b3b5e2bb129771f63e2b257d05",
+            "startLine": 1,
+            "endLine": 10,
+            "score": 0.16,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": null
+          }
+        ],
+        "inputs": {
+          "searchId": "subscription-10",
+          "scope": [
+            "."
+          ],
+          "inventoryComplete": true,
+          "files": {
+            "discovered": 5,
+            "eligible": 5,
+            "excludedByReason": {},
+            "unreadable": 0,
+            "changedBeforeReturn": 0
+          },
+          "fragments": {
+            "total": 5,
+            "remoteEvaluated": 5,
+            "cacheReused": 0,
+            "notEvaluated": 0,
+            "belowThreshold": 5,
+            "aboveThreshold": 0,
+            "omittedStale": 0
+          },
+          "threshold": 0.5,
+          "duplicateRangesCollapsed": 0,
+          "usage": {
+            "providerRequestAttempts": 1,
+            "inputTokensKnownSubtotal": 1257,
+            "inputTokensEstimated": 1257,
+            "estimatedCostUsd": 0.000052794,
+            "reportedCostUsd": null,
+            "attemptsWithUnknownUsage": 0,
+            "transmittedBytes": 4662,
+            "elapsedMs": 227
+          },
+          "preflight": {
+            "plannedRemoteFragments": 5,
+            "plannedCacheHits": 0,
+            "estimatedFirstAttemptTokens": 1012,
+            "estimatedFirstAttemptCostUsd": 0.000042504,
+            "estimatedFirstAttemptRequests": 1,
+            "enabledCaps": {
+              "estimated_input_tokens": 170949,
+              "request_attempts": 41
+            },
+            "estimatedRequiredCaps": {
+              "estimated_input_tokens": 1012,
+              "request_attempts": 1
+            }
+          },
+          "requestedTokens": 4000,
+          "counterId": "tiktoken@1.0.22/cl100k_base",
+          "stopReasons": [],
+          "diagnosticsTruncated": false
+        }
+      }
+    },
+    {
+      "id": "migration-01",
+      "source": "migration-audit",
+      "pool": {
+        "version": 1,
+        "searchId": "migration-01",
+        "query": "How is the timestamp cutoff for expired audit events calculated?",
+        "scope": [
+          "."
+        ],
+        "versions": {
+          "adapter": "vercel-ai-gateway",
+          "model": "typesafe-ai/jev",
+          "criterion": "criterion-1",
+          "layout": "layout-a-1",
+          "counter": "tiktoken@1.0.22/cl100k_base"
+        },
+        "threshold": 0.5,
+        "requestedTokens": 4000,
+        "availableTokens": 3095,
+        "candidates": [
+          {
+            "id": "config/retention.json#L1-L4",
+            "path": "config/retention.json",
+            "sha256": "a65d163496d098156ab413a7165af38725063392b748b2633bb738ed85f943a3",
+            "startLine": 1,
+            "endLine": 4,
+            "score": 0.82,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "migrations/001_create_audit.sql#L1-L7",
+            "path": "migrations/001_create_audit.sql",
+            "sha256": "35a34e07ca9d638c528071193e52f3239b59b4ebdff094d9befe716ae9ab5d74",
+            "startLine": 1,
+            "endLine": 7,
+            "score": 0.19,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "package.json#L1-L1",
+            "path": "package.json",
+            "sha256": "2b7406d8aed381b75be0429c216c63c73f21f0708f1c933be7861740cdc9fb03",
+            "startLine": 1,
+            "endLine": 1,
+            "score": 0.05,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "src/job.ts#L1-L5",
+            "path": "src/job.ts",
+            "sha256": "2f693ca46ee3f86b79b0659d8becf609fe06e6854d301350dc69dab8ce8f58a3",
+            "startLine": 1,
+            "endLine": 5,
+            "score": 0.9,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": "function:planDeletion"
+          },
+          {
+            "id": "src/retention.ts#L1-L14",
+            "path": "src/retention.ts",
+            "sha256": "1b6fd8510271229eed4aada72ac17e20ced998821db16a214bb49abf6da0f237",
+            "startLine": 1,
+            "endLine": 14,
+            "score": 0.97,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": "type:AuditEvent"
+          }
+        ],
+        "inputs": {
+          "searchId": "migration-01",
+          "scope": [
+            "."
+          ],
+          "inventoryComplete": true,
+          "files": {
+            "discovered": 5,
+            "eligible": 5,
+            "excludedByReason": {},
+            "unreadable": 0,
+            "changedBeforeReturn": 0
+          },
+          "fragments": {
+            "total": 5,
+            "remoteEvaluated": 5,
+            "cacheReused": 0,
+            "notEvaluated": 0,
+            "belowThreshold": 2,
+            "aboveThreshold": 3,
+            "omittedStale": 0
+          },
+          "threshold": 0.5,
+          "duplicateRangesCollapsed": 0,
+          "usage": {
+            "providerRequestAttempts": 1,
+            "inputTokensKnownSubtotal": 1216,
+            "inputTokensEstimated": 1216,
+            "estimatedCostUsd": 0.000051072,
+            "reportedCostUsd": null,
+            "attemptsWithUnknownUsage": 0,
+            "transmittedBytes": 4439,
+            "elapsedMs": 207
+          },
+          "preflight": {
+            "plannedRemoteFragments": 5,
+            "plannedCacheHits": 0,
+            "estimatedFirstAttemptTokens": 966,
+            "estimatedFirstAttemptCostUsd": 0.000040572,
+            "estimatedFirstAttemptRequests": 1,
+            "enabledCaps": {
+              "estimated_input_tokens": 169692,
+              "request_attempts": 40
+            },
+            "estimatedRequiredCaps": {
+              "estimated_input_tokens": 966,
+              "request_attempts": 1
+            }
+          },
+          "requestedTokens": 4000,
+          "counterId": "tiktoken@1.0.22/cl100k_base",
+          "stopReasons": [],
+          "diagnosticsTruncated": false
+        }
+      }
+    },
+    {
+      "id": "migration-02",
+      "source": "migration-audit",
+      "pool": {
+        "version": 1,
+        "searchId": "migration-02",
+        "query": "Which records are considered old enough to remove?",
+        "scope": [
+          "."
+        ],
+        "versions": {
+          "adapter": "vercel-ai-gateway",
+          "model": "typesafe-ai/jev",
+          "criterion": "criterion-1",
+          "layout": "layout-a-1",
+          "counter": "tiktoken@1.0.22/cl100k_base"
+        },
+        "threshold": 0.5,
+        "requestedTokens": 4000,
+        "availableTokens": 3095,
+        "candidates": [
+          {
+            "id": "config/retention.json#L1-L4",
+            "path": "config/retention.json",
+            "sha256": "a65d163496d098156ab413a7165af38725063392b748b2633bb738ed85f943a3",
+            "startLine": 1,
+            "endLine": 4,
+            "score": 0.84,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "migrations/001_create_audit.sql#L1-L7",
+            "path": "migrations/001_create_audit.sql",
+            "sha256": "35a34e07ca9d638c528071193e52f3239b59b4ebdff094d9befe716ae9ab5d74",
+            "startLine": 1,
+            "endLine": 7,
+            "score": 0.2,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "package.json#L1-L1",
+            "path": "package.json",
+            "sha256": "2b7406d8aed381b75be0429c216c63c73f21f0708f1c933be7861740cdc9fb03",
+            "startLine": 1,
+            "endLine": 1,
+            "score": 0.06,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "src/job.ts#L1-L5",
+            "path": "src/job.ts",
+            "sha256": "2f693ca46ee3f86b79b0659d8becf609fe06e6854d301350dc69dab8ce8f58a3",
+            "startLine": 1,
+            "endLine": 5,
+            "score": 0.9,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": "function:planDeletion"
+          },
+          {
+            "id": "src/retention.ts#L1-L14",
+            "path": "src/retention.ts",
+            "sha256": "1b6fd8510271229eed4aada72ac17e20ced998821db16a214bb49abf6da0f237",
+            "startLine": 1,
+            "endLine": 14,
+            "score": 0.96,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": "type:AuditEvent"
+          }
+        ],
+        "inputs": {
+          "searchId": "migration-02",
+          "scope": [
+            "."
+          ],
+          "inventoryComplete": true,
+          "files": {
+            "discovered": 5,
+            "eligible": 5,
+            "excludedByReason": {},
+            "unreadable": 0,
+            "changedBeforeReturn": 0
+          },
+          "fragments": {
+            "total": 5,
+            "remoteEvaluated": 5,
+            "cacheReused": 0,
+            "notEvaluated": 0,
+            "belowThreshold": 2,
+            "aboveThreshold": 3,
+            "omittedStale": 0
+          },
+          "threshold": 0.5,
+          "duplicateRangesCollapsed": 0,
+          "usage": {
+            "providerRequestAttempts": 1,
+            "inputTokensKnownSubtotal": 1214,
+            "inputTokensEstimated": 1214,
+            "estimatedCostUsd": 0.000050988,
+            "reportedCostUsd": null,
+            "attemptsWithUnknownUsage": 0,
+            "transmittedBytes": 4425,
+            "elapsedMs": 213
+          },
+          "preflight": {
+            "plannedRemoteFragments": 5,
+            "plannedCacheHits": 0,
+            "estimatedFirstAttemptTokens": 964,
+            "estimatedFirstAttemptCostUsd": 0.000040488,
+            "estimatedFirstAttemptRequests": 1,
+            "enabledCaps": {
+              "estimated_input_tokens": 168476,
+              "request_attempts": 39
+            },
+            "estimatedRequiredCaps": {
+              "estimated_input_tokens": 964,
+              "request_attempts": 1
+            }
+          },
+          "requestedTokens": 4000,
+          "counterId": "tiktoken@1.0.22/cl100k_base",
+          "stopReasons": [],
+          "diagnosticsTruncated": false
+        }
+      }
+    },
+    {
+      "id": "migration-03",
+      "source": "migration-audit",
+      "pool": {
+        "version": 1,
+        "searchId": "migration-03",
+        "query": "Find the implementation of planDeletion.",
+        "scope": [
+          "."
+        ],
+        "versions": {
+          "adapter": "vercel-ai-gateway",
+          "model": "typesafe-ai/jev",
+          "criterion": "criterion-1",
+          "layout": "layout-a-1",
+          "counter": "tiktoken@1.0.22/cl100k_base"
+        },
+        "threshold": 0.5,
+        "requestedTokens": 4000,
+        "availableTokens": 3095,
+        "candidates": [
+          {
+            "id": "config/retention.json#L1-L4",
+            "path": "config/retention.json",
+            "sha256": "a65d163496d098156ab413a7165af38725063392b748b2633bb738ed85f943a3",
+            "startLine": 1,
+            "endLine": 4,
+            "score": 0.47,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "migrations/001_create_audit.sql#L1-L7",
+            "path": "migrations/001_create_audit.sql",
+            "sha256": "35a34e07ca9d638c528071193e52f3239b59b4ebdff094d9befe716ae9ab5d74",
+            "startLine": 1,
+            "endLine": 7,
+            "score": 0.06,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "package.json#L1-L1",
+            "path": "package.json",
+            "sha256": "2b7406d8aed381b75be0429c216c63c73f21f0708f1c933be7861740cdc9fb03",
+            "startLine": 1,
+            "endLine": 1,
+            "score": 0.06,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "src/job.ts#L1-L5",
+            "path": "src/job.ts",
+            "sha256": "2f693ca46ee3f86b79b0659d8becf609fe06e6854d301350dc69dab8ce8f58a3",
+            "startLine": 1,
+            "endLine": 5,
+            "score": 0.97,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": "function:planDeletion"
+          },
+          {
+            "id": "src/retention.ts#L1-L14",
+            "path": "src/retention.ts",
+            "sha256": "1b6fd8510271229eed4aada72ac17e20ced998821db16a214bb49abf6da0f237",
+            "startLine": 1,
+            "endLine": 14,
+            "score": 0.18,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": "type:AuditEvent"
+          }
+        ],
+        "inputs": {
+          "searchId": "migration-03",
+          "scope": [
+            "."
+          ],
+          "inventoryComplete": true,
+          "files": {
+            "discovered": 5,
+            "eligible": 5,
+            "excludedByReason": {},
+            "unreadable": 0,
+            "changedBeforeReturn": 0
+          },
+          "fragments": {
+            "total": 5,
+            "remoteEvaluated": 5,
+            "cacheReused": 0,
+            "notEvaluated": 0,
+            "belowThreshold": 4,
+            "aboveThreshold": 1,
+            "omittedStale": 0
+          },
+          "threshold": 0.5,
+          "duplicateRangesCollapsed": 0,
+          "usage": {
+            "providerRequestAttempts": 1,
+            "inputTokensKnownSubtotal": 1214,
+            "inputTokensEstimated": 1214,
+            "estimatedCostUsd": 0.000050988,
+            "reportedCostUsd": null,
+            "attemptsWithUnknownUsage": 0,
+            "transmittedBytes": 4415,
+            "elapsedMs": 218
+          },
+          "preflight": {
+            "plannedRemoteFragments": 5,
+            "plannedCacheHits": 0,
+            "estimatedFirstAttemptTokens": 962,
+            "estimatedFirstAttemptCostUsd": 0.000040404,
+            "estimatedFirstAttemptRequests": 1,
+            "enabledCaps": {
+              "estimated_input_tokens": 167262,
+              "request_attempts": 38
+            },
+            "estimatedRequiredCaps": {
+              "estimated_input_tokens": 962,
+              "request_attempts": 1
+            }
+          },
+          "requestedTokens": 4000,
+          "counterId": "tiktoken@1.0.22/cl100k_base",
+          "stopReasons": [],
+          "diagnosticsTruncated": false
+        }
+      }
+    },
+    {
+      "id": "migration-04",
+      "source": "migration-audit",
+      "pool": {
+        "version": 1,
+        "searchId": "migration-04",
+        "query": "Trace how the deletion job selects expired events and splits their identifiers into batches.",
+        "scope": [
+          "."
+        ],
+        "versions": {
+          "adapter": "vercel-ai-gateway",
+          "model": "typesafe-ai/jev",
+          "criterion": "criterion-1",
+          "layout": "layout-a-1",
+          "counter": "tiktoken@1.0.22/cl100k_base"
+        },
+        "threshold": 0.5,
+        "requestedTokens": 4000,
+        "availableTokens": 3095,
+        "candidates": [
+          {
+            "id": "config/retention.json#L1-L4",
+            "path": "config/retention.json",
+            "sha256": "a65d163496d098156ab413a7165af38725063392b748b2633bb738ed85f943a3",
+            "startLine": 1,
+            "endLine": 4,
+            "score": 0.82,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "migrations/001_create_audit.sql#L1-L7",
+            "path": "migrations/001_create_audit.sql",
+            "sha256": "35a34e07ca9d638c528071193e52f3239b59b4ebdff094d9befe716ae9ab5d74",
+            "startLine": 1,
+            "endLine": 7,
+            "score": 0.26,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "package.json#L1-L1",
+            "path": "package.json",
+            "sha256": "2b7406d8aed381b75be0429c216c63c73f21f0708f1c933be7861740cdc9fb03",
+            "startLine": 1,
+            "endLine": 1,
+            "score": 0.05,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "src/job.ts#L1-L5",
+            "path": "src/job.ts",
+            "sha256": "2f693ca46ee3f86b79b0659d8becf609fe06e6854d301350dc69dab8ce8f58a3",
+            "startLine": 1,
+            "endLine": 5,
+            "score": 0.96,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": "function:planDeletion"
+          },
+          {
+            "id": "src/retention.ts#L1-L14",
+            "path": "src/retention.ts",
+            "sha256": "1b6fd8510271229eed4aada72ac17e20ced998821db16a214bb49abf6da0f237",
+            "startLine": 1,
+            "endLine": 14,
+            "score": 0.97,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": "type:AuditEvent"
+          }
+        ],
+        "inputs": {
+          "searchId": "migration-04",
+          "scope": [
+            "."
+          ],
+          "inventoryComplete": true,
+          "files": {
+            "discovered": 5,
+            "eligible": 5,
+            "excludedByReason": {},
+            "unreadable": 0,
+            "changedBeforeReturn": 0
+          },
+          "fragments": {
+            "total": 5,
+            "remoteEvaluated": 5,
+            "cacheReused": 0,
+            "notEvaluated": 0,
+            "belowThreshold": 2,
+            "aboveThreshold": 3,
+            "omittedStale": 0
+          },
+          "threshold": 0.5,
+          "duplicateRangesCollapsed": 0,
+          "usage": {
+            "providerRequestAttempts": 1,
+            "inputTokensKnownSubtotal": 1220,
+            "inputTokensEstimated": 1220,
+            "estimatedCostUsd": 0.00005124,
+            "reportedCostUsd": null,
+            "attemptsWithUnknownUsage": 0,
+            "transmittedBytes": 4467,
+            "elapsedMs": 170
+          },
+          "preflight": {
+            "plannedRemoteFragments": 5,
+            "plannedCacheHits": 0,
+            "estimatedFirstAttemptTokens": 969,
+            "estimatedFirstAttemptCostUsd": 0.000040698,
+            "estimatedFirstAttemptRequests": 1,
+            "enabledCaps": {
+              "estimated_input_tokens": 166048,
+              "request_attempts": 37
+            },
+            "estimatedRequiredCaps": {
+              "estimated_input_tokens": 969,
+              "request_attempts": 1
+            }
+          },
+          "requestedTokens": 4000,
+          "counterId": "tiktoken@1.0.22/cl100k_base",
+          "stopReasons": [],
+          "diagnosticsTruncated": false
+        }
+      }
+    },
+    {
+      "id": "migration-05",
+      "source": "migration-audit",
+      "pool": {
+        "version": 1,
+        "searchId": "migration-05",
+        "query": "Where are auditDays and deleteBatchSize declared in configuration?",
+        "scope": [
+          "."
+        ],
+        "versions": {
+          "adapter": "vercel-ai-gateway",
+          "model": "typesafe-ai/jev",
+          "criterion": "criterion-1",
+          "layout": "layout-a-1",
+          "counter": "tiktoken@1.0.22/cl100k_base"
+        },
+        "threshold": 0.5,
+        "requestedTokens": 4000,
+        "availableTokens": 3095,
+        "candidates": [
+          {
+            "id": "config/retention.json#L1-L4",
+            "path": "config/retention.json",
+            "sha256": "a65d163496d098156ab413a7165af38725063392b748b2633bb738ed85f943a3",
+            "startLine": 1,
+            "endLine": 4,
+            "score": 0.95,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "migrations/001_create_audit.sql#L1-L7",
+            "path": "migrations/001_create_audit.sql",
+            "sha256": "35a34e07ca9d638c528071193e52f3239b59b4ebdff094d9befe716ae9ab5d74",
+            "startLine": 1,
+            "endLine": 7,
+            "score": 0.07,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "package.json#L1-L1",
+            "path": "package.json",
+            "sha256": "2b7406d8aed381b75be0429c216c63c73f21f0708f1c933be7861740cdc9fb03",
+            "startLine": 1,
+            "endLine": 1,
+            "score": 0.09,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "src/job.ts#L1-L5",
+            "path": "src/job.ts",
+            "sha256": "2f693ca46ee3f86b79b0659d8becf609fe06e6854d301350dc69dab8ce8f58a3",
+            "startLine": 1,
+            "endLine": 5,
+            "score": 0.35,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": "function:planDeletion"
+          },
+          {
+            "id": "src/retention.ts#L1-L14",
+            "path": "src/retention.ts",
+            "sha256": "1b6fd8510271229eed4aada72ac17e20ced998821db16a214bb49abf6da0f237",
+            "startLine": 1,
+            "endLine": 14,
+            "score": 0.14,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": "type:AuditEvent"
+          }
+        ],
+        "inputs": {
+          "searchId": "migration-05",
+          "scope": [
+            "."
+          ],
+          "inventoryComplete": true,
+          "files": {
+            "discovered": 5,
+            "eligible": 5,
+            "excludedByReason": {},
+            "unreadable": 0,
+            "changedBeforeReturn": 0
+          },
+          "fragments": {
+            "total": 5,
+            "remoteEvaluated": 5,
+            "cacheReused": 0,
+            "notEvaluated": 0,
+            "belowThreshold": 4,
+            "aboveThreshold": 1,
+            "omittedStale": 0
+          },
+          "threshold": 0.5,
+          "duplicateRangesCollapsed": 0,
+          "usage": {
+            "providerRequestAttempts": 1,
+            "inputTokensKnownSubtotal": 1220,
+            "inputTokensEstimated": 1220,
+            "estimatedCostUsd": 0.00005124,
+            "reportedCostUsd": null,
+            "attemptsWithUnknownUsage": 0,
+            "transmittedBytes": 4441,
+            "elapsedMs": 159
+          },
+          "preflight": {
+            "plannedRemoteFragments": 5,
+            "plannedCacheHits": 0,
+            "estimatedFirstAttemptTokens": 967,
+            "estimatedFirstAttemptCostUsd": 0.000040614,
+            "estimatedFirstAttemptRequests": 1,
+            "enabledCaps": {
+              "estimated_input_tokens": 164828,
+              "request_attempts": 36
+            },
+            "estimatedRequiredCaps": {
+              "estimated_input_tokens": 967,
+              "request_attempts": 1
+            }
+          },
+          "requestedTokens": 4000,
+          "counterId": "tiktoken@1.0.22/cl100k_base",
+          "stopReasons": [],
+          "diagnosticsTruncated": false
+        }
+      }
+    },
+    {
+      "id": "migration-06",
+      "source": "migration-audit",
+      "pool": {
+        "version": 1,
+        "searchId": "migration-06",
+        "query": "Where is the SQL index on audit event creation timestamps defined?",
+        "scope": [
+          "."
+        ],
+        "versions": {
+          "adapter": "vercel-ai-gateway",
+          "model": "typesafe-ai/jev",
+          "criterion": "criterion-1",
+          "layout": "layout-a-1",
+          "counter": "tiktoken@1.0.22/cl100k_base"
+        },
+        "threshold": 0.5,
+        "requestedTokens": 4000,
+        "availableTokens": 3095,
+        "candidates": [
+          {
+            "id": "config/retention.json#L1-L4",
+            "path": "config/retention.json",
+            "sha256": "a65d163496d098156ab413a7165af38725063392b748b2633bb738ed85f943a3",
+            "startLine": 1,
+            "endLine": 4,
+            "score": 0.1,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "migrations/001_create_audit.sql#L1-L7",
+            "path": "migrations/001_create_audit.sql",
+            "sha256": "35a34e07ca9d638c528071193e52f3239b59b4ebdff094d9befe716ae9ab5d74",
+            "startLine": 1,
+            "endLine": 7,
+            "score": 0.96,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "package.json#L1-L1",
+            "path": "package.json",
+            "sha256": "2b7406d8aed381b75be0429c216c63c73f21f0708f1c933be7861740cdc9fb03",
+            "startLine": 1,
+            "endLine": 1,
+            "score": 0.05,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "src/job.ts#L1-L5",
+            "path": "src/job.ts",
+            "sha256": "2f693ca46ee3f86b79b0659d8becf609fe06e6854d301350dc69dab8ce8f58a3",
+            "startLine": 1,
+            "endLine": 5,
+            "score": 0.1,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": "function:planDeletion"
+          },
+          {
+            "id": "src/retention.ts#L1-L14",
+            "path": "src/retention.ts",
+            "sha256": "1b6fd8510271229eed4aada72ac17e20ced998821db16a214bb49abf6da0f237",
+            "startLine": 1,
+            "endLine": 14,
+            "score": 0.18,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": "type:AuditEvent"
+          }
+        ],
+        "inputs": {
+          "searchId": "migration-06",
+          "scope": [
+            "."
+          ],
+          "inventoryComplete": true,
+          "files": {
+            "discovered": 5,
+            "eligible": 5,
+            "excludedByReason": {},
+            "unreadable": 0,
+            "changedBeforeReturn": 0
+          },
+          "fragments": {
+            "total": 5,
+            "remoteEvaluated": 5,
+            "cacheReused": 0,
+            "notEvaluated": 0,
+            "belowThreshold": 4,
+            "aboveThreshold": 1,
+            "omittedStale": 0
+          },
+          "threshold": 0.5,
+          "duplicateRangesCollapsed": 0,
+          "usage": {
+            "providerRequestAttempts": 1,
+            "inputTokensKnownSubtotal": 1217,
+            "inputTokensEstimated": 1217,
+            "estimatedCostUsd": 0.000051114,
+            "reportedCostUsd": null,
+            "attemptsWithUnknownUsage": 0,
+            "transmittedBytes": 4441,
+            "elapsedMs": 174
+          },
+          "preflight": {
+            "plannedRemoteFragments": 5,
+            "plannedCacheHits": 0,
+            "estimatedFirstAttemptTokens": 967,
+            "estimatedFirstAttemptCostUsd": 0.000040614,
+            "estimatedFirstAttemptRequests": 1,
+            "enabledCaps": {
+              "estimated_input_tokens": 163608,
+              "request_attempts": 35
+            },
+            "estimatedRequiredCaps": {
+              "estimated_input_tokens": 967,
+              "request_attempts": 1
+            }
+          },
+          "requestedTokens": 4000,
+          "counterId": "tiktoken@1.0.22/cl100k_base",
+          "stopReasons": [],
+          "diagnosticsTruncated": false
+        }
+      }
+    },
+    {
+      "id": "migration-07",
+      "source": "migration-audit",
+      "pool": {
+        "version": 1,
+        "searchId": "migration-07",
+        "query": "Show the declared retention settings and the values actually used by the deletion planner.",
+        "scope": [
+          "."
+        ],
+        "versions": {
+          "adapter": "vercel-ai-gateway",
+          "model": "typesafe-ai/jev",
+          "criterion": "criterion-1",
+          "layout": "layout-a-1",
+          "counter": "tiktoken@1.0.22/cl100k_base"
+        },
+        "threshold": 0.5,
+        "requestedTokens": 4000,
+        "availableTokens": 3095,
+        "candidates": [
+          {
+            "id": "config/retention.json#L1-L4",
+            "path": "config/retention.json",
+            "sha256": "a65d163496d098156ab413a7165af38725063392b748b2633bb738ed85f943a3",
+            "startLine": 1,
+            "endLine": 4,
+            "score": 0.8,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "migrations/001_create_audit.sql#L1-L7",
+            "path": "migrations/001_create_audit.sql",
+            "sha256": "35a34e07ca9d638c528071193e52f3239b59b4ebdff094d9befe716ae9ab5d74",
+            "startLine": 1,
+            "endLine": 7,
+            "score": 0.09,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "package.json#L1-L1",
+            "path": "package.json",
+            "sha256": "2b7406d8aed381b75be0429c216c63c73f21f0708f1c933be7861740cdc9fb03",
+            "startLine": 1,
+            "endLine": 1,
+            "score": 0.05,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "src/job.ts#L1-L5",
+            "path": "src/job.ts",
+            "sha256": "2f693ca46ee3f86b79b0659d8becf609fe06e6854d301350dc69dab8ce8f58a3",
+            "startLine": 1,
+            "endLine": 5,
+            "score": 0.9,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": "function:planDeletion"
+          },
+          {
+            "id": "src/retention.ts#L1-L14",
+            "path": "src/retention.ts",
+            "sha256": "1b6fd8510271229eed4aada72ac17e20ced998821db16a214bb49abf6da0f237",
+            "startLine": 1,
+            "endLine": 14,
+            "score": 0.72,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": "type:AuditEvent"
+          }
+        ],
+        "inputs": {
+          "searchId": "migration-07",
+          "scope": [
+            "."
+          ],
+          "inventoryComplete": true,
+          "files": {
+            "discovered": 5,
+            "eligible": 5,
+            "excludedByReason": {},
+            "unreadable": 0,
+            "changedBeforeReturn": 0
+          },
+          "fragments": {
+            "total": 5,
+            "remoteEvaluated": 5,
+            "cacheReused": 0,
+            "notEvaluated": 0,
+            "belowThreshold": 2,
+            "aboveThreshold": 3,
+            "omittedStale": 0
+          },
+          "threshold": 0.5,
+          "duplicateRangesCollapsed": 0,
+          "usage": {
+            "providerRequestAttempts": 1,
+            "inputTokensKnownSubtotal": 1220,
+            "inputTokensEstimated": 1220,
+            "estimatedCostUsd": 0.00005124,
+            "reportedCostUsd": null,
+            "attemptsWithUnknownUsage": 0,
+            "transmittedBytes": 4465,
+            "elapsedMs": 210
+          },
+          "preflight": {
+            "plannedRemoteFragments": 5,
+            "plannedCacheHits": 0,
+            "estimatedFirstAttemptTokens": 969,
+            "estimatedFirstAttemptCostUsd": 0.000040698,
+            "estimatedFirstAttemptRequests": 1,
+            "enabledCaps": {
+              "estimated_input_tokens": 162391,
+              "request_attempts": 34
+            },
+            "estimatedRequiredCaps": {
+              "estimated_input_tokens": 969,
+              "request_attempts": 1
+            }
+          },
+          "requestedTokens": 4000,
+          "counterId": "tiktoken@1.0.22/cl100k_base",
+          "stopReasons": [],
+          "diagnosticsTruncated": false
+        }
+      }
+    },
+    {
+      "id": "migration-08",
+      "source": "migration-audit",
+      "pool": {
+        "version": 1,
+        "searchId": "migration-08",
+        "query": "How are identifiers partitioned into bounded groups for deletion?",
+        "scope": [
+          "."
+        ],
+        "versions": {
+          "adapter": "vercel-ai-gateway",
+          "model": "typesafe-ai/jev",
+          "criterion": "criterion-1",
+          "layout": "layout-a-1",
+          "counter": "tiktoken@1.0.22/cl100k_base"
+        },
+        "threshold": 0.5,
+        "requestedTokens": 4000,
+        "availableTokens": 3095,
+        "candidates": [
+          {
+            "id": "config/retention.json#L1-L4",
+            "path": "config/retention.json",
+            "sha256": "a65d163496d098156ab413a7165af38725063392b748b2633bb738ed85f943a3",
+            "startLine": 1,
+            "endLine": 4,
+            "score": 0.79,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "migrations/001_create_audit.sql#L1-L7",
+            "path": "migrations/001_create_audit.sql",
+            "sha256": "35a34e07ca9d638c528071193e52f3239b59b4ebdff094d9befe716ae9ab5d74",
+            "startLine": 1,
+            "endLine": 7,
+            "score": 0.07,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "package.json#L1-L1",
+            "path": "package.json",
+            "sha256": "2b7406d8aed381b75be0429c216c63c73f21f0708f1c933be7861740cdc9fb03",
+            "startLine": 1,
+            "endLine": 1,
+            "score": 0.03,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "src/job.ts#L1-L5",
+            "path": "src/job.ts",
+            "sha256": "2f693ca46ee3f86b79b0659d8becf609fe06e6854d301350dc69dab8ce8f58a3",
+            "startLine": 1,
+            "endLine": 5,
+            "score": 0.94,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": "function:planDeletion"
+          },
+          {
+            "id": "src/retention.ts#L1-L14",
+            "path": "src/retention.ts",
+            "sha256": "1b6fd8510271229eed4aada72ac17e20ced998821db16a214bb49abf6da0f237",
+            "startLine": 1,
+            "endLine": 14,
+            "score": 0.95,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": "type:AuditEvent"
+          }
+        ],
+        "inputs": {
+          "searchId": "migration-08",
+          "scope": [
+            "."
+          ],
+          "inventoryComplete": true,
+          "files": {
+            "discovered": 5,
+            "eligible": 5,
+            "excludedByReason": {},
+            "unreadable": 0,
+            "changedBeforeReturn": 0
+          },
+          "fragments": {
+            "total": 5,
+            "remoteEvaluated": 5,
+            "cacheReused": 0,
+            "notEvaluated": 0,
+            "belowThreshold": 2,
+            "aboveThreshold": 3,
+            "omittedStale": 0
+          },
+          "threshold": 0.5,
+          "duplicateRangesCollapsed": 0,
+          "usage": {
+            "providerRequestAttempts": 1,
+            "inputTokensKnownSubtotal": 1217,
+            "inputTokensEstimated": 1217,
+            "estimatedCostUsd": 0.000051114,
+            "reportedCostUsd": null,
+            "attemptsWithUnknownUsage": 0,
+            "transmittedBytes": 4440,
+            "elapsedMs": 243
+          },
+          "preflight": {
+            "plannedRemoteFragments": 5,
+            "plannedCacheHits": 0,
+            "estimatedFirstAttemptTokens": 966,
+            "estimatedFirstAttemptCostUsd": 0.000040572,
+            "estimatedFirstAttemptRequests": 1,
+            "enabledCaps": {
+              "estimated_input_tokens": 161171,
+              "request_attempts": 33
+            },
+            "estimatedRequiredCaps": {
+              "estimated_input_tokens": 966,
+              "request_attempts": 1
+            }
+          },
+          "requestedTokens": 4000,
+          "counterId": "tiktoken@1.0.22/cl100k_base",
+          "stopReasons": [],
+          "diagnosticsTruncated": false
+        }
+      }
+    },
+    {
+      "id": "migration-09",
+      "source": "migration-audit",
+      "pool": {
+        "version": 1,
+        "searchId": "migration-09",
+        "query": "Where does the deletion job execute a SQL DELETE against the database?",
+        "scope": [
+          "."
+        ],
+        "versions": {
+          "adapter": "vercel-ai-gateway",
+          "model": "typesafe-ai/jev",
+          "criterion": "criterion-1",
+          "layout": "layout-a-1",
+          "counter": "tiktoken@1.0.22/cl100k_base"
+        },
+        "threshold": 0.5,
+        "requestedTokens": 4000,
+        "availableTokens": 3095,
+        "candidates": [
+          {
+            "id": "config/retention.json#L1-L4",
+            "path": "config/retention.json",
+            "sha256": "a65d163496d098156ab413a7165af38725063392b748b2633bb738ed85f943a3",
+            "startLine": 1,
+            "endLine": 4,
+            "score": 0.23,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "migrations/001_create_audit.sql#L1-L7",
+            "path": "migrations/001_create_audit.sql",
+            "sha256": "35a34e07ca9d638c528071193e52f3239b59b4ebdff094d9befe716ae9ab5d74",
+            "startLine": 1,
+            "endLine": 7,
+            "score": 0.06,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "package.json#L1-L1",
+            "path": "package.json",
+            "sha256": "2b7406d8aed381b75be0429c216c63c73f21f0708f1c933be7861740cdc9fb03",
+            "startLine": 1,
+            "endLine": 1,
+            "score": 0.06,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "src/job.ts#L1-L5",
+            "path": "src/job.ts",
+            "sha256": "2f693ca46ee3f86b79b0659d8becf609fe06e6854d301350dc69dab8ce8f58a3",
+            "startLine": 1,
+            "endLine": 5,
+            "score": 0.3,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": "function:planDeletion"
+          },
+          {
+            "id": "src/retention.ts#L1-L14",
+            "path": "src/retention.ts",
+            "sha256": "1b6fd8510271229eed4aada72ac17e20ced998821db16a214bb49abf6da0f237",
+            "startLine": 1,
+            "endLine": 14,
+            "score": 0.14,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": "type:AuditEvent"
+          }
+        ],
+        "inputs": {
+          "searchId": "migration-09",
+          "scope": [
+            "."
+          ],
+          "inventoryComplete": true,
+          "files": {
+            "discovered": 5,
+            "eligible": 5,
+            "excludedByReason": {},
+            "unreadable": 0,
+            "changedBeforeReturn": 0
+          },
+          "fragments": {
+            "total": 5,
+            "remoteEvaluated": 5,
+            "cacheReused": 0,
+            "notEvaluated": 0,
+            "belowThreshold": 5,
+            "aboveThreshold": 0,
+            "omittedStale": 0
+          },
+          "threshold": 0.5,
+          "duplicateRangesCollapsed": 0,
+          "usage": {
+            "providerRequestAttempts": 1,
+            "inputTokensKnownSubtotal": 1218,
+            "inputTokensEstimated": 1218,
+            "estimatedCostUsd": 0.000051156,
+            "reportedCostUsd": null,
+            "attemptsWithUnknownUsage": 0,
+            "transmittedBytes": 4445,
+            "elapsedMs": 280
+          },
+          "preflight": {
+            "plannedRemoteFragments": 5,
+            "plannedCacheHits": 0,
+            "estimatedFirstAttemptTokens": 968,
+            "estimatedFirstAttemptCostUsd": 0.000040656,
+            "estimatedFirstAttemptRequests": 1,
+            "enabledCaps": {
+              "estimated_input_tokens": 159954,
+              "request_attempts": 32
+            },
+            "estimatedRequiredCaps": {
+              "estimated_input_tokens": 968,
+              "request_attempts": 1
+            }
+          },
+          "requestedTokens": 4000,
+          "counterId": "tiktoken@1.0.22/cl100k_base",
+          "stopReasons": [],
+          "diagnosticsTruncated": false
+        }
+      }
+    },
+    {
+      "id": "migration-10",
+      "source": "migration-audit",
+      "pool": {
+        "version": 1,
+        "searchId": "migration-10",
+        "query": "Where are deleted audit events archived to object storage?",
+        "scope": [
+          "."
+        ],
+        "versions": {
+          "adapter": "vercel-ai-gateway",
+          "model": "typesafe-ai/jev",
+          "criterion": "criterion-1",
+          "layout": "layout-a-1",
+          "counter": "tiktoken@1.0.22/cl100k_base"
+        },
+        "threshold": 0.5,
+        "requestedTokens": 4000,
+        "availableTokens": 3095,
+        "candidates": [
+          {
+            "id": "config/retention.json#L1-L4",
+            "path": "config/retention.json",
+            "sha256": "a65d163496d098156ab413a7165af38725063392b748b2633bb738ed85f943a3",
+            "startLine": 1,
+            "endLine": 4,
+            "score": 0.2,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "migrations/001_create_audit.sql#L1-L7",
+            "path": "migrations/001_create_audit.sql",
+            "sha256": "35a34e07ca9d638c528071193e52f3239b59b4ebdff094d9befe716ae9ab5d74",
+            "startLine": 1,
+            "endLine": 7,
+            "score": 0.1,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "package.json#L1-L1",
+            "path": "package.json",
+            "sha256": "2b7406d8aed381b75be0429c216c63c73f21f0708f1c933be7861740cdc9fb03",
+            "startLine": 1,
+            "endLine": 1,
+            "score": 0.06,
+            "chunker": "jevgrep-line-windows-1",
+            "classification": "line-window",
+            "label": null
+          },
+          {
+            "id": "src/job.ts#L1-L5",
+            "path": "src/job.ts",
+            "sha256": "2f693ca46ee3f86b79b0659d8becf609fe06e6854d301350dc69dab8ce8f58a3",
+            "startLine": 1,
+            "endLine": 5,
+            "score": 0.25,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": "function:planDeletion"
+          },
+          {
+            "id": "src/retention.ts#L1-L14",
+            "path": "src/retention.ts",
+            "sha256": "1b6fd8510271229eed4aada72ac17e20ced998821db16a214bb49abf6da0f237",
+            "startLine": 1,
+            "endLine": 14,
+            "score": 0.13,
+            "chunker": "jevgrep-typescript-6.0.2-2",
+            "classification": "syntax-range",
+            "label": "type:AuditEvent"
+          }
+        ],
+        "inputs": {
+          "searchId": "migration-10",
+          "scope": [
+            "."
+          ],
+          "inventoryComplete": true,
+          "files": {
+            "discovered": 5,
+            "eligible": 5,
+            "excludedByReason": {},
+            "unreadable": 0,
+            "changedBeforeReturn": 0
+          },
+          "fragments": {
+            "total": 5,
+            "remoteEvaluated": 5,
+            "cacheReused": 0,
+            "notEvaluated": 0,
+            "belowThreshold": 5,
+            "aboveThreshold": 0,
+            "omittedStale": 0
+          },
+          "threshold": 0.5,
+          "duplicateRangesCollapsed": 0,
+          "usage": {
+            "providerRequestAttempts": 1,
+            "inputTokensKnownSubtotal": 1215,
+            "inputTokensEstimated": 1215,
+            "estimatedCostUsd": 0.00005103,
+            "reportedCostUsd": null,
+            "attemptsWithUnknownUsage": 0,
+            "transmittedBytes": 4433,
+            "elapsedMs": 198
+          },
+          "preflight": {
+            "plannedRemoteFragments": 5,
+            "plannedCacheHits": 0,
+            "estimatedFirstAttemptTokens": 965,
+            "estimatedFirstAttemptCostUsd": 0.00004053,
+            "estimatedFirstAttemptRequests": 1,
+            "enabledCaps": {
+              "estimated_input_tokens": 158736,
+              "request_attempts": 31
+            },
+            "estimatedRequiredCaps": {
+              "estimated_input_tokens": 965,
+              "request_attempts": 1
+            }
+          },
+          "requestedTokens": 4000,
+          "counterId": "tiktoken@1.0.22/cl100k_base",
+          "stopReasons": [],
+          "diagnosticsTruncated": false
+        }
+      }
+    }
+  ]
+}
