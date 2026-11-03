@@ -91,19 +91,20 @@ function buildGatewayInput(batch: EvaluationBatch): {
   state: Readonly<Record<string, string>>;
   questions: Readonly<Record<string, GatewayBooleanQuestion>>;
 } {
+  const criterion = batch.criterion?.text ?? RELEVANCE_CRITERION;
   const questions: Record<string, GatewayBooleanQuestion> = {};
   for (const item of batch.items) {
     questions[item.id] = {
       type: 'boolean',
       instructions: questionInstructions(item),
-      criteria: { true: RELEVANCE_CRITERION },
+      criteria: { true: criterion },
     };
   }
   return {
     state: {
       search_question: batch.query,
-      criterion: RELEVANCE_CRITERION,
-      criterion_version: CRITERION_VERSION,
+      criterion,
+      criterion_version: batch.criterion?.version ?? CRITERION_VERSION,
       layout: LAYOUT_VERSION,
     },
     questions,

@@ -24,7 +24,7 @@ export type CapturedPool = { readonly id: string; readonly source: string; reado
 export type CaptureFile = {
   readonly schemaVersion: 1;
   readonly kind: 'candidate-pools';
-  readonly capture: 'synthetic' | 'real';
+  readonly capture: 'synthetic' | 'real' | 'false-premise';
   readonly dataset: string;
   readonly split?: string;
   readonly environment: unknown;
