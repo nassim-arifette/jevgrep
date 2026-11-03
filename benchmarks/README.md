@@ -181,6 +181,35 @@ sweep of threshold, top-k and score gap including the negative questions. Replay
 The [2026-11-03 report](baselines/2026-11-03-selection-replay.md) records the first
 comparison; the captured pools are in [pools](pools/).
 
+## JS/TS chunking comparison (E1)
+
+`--chunker <arm>` on `bench:real` and `bench:retrieval` swaps how JS/TS files are
+chunked; every other file keeps the production chunker, and each arm has its own
+preparation-cache identity. The arms are defined in
+[chunking-arms.ts](../scripts/bench/chunking-arms.ts):
+
+| Arm | Boundaries | Model-visible label |
+| --- | --- | --- |
+| `line-windows` | JG-012 line windows | none |
+| `typescript-v2` | previous depth-indexed packing (`jevgrep-typescript-6.0.2-2`) | symbol that starts the range |
+| `recursive` (production) | recursive descent into oversized nodes, sibling packing | symbol that starts the range |
+| `recursive-compact` | recursive | enclosing chain, names only |
+| `recursive-enclosing` | recursive | enclosing chain with signatures and spans |
+
+Boundaries and labels are separate variables: the three `recursive*` arms produce the
+same line ranges. The JS/TS task set is `--javascript`
+([real-tasks/README.md](real-tasks/README.md#javascript-and-typescript-tasks)):
+
+```sh
+npm run bench:chunking   # offline: fragment shape and where evidence lands, no provider call
+npm run bench:real -- --javascript --chunker typescript-v2 --config <trusted-config> --split dev
+```
+
+Jev scores vary slightly between identical runs, so compare arms over several
+repetitions and per query; near-tied fragments decide many Recall@1 differences. A
+captured candidate pool cannot replay a chunking change, because the pool itself is
+made of fragments, so arms must be run live.
+
 ## Verification
 
 `npm run verify` includes tests for profile isolation and outcome equivalence, the

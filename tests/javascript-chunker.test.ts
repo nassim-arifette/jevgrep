@@ -52,9 +52,11 @@ ${statements('last', 18, '  ')}
 }
 `;
 
-test('every fragment of an oversized function names the function it belongs to', () => {
+const ENCLOSING = { javascriptContext: 'enclosing' } as const;
+
+test('with enclosing context, every fragment of an oversized function names the function', () => {
   const snapshot = snapshotOf('src/ledger.ts', LARGE_FUNCTION);
-  const fragments = fragmentsOf(chunkSnapshot(snapshot, SMALL));
+  const fragments = fragmentsOf(chunkSnapshot(snapshot, SMALL, ENCLOSING));
   assertExactAndCovered(snapshot, fragments, SMALL);
   const inside = fragments.filter((fragment) => fragment.startLine > 3);
   assert.ok(inside.length >= 3, 'the function is split recursively');
@@ -71,10 +73,15 @@ test('the signature is never left alone in its own fragment', () => {
   assert.ok(header.endLine > 4, 'the signature stays with the first statements of the body');
 });
 
-test('the local policy keeps the same boundaries and labels only symbol starts', () => {
+test('the default local policy keeps the same boundaries and labels only symbol starts', () => {
   const snapshot = snapshotOf('src/ledger.ts', LARGE_FUNCTION);
-  const enclosing = fragmentsOf(chunkSnapshot(snapshot, SMALL));
-  const local = fragmentsOf(chunkSnapshot(snapshot, SMALL, { javascriptContext: 'local' }));
+  const enclosing = fragmentsOf(chunkSnapshot(snapshot, SMALL, ENCLOSING));
+  const compact = fragmentsOf(chunkSnapshot(snapshot, SMALL, { javascriptContext: 'compact' }));
+  const local = fragmentsOf(chunkSnapshot(snapshot, SMALL));
+  assert.deepEqual(compact.map((fragment) => [fragment.startLine, fragment.endLine]), enclosing.map((fragment) => [fragment.startLine, fragment.endLine]));
+  assert.ok(compact.every((fragment) => fragment.label == null || !fragment.label.includes('(')), 'compact labels carry no signature');
+  const start = local.find((fragment) => fragment.text.includes('export async function reconcileLedger'))!;
+  assert.equal(start.label, 'function:reconcileLedger');
   assert.deepEqual(local.map((fragment) => [fragment.startLine, fragment.endLine]), enclosing.map((fragment) => [fragment.startLine, fragment.endLine]));
   assert.ok(local.filter((fragment) => fragment.label != null).length < enclosing.filter((fragment) => fragment.label != null).length);
 });
@@ -88,7 +95,7 @@ ${statements(`value${String(index)}_`, 10, '    ')}
   }`).join('\n\n');
   const text = `@injectable()\nexport class Pipeline {\n${methods}\n}\n`;
   const snapshot = snapshotOf('src/pipeline.ts', text);
-  const fragments = fragmentsOf(chunkSnapshot(snapshot, SMALL));
+  const fragments = fragmentsOf(chunkSnapshot(snapshot, SMALL, ENCLOSING));
   assertExactAndCovered(snapshot, fragments, SMALL);
   for (let index = 0; index < 4; index += 1) {
     const start = fragments.find((fragment) => fragment.text.includes(`step${String(index)}(input: number)`))!;
@@ -113,12 +120,15 @@ ${statements('c', 16, '    ')}
 });
 `;
   const snapshot = snapshotOf('src/ledger.test.js', text);
-  const fragments = fragmentsOf(chunkSnapshot(snapshot, SMALL));
+  const fragments = fragmentsOf(chunkSnapshot(snapshot, SMALL, ENCLOSING));
   assertExactAndCovered(snapshot, fragments, SMALL);
   const labelAt = (needle: string): string => fragments.find((fragment) => fragment.text.includes(needle))!.label ?? '';
   assert.match(labelAt('const a3 ='), /handleRequest\(request\)/);
   assert.match(labelAt('const b3 ='), /callback:describe\("ledger"\).*callback:it\("reconciles entries"\)/);
   assert.match(labelAt('const c3 ='), /callback:it\("rejects duplicates"\)/);
+  const local = fragmentsOf(chunkSnapshot(snapshot, SMALL));
+  assert.ok(local.some((fragment) => fragment.label === 'function:handleRequest'));
+  assert.ok(local.some((fragment) => fragment.label === 'callback:it("rejects duplicates")'));
 });
 
 test('a React component is labelled and JSX that fits stays in one fragment', () => {

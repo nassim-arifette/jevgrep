@@ -10,9 +10,11 @@
  *
  * Every range carries the chain of named symbols that encloses it (function, class,
  * method, named arrow function, component, callback, JSX element). That chain is
- * request metadata (`Structure:`), never spliced into the excerpt. The `local` policy
- * keeps the previous convention, a label only on a range that starts a symbol, so
- * boundaries and enclosing context can be compared as separate variables.
+ * request metadata (`Structure:`), never spliced into the excerpt. The default `local`
+ * policy labels a range only with the symbol it starts (the previous convention, now
+ * also for named arrow functions, components and callbacks); `enclosing` and `compact`
+ * render the whole chain so boundaries and context can be compared separately (E1).
+ * On the pinned JS/TS tasks the chain did not improve retrieval, so it is not the default.
  *
  * A file with syntax errors keeps structural ranges for the top-level statements that
  * contain no diagnostic; the statements that do are split into plain line windows. If
@@ -452,7 +454,7 @@ function localLabel(chunk: Chunk): string | null {
 export function planJavaScriptRanges(
   snapshot: SourceSnapshot,
   limits: WindowLimits,
-  policy: JavaScriptContextPolicy = 'enclosing',
+  policy: JavaScriptContextPolicy = 'local',
 ): JavaScriptPlan {
   try {
     const source = ts.createSourceFile(snapshot.relativePath, snapshot.text, ts.ScriptTarget.Latest, true, scriptKindOf(snapshot.relativePath));

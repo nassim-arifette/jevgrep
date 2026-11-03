@@ -43,7 +43,7 @@ if (values.help) {
     'npm run bench:real -- --validate-only',
     'npm run bench:real -- --config <trusted-config> --split dev [--jobs 1] [--max-requests 400] [--output benchmark-results/real-dev.json]',
     'npm run bench:real -- --config <trusted-config> --split heldout --freeze benchmark-results/real-heldout.freeze.json',
-    'npm run bench:real -- --javascript --chunker line-windows|typescript-v2|recursive-local|recursive --config <trusted-config> --split dev   (E1)',
+    'npm run bench:real -- --javascript --chunker line-windows|typescript-v2|recursive|recursive-compact|recursive-enclosing --config <trusted-config> --split dev   (E1)',
     'npm run bench:real -- --config <trusted-config> --split heldout --frozen benchmark-results/real-heldout.freeze.json',
   ].join('\n'));
 } else {

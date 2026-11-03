@@ -307,7 +307,10 @@ export const DEFAULT_CHUNKER: SnapshotChunker = Object.freeze({
 });
 
 export type ChunkOptions = {
-  /** Enclosing-symbol labels (default) or labels only where a symbol starts; the E1 metadata variable. */
+  /**
+   * JS/TS label policy, the E1 metadata variable. `local` (default) labels a range with the
+   * symbol it starts; `enclosing` and `compact` add the enclosing chain and measured no better.
+   */
   readonly javascriptContext?: JavaScriptContextPolicy;
 };
 
@@ -339,7 +342,7 @@ export function chunkSnapshot(
     return fallbackWindows(snapshot, limits);
   }
   if (language === 'javascript') {
-    return chunkJavaScript(snapshot, limits, options.javascriptContext ?? 'enclosing');
+    return chunkJavaScript(snapshot, limits, options.javascriptContext ?? 'local');
   }
 
   const chunker = SYNTAX_CHUNKER_VERSIONS[language];

@@ -29,6 +29,21 @@ Runners re-export snapshots from local mirrors in parallel and refuse a hash mis
 This is a public historical dataset: the held-out split is held out from tuning in
 this repository, not a blind external test. Models may have seen these repositories.
 
+### JavaScript and TypeScript tasks
+
+`swe-bench-multilingual-js-1.json` is imported the same way from
+`SWE-bench/SWE-bench_Multilingual` (test split, MIT) with seed `jevgrep-js-1`, for JS/TS
+chunking experiments (`npm run bench:real -- --javascript`). It has no audit file:
+labels come from the patches alone. Only library sources are exported.
+
+| Repository | Split | Tasks | Exported paths |
+| --- | --- | --- | --- |
+| `preactjs/preact` | dev | 14 | `src/`, `hooks/src/`, `compat/src/`, `debug/src/`, `devtools/src/`, `jsx-runtime/src/`, `test-utils/src/` |
+| `axios/axios` | heldout | 4 | `lib/`, `index.d.ts`, `index.js` |
+
+JS/TS hunks are classified with JS comment and import rules, and these tasks have no
+docstring-derived code-understanding queries.
+
 ## Query categories and labels
 
 | Category | Query | Required evidence | Complementary evidence |

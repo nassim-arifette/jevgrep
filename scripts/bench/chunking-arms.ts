@@ -12,11 +12,11 @@ import type { SourceSnapshot } from '../../src/source/snapshot.ts';
  *
  * - `line-windows`: JG-012 line windows only.
  * - `typescript-v2`: the previous depth-indexed boundary packing (`jevgrep-typescript-6.0.2-2`).
- * - `recursive-local`: recursive boundaries, label only where a symbol starts (boundary variable alone).
+ * - `recursive`: recursive boundaries, label only where a symbol starts (the production chunker).
  * - `recursive-compact`: recursive boundaries, enclosing symbol names without signatures or spans.
- * - `recursive`: recursive boundaries with enclosing-symbol labels (the production chunker).
+ * - `recursive-enclosing`: recursive boundaries, enclosing symbols with signatures and spans.
  */
-export const CHUNKING_ARMS = ['line-windows', 'typescript-v2', 'recursive-local', 'recursive-compact', 'recursive'] as const;
+export const CHUNKING_ARMS = ['line-windows', 'typescript-v2', 'recursive', 'recursive-compact', 'recursive-enclosing'] as const;
 export type ChunkingArm = typeof CHUNKING_ARMS[number];
 
 const PREVIOUS_TYPESCRIPT_CHUNKER = 'jevgrep-typescript-6.0.2-2';
@@ -41,7 +41,7 @@ function forJavaScript(arm: string, chunk: (snapshot: SourceSnapshot, limits: Wi
 export function chunkingArm(arm: string): SnapshotChunker {
   switch (arm) {
     case 'recursive': return DEFAULT_CHUNKER;
-    case 'recursive-local': return forJavaScript(arm, (snapshot, limits) => chunkSnapshot(snapshot, limits, { javascriptContext: 'local' }));
+    case 'recursive-enclosing': return forJavaScript(arm, (snapshot, limits) => chunkSnapshot(snapshot, limits, { javascriptContext: 'enclosing' }));
     case 'recursive-compact': return forJavaScript(arm, (snapshot, limits) => chunkSnapshot(snapshot, limits, { javascriptContext: 'compact' }));
     case 'typescript-v2': return forJavaScript(arm, previousTypeScript);
     case 'line-windows': return forJavaScript(arm, fallbackWindows);
@@ -53,7 +53,7 @@ export function chunkingArm(arm: string): SnapshotChunker {
 export const armChunkerVersion: Readonly<Record<ChunkingArm, string>> = {
   'line-windows': LINE_WINDOW_CHUNKER_VERSION,
   'typescript-v2': PREVIOUS_TYPESCRIPT_CHUNKER,
-  'recursive-local': SYNTAX_CHUNKER_VERSIONS.javascript,
-  'recursive-compact': SYNTAX_CHUNKER_VERSIONS.javascript,
   recursive: SYNTAX_CHUNKER_VERSIONS.javascript,
+  'recursive-compact': SYNTAX_CHUNKER_VERSIONS.javascript,
+  'recursive-enclosing': SYNTAX_CHUNKER_VERSIONS.javascript,
 };
