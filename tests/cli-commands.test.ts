@@ -150,6 +150,41 @@ test('inspect estimates USD with the same nanodollar policy as a search', async 
   assert.equal(report.estimates.cost_usd, estimateInputCostUsd(report.estimates.input_tokens, 0.15));
 });
 
+test('inspect warns before a search that an enabled cap would refuse a cold scan', async () => {
+  const space = workspace((config) => ({
+    ...withRemoteEnabled(config), scan_caps: { ...config.scan_caps, transmitted_bytes: 1, request_attempts: 1_000 },
+  }));
+  const provider = new CountingProvider();
+  const inspected = capture();
+  const code = await executeCommand(
+    parsed(['inspect', '--config', space.configPath, '--json']), inspected.io, dependencies(space, provider),
+  );
+  assert.equal(code, CLI_EXIT_CODES.complete, inspected.err.join(''));
+  const report = JSON.parse(inspected.out.join('')) as {
+    scan_caps: { enabled: Record<string, number>; required: Record<string, number | null>; exceeded: string[] };
+    estimates: { requests: number }; notes: string[];
+  };
+  assert.deepEqual(report.scan_caps.enabled, { request_attempts: 1_000, transmitted_bytes: 1 });
+  assert.equal(report.scan_caps.required['request_attempts'], report.estimates.requests);
+  assert.ok((report.scan_caps.required['transmitted_bytes'] ?? 0) > 1);
+  assert.deepEqual(report.scan_caps.exceeded, ['transmitted_bytes']);
+  assert.ok(report.notes.some((note) => note.includes('would be refused before any provider request')));
+
+  const searched = capture();
+  await executeCommand(parsed(['search', '--config', space.configPath, '--query', 'cache invalidation', '--json']),
+    searched.io, dependencies(space, provider));
+  const result = JSON.parse(searched.out.join('')) as { status: string; report: { stop_reasons: string[] } };
+  assert.equal(result.status, 'rejected', 'the search agrees with the inspect verdict');
+  assert.ok(result.report.stop_reasons.includes('SCOPE_EXCEEDS_SCAN_BUDGET'));
+  assert.equal(provider.calls, 0);
+
+  const human = capture();
+  await executeCommand(parsed(['inspect', '--config', space.configPath]), human.io, dependencies(space));
+  const text = human.out.join('\n');
+  assert.match(text, /scan caps {10}request_attempts: \d+ of 1000 \(fits\)/);
+  assert.match(text, /transmitted_bytes: \d+ of 1 \(EXCEEDED\)/);
+});
+
 test('the human inspect rendering names what it could not count', async () => {
   const space = workspace();
   const captured = capture();
@@ -157,6 +192,7 @@ test('the human inspect rendering names what it could not count', async () => {
   const text = captured.out.join('\n');
   assert.ok(text.includes('cache hits         unknown without a search question'));
   assert.ok(text.includes('estimated cost     unknown'));
+  assert.ok(text.includes('scan caps          none enabled'));
   assert.ok(/excluded by reason|excluded         none/.test(text));
 });
 

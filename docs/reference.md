@@ -108,7 +108,10 @@ See [TypeSafe model limits](https://docs.typesafe.ai/models) and the
 
 `inspect` and search planning use the same serializer and token estimator; `inspect`
 uses a sample query, so its estimate can differ from an actual search. Estimates are
-not provider billing. File preparation still runs on every search, reusing cached work
+not provider billing. `inspect` also runs the search preflight against every enabled
+`scan_caps` entry and lists the caps a complete cold search (no cache hits) would
+exceed; such a search is refused before any provider request unless partial scans are
+allowed. File preparation still runs on every search, reusing cached work
 only for unchanged file contents: there is no persistent repository index.
 
 ## Development
