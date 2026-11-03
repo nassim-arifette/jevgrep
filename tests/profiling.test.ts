@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { createSearchEngine } from '../src/engine.ts';
-import type { ProviderClient } from '../src/evaluation/jev.ts';
+import type { ProviderClient } from '../src/evaluation/contracts.ts';
 import { countProfile, measureAsync, measureSync, SearchProfiler, withSearchProfile } from '../src/profiling.ts';
 import { ManualClock } from '../src/testing/manual-clock.ts';
 import { createWorkspace } from './helpers/search-workspace.ts';

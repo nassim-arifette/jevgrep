@@ -8,7 +8,7 @@
 import type { ScanCap } from './contracts.ts';
 import { ConfigurationError } from './config.ts';
 import { buildRequestPayload } from './evaluation/jev.ts';
-import type { BatchItem, EvaluationBatch } from './evaluation/jev.ts';
+import type { BatchItem, EvaluationBatch } from './evaluation/contracts.ts';
 import { batchLimits, measureSerializedBatch, type BatchLimits, type SerializedBatchMeasure } from './evaluation/policy.ts';
 import { estimateInputCostUsd } from './pricing.ts';
 import type { ReportInputs } from './response/render.ts';

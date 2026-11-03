@@ -2,7 +2,8 @@
 import { OPENROUTER_JEV_MODEL, OpenRouterAdapter, serializeOpenRouterBatch, type OpenRouterAdapterOptions } from './openrouter.ts';
 import { ConfigurationError } from '../config.ts';
 import type { Configuration } from '../contracts.ts';
-import { JevAdapter, buildRequestPayload, type EvaluationBatch, type JevAdapterOptions, type ProviderClient } from './jev.ts';
+import type { EvaluationBatch, ProviderClient } from './contracts.ts';
+import { JevAdapter, buildRequestPayload, type JevAdapterOptions } from './jev.ts';
 import {
   VERCEL_JEV_MODEL,
   VercelGatewayAdapter,

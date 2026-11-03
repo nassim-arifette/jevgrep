@@ -1,4 +1,4 @@
-import { ProviderError, type ProviderClient } from '../../src/evaluation/jev.ts';
+import { ProviderError, type ProviderClient } from '../../src/evaluation/contracts.ts';
 import { countReferenceTokens } from '../../src/response/token-counter.ts';
 
 /** Shared across all questions, including retries. Reservations happen before await. */

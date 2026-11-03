@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
 import { configurationSchema } from '../src/contracts.ts';
-import type { ProviderClient } from '../src/evaluation/jev.ts';
+import type { ProviderClient } from '../src/evaluation/contracts.ts';
 import { configuredAdapter, createConfiguredProvider, type ProviderFactories } from '../src/evaluation/provider.ts';
 import type { JevAdapterOptions } from '../src/evaluation/jev.ts';
 import type { VercelGatewayAdapterOptions } from '../src/evaluation/vercel-gateway.ts';

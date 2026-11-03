@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { boundedFetch, MAX_PROVIDER_RESPONSE_BYTES } from '../src/evaluation/http.ts';
-import { JevAdapter, ProviderError, duplicateAnswerKeys, type EvaluationBatch } from '../src/evaluation/jev.ts';
+import { ProviderError, type EvaluationBatch } from '../src/evaluation/contracts.ts';
+import { JevAdapter, duplicateAnswerKeys } from '../src/evaluation/jev.ts';
 import { OpenRouterAdapter, OPENROUTER_JEV_MODEL } from '../src/evaluation/openrouter.ts';
 import { VercelGatewayAdapter, VERCEL_JEV_MODEL } from '../src/evaluation/vercel-gateway.ts';
 import { createSearchEngine } from '../src/engine.ts';

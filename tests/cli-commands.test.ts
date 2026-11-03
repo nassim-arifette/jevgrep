@@ -10,7 +10,7 @@ import type { CommandDependencies } from '../src/cli-commands.ts';
 import type { CliIo } from '../src/cli.ts';
 import { createSearchEngine } from '../src/engine.ts';
 import { ScoreCache } from '../src/evaluation/cache.ts';
-import type { BatchEvaluation, EvaluationBatch, ProviderClient } from '../src/evaluation/jev.ts';
+import type { BatchEvaluation, EvaluationBatch, ProviderClient } from '../src/evaluation/contracts.ts';
 import { estimateInputCostUsd } from '../src/pricing.ts';
 import { CLI_EXIT_CODES } from '../src/search-response.ts';
 import { preparationCacheDirectory } from '../src/source/preparation-cache.ts';

@@ -45,3 +45,30 @@ export const boundedFetch: typeof fetch = async (input, init) => {
     status: response.status, statusText: response.statusText, headers: response.headers,
   });
 };
+
+export type TransportRequest = {
+  readonly url: string;
+  readonly method: 'POST';
+  readonly headers: Readonly<Record<string, string>>;
+  readonly body: string;
+};
+
+export type TransportResponse = {
+  readonly status: number;
+  readonly headers: Readonly<Record<string, string>>;
+  readonly text: string;
+};
+
+/** One HTTP exchange. Development uses an injected, offline transport. */
+export type ProviderTransport = (request: TransportRequest, signal?: AbortSignal) => Promise<TransportResponse>;
+
+/** One bounded HTTP exchange with redirects disabled and no automatic retry. */
+export const fetchTransport: ProviderTransport = async (request, signal) => {
+  const response = await boundedFetch(request.url, {
+    method: request.method, headers: request.headers, body: request.body,
+    ...(signal === undefined ? {} : { signal }),
+  });
+  const headers: Record<string, string> = {};
+  response.headers.forEach((value, key) => { headers[key.toLowerCase()] = value; });
+  return { status: response.status, headers, text: await response.text() };
+};

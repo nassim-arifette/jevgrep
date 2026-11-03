@@ -7,7 +7,7 @@ import { after, test } from 'node:test';
 import { createSearchEngine } from '../src/engine.ts';
 import type { SearchOutcome } from '../src/contracts.ts';
 import { searchOutcomeSchema } from '../src/contracts.ts';
-import type { BatchEvaluation, EvaluationBatch, ProviderClient } from '../src/evaluation/jev.ts';
+import type { BatchEvaluation, EvaluationBatch, ProviderClient } from '../src/evaluation/contracts.ts';
 import { MCP_PROTOCOL_VERSION, TOOL_NAME, runMcpServer } from '../src/mcp.ts';
 import type { Clock } from '../src/lifecycle.ts';
 import { ManualClock } from '../src/testing/manual-clock.ts';

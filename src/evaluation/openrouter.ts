@@ -3,16 +3,9 @@
  * Contract: https://openrouter.ai/openapi.json, /api/alpha/decisions.
  * One bounded HTTP exchange per scheduler attempt; no fallback providers.
  */
-import {
-  buildRequestPayload,
-  evaluateDecisionRequest,
-  fetchTransport,
-  ProviderError,
-  type BatchEvaluation,
-  type EvaluationBatch,
-  type ProviderClient,
-  type ProviderTransport,
-} from './jev.ts';
+import { ProviderError, type BatchEvaluation, type EvaluationBatch, type ProviderClient } from './contracts.ts';
+import { fetchTransport, type ProviderTransport } from './http.ts';
+import { buildRequestPayload, evaluateDecisionRequest } from './jev.ts';
 
 export const OPENROUTER_JEV_MODEL = 'typesafe/jev-1.13' as const;
 export const OPENROUTER_BASE_URL = 'https://openrouter.ai' as const;

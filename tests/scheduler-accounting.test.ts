@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { createSearchEngine } from '../src/engine.ts';
-import { ProviderError, type ProviderClient } from '../src/evaluation/jev.ts';
+import { ProviderError, type ProviderClient } from '../src/evaluation/contracts.ts';
 import { createWorkspace, withRemoteEnabled } from './helpers/search-workspace.ts';
 
 for (const cap of [null, 1]) {

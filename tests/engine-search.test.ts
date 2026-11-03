@@ -4,8 +4,9 @@ import { join } from 'node:path';
 import { after, test } from 'node:test';
 
 import { createSearchEngine } from '../src/engine.ts';
-import type { BatchEvaluation, EvaluationBatch, ProviderClient } from '../src/evaluation/jev.ts';
-import { JevAdapter, ProviderError, buildRequestPayload } from '../src/evaluation/jev.ts';
+import type { BatchEvaluation, EvaluationBatch, ProviderClient } from '../src/evaluation/contracts.ts';
+import { ProviderError } from '../src/evaluation/contracts.ts';
+import { JevAdapter, buildRequestPayload } from '../src/evaluation/jev.ts';
 import type { SearchError, SearchResult } from '../src/contracts.ts';
 import { searchResultSchema } from '../src/contracts.ts';
 import { countReferenceTokens } from '../src/response/token-counter.ts';

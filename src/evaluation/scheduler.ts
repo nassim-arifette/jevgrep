@@ -1,7 +1,7 @@
 /** Bounded provider work. The engine reserves every attempt before this seam sends it. */
 import { SearchContext, isAbortError } from '../lifecycle.ts';
 import { measureAsync } from '../profiling.ts';
-import { ProviderError, type BatchEvaluation, type EvaluationBatch, type ProviderClient } from './jev.ts';
+import { ProviderError, type BatchEvaluation, type EvaluationBatch, type ProviderClient } from './contracts.ts';
 
 export const DEFAULT_RETRY_POLICY = Object.freeze({
   max_retries: 2, base_delay_ms: 250, max_delay_ms: 5_000, retry_ambiguous: false,

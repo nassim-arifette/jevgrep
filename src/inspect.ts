@@ -14,7 +14,7 @@ import { exclusionCounts, prepareScope } from './source/prepare.ts';
 import type { LoadedConfiguration } from './config.ts';
 import type { ScanCap } from './contracts.ts';
 import { buildBatches, enabledCapsOf, planScan } from './planning.ts';
-import type { EvaluationBatch } from './evaluation/jev.ts';
+import type { EvaluationBatch } from './evaluation/contracts.ts';
 import { batchLimits } from './evaluation/policy.ts';
 import { estimateInputCostUsd } from './pricing.ts';
 import { configuredAdapter, serializeConfiguredBatch } from './evaluation/provider.ts';

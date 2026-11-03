@@ -4,7 +4,7 @@ import { setImmediate } from 'node:timers/promises';
 import { test } from 'node:test';
 import { SearchContext } from '../src/lifecycle.ts';
 import { ManualClock } from '../src/testing/manual-clock.ts';
-import { ProviderError, type BatchEvaluation, type EvaluationBatch, type ProviderClient } from '../src/evaluation/jev.ts';
+import { ProviderError, type BatchEvaluation, type EvaluationBatch, type ProviderClient } from '../src/evaluation/contracts.ts';
 import { runEvaluations } from '../src/evaluation/scheduler.ts';
 
 const batch: EvaluationBatch = { query: 'q', items: [{ id: 'a', path: 'a.ts', startLine: 1, endLine: 1, text: 'a();' }] };
@@ -153,7 +153,7 @@ test('Retry-After pauses later batches even when retrying the refused batch is d
 test('a real CLI process stays alive during backoff and exits after retry cleanup', () => {
   const schedulerUrl = new URL('../src/evaluation/scheduler.ts', import.meta.url).href;
   const lifecycleUrl = new URL('../src/lifecycle.ts', import.meta.url).href;
-  const jevUrl = new URL('../src/evaluation/jev.ts', import.meta.url).href;
+  const jevUrl = new URL('../src/evaluation/contracts.ts', import.meta.url).href;
   const script = `import { runEvaluations } from ${JSON.stringify(schedulerUrl)};
     import { SearchContext } from ${JSON.stringify(lifecycleUrl)};
     import { ProviderError } from ${JSON.stringify(jevUrl)};
