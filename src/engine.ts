@@ -37,6 +37,7 @@ import { batchLimits, measureSerializedBatch, isOpenRouterModelRevision, scoreCa
 import { runEvaluations } from './evaluation/scheduler.ts';
 import { SearchContext, SearchLogger, isAbortError, runPhase, systemClock } from './lifecycle.ts';
 import type { Clock } from './lifecycle.ts';
+import { estimateInputCostUsd } from './pricing.ts';
 import { excerptBudget, excerptCost, renderSearchResult, ResponseBudgetError } from './response/render.ts';
 import type { ReportInputs, RenderedResponse } from './response/render.ts';
 import { selectRanges } from './response/selection.ts';
@@ -123,13 +124,6 @@ function questionTokenMemo(maxUtf16Bytes = 8 * 1024 * 1024): (value: string) => 
     }
     return tokens;
   };
-}
-
-/** Round up to the contract's integer nanodollar unit, including sub-unit costs. */
-function estimateCost(tokens: number, pricePerMillion: number | null): number | null {
-  if (pricePerMillion === null) return null;
-  const rate = BigInt(Math.round(pricePerMillion * 1_000_000_000));
-  return Number((BigInt(tokens) * rate + 999_999n) / 1_000_000n) / 1_000_000_000;
 }
 
 export class SearchEngine {
@@ -378,7 +372,7 @@ export class SearchEngine {
               request_attempts: usage.attempts + 1,
               transmitted_bytes: usage.transmittedBytes + bytes,
               estimated_input_tokens: usage.knownInputTokens + usage.reservedInputTokens + tokens,
-              estimated_cost_usd: estimateCost(usage.knownInputTokens + usage.reservedInputTokens + tokens,
+              estimated_cost_usd: estimateInputCostUsd(usage.knownInputTokens + usage.reservedInputTokens + tokens,
                 config.provider.pricing?.input_usd_per_million_tokens ?? null),
             };
             if (Object.entries(projected).some(([key, value]) => {
@@ -433,7 +427,7 @@ export class SearchEngine {
               usage.reservedInputTokens -= Math.max(1, costOf(batch).tokens);
               usage.knownInputTokens += evaluation.usage.inputTokens;
               const usedTokens = usage.knownInputTokens + usage.reservedInputTokens;
-              const usedCost = estimateCost(usedTokens, config.provider.pricing?.input_usd_per_million_tokens ?? null);
+              const usedCost = estimateInputCostUsd(usedTokens, config.provider.pricing?.input_usd_per_million_tokens ?? null);
               if ((enabledCaps.estimated_input_tokens !== undefined && usedTokens > enabledCaps.estimated_input_tokens)
                 || (enabledCaps.estimated_cost_usd !== undefined && usedCost !== null && usedCost > enabledCaps.estimated_cost_usd)) {
                 context.addStopReason('ESTIMATE_OVERRUN');
@@ -530,7 +524,7 @@ export class SearchEngine {
 
     const estimatedInputTokens = usage.knownInputTokens + usage.reservedInputTokens;
     const pricing = config.provider.pricing;
-    const estimatedCostUsd = estimateCost(estimatedInputTokens, pricing?.input_usd_per_million_tokens ?? null);
+    const estimatedCostUsd = estimateInputCostUsd(estimatedInputTokens, pricing?.input_usd_per_million_tokens ?? null);
 
     const inputs: ReportInputs = {
       searchId: context.searchId,
@@ -688,7 +682,7 @@ export function planScan(
   };
   const estimatedTokens = batches.reduce((sum, batch) => sum + costOf(batch).tokens, 0);
   const estimatedBytes = batches.reduce((sum, batch) => sum + costOf(batch).bytes, 0);
-  const estimatedCost = estimateCost(estimatedTokens, options.pricePerMillionInputTokens);
+  const estimatedCost = estimateInputCostUsd(estimatedTokens, options.pricePerMillionInputTokens);
   if (options.enabledCaps.estimated_cost_usd !== undefined && estimatedCost === null) {
     throw new ConfigurationError('INVALID_CONFIG', 'a USD cap requires a qualified pricing record');
   }
@@ -726,7 +720,7 @@ export function planScan(
       estimated_input_tokens: nextTokens,
       transmitted_bytes: nextBytes,
       request_attempts: admitted.length + 1,
-      estimated_cost_usd: estimateCost(nextTokens, options.pricePerMillionInputTokens),
+      estimated_cost_usd: estimateInputCostUsd(nextTokens, options.pricePerMillionInputTokens),
       prepared_source_bytes: options.preparedBytes,
       candidate_files: options.candidateFiles,
       fragments: options.preparedFragments,
