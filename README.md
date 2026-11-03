@@ -14,10 +14,10 @@ client so your coding agent stops opening file after file to find its way around
 
 <p align="center">
   <a href="https://github.com/nassim-arifette/jevgrep/blob/main/docs/assets/jevgrep-demo.mp4">
-    <img src="https://raw.githubusercontent.com/nassim-arifette/jevgrep/main/docs/assets/jevgrep-demo-poster.png" alt="JevGrep demo: a plain-English question returns the exact source lines, paths and scores" width="900">
+    <img src="https://raw.githubusercontent.com/nassim-arifette/jevgrep/main/docs/assets/jevgrep-demo.gif" alt="Animated JevGrep demo: a plain-English question returns the exact source lines, paths and scores" width="900">
   </a>
   <br>
-  <sub>▶ <a href="https://github.com/nassim-arifette/jevgrep/blob/main/docs/assets/jevgrep-demo.mp4">Watch the 45-second demo</a>. Every result shown comes from a real search on this repository.</sub>
+  <sub>▶ <a href="https://github.com/nassim-arifette/jevgrep/blob/main/docs/assets/jevgrep-demo.mp4">Watch the full-quality video (44 s)</a>. Every result shown comes from a real search on this repository.</sub>
 </p>
 
 ## Why JevGrep
