@@ -12,7 +12,8 @@
  */
 import { exclusionCounts, prepareScope } from './source/prepare.ts';
 import type { LoadedConfiguration } from './config.ts';
-import { buildBatches } from './engine.ts';
+import type { ScanCap } from './contracts.ts';
+import { buildBatches, enabledCapsOf, planScan } from './engine.ts';
 import type { EvaluationBatch } from './evaluation/jev.ts';
 import { batchLimits } from './evaluation/policy.ts';
 import { estimateInputCostUsd } from './pricing.ts';
@@ -48,6 +49,13 @@ export type InspectionReport = {
     /** Unknown without a question: a cache hit depends on the exact query. */
     readonly cache_hits: null;
     readonly provider_context_limit_tokens: number;
+  };
+  /** Enabled caps checked against a cold search (no cache hits), as a search's preflight does. */
+  readonly scan_caps: {
+    readonly enabled: Readonly<Partial<Record<ScanCap, number>>>;
+    readonly required: Readonly<Partial<Record<ScanCap, number | null>>>;
+    /** Caps a cold search would exceed; a search then refuses before dispatch unless partial scans are allowed. */
+    readonly exceeded: readonly ScanCap[];
   };
   readonly remote_evaluation_enabled: boolean;
   readonly notes: readonly string[];
@@ -102,6 +110,19 @@ export function inspectScope(configuration: LoadedConfiguration, options: Inspec
   const estimatedInputTokens = batches.reduce((total, batch) => total + countReferenceTokens(serialize(batch)), 0);
   const pricing = config.provider.pricing;
   const estimatedCost = estimateInputCostUsd(estimatedInputTokens, pricing?.input_usd_per_million_tokens ?? null);
+  const enabledCaps = enabledCapsOf(config.scan_caps);
+  const plan = planScan(prepared.fragments, query, {
+    model: config.provider.model, batches, serialize, enabledCaps,
+    allowPartial: false, requireFit: true,
+    preparedBytes: prepared.preparedBytes, candidateFiles: prepared.files.length,
+    preparedFragments: prepared.fragments.length,
+    pricePerMillionInputTokens: pricing?.input_usd_per_million_tokens ?? null,
+  });
+  const required = plan.report.estimatedRequiredCaps;
+  const exceeded = (Object.entries(enabledCaps) as [ScanCap, number][])
+    .filter(([cap, limit]) => (required[cap] ?? 0) > limit)
+    .map(([cap]) => cap)
+    .sort();
 
   const notes: string[] = [];
   if (!prepared.inventory.complete) {
@@ -118,6 +139,9 @@ export function inspectScope(configuration: LoadedConfiguration, options: Inspec
   }
   if (!config.remote_evaluation_enabled) {
     notes.push('remote evaluation is disabled: a search would be refused before any excerpt leaves this machine');
+  }
+  if (exceeded.length > 0) {
+    notes.push(`a complete cold search exceeds the enabled ${exceeded.join(', ')} cap(s): it would be refused before any provider request unless partial scans are allowed`);
   }
   notes.push('token and cost figures are local estimates under the pinned reference counter, not provider billing');
   notes.push(`batch target: ${String(limits.totalTokens * limits.headroomRatio)} reference tokens, at most ${String(limits.maxItems)} questions and ${String(limits.maxRequestBytes)} wire bytes`);
@@ -157,6 +181,7 @@ export function inspectScope(configuration: LoadedConfiguration, options: Inspec
       cache_hits: null,
       provider_context_limit_tokens: limits.totalTokens,
     },
+    scan_caps: { enabled: enabledCaps, required, exceeded },
     remote_evaluation_enabled: config.remote_evaluation_enabled,
     notes,
   };
@@ -188,7 +213,18 @@ export function renderInspection(report: InspectionReport): string[] {
     `estimated scan     ${String(report.estimates.requests)} provider request(s), ~${String(report.estimates.input_tokens)} input tokens`,
     `estimated cost     ${report.estimates.cost_usd === null ? 'unknown' : `$${String(report.estimates.cost_usd)}`} (${report.estimates.cost_note})`,
     'cache hits         unknown without a search question',
+    ...renderScanCaps(report.scan_caps),
     `remote evaluation  ${report.remote_evaluation_enabled ? 'enabled' : 'disabled'}`,
     ...report.notes.map((note) => `note               ${note}`),
   ];
+}
+
+function renderScanCaps(caps: InspectionReport['scan_caps']): string[] {
+  const enabled = (Object.entries(caps.enabled) as [ScanCap, number][]).sort(([left], [right]) => (left < right ? -1 : 1));
+  if (enabled.length === 0) return ['scan caps          none enabled'];
+  return enabled.map(([cap, limit], index) => {
+    const need = caps.required[cap];
+    const verdict = caps.exceeded.includes(cap) ? 'EXCEEDED' : 'fits';
+    return `${index === 0 ? 'scan caps          ' : '                   '}${cap}: ${need === null || need === undefined ? 'unknown' : String(need)} of ${String(limit)} (${verdict})`;
+  });
 }

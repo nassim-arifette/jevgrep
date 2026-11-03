@@ -624,7 +624,7 @@ function orderStopReasons(reasons: readonly StopReason[]): StopReason[] {
   return [...new Set(reasons)].sort((left, right) => (STOP_REASON_ORDER.get(left) ?? 99) - (STOP_REASON_ORDER.get(right) ?? 99));
 }
 
-function enabledCapsOf(caps: Readonly<Record<ScanCap, number | null>>): Partial<Record<ScanCap, number>> {
+export function enabledCapsOf(caps: Readonly<Record<ScanCap, number | null>>): Partial<Record<ScanCap, number>> {
   const enabled: Partial<Record<ScanCap, number>> = {};
   for (const [key, value] of Object.entries(caps)) {
     if (value !== null) {
