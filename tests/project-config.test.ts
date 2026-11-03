@@ -51,10 +51,12 @@ test('every declared dependency is pinned to an exact version', () => {
   }
   // The runtime dependency list is an allowlist, not a free-for-all: each entry is a
   // decision recorded in an issue report. `tiktoken` is the reference response counter
-  // pinned by JG-006; the Vercel adapter uses the official AI SDK evaluation API.
+  // pinned by JG-006; the Vercel adapter uses the official AI SDK evaluation API;
+  // `web-tree-sitter` runs the vendored Go and Rust grammars as WASM, with no native addon
+  // and no install script.
   assert.deepEqual(
     Object.keys(manifest.dependencies ?? {}).sort(),
-    ['@ai-sdk/gateway', 'ai', 'tiktoken', 'typescript-parser'],
+    ['@ai-sdk/gateway', 'ai', 'tiktoken', 'typescript-parser', 'web-tree-sitter'],
     'a new runtime dependency needs its own recorded decision before it is added here',
   );
 });

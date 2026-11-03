@@ -24,17 +24,20 @@ import type { Boundary } from './javascript-boundaries.ts';
 import { DEFAULT_WINDOW_LIMITS, LINE_WINDOW_CHUNKER_VERSION, lineWindowsOf } from './line-windows.ts';
 import type { FragmentWindow, UnsupportedLongLine, WindowLimits } from './line-windows.ts';
 import type { SourceSnapshot } from './snapshot.ts';
+import { TREE_SITTER_GRAMMARS, parseTreeSitterBoundaries } from './tree-sitter-boundaries.ts';
 
 export { DEFAULT_WINDOW_LIMITS, LINE_WINDOW_CHUNKER_VERSION };
 export type { WindowLimits };
 
-export type SyntaxLanguage = 'javascript' | 'python' | 'java';
+export type SyntaxLanguage = 'javascript' | 'python' | 'java' | 'go' | 'rust';
 
 /** Bumped per language when its syntax boundaries change; part of evaluation identity (JG-018). */
 export const SYNTAX_CHUNKER_VERSIONS: Readonly<Record<SyntaxLanguage, string>> = {
   javascript: 'jevgrep-typescript-6.0.2-2',
   python: 'jevgrep-python-scan-1',
   java: 'jevgrep-java-scan-1',
+  go: `jevgrep-${TREE_SITTER_GRAMMARS.go}-1`,
+  rust: `jevgrep-${TREE_SITTER_GRAMMARS.rust}-1`,
 };
 
 export const SYNTAX_CHUNKER_VERSION = SYNTAX_CHUNKER_VERSIONS.javascript;
@@ -68,6 +71,8 @@ const SYNTAX_LANGUAGES: ReadonlyMap<string, SyntaxLanguage> = new Map([
   ['.py', 'python'],
   ['.pyi', 'python'],
   ['.java', 'java'],
+  ['.go', 'go'],
+  ['.rs', 'rust'],
 ]);
 
 export function extensionOf(path: string): string {
@@ -81,7 +86,7 @@ export function syntaxLanguageOf(path: string): SyntaxLanguage | null {
   return SYNTAX_LANGUAGES.get(extensionOf(path)) ?? null;
 }
 
-/** True for the JS/TS, Python and Java extensions the syntax chunker attempts. */
+/** True for the JS/TS, Python, Java, Go and Rust extensions the syntax chunker attempts. */
 export function usesSyntaxChunking(path: string): boolean {
   return syntaxLanguageOf(path) !== null;
 }
@@ -95,6 +100,9 @@ function parseBoundaries(language: SyntaxLanguage, snapshot: SourceSnapshot): Pa
       return parsePythonBoundaries(snapshot.text, lineOfOffset);
     case 'java':
       return parseJavaBoundaries(snapshot.text, lineOfOffset);
+    case 'go':
+    case 'rust':
+      return parseTreeSitterBoundaries(language, snapshot.text);
   }
 }
 
@@ -290,7 +298,7 @@ function fallbackWindows(snapshot: SourceSnapshot, limits: WindowLimits): ChunkR
 /**
  * Prepare every fragment of one snapshot.
  *
- * Text in other languages uses JG-012 directly. JS/TS, Python and Java text is
+ * Text in other languages uses JG-012 directly. JS/TS, Python, Java, Go and Rust text is
  * parsed for statement boundaries; if the parser refuses the file, the same JG-012 windows are returned
  * with `fallback: 'parse_failure'` so the caller can report it.
  */
