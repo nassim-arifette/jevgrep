@@ -3,14 +3,10 @@ import { parseArgs } from 'node:util';
 import type { SelectionPolicy, SelectionTuning } from '../src/response/selection.ts';
 import { DEFAULT_SELECTION_TUNING } from '../src/response/selection.ts';
 import { environment, projectRoot, writeReport } from './bench/common.ts';
-import { questions, validateDataset } from './bench/dataset.ts';
-import { loadManifest } from './bench/real-tasks.ts';
-import { readCapture, replayPool } from './bench/replay.ts';
-import type { CaptureFile, ReplayArm } from './bench/replay.ts';
+import { loadReplayCases, replayPool } from './bench/replay.ts';
+import type { ReplayArm, ReplayCase as Case } from './bench/replay.ts';
 import { mean } from './bench/report.ts';
 import { localizationRangeMetrics } from './bench/retrieval.ts';
-import type { LocalizationQuestion } from './bench/retrieval.ts';
-import { loadSnapshots } from './bench/snapshots.ts';
 
 const { values } = parseArgs({ options: {
   tuning: { type: 'string' }, heldout: { type: 'string' }, budgets: { type: 'string' },
@@ -18,36 +14,6 @@ const { values } = parseArgs({ options: {
 } });
 
 const usage = 'npm run bench:replay -- --tuning <pools.json>[,<pools.json>] [--heldout <pools.json>] [--budgets 1200,1600,2400,4000] [--output benchmark-results/replay.json]';
-
-type Query = LocalizationQuestion & { readonly id: string; readonly negative: boolean };
-type Case = { readonly id: string; readonly capture: string; readonly query: Query; readonly files: Readonly<Record<string, string>>; readonly pool: CaptureFile['pools'][number]['pool'] };
-
-async function loadCases(paths: readonly string[]): Promise<Case[]> {
-  const cases: Case[] = [];
-  const manifest = loadManifest();
-  for (const path of paths) {
-    const capture = readCapture(path);
-    if (capture.capture === 'synthetic') {
-      const repositories = validateDataset();
-      for (const { id, source, pool } of capture.pools) {
-        const question = questions.find((entry) => entry.id === id);
-        if (question === undefined) throw new Error(`${id}: unknown synthetic question`);
-        cases.push({ id, capture: 'synthetic', pool, files: repositories.get(source as never)!,
-          query: { id, evidence: question.evidence, complementary: [], negative: question.kind === 'negative' } });
-      }
-    } else {
-      const tasks = manifest.tasks.filter((task) => capture.pools.some((entry) => entry.source === task.id));
-      const snapshots = await loadSnapshots(tasks, values.mirrors ?? join(projectRoot, 'benchmark-results/mirrors'));
-      for (const { id, source, pool } of capture.pools) {
-        const query = tasks.find((task) => task.id === source)?.queries.find((entry) => entry.id === id);
-        if (query === undefined) throw new Error(`${id}: unknown real query`);
-        cases.push({ id, capture: `real-${capture.split ?? ''}`, pool, files: snapshots.get(source)!,
-          query: { id, evidence: query.evidence, complementary: query.complementary, negative: query.evidence.length === 0 } });
-      }
-    }
-  }
-  return cases;
-}
 
 type Row = ReturnType<typeof measure>;
 
@@ -136,8 +102,9 @@ if (values.help || values.tuning === undefined) {
   console.log(usage);
 } else {
   const budgets = (values.budgets ?? '1200,1600,2400,4000').split(',').map(Number);
-  const tuning = await loadCases(values.tuning.split(','));
-  const heldout = values.heldout === undefined ? [] : await loadCases(values.heldout.split(','));
+  const mirrors = values.mirrors ?? join(projectRoot, 'benchmark-results/mirrors');
+  const tuning = await loadReplayCases(values.tuning.split(','), mirrors);
+  const heldout = values.heldout === undefined ? [] : await loadReplayCases(values.heldout.split(','), mirrors);
   const tuningTable = table(sweep(tuning, budgets, candidates));
   // Pick one configuration per policy on the tuning split only; held-out is evaluated once.
   const chosen = ['mmr', 'marginal'].map((policy) => tuningTable.filter((arm) => arm.policy === policy)

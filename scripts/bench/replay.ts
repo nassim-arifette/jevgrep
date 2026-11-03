@@ -17,6 +17,11 @@ import { selectRanges } from '../../src/response/selection.ts';
 import type { SelectedRange, SelectionPolicy, SelectionTuning } from '../../src/response/selection.ts';
 import type { PreparedFragment } from '../../src/source/chunker.ts';
 import { writeReport } from './common.ts';
+import { questions, validateDataset } from './dataset.ts';
+import type { RetrievalQuestion } from './dataset.ts';
+import { loadManifest } from './real-tasks.ts';
+import type { LocalizationQuestion } from './retrieval.ts';
+import { loadSnapshots } from './snapshots.ts';
 
 /** One captured search: `source` names the fixture repository or real task it ran on. */
 export type CapturedPool = { readonly id: string; readonly source: string; readonly pool: CandidatePool };
@@ -133,4 +138,37 @@ function topRanges(ranges: readonly SelectedRange[], k: number): SelectedRange[]
   const order = [...ranges].sort((a, b) => b.score - a.score || (a.path < b.path ? -1 : a.path > b.path ? 1 : a.startLine - b.startLine));
   const kept = new Set(order.slice(0, k));
   return ranges.filter((range) => kept.has(range));
+}
+
+export type ReplayQuery = LocalizationQuestion & { readonly id: string; readonly negative: boolean };
+/** One captured search with its annotation and the pinned files it ran on. */
+export type ReplayCase = { readonly id: string; readonly capture: string; readonly query: ReplayQuery; readonly files: Readonly<Record<string, string>>; readonly pool: CaptureFile['pools'][number]['pool'] };
+
+export async function loadReplayCases(paths: readonly string[], mirrors: string): Promise<ReplayCase[]> {
+  const cases: ReplayCase[] = [];
+  const manifest = loadManifest();
+  for (const path of paths) {
+    const capture = readCapture(path);
+    if (capture.capture === 'synthetic') {
+      const repositories = validateDataset();
+      for (const { id, source, pool } of capture.pools) {
+        const question = questions.find((entry) => entry.id === id);
+        if (question === undefined) throw new Error(`${id}: unknown synthetic question`);
+        cases.push({ id, capture: 'synthetic', pool, files: repositories.get(source as RetrievalQuestion['repository'])!,
+          query: { id, evidence: question.evidence, complementary: [], negative: question.kind === 'negative' } });
+      }
+    } else if (capture.capture === 'real') {
+      const tasks = manifest.tasks.filter((task) => capture.pools.some((entry) => entry.source === task.id));
+      const snapshots = await loadSnapshots(tasks, mirrors);
+      for (const { id, source, pool } of capture.pools) {
+        const query = tasks.find((task) => task.id === source)?.queries.find((entry) => entry.id === id);
+        if (query === undefined) throw new Error(`${id}: unknown real query`);
+        cases.push({ id, capture: `real-${capture.split ?? ''}`, pool, files: snapshots.get(source)!,
+          query: { id, evidence: query.evidence, complementary: query.complementary, negative: query.evidence.length === 0 } });
+      }
+    } else {
+      throw new Error(`${path}: ${capture.capture} pools carry no localization annotations`);
+    }
+  }
+  return cases;
 }
