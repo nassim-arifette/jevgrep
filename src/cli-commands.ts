@@ -21,7 +21,7 @@ import type { Readable, Writable } from 'node:stream';
 
 import type { CliCommand } from './cli-args.ts';
 import { renderHumanOutcome } from './cli-render.ts';
-import type { CliIo } from './cli.ts';
+import type { CliIo } from './cli-io.ts';
 import { ConfigurationError, doctorReport, loadConfiguration, renderDoctorReport } from './config.ts';
 import type { LoadedConfiguration } from './config.ts';
 import { createSearchError } from './contracts.ts';
@@ -208,9 +208,10 @@ async function runSearch(
   }
 
   const engine = engineFor(loaded, deps);
-  const { outcome, measuredTokens } = await engine.search(command.request, {
-    ...(deps.signal === undefined ? {} : { signal: deps.signal }),
-  });
+  const { outcome, measuredTokens } = await engine.search(
+    command.request,
+    deps.signal === undefined ? {} : { signal: deps.signal },
+  );
 
   if (command.json) {
     try {

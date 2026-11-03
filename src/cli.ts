@@ -11,6 +11,7 @@ import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 import { parseCliArguments, type CliCommand } from './cli-args.ts';
 import { executeCommand } from './cli-commands.ts';
+import type { CliIo } from './cli-io.ts';
 import { commandHelp, documentedCommands, globalHelp } from './cli-help.ts';
 import { CLI_EXIT_CODES } from './search-response.ts';
 
@@ -29,11 +30,7 @@ const EXIT_CODES_IN_USE: ReadonlySet<number> = new Set([
   CLI_EXIT_CODES.interrupted,
 ]);
 
-/** Minimal output seam: tests capture the CLI without spawning a child process. */
-export type CliIo = {
-  readonly out: (line: string) => void;
-  readonly err: (line: string) => void;
-};
+export type { CliIo } from './cli-io.ts';
 
 /** Replaceable collaborators, so tests can force the failure paths. */
 export type CliDependencies = {
