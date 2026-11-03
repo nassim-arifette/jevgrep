@@ -57,7 +57,7 @@ test('the request carries the versioned criterion, the excerpt and its location 
   const first = payload.questions['f-one'];
   assert.ok(first !== undefined);
   assert.equal(first.type, 'noul');
-  assert.equal(first.criteria.true, RELEVANCE_CRITERION);
+  assert.equal(first.criteria?.true, RELEVANCE_CRITERION);
   assert.ok(first.instructions.includes('src/cache.ts'));
   assert.ok(first.instructions.includes('Lines: 1-12'));
   assert.ok(first.instructions.includes('export function invalidate()'));

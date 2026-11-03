@@ -25,7 +25,7 @@
 import { batchLimits, fitsSerializedBatch } from './policy.ts';
 import { MAX_PROVIDER_RESPONSE_BYTES, fetchTransport, type ProviderTransport, type TransportRequest, type TransportResponse } from './http.ts';
 import { ProviderError } from './contracts.ts';
-import type { BatchEvaluation, BatchItem, EvaluationBatch, InvalidAnswer, ProviderClient } from './contracts.ts';
+import type { BatchEvaluation, BatchItem, EvaluationBatch, InvalidAnswer, ProviderClient, RequestLayout } from './contracts.ts';
 
 /** Versioned relevance criterion, quoted from specification section 6.2. */
 export const RELEVANCE_CRITERION =
@@ -36,7 +36,26 @@ export const RELEVANCE_CRITERION =
 
 export const CRITERION_VERSION = 'criterion-1';
 /** Shared question in state, one excerpt per question (layout A). Part of cache identity. */
-export const LAYOUT_VERSION = 'layout-a-1';
+export const LAYOUT_VERSION = 'layout-a-1' satisfies RequestLayout;
+
+export const REQUEST_LAYOUTS: readonly RequestLayout[] = ['layout-a-1', 'layout-compact-state-1', 'layout-compact-ref-1'];
+
+/** Per-question criteria of `layout-compact-ref-1`; the full criterion stays in state. */
+export const CRITERION_REFERENCE = Object.freeze({
+  true: 'The excerpt meets the criterion given in state.',
+  false: 'The excerpt does not meet the criterion given in state.',
+});
+
+/**
+ * Per-question criteria of a batch's layout; undefined omits the key. The layout-A
+ * branch returns the exact object production has always sent.
+ */
+export function layoutCriteria(batch: EvaluationBatch): { true: string } | undefined {
+  const layout = batch.layout ?? LAYOUT_VERSION;
+  if (layout === 'layout-compact-state-1') return undefined;
+  if (layout === 'layout-compact-ref-1') return { true: CRITERION_REFERENCE.true };
+  return { true: batch.criterion?.text ?? RELEVANCE_CRITERION };
+}
 
 /** Documented model limits; local estimates only, never presented as billing truth. */
 export const PROVIDER_CONTEXT_LIMITS = Object.freeze(batchLimits());
@@ -53,7 +72,7 @@ export type JevAdapterOptions = {
 type QuestionPayload = {
   type: 'noul';
   instructions: string;
-  criteria: { true: string };
+  criteria?: { true: string };
 };
 
 type RequestPayload = {
@@ -73,12 +92,11 @@ export function questionInstructions(item: BatchItem): string {
 export function buildRequestPayload(batch: EvaluationBatch, model: string): RequestPayload {
   const criterion = batch.criterion?.text ?? RELEVANCE_CRITERION;
   const questions: Record<string, QuestionPayload> = {};
+  const criteria = layoutCriteria(batch);
   for (const item of batch.items) {
-    questions[item.id] = {
-      type: 'noul',
-      instructions: questionInstructions(item),
-      criteria: { true: criterion },
-    };
+    questions[item.id] = criteria === undefined
+      ? { type: 'noul', instructions: questionInstructions(item) }
+      : { type: 'noul', instructions: questionInstructions(item), criteria };
   }
   return {
     model,
@@ -86,7 +104,7 @@ export function buildRequestPayload(batch: EvaluationBatch, model: string): Requ
       search_question: batch.query,
       criterion,
       criterion_version: batch.criterion?.version ?? CRITERION_VERSION,
-      layout: LAYOUT_VERSION,
+      layout: batch.layout ?? LAYOUT_VERSION,
     },
     questions,
   };

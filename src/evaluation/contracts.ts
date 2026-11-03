@@ -17,6 +17,13 @@ export type BatchItem = {
 /** A versioned model-visible judgment; its text and version are part of the request body. */
 export type JudgmentCriterion = { readonly version: string; readonly text: string };
 
+/**
+ * Versioned model-visible request layouts (roadmap section 11). `layout-a-1` repeats
+ * the criterion in every question; the compact layouts state it once in shared state,
+ * either with no per-question criteria or with a short pointer to it.
+ */
+export type RequestLayout = 'layout-a-1' | 'layout-compact-state-1' | 'layout-compact-ref-1';
+
 export type EvaluationBatch = {
   readonly query: string;
   readonly items: readonly BatchItem[];
@@ -25,6 +32,11 @@ export type EvaluationBatch = {
    * section 14, E8). Absent in production searches, whose payload is unchanged.
    */
   readonly criterion?: JudgmentCriterion;
+  /**
+   * Experimental request layout (bench:layouts only); absent means `layout-a-1`, whose bytes
+   * are unchanged. The engine never sets it, so cache identities keep LAYOUT_VERSION.
+   */
+  readonly layout?: RequestLayout;
 };
 
 export type ProviderUsage = {
