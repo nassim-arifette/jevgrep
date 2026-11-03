@@ -111,18 +111,7 @@ function readOptions(
   argv: readonly string[],
   allowed: readonly string[],
 ): { readonly state: OptionState; readonly error: string | undefined } {
-  const mutable: {
-    config: string | undefined;
-    query: string | undefined;
-    queryFile: string | undefined;
-    scope: string[];
-    maxContextTokens: string | undefined;
-    allowPartial: boolean;
-    json: boolean;
-    root: string | undefined;
-    provider: string | undefined;
-    global: boolean;
-  } = { config: undefined, query: undefined, queryFile: undefined, scope: [], maxContextTokens: undefined, allowPartial: false, json: false, root: undefined, provider: undefined, global: false };
+  const mutable: MutableOptions = { config: undefined, query: undefined, queryFile: undefined, scope: [], maxContextTokens: undefined, allowPartial: false, json: false, root: undefined, provider: undefined, global: false };
   const state = mutable;
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -155,58 +144,122 @@ function readOptions(
     }
     index += 1;
 
-    switch (option) {
-      case '--root':
-        if (state.root !== undefined) return { state, error: "option '--root' was given twice" };
-        state.root = value;
-        break;
-      case '--provider':
-        if (state.provider !== undefined) return { state, error: "option '--provider' was given twice" };
-        if (value !== 'typesafe' && value !== 'vercel' && value !== 'openrouter') return { state, error: "option '--provider' must be 'typesafe', 'vercel' or 'openrouter'" };
-        state.provider = value;
-        break;
-      case '--config':
-        if (state.config !== undefined) {
-          return { state, error: "option '--config' was given twice" };
-        }
-        if (value.trim().length === 0) {
-          return { state, error: "option '--config' needs a non-empty path" };
-        }
-        state.config = value;
-        break;
-      case '--query':
-        if (state.query !== undefined) {
-          return { state, error: "option '--query' was given twice; use --query-file for a long query" };
-        }
-        state.query = value;
-        break;
-      case '--query-file':
-        if (state.queryFile !== undefined) {
-          return { state, error: "option '--query-file' was given twice" };
-        }
-        state.queryFile = value;
-        break;
-      case '--scope':
-        if (value.trim().length === 0) {
-          return { state, error: "option '--scope' needs a non-empty path" };
-        }
-        state.scope.push(value);
-        break;
-      case '--max-context-tokens':
-        if (state.maxContextTokens !== undefined) {
-          return { state, error: "option '--max-context-tokens' was given twice" };
-        }
-        if (!/^[0-9]+$/.test(value)) {
-          return { state, error: `option '--max-context-tokens' needs a positive integer, got '${value}'` };
-        }
-        state.maxContextTokens = value;
-        break;
-      default:
-        return { state, error: `option '${option}' is not accepted here` };
-    }
+    const error = applyValueOption(state, option, value);
+    if (error !== undefined) return { state, error };
   }
 
   return { state, error: undefined };
+}
+
+type MutableOptions = {
+  config: string | undefined;
+  query: string | undefined;
+  queryFile: string | undefined;
+  scope: string[];
+  maxContextTokens: string | undefined;
+  allowPartial: boolean;
+  json: boolean;
+  root: string | undefined;
+  provider: string | undefined;
+  global: boolean;
+};
+
+/** Store one option that takes a value, or explain why it is refused. */
+function applyValueOption(state: MutableOptions, option: string, value: string): string | undefined {
+  switch (option) {
+    case '--root':
+      if (state.root !== undefined) return "option '--root' was given twice";
+      state.root = value;
+      return undefined;
+    case '--provider':
+      if (state.provider !== undefined) return "option '--provider' was given twice";
+      if (value !== 'typesafe' && value !== 'vercel' && value !== 'openrouter') return "option '--provider' must be 'typesafe', 'vercel' or 'openrouter'";
+      state.provider = value;
+      return undefined;
+    case '--config':
+      if (state.config !== undefined) {
+        return "option '--config' was given twice";
+      }
+      if (value.trim().length === 0) {
+        return "option '--config' needs a non-empty path";
+      }
+      state.config = value;
+      return undefined;
+    case '--query':
+      if (state.query !== undefined) {
+        return "option '--query' was given twice; use --query-file for a long query";
+      }
+      state.query = value;
+      return undefined;
+    case '--query-file':
+      if (state.queryFile !== undefined) {
+        return "option '--query-file' was given twice";
+      }
+      state.queryFile = value;
+      return undefined;
+    case '--scope':
+      if (value.trim().length === 0) {
+        return "option '--scope' needs a non-empty path";
+      }
+      state.scope.push(value);
+      return undefined;
+    case '--max-context-tokens':
+      if (state.maxContextTokens !== undefined) {
+        return "option '--max-context-tokens' was given twice";
+      }
+      if (!/^[0-9]+$/.test(value)) {
+        return `option '--max-context-tokens' needs a positive integer, got '${value}'`;
+      }
+      state.maxContextTokens = value;
+      return undefined;
+    default:
+      return `option '${option}' is not accepted here`;
+  }
+}
+
+function searchCommand(
+  state: OptionState,
+  scope: readonly string[],
+  config: string | undefined,
+  dependencies: CliParseDependencies,
+): CliParseResult {
+  const query = state.query;
+  const queryFile = state.queryFile;
+  if (query !== undefined && queryFile !== undefined) {
+    return refuse("use either '--query' or '--query-file', not both");
+  }
+  if (query === undefined && queryFile === undefined) {
+    return refuse("option '--query' or '--query-file' is required");
+  }
+  let text: string;
+  if (queryFile !== undefined) {
+    try {
+      text = dependencies.readFile(queryFile);
+    } catch (readError) {
+      return refuse(`cannot read the query file '${queryFile}': ${messageOf(readError)}`);
+    }
+  } else {
+    text = query ?? '';
+  }
+
+  const raw: Record<string, unknown> = {
+    query: text,
+    scope,
+    allow_partial_scan: state.allowPartial,
+  };
+  if (state.maxContextTokens !== undefined) {
+    raw['max_context_tokens'] = Number(state.maxContextTokens);
+  }
+  try {
+    // The engine applies operator limits after loading trusted configuration.
+    const { max_context_tokens, ...normalized } = parseSearchRequest(raw, {
+      default_response_tokens: CONTRACT_LIMITS.default_response_tokens, max_response_tokens: Number.MAX_SAFE_INTEGER,
+    });
+    const request: SearchRequest = { ...normalized, ...(state.maxContextTokens === undefined ? {} : { max_context_tokens }) };
+    return { kind: 'command', command: { kind: 'search', ...(config === undefined ? {} : { config }), request, json: state.json } };
+  } catch (validationError) {
+    return refuse(messageOf(validationError));
+  }
 }
 
 function messageOf(error: unknown): string {
@@ -263,45 +316,7 @@ export function parseCliArguments(
   const config = state.config;
   const scope = state.scope.length > 0 ? state.scope : ['.'];
 
-  if (command === 'search') {
-    const query = state.query;
-    const queryFile = state.queryFile;
-    if (query !== undefined && queryFile !== undefined) {
-      return refuse("use either '--query' or '--query-file', not both");
-    }
-    if (query === undefined && queryFile === undefined) {
-      return refuse("option '--query' or '--query-file' is required");
-    }
-    let text: string;
-    if (queryFile !== undefined) {
-      try {
-        text = dependencies.readFile(queryFile);
-      } catch (readError) {
-        return refuse(`cannot read the query file '${queryFile}': ${messageOf(readError)}`);
-      }
-    } else {
-      text = query ?? '';
-    }
-
-    const raw: Record<string, unknown> = {
-      query: text,
-      scope,
-      allow_partial_scan: state.allowPartial,
-    };
-    if (state.maxContextTokens !== undefined) {
-      raw['max_context_tokens'] = Number(state.maxContextTokens);
-    }
-    try {
-      // The engine applies operator limits after loading trusted configuration.
-      const { max_context_tokens, ...normalized } = parseSearchRequest(raw, {
-        default_response_tokens: CONTRACT_LIMITS.default_response_tokens, max_response_tokens: Number.MAX_SAFE_INTEGER,
-      });
-      const request: SearchRequest = { ...normalized, ...(state.maxContextTokens === undefined ? {} : { max_context_tokens }) };
-      return { kind: 'command', command: { kind: 'search', ...(config === undefined ? {} : { config }), request, json: state.json } };
-    } catch (validationError) {
-      return refuse(messageOf(validationError));
-    }
-  }
+  if (command === 'search') return searchCommand(state, scope, config, dependencies);
 
   if (command === 'inspect') {
     const refusal = scopeError(scope);

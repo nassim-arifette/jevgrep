@@ -29,6 +29,7 @@ import { createSearchError } from './contracts.ts';
 import type { SearchOutcome } from './contracts.ts';
 import type { SearchEngine } from './engine.ts';
 import { createCallScheduler } from './mcp-calls.ts';
+import type { CallScheduler } from './mcp-calls.ts';
 import { createLineFramer } from './mcp-framing.ts';
 import {
   INTERNAL_ERROR, INVALID_PARAMS, INVALID_REQUEST, METHOD_NOT_FOUND, PARSE_ERROR, parseRequest,
@@ -158,60 +159,13 @@ export function runMcpServer(options: McpServerOptions): Promise<void> {
     abandon('output stream failed');
   });
 
-  const startToolCall = (id: JsonRpcId, params: unknown): Promise<void> => {
-    const record = (params ?? {}) as Record<string, unknown>;
-    if (record['name'] !== TOOL_NAME) {
-      sendError(id, INVALID_PARAMS, 'unknown tool');
-      return Promise.resolve();
-    }
-    if (calls.has(id)) {
-      sendError(id, INVALID_REQUEST, 'request id is already in use');
-      return Promise.resolve();
-    }
-    if (calls.isFull()) {
-      send({ jsonrpc: '2.0', id, result: toolResult(createSearchError('BUSY', randomUUID())) });
-      return Promise.resolve();
-    }
-    return new Promise<void>((resolve) => {
-      calls.submit({
-        id, startedAtMs: engine.clock.nowMs, controller: new AbortController(),
-        arguments: record['arguments'] ?? {}, resolve,
-      });
-    });
-  };
-
-  const handle = (message: JsonRpcRequest): void => {
-    const id = message.id ?? null;
-    if (id === null && !message.method.startsWith('notifications/')) return;
-    switch (message.method) {
-      case 'initialize':
-        send({ jsonrpc: '2.0', id, result: initializeResult(message.params, options.serverVersion) });
-        return;
-      case 'notifications/initialized':
-      case 'notifications/roots/list_changed':
-        return;
-      case 'ping':
-        send({ jsonrpc: '2.0', id, result: {} });
-        return;
-      case 'tools/list':
-        send({ jsonrpc: '2.0', id, result: TOOL_LIST });
-        return;
-      case 'tools/call': {
-        if (id === null) return;
-        const pending = startToolCall(id, message.params);
-        inFlight.add(pending);
-        void pending.finally(() => inFlight.delete(pending));
-        return;
-      }
-      case 'notifications/cancelled': {
-        const requestId = ((message.params ?? {}) as { requestId?: unknown }).requestId;
-        if (typeof requestId === 'string' || typeof requestId === 'number') calls.cancel(requestId);
-        return;
-      }
-      default:
-        if (id !== null) sendError(id, METHOD_NOT_FOUND, 'unsupported method');
-    }
-  };
+  const handle = createRequestRouter({
+    send, sendError, calls, serverVersion: options.serverVersion, nowMs: () => engine.clock.nowMs,
+    track: (pending) => {
+      inFlight.add(pending);
+      void pending.finally(() => inFlight.delete(pending));
+    },
+  });
 
   const consume = (line: string): void => {
     const parsed = parseRequest(line);
@@ -250,6 +204,72 @@ export function runMcpServer(options: McpServerOptions): Promise<void> {
     input.on('end', finish);
     input.on('close', finish);
   });
+}
+
+type RouterDeps = {
+  readonly send: (message: unknown) => void;
+  readonly sendError: (id: JsonRpcId | null, code: number, message: string) => void;
+  readonly calls: CallScheduler;
+  readonly serverVersion: string;
+  readonly nowMs: () => number;
+  readonly track: (pending: Promise<void>) => void;
+};
+
+/** Admit one tools/call: unknown tool, duplicate id and a full queue answer at once. */
+function startToolCall(id: JsonRpcId, params: unknown, deps: RouterDeps): Promise<void> {
+  const { send, sendError, calls } = deps;
+  const record = (params ?? {}) as Record<string, unknown>;
+  if (record['name'] !== TOOL_NAME) {
+    sendError(id, INVALID_PARAMS, 'unknown tool');
+    return Promise.resolve();
+  }
+  if (calls.has(id)) {
+    sendError(id, INVALID_REQUEST, 'request id is already in use');
+    return Promise.resolve();
+  }
+  if (calls.isFull()) {
+    send({ jsonrpc: '2.0', id, result: toolResult(createSearchError('BUSY', randomUUID())) });
+    return Promise.resolve();
+  }
+  return new Promise<void>((resolve) => {
+    calls.submit({
+      id, startedAtMs: deps.nowMs(), controller: new AbortController(),
+      arguments: record['arguments'] ?? {}, resolve,
+    });
+  });
+}
+
+/** Method dispatch for validated requests; requests without an id get no reply. */
+function createRequestRouter(deps: RouterDeps): (message: JsonRpcRequest) => void {
+  const { send, sendError, calls } = deps;
+  return (message) => {
+    const id = message.id ?? null;
+    if (id === null && !message.method.startsWith('notifications/')) return;
+    switch (message.method) {
+      case 'initialize':
+        send({ jsonrpc: '2.0', id, result: initializeResult(message.params, deps.serverVersion) });
+        return;
+      case 'notifications/initialized':
+      case 'notifications/roots/list_changed':
+        return;
+      case 'ping':
+        send({ jsonrpc: '2.0', id, result: {} });
+        return;
+      case 'tools/list':
+        send({ jsonrpc: '2.0', id, result: TOOL_LIST });
+        return;
+      case 'tools/call':
+        if (id !== null) deps.track(startToolCall(id, message.params, deps));
+        return;
+      case 'notifications/cancelled': {
+        const requestId = ((message.params ?? {}) as { requestId?: unknown }).requestId;
+        if (typeof requestId === 'string' || typeof requestId === 'number') calls.cancel(requestId);
+        return;
+      }
+      default:
+        if (id !== null) sendError(id, METHOD_NOT_FOUND, 'unsupported method');
+    }
+  };
 }
 
 /** One text block holding the validated payload; `isError` follows the outcome status. */

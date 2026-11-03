@@ -341,6 +341,23 @@ function sum(values: number[], path: string): number {
   return Number(total);
 }
 
+type SearchReport = SearchResult['report'];
+
+type ResultFacts = {
+  readonly value: SearchResult;
+  readonly path: string;
+  readonly check: (condition: boolean, rule: string) => void;
+  readonly report: SearchReport;
+  readonly files: SearchReport['files'];
+  readonly f: SearchReport['fragments'];
+  readonly selection: SearchReport['selection'];
+  readonly u: SearchReport['usage'];
+  readonly p: SearchReport['preflight'];
+  readonly reasons: SearchReport['stop_reasons'];
+  readonly evaluated: number;
+  readonly knownTotal: number;
+};
+
 function validateResult(value: SearchResult, path: string): void {
   const { files, fragments: f, selection, usage: u, preflight: p, stop_reasons: reasons } = value.report;
   const report = value.report;
@@ -365,6 +382,15 @@ function validateResult(value: SearchResult, path: string): void {
   check(selection.duplicate_ranges_collapsed <= f.above_threshold, 'collapsed duplicates exceed qualifying fragments');
   check(new Set(reasons).size === reasons.length, 'stop reasons must be unique');
 
+  const facts: ResultFacts = { value, path, check, report, files, f, selection, u, p, reasons, evaluated, knownTotal };
+  checkStatus(facts);
+  checkExcerpts(facts);
+  checkUsage(facts);
+  checkPreflight(facts);
+}
+
+/** Status, stop reasons and the empty-selection outcome agree. */
+function checkStatus({ value, check, report, files, f, selection, u, p, reasons, evaluated }: ResultFacts): void {
   const canBeComplete = report.inventory_complete && f.total !== null && f.not_evaluated === 0
     && files.unreadable === 0 && files.changed_before_return === 0;
   check(!report.scope_fully_scanned || canBeComplete, 'full coverage contradicts inventory, evaluations or freshness');
@@ -401,7 +427,10 @@ function validateResult(value: SearchResult, path: string): void {
     : f.above_threshold === 0 ? 'no_score_above_threshold'
     : f.omitted_stale === f.above_threshold ? 'no_fresh_excerpt' : 'no_excerpt_fits';
   check(selection.outcome === expectedSelection, 'selection outcome violates empty-selection precedence');
+}
 
+/** Returned excerpts are unique, in scope, above threshold and one snapshot per file. */
+function checkExcerpts({ value, check, report, files, selection }: ResultFacts): void {
   const seenRanges = new Set<string>();
   const hashes = new Map<string, string>();
   for (const excerpt of value.excerpts) {
@@ -415,7 +444,10 @@ function validateResult(value: SearchResult, path: string): void {
     seenRanges.add(key);
   }
   check(hashes.size <= files.eligible, 'returned files exceed eligible files');
+}
 
+/** Usage accounting is internally consistent. */
+function checkUsage({ path, check, f, u, reasons }: ResultFacts): void {
   check(u.attempts_with_unknown_usage <= u.provider_request_attempts, 'unknown attempts exceed dispatched attempts');
   check(u.provider_input_tokens_reported === (u.attempts_with_unknown_usage === 0 ? u.provider_input_tokens_known_subtotal : null),
     'all-attempt usage must be null if any attempt has unknown usage');
@@ -433,7 +465,10 @@ function validateResult(value: SearchResult, path: string): void {
       && (u.estimated_cost_usd === null || u.estimated_cost_usd === 0)
       && (u.reported_cost_usd === null || u.reported_cost_usd === 0), 'zero-call searches cannot report incurred usage');
   }
+}
 
+/** The preflight plan matches the prepared totals and justifies any rejection. */
+function checkPreflight({ value, path, check, f, p, reasons }: ResultFacts): void {
   const enabledKeys = Object.keys(p.enabled_caps).sort();
   check(JSON.stringify(enabledKeys) === JSON.stringify(Object.keys(p.estimated_required_caps).sort()), 'cap maps must have exactly the same keys');
   if (f.total !== null) {
