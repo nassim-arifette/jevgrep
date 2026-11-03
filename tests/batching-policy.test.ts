@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { buildBatches } from '../src/engine.ts';
+import { buildBatches } from '../src/planning.ts';
 import { buildRequestPayload, type EvaluationBatch } from '../src/evaluation/jev.ts';
 import { batchLimits, fitsSerializedBatch, measureSerializedBatch, scoreCachePolicy } from '../src/evaluation/policy.ts';
 import { serializeGatewayBatch } from '../src/evaluation/vercel-gateway.ts';
