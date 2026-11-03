@@ -226,6 +226,29 @@ npm run bench:criteria -- analyze --judgments benchmark-results/criteria-judgmen
 request. Each criterion is versioned in the request state. See the
 [2026-11-03 results](baselines/2026-11-03-ambiguous-criteria.md).
 
+## Relationship expansion (E7)
+
+`bench:compare` can compare candidate-proposal strategies at one Jev allowance
+without provider spend. A live exhaustive run with `--capture` saves every
+fragment's Jev score (hashes, ranges and scores, never source text); replay arms
+then run the ordinary engine on the same snapshot while only their candidates can
+score, and report candidate recall, Jev tokens and cost for the candidate set:
+
+```sh
+npm run bench:compare -- --arms jevgrep --config /path/to/config.json --capture benchmark-results/e7-scores.json
+npm run bench:compare -- --arms jevgrep-replay,e7-hop0,e7-adjacent,e7-hop1,e7-hop2,codegraph-jevgrep \
+  --replay benchmarks/pools/e7-swe-bench-sample-1-scores.json --budget 16 --seeds 8 [--fanout 4] [--graph-behind 100]
+```
+
+`e7-hop0` evaluates the top lexical fragments; `e7-hop1`/`e7-hop2` replace half of
+them with one or two bounded CodeGraph relation hops; `e7-adjacent` is the
+same-file locality control; `codegraph-jevgrep` lets CodeGraph's `context` command
+propose candidates. Graph arms need a `codegraph` binary (`--codegraph`); a missing
+or unreadable index falls back to the lexical ranking. `--graph-behind` indexes an
+older commit to measure a stale graph. The report adds paired per-question
+differences against `e7-hop0` and cold/sync index costs. The
+[2026-11-03 report](baselines/2026-11-03-graph-expansion.md) found no robust gain.
+
 ## Verification
 
 `npm run verify` includes tests for profile isolation and outcome equivalence, the
