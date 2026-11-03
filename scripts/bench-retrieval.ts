@@ -7,12 +7,13 @@ import { writeCapture } from './bench/replay.ts';
 import type { CapturedPool } from './bench/replay.ts';
 import { datasetVersion, fixtureHashes, questions, validateDataset } from './bench/dataset.ts';
 import { liveProvider } from './bench/live-provider.ts';
+import { chunkingArm } from './bench/chunking-arms.ts';
 import { retrievalMetrics, summarizeRetrieval } from './bench/retrieval.ts';
 
 const { values } = parseArgs({ options: {
   config: { type: 'string' }, output: { type: 'string' }, 'max-requests': { type: 'string' },
   'max-input-tokens': { type: 'string' }, 'response-tokens': { type: 'string' },
-  capture: { type: 'string' }, 'validate-only': { type: 'boolean' }, help: { type: 'boolean' },
+  capture: { type: 'string' }, 'validate-only': { type: 'boolean' }, help: { type: 'boolean' }, chunker: { type: 'string' },
 } });
 
 if (values.help) {
@@ -43,7 +44,7 @@ if (values.help) {
       const space = workspace(repositories.get(question.repository)!, (base) => live.configure(base));
       try {
         const profile = new SearchProfiler();
-        const result = await createSearchEngine({ configuration: space.loaded, provider }).search({
+        const result = await createSearchEngine({ configuration: space.loaded, provider, chunker: chunkingArm(values.chunker ?? 'recursive') }).search({
           query: question.query, scope: ['.'], max_context_tokens: responseTokens,
         }, { searchId: question.id, profile, onCandidatePool: (pool) => { pools.push({ id: question.id, source: question.repository, pool }); } });
         rows.push({

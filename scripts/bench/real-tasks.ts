@@ -49,15 +49,26 @@ export type RealManifest = {
 export const realRepositories = {
   'psf/requests': { url: 'https://github.com/psf/requests.git', split: 'dev', exclude: ['requests/packages/', 'docs/', 'ext/'] },
   'pallets/flask': { url: 'https://github.com/pallets/flask.git', split: 'heldout', exclude: ['docs/', 'examples/', 'artwork/'] },
-} as const satisfies Record<string, { url: string; split: RealSplit; exclude: readonly string[] }>;
+  // JS/TS tasks (SWE-bench Multilingual) for chunking experiments; only library sources are kept.
+  'preactjs/preact': {
+    url: 'https://github.com/preactjs/preact.git', split: 'dev', exclude: ['test/', 'demo/', 'benches/', 'mangle.json'],
+    include: ['src/', 'hooks/src/', 'compat/src/', 'debug/src/', 'devtools/src/', 'jsx-runtime/src/', 'test-utils/src/'],
+  },
+  'axios/axios': { url: 'https://github.com/axios/axios.git', split: 'heldout', exclude: [], include: ['lib/', 'index.d.ts', 'index.js'] },
+} as const satisfies Record<string, { url: string; split: RealSplit; exclude: readonly string[]; include?: readonly string[] }>;
 export type RealRepository = keyof typeof realRepositories;
 
 export const manifestPath = join(projectRoot, 'benchmarks/real-tasks/swe-bench-sample-1.json');
 export const auditPath = join(projectRoot, 'benchmarks/real-tasks/audit.json');
+export const javascriptManifestPath = join(projectRoot, 'benchmarks/real-tasks/swe-bench-multilingual-js-1.json');
 
-const isTestPath = (path: string): boolean => /(^|\/)(tests?|testing)(\/|$)|(^|\/)test_[^/]*\.py$|_test\.py$/.test(path);
-export const excluded = (repository: RealRepository, path: string): boolean =>
-  realRepositories[repository].exclude.some((prefix) => path.startsWith(prefix));
+const isTestPath = (path: string): boolean =>
+  /(^|\/)(tests?|testing|__tests__)(\/|$)|(^|\/)test_[^/]*\.py$|_test\.py$|\.(test|spec)\.[cm]?[jt]sx?$/.test(path);
+const isJavaScript = (path: string): boolean => /\.[cm]?[jt]sx?$/.test(path);
+export const excluded = (repository: RealRepository, path: string): boolean => {
+  const entry: { readonly exclude: readonly string[]; readonly include?: readonly string[] } = realRepositories[repository];
+  return entry.exclude.some((prefix) => path.startsWith(prefix)) || (entry.include !== undefined && !entry.include.some((prefix) => path.startsWith(prefix)));
+};
 
 export type Hunk = { readonly removed: readonly string[]; readonly added: readonly string[]; readonly lines: readonly number[] };
 export type FileDiff = { readonly path: string; readonly isNew: boolean; readonly hunks: readonly Hunk[] };
@@ -93,6 +104,24 @@ export function parsePatch(patch: string): FileDiff[] {
 }
 
 /** Pre-change lines inside a Python docstring or on a comment line. */
+/** Lines inside JS/TS block comments, line comments, or blank. */
+function javascriptDocumentationLines(text: string): Set<number> {
+  const result = new Set<number>();
+  let open = false;
+  text.split(/\r?\n/).forEach((line, index) => {
+    const startsOpen = open;
+    let rest = line;
+    for (;;) {
+      const marker = open ? rest.indexOf('*/') : rest.indexOf('/*');
+      if (marker === -1) break;
+      open = !open;
+      rest = rest.slice(marker + 2);
+    }
+    if (startsOpen || open || /^\s*(\/\/|\/\*.*\*\/\s*$|$)/.test(line) || (startsOpen && /^\s*\*/.test(line))) result.add(index + 1);
+  });
+  return result;
+}
+
 function documentationLines(text: string): Set<number> {
   const lines = text.split(/\r?\n/);
   const result = new Set<number>();
@@ -128,15 +157,28 @@ const importLine = new RegExp(String.raw`^\s*(?:from\s+\S+\s+import\b|import\s|(
  * Whitespace-only, import-only and documentation-only hunks are ignored. A pure
  * insertion of a new `def`/`class` only marks where new code was placed.
  */
-export function classifyHunk(hunk: Hunk, preChangeText: string): HunkRole {
+export function classifyHunk(hunk: Hunk, preChangeText: string, path = ''): HunkRole {
   const squash = (lines: readonly string[]): string => lines.map((line) => line.replace(/\s+/g, '')).join('\n');
   if (squash(hunk.removed) === squash(hunk.added)) return 'ignored';
   const changed = [...hunk.removed, ...hunk.added].filter((line) => line.trim() !== '');
+  if (isJavaScript(path)) return classifyJavaScriptHunk(hunk, changed, preChangeText);
   if (changed.every((line) => importLine.test(line)) && changed.some((line) => /\bimport\b/.test(line))) return 'ignored';
   const documentation = documentationLines(preChangeText);
   const inside = (line: number): boolean => documentation.has(line) && (hunk.removed.length > 0 || documentation.has(line + 1));
   if (hunk.lines.every(inside)) return 'ignored';
   if (hunk.removed.length === 0 && /^\s*(@|(async\s+)?def\s|class\s)/.test(hunk.added.find((line) => line.trim() !== '') ?? '')) return 'placement';
+  return 'edit';
+}
+
+const javascriptImportLine = /^\s*(?:import\s|export\s.*\bfrom\s|(?:const|let|var)\s.*=\s*require\(|[\w$]+(?:\s+as\s+[\w$]+)?,?\s*$|\}\s*from\s)/;
+
+function classifyJavaScriptHunk(hunk: Hunk, changed: readonly string[], preChangeText: string): HunkRole {
+  if (changed.every((line) => javascriptImportLine.test(line)) && changed.some((line) => /\b(import|require)\b|\bfrom\s/.test(line))) return 'ignored';
+  const documentation = javascriptDocumentationLines(preChangeText);
+  const inside = (line: number): boolean => documentation.has(line) && (hunk.removed.length > 0 || documentation.has(line + 1));
+  if (hunk.lines.every(inside)) return 'ignored';
+  const first = hunk.added.find((line) => line.trim() !== '') ?? '';
+  if (hunk.removed.length === 0 && /^\s*(@|\/\*\*|(export\s+)?(default\s+)?(async\s+)?(function|class)\b)/.test(first)) return 'placement';
   return 'edit';
 }
 
@@ -280,7 +322,7 @@ export function buildTask(instance: SweInstance, files: Readonly<Record<string, 
   if (Buffer.byteLength(query, 'utf8') > maxQueryBytes) return null;
   const diffs = parsePatch(instance.patch);
   if (diffs.some((file) => file.isNew || isTestPath(file.path) || excluded(repository, file.path) || files[file.path] === undefined)) return null;
-  const roles = diffs.map((file) => ({ file, roles: file.hunks.map((hunk) => classifyHunk(hunk, files[file.path]!)) }));
+  const roles = diffs.map((file) => ({ file, roles: file.hunks.map((hunk) => classifyHunk(hunk, files[file.path]!, file.path)) }));
   const touched = (role: HunkRole): Evidence[] => roles.flatMap(({ file, roles: kinds }) =>
     unitsFromLines(file.path, file.hunks.flatMap((hunk, index) => kinds[index] === role ? hunk.lines : [])));
   const edit = touched('edit');
@@ -294,7 +336,8 @@ export function buildTask(instance: SweInstance, files: Readonly<Record<string, 
   const complementary = [...(edit.length > 0 ? placement : []), ...tests];
   const queries: RealQuery[] = [{ id: `${instance.instance_id}:change`, category: 'change-localization', query, evidence, complementary, label: 'patch' }];
   const first = evidence[0]!;
-  const enclosing = enclosingFunction(files[first.path]!, first.startLine);
+  // Docstring-derived questions are Python-only.
+  const enclosing = first.path.endsWith('.py') ? enclosingFunction(files[first.path]!, first.startLine) : null;
   if (enclosing?.summary) {
     queries.push({
       id: `${instance.instance_id}:understand`, category: 'code-understanding', query: understandingQuery(enclosing.summary),
