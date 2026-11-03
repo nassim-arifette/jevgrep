@@ -32,5 +32,5 @@ jobs:
       - name: Install exact versions from the lockfile
         run: npm ci --no-audit --no-fund
 
-      - name: Type check, test, build and smoke without provider credentials
+      - name: Check formatting, type check, test, build and smoke without provider credentials
         run: npm run verify

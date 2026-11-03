@@ -39,6 +39,7 @@
     "typecheck": "node node_modules/typescript/bin/tsc -p tsconfig.json",
     "test": "node --test \"tests/*.test.ts\" \"tests/contract/*.test.ts\"",
     "smoke": "node scripts/smoke.ts",
+    "format:check": "node scripts/check-format.ts",
     "bench": "node scripts/bench.ts",
     "bench:cache": "node scripts/bench-cache-writes.ts",
     "bench:preparation": "node scripts/bench-preparation.ts",
@@ -47,7 +48,7 @@
     "bench:real:import": "node scripts/bench-real-import.ts",
     "bench:agent": "node scripts/bench-agent.ts",
     "bench:compare": "node scripts/bench-compare.ts",
-    "verify": "npm run typecheck && npm test && npm run build && npm run smoke",
+    "verify": "npm run format:check && npm run typecheck && npm test && npm run build && npm run smoke",
     "prepublishOnly": "npm run verify"
   },
   "devDependencies": {
