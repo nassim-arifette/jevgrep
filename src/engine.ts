@@ -194,39 +194,7 @@ export class SearchEngine {
     );
 
     const root = sourceRoot;
-    const prepared = await measureAsync('preparation', () => runPhase(context, 'preparation', () => prepareScopeCooperatively(root, request.scope, {
-      inventory: {
-        respectGitignore: config.source.respect_gitignore,
-        maxFileBytes: config.source.max_file_bytes,
-        extraDenyGlobs: config.source.extra_deny_globs,
-        shouldStop: () => !context.canStartWork(),
-      },
-      limits: {
-        preparedSourceBytes: config.scan_caps.prepared_source_bytes,
-        candidateFiles: config.scan_caps.candidate_files,
-        fragments: config.scan_caps.fragments,
-      },
-      shouldStop: () => !context.canStartWork(),
-      cache: this.#preparationCache,
-      ...(this.#options.chunker === undefined ? {} : { chunker: this.#options.chunker }),
-    })));
-
-    // A lost authorization cannot become permission to send an earlier partial
-    // snapshot. The anchor is retained and invalidation lasts until config reload.
-    root.assertCurrent();
-
-    if (!prepared.inventory.complete) {
-      context.addStopReason('INVENTORY_INCOMPLETE');
-    }
-    if (prepared.inventory.complete && !prepared.complete) {
-      context.addStopReason('PREPARATION_LIMIT');
-    }
-    for (const directory of prepared.inventory.excludedDirectories) {
-      context.diagnostics.recordExcludedDirectory(directory.reason);
-    }
-    if (prepared.parseFallbacks > 0) {
-      context.diagnostics.record('PARSE_FALLBACK', context.elapsedMs, { count: prepared.parseFallbacks });
-    }
+    const prepared = await this.#prepare(request.scope, context);
 
     // Cache lookup precedes planning and scheduling (specification section 6.3).
     const model = provider.model;
@@ -300,6 +268,7 @@ export class SearchEngine {
     }
 
     const enabledCaps = enabledCapsOf(config.scan_caps);
+    const pricePerMillion = config.provider.pricing?.input_usd_per_million_tokens ?? null;
     const plan = measureSync('planning', () => planScan(pending, request.query, {
       model,
       batches: pendingBatches,
@@ -311,7 +280,7 @@ export class SearchEngine {
       preparedBytes: prepared.preparedBytes,
       candidateFiles: prepared.files.length,
       preparedFragments: prepared.fragments.length,
-      pricePerMillionInputTokens: config.provider.pricing?.input_usd_per_million_tokens ?? null,
+      pricePerMillionInputTokens: pricePerMillion,
     }));
 
     const usage: UsageAccount = {
@@ -351,17 +320,7 @@ export class SearchEngine {
             const cost = costOf(batch);
             const tokens = Math.max(1, cost.tokens);
             const bytes = cost.bytes;
-            const projected: Partial<Record<ScanCap, number | null>> = {
-              request_attempts: usage.attempts + 1,
-              transmitted_bytes: usage.transmittedBytes + bytes,
-              estimated_input_tokens: usage.knownInputTokens + usage.reservedInputTokens + tokens,
-              estimated_cost_usd: estimateInputCostUsd(usage.knownInputTokens + usage.reservedInputTokens + tokens,
-                config.provider.pricing?.input_usd_per_million_tokens ?? null),
-            };
-            if (Object.entries(projected).some(([key, value]) => {
-              const cap = enabledCaps[key as ScanCap];
-              return cap !== undefined && (value === null || value > cap);
-            })) {
+            if (exceedsEnabledCaps(usage, tokens, bytes, enabledCaps, pricePerMillion)) {
               context.addStopReason('SCAN_CAP_REACHED');
               return false;
             }
@@ -376,12 +335,7 @@ export class SearchEngine {
             return true;
           },
           onScores: (batch, evaluation) => {
-            const cacheable = cachePolicy.mode !== 'disabled' && evaluation.requestedModel === model
-              && (evaluation.returnedModel === null || evaluation.returnedModel === model
-                || (cachePolicy.mode === 'rolling' && adapter === 'typesafe-direct'
-                  && isPinnedModelRevision(evaluation.returnedModel))
-                || (cachePolicy.mode === 'rolling' && adapter === 'openrouter'
-                  && isOpenRouterModelRevision(evaluation.returnedModel)));
+            const cacheable = isCacheableEvaluation(evaluation, model, adapter, cachePolicy.mode);
             const writes: ScoreCacheWrite[] = [];
             for (const item of batch.items) {
               const score = evaluation.scores.get(item.id);
@@ -401,21 +355,9 @@ export class SearchEngine {
               }
             }
             if (writes.length > 0) measureSync('cache_write', () => this.#cache.writeMany(writes));
-            if (evaluation.usage.inputTokens === null) {
-              // The reservation survives: an attempt whose usage never resolved is
-              // still an attempt the provider may have billed.
-              usage.unknownUsageAttempts += 1;
-              context.addStopReason('USAGE_UNKNOWN');
-            } else {
-              usage.reservedInputTokens -= Math.max(1, costOf(batch).tokens);
-              usage.knownInputTokens += evaluation.usage.inputTokens;
-              const usedTokens = usage.knownInputTokens + usage.reservedInputTokens;
-              const usedCost = estimateInputCostUsd(usedTokens, config.provider.pricing?.input_usd_per_million_tokens ?? null);
-              if ((enabledCaps.estimated_input_tokens !== undefined && usedTokens > enabledCaps.estimated_input_tokens)
-                || (enabledCaps.estimated_cost_usd !== undefined && usedCost !== null && usedCost > enabledCaps.estimated_cost_usd)) {
-                context.addStopReason('ESTIMATE_OVERRUN');
-              }
-            }
+            recordUsage(usage, evaluation.usage.inputTokens, Math.max(1, costOf(batch).tokens), {
+              enabledCaps, pricePerMillion, context,
+            });
             if (evaluation.invalid.length > 0) {
               context.addStopReason('INVALID_PROVIDER_RESPONSE');
               context.diagnostics.record('INVALID_PROVIDER_RESPONSE', context.elapsedMs, { count: evaluation.invalid.length });
@@ -434,6 +376,45 @@ export class SearchEngine {
     return this.#render(context, request, prepared, scored, usage, plan, available, false, capture === undefined ? undefined : (inputs) => {
       capture(candidatePool(request, inputs, scored, available, config.search.threshold, { adapter, model }));
     });
+  }
+
+  /** Inventory and preparation, with their stop reasons and diagnostics recorded. */
+  async #prepare(scope: readonly string[], context: SearchContext): Promise<PreparedScope> {
+    const { config, sourceRoot: root } = this.#options.configuration;
+    const prepared = await measureAsync('preparation', () => runPhase(context, 'preparation', () => prepareScopeCooperatively(root, scope, {
+      inventory: {
+        respectGitignore: config.source.respect_gitignore,
+        maxFileBytes: config.source.max_file_bytes,
+        extraDenyGlobs: config.source.extra_deny_globs,
+        shouldStop: () => !context.canStartWork(),
+      },
+      limits: {
+        preparedSourceBytes: config.scan_caps.prepared_source_bytes,
+        candidateFiles: config.scan_caps.candidate_files,
+        fragments: config.scan_caps.fragments,
+      },
+      shouldStop: () => !context.canStartWork(),
+      cache: this.#preparationCache,
+      ...(this.#options.chunker === undefined ? {} : { chunker: this.#options.chunker }),
+    })));
+
+    // A lost authorization cannot become permission to send an earlier partial
+    // snapshot. The anchor is retained and invalidation lasts until config reload.
+    root.assertCurrent();
+
+    if (!prepared.inventory.complete) {
+      context.addStopReason('INVENTORY_INCOMPLETE');
+    }
+    if (prepared.inventory.complete && !prepared.complete) {
+      context.addStopReason('PREPARATION_LIMIT');
+    }
+    for (const directory of prepared.inventory.excludedDirectories) {
+      context.diagnostics.recordExcludedDirectory(directory.reason);
+    }
+    if (prepared.parseFallbacks > 0) {
+      context.diagnostics.record('PARSE_FALLBACK', context.elapsedMs, { count: prepared.parseFallbacks });
+    }
+    return prepared;
   }
 
   /** Selection, freshness and the measured rendering, in that order. */
@@ -566,6 +547,70 @@ export class SearchEngine {
       attempts: usage.attempts,
     });
     return { outcome: rendered.result, measuredTokens: rendered.measuredTokens, searchId: context.searchId };
+  }
+}
+
+/** Whether dispatching one more batch would pass an enabled cap, counting in-flight reservations. */
+function exceedsEnabledCaps(
+  usage: UsageAccount,
+  tokens: number,
+  bytes: number,
+  enabledCaps: Partial<Record<ScanCap, number>>,
+  pricePerMillion: number | null,
+): boolean {
+  const projectedTokens = usage.knownInputTokens + usage.reservedInputTokens + tokens;
+  const projected: Partial<Record<ScanCap, number | null>> = {
+    request_attempts: usage.attempts + 1,
+    transmitted_bytes: usage.transmittedBytes + bytes,
+    estimated_input_tokens: projectedTokens,
+    estimated_cost_usd: estimateInputCostUsd(projectedTokens, pricePerMillion),
+  };
+  return Object.entries(projected).some(([key, value]) => {
+    const cap = enabledCaps[key as ScanCap];
+    return cap !== undefined && (value === null || value > cap);
+  });
+}
+
+/** A score is cached only for the requested model, or a pinned revision of a rolling alias. */
+function isCacheableEvaluation(
+  evaluation: { readonly requestedModel: string; readonly returnedModel: string | null },
+  model: string,
+  adapter: string,
+  cacheMode: string,
+): boolean {
+  if (cacheMode === 'disabled' || evaluation.requestedModel !== model) return false;
+  const returned = evaluation.returnedModel;
+  return returned === null || returned === model
+    || (cacheMode === 'rolling' && adapter === 'typesafe-direct' && isPinnedModelRevision(returned))
+    || (cacheMode === 'rolling' && adapter === 'openrouter' && isOpenRouterModelRevision(returned));
+}
+
+/** Settle one attempt's reservation against its reported usage. */
+function recordUsage(
+  usage: UsageAccount,
+  inputTokens: number | null,
+  reservedTokens: number,
+  limits: {
+    readonly enabledCaps: Partial<Record<ScanCap, number>>;
+    readonly pricePerMillion: number | null;
+    readonly context: SearchContext;
+  },
+): void {
+  const { enabledCaps, pricePerMillion, context } = limits;
+  if (inputTokens === null) {
+    // The reservation survives: an attempt whose usage never resolved is still an
+    // attempt the provider may have billed.
+    usage.unknownUsageAttempts += 1;
+    context.addStopReason('USAGE_UNKNOWN');
+    return;
+  }
+  usage.reservedInputTokens -= reservedTokens;
+  usage.knownInputTokens += inputTokens;
+  const usedTokens = usage.knownInputTokens + usage.reservedInputTokens;
+  const usedCost = estimateInputCostUsd(usedTokens, pricePerMillion);
+  if ((enabledCaps.estimated_input_tokens !== undefined && usedTokens > enabledCaps.estimated_input_tokens)
+    || (enabledCaps.estimated_cost_usd !== undefined && usedCost !== null && usedCost > enabledCaps.estimated_cost_usd)) {
+    context.addStopReason('ESTIMATE_OVERRUN');
   }
 }
 
