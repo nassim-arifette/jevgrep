@@ -103,7 +103,6 @@ export function parsePatch(patch: string): FileDiff[] {
   return files;
 }
 
-/** Pre-change lines inside a Python docstring or on a comment line. */
 /** Lines inside JS/TS block comments, line comments, or blank. */
 function javascriptDocumentationLines(text: string): Set<number> {
   const result = new Set<number>();
@@ -122,6 +121,7 @@ function javascriptDocumentationLines(text: string): Set<number> {
   return result;
 }
 
+/** Pre-change lines inside a Python docstring or on a comment line. */
 function documentationLines(text: string): Set<number> {
   const lines = text.split(/\r?\n/);
   const result = new Set<number>();
