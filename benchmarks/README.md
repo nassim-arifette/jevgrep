@@ -286,6 +286,23 @@ scores as a second layout-A sample for the noise floor. It reports quality per
 group, score agreement and cost. The
 [2026-11-03 report](baselines/2026-11-03-compact-payloads.md) kept `layout-a-1`.
 
+## Progressive search (section 10)
+
+`bench:progressive` replays the E7 score pool through the ordinary engine with
+`allow_partial_scan: true` and compares candidate orders (path order, lexical
+priority, priority with a 25 % or 50 % path-order reserve) at token and file caps
+set to fractions of each question's exhaustive scan, plus repeated searches that
+continue a partial scan through the score cache. It makes no provider request:
+
+```sh
+npm run bench:progressive -- [--replay benchmarks/pools/e7-swe-bench-sample-1-scores.json] [--budgets 0.1,0.25,0.5]
+```
+
+Each row reports localization metrics on the delivered excerpts, candidate recall
+(annotated evidence inside the evaluated fragments), the first batch that scores a
+useful fragment, requests, tokens, evaluated share, complete searches and newly
+delivered excerpts. See the [2026-11-03 results](baselines/2026-11-03-progressive-search.md).
+
 ## Verification
 
 `npm run verify` includes tests for profile isolation and outcome equivalence, the

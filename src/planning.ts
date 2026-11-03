@@ -123,28 +123,49 @@ export function planScan(
   }
   const rejected = overrun && options.requireFit && !options.allowPartial;
 
-  // A partial scan admits a deterministic prefix of whole batches, never all work
-  // with its caps disabled. Preparation caps are enforced before planning.
+  // A partial scan admits a deterministic prefix of the planned batches, never all
+  // work with its caps disabled. Preparation caps are enforced before planning.
   const admitted: EvaluationBatch[] = [];
   let tokens = 0;
   let bytes = 0;
-  for (const batch of batches) {
-    const cost = costOf(batch);
+  const fits = (cost: BatchCost): boolean => {
     const nextTokens = tokens + cost.tokens;
-    const nextBytes = bytes + cost.bytes;
     const needs: Partial<Record<ScanCap, number | null>> = {
       estimated_input_tokens: nextTokens,
-      transmitted_bytes: nextBytes,
+      transmitted_bytes: bytes + cost.bytes,
       request_attempts: admitted.length + 1,
       estimated_cost_usd: estimateInputCostUsd(nextTokens, options.pricePerMillionInputTokens),
       prepared_source_bytes: options.preparedBytes,
       candidate_files: options.candidateFiles,
       fragments: options.preparedFragments,
     };
-    if (Object.entries(options.enabledCaps).some(([key, cap]) => (needs[key as ScanCap] ?? Infinity) > cap)) break;
+    return !Object.entries(options.enabledCaps).some(([key, cap]) => (needs[key as ScanCap] ?? Infinity) > cap);
+  };
+  const admit = (batch: EvaluationBatch): void => {
+    const cost = costOf(batch);
     admitted.push(batch);
-    tokens = nextTokens;
-    bytes = nextBytes;
+    tokens += cost.tokens;
+    bytes += cost.bytes;
+  };
+  for (const batch of batches) {
+    if (fits(costOf(batch))) {
+      admit(batch);
+      continue;
+    }
+    // A partial scan may still send the longest leading part of the first batch that
+    // does not fit, so a size cap smaller than one full batch still evaluates something.
+    if (options.allowPartial) {
+      let low = 0;
+      let high = batch.items.length - 1;
+      let head: EvaluationBatch | null = null;
+      while (low < high) {
+        const middle = Math.ceil((low + high) / 2);
+        const candidate = { ...batch, items: batch.items.slice(0, middle) };
+        if (fits(costOf(candidate))) { low = middle; head = candidate; } else high = middle - 1;
+      }
+      if (head !== null && head.items.length === low) admit(head);
+    }
+    break;
   }
 
   return {
@@ -163,9 +184,13 @@ export function planScan(
   };
 }
 
-/** Deterministic batches: path and offset order, bounded by the provider's own limits. */
+/**
+ * Deterministic batches bounded by the provider's own limits: path and offset order,
+ * or the caller's order when `preserveOrder` is set (a prioritized partial scan).
+ */
 export function buildBatches(fragments: readonly PreparedFragment[], query: string, options: {
   readonly model?: string; readonly limits?: BatchLimits; readonly serialize?: (batch: EvaluationBatch) => string;
+  readonly preserveOrder?: boolean;
   readonly countQuestionTokens?: (text: string) => number;
   readonly singletonMeasures?: ReadonlyMap<string, SerializedBatchMeasure>;
   readonly onBatchMeasure?: (batch: EvaluationBatch, measure: SerializedBatchMeasure, body: string) => void;
@@ -177,7 +202,7 @@ export function buildBatches(fragments: readonly PreparedFragment[], query: stri
     const body = serialize(batch);
     return { result: measureSerializedBatch(body, limits, countQuestionTokens), body };
   };
-  const ordered = [...fragments].sort((left, right) => (left.path < right.path ? -1 : left.path > right.path ? 1 : 0)
+  const ordered = options.preserveOrder === true ? fragments : [...fragments].sort((left, right) => (left.path < right.path ? -1 : left.path > right.path ? 1 : 0)
     || (left.startLine - right.startLine) || (left.endLine - right.endLine));
   const batches: EvaluationBatch[] = [];
   let items: BatchItem[] = [];

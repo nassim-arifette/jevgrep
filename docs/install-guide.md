@@ -166,7 +166,11 @@ jevgrep search --config "/absolute/path/to/config.json" --query "How are permiss
 
 The question file is read verbatim. Scope can narrow authorization, never expand it.
 Add `--allow-partial` to permit a deterministic partial scan when an enabled cap
-would otherwise reject the search.
+would otherwise reject the search. A partial scan prepares and evaluates candidates
+in a local lexical priority order (question terms in the fragment text, file name and
+symbol label), so the evaluated share holds the most likely fragments first; it is
+still reported as partial. Repeating the same search continues it: cached scores are
+reused and only the remaining fragments are sent, within the same caps.
 
 Exit codes are `0` complete (including an empty selection), `2` invalid request,
 configuration problem or preflight rejection, `3` partial, `4` fatal failure, and

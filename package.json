@@ -47,6 +47,7 @@
     "bench:cancellation": "node scripts/bench-cancellation.ts",
     "bench:chunking": "node scripts/bench-chunking.ts",
     "bench:retrieval": "node scripts/bench-retrieval.ts",
+    "bench:progressive": "node scripts/bench-progressive.ts",
     "bench:real": "node scripts/bench-real.ts",
     "bench:real:import": "node scripts/bench-real-import.ts",
     "bench:agent": "node scripts/bench-agent.ts",

@@ -38,6 +38,7 @@ import { SearchContext, SearchLogger, isAbortError, runPhase, systemClock } from
 import type { Clock } from './lifecycle.ts';
 import { batchCost, buildBatches, enabledCapsOf, planScan, questionTokenMemo } from './planning.ts';
 import type { BatchCost, ScanPlan } from './planning.ts';
+import { PARTIAL_SCAN_ORDER, prioritizeFiles, prioritizeFragments, type CandidateOrder } from './priority.ts';
 import { estimateInputCostUsd } from './pricing.ts';
 import { excerptBudget, excerptCost, renderSearchResult, ResponseBudgetError } from './response/render.ts';
 import type { ReportInputs, RenderedResponse } from './response/render.ts';
@@ -52,7 +53,7 @@ import type { PreparedFragment, SnapshotChunker } from './source/chunker.ts';
 import { FreshnessTracker, rootReader } from './source/freshness.ts';
 import { exclusionCounts, prepareScopeCooperatively } from './source/prepare.ts';
 import { PreparationCache, preparationCacheDirectory } from './source/preparation-cache.ts';
-import type { PreparedScope } from './source/prepare.ts';
+import type { PreparedScope, PrepareOptions } from './source/prepare.ts';
 import type { SourceSnapshot } from './source/snapshot.ts';
 import { countProfile, measureAsync, measureSync, withSearchProfile, type SearchProfiler } from './profiling.ts';
 
@@ -74,6 +75,8 @@ export type EngineOptions = {
   readonly preparationCache?: PreparationCache;
   /** Benchmark seam for chunking experiments (E1); defaults to the production chunker. */
   readonly chunker?: SnapshotChunker;
+  /** Evaluation and preparation order of an allowed partial scan (section 10); a complete scan is unaffected. */
+  readonly candidateOrder?: CandidateOrder;
   readonly clock?: Clock;
   readonly logger?: SearchLogger;
   readonly env?: NodeJS.ProcessEnv;
@@ -185,7 +188,10 @@ export class SearchEngine {
     );
 
     const root = sourceRoot;
-    const prepared = await this.#prepare(request.scope, context);
+    const order = this.#options.candidateOrder ?? PARTIAL_SCAN_ORDER;
+    const partialOrder = request.allow_partial_scan && order.kind !== 'path' ? order : null;
+    const prepared = await this.#prepare(request.scope, context,
+      partialOrder === null ? undefined : (files) => prioritizeFiles(files, request.query, partialOrder));
 
     // Cache lookup precedes planning and scheduling (specification section 6.3).
     const model = provider.model;
@@ -204,9 +210,11 @@ export class SearchEngine {
       query: request.query, serialize, limits, countQuestionTokens,
       identity: { endpoint: config.provider.base_url, model, adapter, cacheMode: cachePolicy.mode },
     });
-    const pendingBatches = measureSync('batching', () => buildBatches(pending, request.query, {
-      model, serialize, limits, countQuestionTokens, singletonMeasures, onBatchMeasure,
-    }));
+    const batchesOf = (fragments: readonly PreparedFragment[], preserveOrder: boolean): EvaluationBatch[] =>
+      measureSync('batching', () => buildBatches(fragments, request.query, {
+        model, serialize, limits, countQuestionTokens, singletonMeasures, onBatchMeasure, preserveOrder,
+      }));
+    const pendingBatches = batchesOf(pending, false);
     if (this.#cache.stats.corrupt > 0 || this.#cache.stats.failures > 0) {
       context.diagnostics.record('CACHE_UNAVAILABLE', context.elapsedMs,
         { count: this.#cache.stats.corrupt + this.#cache.stats.failures });
@@ -214,9 +222,9 @@ export class SearchEngine {
 
     const enabledCaps = enabledCapsOf(config.scan_caps);
     const pricePerMillion = config.provider.pricing?.input_usd_per_million_tokens ?? null;
-    const plan = measureSync('planning', () => planScan(pending, request.query, {
+    const planOf = (batches: readonly EvaluationBatch[]): ScanPlan => measureSync('planning', () => planScan(pending, request.query, {
       model,
-      batches: pendingBatches,
+      batches,
       serialize,
       batchCost: costOf,
       enabledCaps,
@@ -227,6 +235,12 @@ export class SearchEngine {
       preparedFragments: prepared.fragments.length,
       pricePerMillionInputTokens: pricePerMillion,
     }));
+    let plan = planOf(pendingBatches);
+    // An allowed partial scan evaluates the highest-priority prefix instead of a path
+    // prefix. The strict preflight already ran on the complete plan.
+    if (plan.capReached && !plan.rejected && partialOrder !== null) {
+      plan = planOf(batchesOf(prioritizeFragments(pending, request.query, partialOrder), true));
+    }
 
     const usage: UsageAccount = {
       attempts: 0, knownInputTokens: 0, reservedInputTokens: 0, unknownUsageAttempts: 0, transmittedBytes: 0,
@@ -366,7 +380,7 @@ export class SearchEngine {
   }
 
   /** Inventory and preparation, with their stop reasons and diagnostics recorded. */
-  async #prepare(scope: readonly string[], context: SearchContext): Promise<PreparedScope> {
+  async #prepare(scope: readonly string[], context: SearchContext, fileOrder?: PrepareOptions['fileOrder']): Promise<PreparedScope> {
     const { config, sourceRoot: root } = this.#options.configuration;
     const prepared = await measureAsync('preparation', () => runPhase(context, 'preparation', () => prepareScopeCooperatively(root, scope, {
       inventory: {
@@ -383,6 +397,7 @@ export class SearchEngine {
       shouldStop: () => !context.canStartWork(),
       cache: this.#preparationCache,
       ...(this.#options.chunker === undefined ? {} : { chunker: this.#options.chunker }),
+      ...(fileOrder === undefined ? {} : { fileOrder }),
     })));
 
     // A lost authorization cannot become permission to send an earlier partial
