@@ -12,7 +12,7 @@ import process from 'node:process';
 
 import { loadConfiguration } from '../../src/config.ts';
 import { createSearchEngine } from '../../src/engine.ts';
-import type { BatchEvaluation, EvaluationBatch, ProviderClient } from '../../src/evaluation/jev.ts';
+import type { BatchEvaluation, EvaluationBatch, ProviderClient } from '../../src/evaluation/contracts.ts';
 import { runMcpServer } from '../../src/mcp.ts';
 
 class DeterministicProvider implements ProviderClient {

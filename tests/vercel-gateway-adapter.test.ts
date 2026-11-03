@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { ProviderError, type EvaluationBatch } from '../src/evaluation/jev.ts';
+import { ProviderError, type EvaluationBatch } from '../src/evaluation/contracts.ts';
 import {
   VERCEL_JEV_MODEL,
   VercelGatewayAdapter,

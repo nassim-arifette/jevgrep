@@ -1,11 +1,11 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import {
-  CRITERION_VERSION, JevAdapter, LAYOUT_VERSION, ProviderError, RELEVANCE_CRITERION,
-  buildRequestPayload, duplicateAnswerKeys, fetchTransport, fitsProviderLimits, normalizeResponse,
-} from '../src/evaluation/jev.ts';
-import type { EvaluationBatch, TransportRequest, TransportResponse } from '../src/evaluation/jev.ts';
+import { ProviderError } from '../src/evaluation/contracts.ts';
+import { fetchTransport } from '../src/evaluation/http.ts';
+import { CRITERION_VERSION, JevAdapter, LAYOUT_VERSION, RELEVANCE_CRITERION, buildRequestPayload, duplicateAnswerKeys, fitsProviderLimits, normalizeResponse } from '../src/evaluation/jev.ts';
+import type { EvaluationBatch } from '../src/evaluation/contracts.ts';
+import type { TransportRequest, TransportResponse } from '../src/evaluation/http.ts';
 
 /**
  * Jev adapter contract (JG-013, specification 6.2 and 6.3).

@@ -4,7 +4,8 @@
  * One call to `evaluateBatch` is exactly one observable attempt: no hidden retry, no
  * hidden fallback, no hidden request. Retries, reservations and deadlines belong to
  * the scheduler (JG-017); authorization belongs to the source reader; this module
- * owns the provider contract and nothing else.
+ * owns the TypeSafe direct wire format and the validation shared with the other
+ * adapters; shared types and errors live in contracts.ts, the HTTP transport in http.ts.
  *
  * Validation is strict and asymmetric on purpose (specification section 6.3 and
  * requirement R5): a valid score is kept even when a neighbour in the same response
@@ -22,7 +23,9 @@
  * checks run before this adapter is constructed.
  */
 import { batchLimits, fitsSerializedBatch } from './policy.ts';
-import { boundedFetch, MAX_PROVIDER_RESPONSE_BYTES } from './http.ts';
+import { MAX_PROVIDER_RESPONSE_BYTES, fetchTransport, type ProviderTransport, type TransportRequest, type TransportResponse } from './http.ts';
+import { ProviderError } from './contracts.ts';
+import type { BatchEvaluation, BatchItem, EvaluationBatch, InvalidAnswer, ProviderClient } from './contracts.ts';
 
 /** Versioned relevance criterion, quoted from specification section 6.2. */
 export const RELEVANCE_CRITERION =
@@ -37,113 +40,6 @@ export const LAYOUT_VERSION = 'layout-a-1';
 
 /** Documented model limits; local estimates only, never presented as billing truth. */
 export const PROVIDER_CONTEXT_LIMITS = Object.freeze(batchLimits());
-
-export type BatchItem = {
-  /** Correlation key; the provider returns answers under this id. */
-  readonly id: string;
-  /** Repository-relative path, model-visible metadata and part of evaluation identity. */
-  readonly path: string;
-  readonly startLine: number;
-  readonly endLine: number;
-  readonly text: string;
-  readonly label?: string | null;
-};
-
-export type EvaluationBatch = {
-  readonly query: string;
-  readonly items: readonly BatchItem[];
-};
-
-export type ProviderUsage = {
-  /** null means the provider reported no usable usage; it is never turned into zero. */
-  readonly inputTokens: number | null;
-  readonly outputTokens: number | null;
-};
-
-export type InvalidAnswer = {
-  readonly id: string;
-  readonly reason: 'missing' | 'unexpected' | 'wrong_type' | 'not_finite' | 'out_of_range' | 'duplicate';
-};
-
-export type BatchEvaluation = {
-  /** Validated probabilities, keyed by item id. Absent ids were not evaluated. */
-  readonly scores: ReadonlyMap<string, number>;
-  readonly invalid: readonly InvalidAnswer[];
-  readonly usage: ProviderUsage;
-  readonly requestedModel: string;
-  /** Model the provider says answered, or null when it does not resolve to a revision. */
-  readonly returnedModel: string | null;
-  readonly transmittedBytes: number;
-  readonly requestId: string | null;
-};
-
-export type ProviderErrorCode =
-  | 'PROVIDER_AUTH' | 'PROVIDER_QUOTA' | 'PROVIDER_RATE_LIMIT'
-  | 'PROVIDER_UNAVAILABLE' | 'INVALID_PROVIDER_RESPONSE';
-
-/**
- * A normalized provider failure. `ambiguous` marks an attempt that may have been
- * evaluated and billed even though no usable answer came back: such an attempt keeps
- * its usage reservation and is not retried automatically.
- */
-export class ProviderError extends Error {
-  override readonly name = 'ProviderError';
-  readonly code: ProviderErrorCode;
-  readonly retryable: boolean;
-  readonly ambiguous: boolean;
-  readonly retryAfterMs: number | null;
-  readonly status: number | null;
-  readonly transmittedBytes: number;
-  /** A dispatched exchange was aborted by the caller's signal, not a provider refusal. */
-  readonly cancelled: boolean;
-
-  constructor(options: {
-    code: ProviderErrorCode;
-    message: string;
-    retryable: boolean;
-    ambiguous: boolean;
-    retryAfterMs?: number | null;
-    status?: number | null;
-    transmittedBytes?: number;
-    cancelled?: boolean;
-  }) {
-    super(options.message);
-    this.code = options.code;
-    this.retryable = options.retryable;
-    this.ambiguous = options.ambiguous;
-    this.retryAfterMs = options.retryAfterMs ?? null;
-    this.status = options.status ?? null;
-    this.transmittedBytes = options.transmittedBytes ?? 0;
-    this.cancelled = options.cancelled ?? false;
-  }
-}
-
-export type TransportRequest = {
-  readonly url: string;
-  readonly method: 'POST';
-  readonly headers: Readonly<Record<string, string>>;
-  readonly body: string;
-};
-
-export type TransportResponse = {
-  readonly status: number;
-  readonly headers: Readonly<Record<string, string>>;
-  readonly text: string;
-};
-
-/** One HTTP exchange. Development uses an injected, offline transport. */
-export type ProviderTransport = (request: TransportRequest, signal?: AbortSignal) => Promise<TransportResponse>;
-
-/** One bounded HTTP exchange with redirects disabled and no automatic retry. */
-export const fetchTransport: ProviderTransport = async (request, signal) => {
-  const response = await boundedFetch(request.url, {
-    method: request.method, headers: request.headers, body: request.body,
-    ...(signal === undefined ? {} : { signal }),
-  });
-  const headers: Record<string, string> = {};
-  response.headers.forEach((value, key) => { headers[key.toLowerCase()] = value; });
-  return { status: response.status, headers, text: await response.text() };
-};
 
 export type JevAdapterOptions = {
   readonly baseUrl: string;
@@ -400,15 +296,6 @@ export function normalizeResponse(
     requestId,
   };
 }
-
-/** Narrow provider seam used by the scheduler and by the engine. */
-export type ProviderClient = {
-  readonly model: string;
-  /** Exact outbound JSON body, including the adapter's protocol envelope. */
-  serializeBatch?(batch: EvaluationBatch): string;
-  /** Prepared body is the exact result of serializeBatch for this immutable batch. */
-  evaluateBatch(batch: EvaluationBatch, signal?: AbortSignal, preparedBody?: string): Promise<BatchEvaluation>;
-};
 
 export class JevAdapter implements ProviderClient {
   readonly model: string;

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { createSearchEngine } from '../src/engine.ts';
-import type { ProviderClient } from '../src/evaluation/jev.ts';
+import type { ProviderClient } from '../src/evaluation/contracts.ts';
 import { createWorkspace } from './helpers/search-workspace.ts';
 import { serializeGatewayBatch } from '../src/evaluation/vercel-gateway.ts';
 import { inspectScope } from '../src/inspect.ts';

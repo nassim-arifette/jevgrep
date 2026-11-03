@@ -1,5 +1,6 @@
 import { createSearchEngine } from '../../src/engine.ts';
-import { buildRequestPayload, type ProviderClient } from '../../src/evaluation/jev.ts';
+import type { ProviderClient } from '../../src/evaluation/contracts.ts';
+import { buildRequestPayload } from '../../src/evaluation/jev.ts';
 import { SearchProfiler } from '../../src/profiling.ts';
 import { countReferenceTokens } from '../../src/response/token-counter.ts';
 import { performance } from 'node:perf_hooks';

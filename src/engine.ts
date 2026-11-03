@@ -28,10 +28,9 @@ import { ConfigurationError, resolveCredential } from './config.ts';
 import type { LoadedConfiguration } from './config.ts';
 import { ScoreCache, evaluationIdentity, isPinnedModelRevision } from './evaluation/cache.ts';
 import type { ScoreCacheWrite } from './evaluation/cache.ts';
-import {
-  CRITERION_VERSION, LAYOUT_VERSION, ProviderError, buildRequestPayload,
-} from './evaluation/jev.ts';
-import type { EvaluationBatch, ProviderClient } from './evaluation/jev.ts';
+import { ProviderError } from './evaluation/contracts.ts';
+import { CRITERION_VERSION, LAYOUT_VERSION, buildRequestPayload } from './evaluation/jev.ts';
+import type { EvaluationBatch, ProviderClient } from './evaluation/contracts.ts';
 import { createConfiguredProvider } from './evaluation/provider.ts';
 import { batchLimits, measureSerializedBatch, isOpenRouterModelRevision, scoreCachePolicy, MAX_ROLLING_TTL_SECONDS, type SerializedBatchMeasure } from './evaluation/policy.ts';
 import { runEvaluations } from './evaluation/scheduler.ts';

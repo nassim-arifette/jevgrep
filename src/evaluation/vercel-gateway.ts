@@ -15,19 +15,8 @@ import {
   type JSONValue,
 } from 'ai';
 
-import {
-  CRITERION_VERSION,
-  LAYOUT_VERSION,
-  ProviderError,
-  RELEVANCE_CRITERION,
-  questionInstructions,
-  parseRetryAfter,
-  inspectResponseKeys,
-  type BatchEvaluation,
-  type EvaluationBatch,
-  type InvalidAnswer,
-  type ProviderClient,
-} from './jev.ts';
+import { ProviderError, type BatchEvaluation, type EvaluationBatch, type InvalidAnswer, type ProviderClient } from './contracts.ts';
+import { CRITERION_VERSION, LAYOUT_VERSION, RELEVANCE_CRITERION, questionInstructions, parseRetryAfter, inspectResponseKeys } from './jev.ts';
 import { boundedFetch } from './http.ts';
 
 /** Validate each association before the SDK's all-or-nothing envelope validator. */

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { createSearchEngine } from '../src/engine.ts';
 import { createSearchError, type SearchResult } from '../src/contracts.ts';
-import { ProviderError, type ProviderClient } from '../src/evaluation/jev.ts';
+import { ProviderError, type ProviderClient } from '../src/evaluation/contracts.ts';
 import { questions, validateDataset, type RetrievalQuestion } from '../scripts/bench/dataset.ts';
 import { distribution, runLocalSample } from '../scripts/bench/local.ts';
 import { limitProvider } from '../scripts/bench/limited-provider.ts';
