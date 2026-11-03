@@ -30,7 +30,7 @@ import { ScoreCache, evaluationIdentity, isPinnedModelRevision } from './evaluat
 import type { ScoreCacheWrite } from './evaluation/cache.ts';
 import { ProviderError } from './evaluation/contracts.ts';
 import { CRITERION_VERSION, LAYOUT_VERSION, buildRequestPayload } from './evaluation/jev.ts';
-import type { EvaluationBatch, ProviderClient } from './evaluation/contracts.ts';
+import type { BatchEvaluation, EvaluationBatch, ProviderClient } from './evaluation/contracts.ts';
 import { createConfiguredProvider } from './evaluation/provider.ts';
 import { batchLimits, measureSerializedBatch, isOpenRouterModelRevision, scoreCachePolicy, MAX_ROLLING_TTL_SECONDS, type SerializedBatchMeasure } from './evaluation/policy.ts';
 import { runEvaluations } from './evaluation/scheduler.ts';
@@ -44,9 +44,10 @@ import type { ReportInputs, RenderedResponse } from './response/render.ts';
 import { CANDIDATE_POOL_VERSION } from './response/candidate-pool.ts';
 import type { CandidatePool } from './response/candidate-pool.ts';
 import { selectRanges } from './response/selection.ts';
-import type { SelectedRange } from './response/selection.ts';
+import type { SelectedRange, SelectionResult } from './response/selection.ts';
 import { REFERENCE_COUNTER_ID } from './response/token-counter.ts';
 import { UnauthorizedPathError } from './source/authorization.ts';
+import type { AuthorizedRoot } from './source/authorization.ts';
 import type { PreparedFragment, SnapshotChunker } from './source/chunker.ts';
 import { FreshnessTracker, rootReader } from './source/freshness.ts';
 import { exclusionCounts, prepareScopeCooperatively } from './source/prepare.ts';
@@ -173,17 +174,7 @@ export class SearchEngine {
 
   async #run(rawRequest: unknown, context: SearchContext, capture?: (pool: CandidatePool) => void): Promise<SearchOutcomeWithDiagnostics> {
     const { config, sourceRoot } = this.#options.configuration;
-    let request;
-    try {
-      request = parseSearchRequest(rawRequest, {
-        default_response_tokens: config.search.default_response_tokens,
-        max_response_tokens: config.search.max_response_tokens,
-      });
-    } catch (cause) {
-      // Only a caller's request can be an invalid request; a contract failure later
-      // in the pipeline is a defect and must stay loud rather than masquerade as one.
-      throw cause instanceof ContractValidationError ? new RequestValidationError(cause) : cause;
-    }
+    const request = parseCallerRequest(rawRequest, config);
 
     // The mandatory report envelope is reserved before any work that could cost money.
     const available = measureSync('rendering', () => excerptBudget(context.searchId, request.scope, REFERENCE_COUNTER_ID, request.max_context_tokens));
@@ -206,61 +197,15 @@ export class SearchEngine {
       countProfile('serializedBytes', () => Buffer.byteLength(payload, 'utf8'));
       return payload;
     });
-    const measuredBatches = new WeakMap<EvaluationBatch, BatchCost>();
-    let retainedPayloadBytes = 0;
-    const maxRetainedPayloadBytes = 16 * 1024 * 1024;
-    const costOf = (batch: EvaluationBatch): BatchCost => {
-      let cost = measuredBatches.get(batch);
-      if (cost === undefined) {
-        cost = batchCost(batch, model, serialize);
-        measuredBatches.set(batch, cost);
-      }
-      return cost;
-    };
-    const identityOf = (fragment: PreparedFragment, batchHash: string): string => evaluationIdentity({
-      query: request.query,
-      path: fragment.path,
-      startLine: fragment.startLine,
-      endLine: fragment.endLine,
-      text: fragment.text,
-      label: fragment.label ?? null,
-      criterionVersion: CRITERION_VERSION,
-      layoutVersion: LAYOUT_VERSION,
-      chunkerVersion: fragment.chunker,
-      endpoint: config.provider.base_url,
-      modelRevision: model,
-      providerOptions: { adapter, cachePolicy: cachePolicy.mode },
-      batchComposition: [batchHash],
-    });
-
-    const cached = new Map<string, number>();
-    const pending: PreparedFragment[] = [];
-    const identities = new Map<string, string>();
+    const { costOf, onBatchMeasure } = batchCostMemo(model, serialize);
     const limits = batchLimits(adapter);
     const countQuestionTokens = questionTokenMemo();
-    const singletonMeasures = new Map<string, SerializedBatchMeasure>();
-    // Both evaluation APIs judge each question independently against shared state.
-    // Hash its exact envelope and regroup only misses; neighbors cannot invalidate it.
-    for (const fragment of prepared.fragments) {
-      const hit = measureSync('cache_lookup', () => {
-        const body = serialize({ query: request.query, items: [fragment] });
-        const inputHash = createHash('sha256').update(body).digest('hex');
-        const identity = identityOf(fragment, inputHash);
-        identities.set(fragment.id, identity);
-        const score = cachePolicy.mode !== 'disabled' ? this.#cache.read(identity) : null;
-        if (score === null) singletonMeasures.set(fragment.id, measureSerializedBatch(body, limits, countQuestionTokens));
-        return score;
-      });
-      if (hit !== null) cached.set(fragment.id, hit);
-      else pending.push(fragment);
-    }
+    const { cached, pending, identities, singletonMeasures } = this.#lookupCachedScores(prepared.fragments, {
+      query: request.query, serialize, limits, countQuestionTokens,
+      identity: { endpoint: config.provider.base_url, model, adapter, cacheMode: cachePolicy.mode },
+    });
     const pendingBatches = measureSync('batching', () => buildBatches(pending, request.query, {
-      model, serialize, limits, countQuestionTokens, singletonMeasures,
-      onBatchMeasure: (batch, measure, body) => {
-        const retain = retainedPayloadBytes + measure.bytes <= maxRetainedPayloadBytes;
-        if (retain) retainedPayloadBytes += measure.bytes;
-        measuredBatches.set(batch, { tokens: measure.tokens!, bytes: measure.bytes, ...(retain ? { body } : {}) });
-      },
+      model, serialize, limits, countQuestionTokens, singletonMeasures, onBatchMeasure,
     }));
     if (this.#cache.stats.corrupt > 0 || this.#cache.stats.failures > 0) {
       context.diagnostics.record('CACHE_UNAVAILABLE', context.elapsedMs,
@@ -303,79 +248,121 @@ export class SearchEngine {
     if (plan.capReached) context.addStopReason('SCAN_CAP_REACHED');
 
     if (plan.batches.length > 0) {
-      await measureAsync('evaluation', () => runPhase(context, 'evaluation', async () => {
-        await runEvaluations(provider, plan.batches, context, {
-          concurrency: config.search.concurrency,
-          ...(config.search.retry === undefined ? {} : { retry: config.search.retry }),
-          bodyOf: (batch) => costOf(batch).body,
-          onDispatch: (batch) => {
-            root.assertCurrent();
-            // Revalidate each named entry before disclosure, while sending only
-            // the already captured snapshot bytes (never reread replacement text).
-            for (const path of new Set(batch.items.map((item) => item.path))) {
-              if (root.resolveEntry(path).kind !== 'file') {
-                throw new UnauthorizedPathError('not_regular_file', path, 'source type changed before dispatch');
-              }
-            }
-            const cost = costOf(batch);
-            const tokens = Math.max(1, cost.tokens);
-            const bytes = cost.bytes;
-            if (exceedsEnabledCaps(usage, tokens, bytes, enabledCaps, pricePerMillion)) {
-              context.addStopReason('SCAN_CAP_REACHED');
-              return false;
-            }
-            // Filesystem checks and token accounting are synchronous; the deadline
-            // may have elapsed since the scheduler admitted this batch.
-            if (!context.canStartWork()) return false;
-            // Synchronous reservation before awaiting the provider: concurrent
-            // workers immediately see spent and in-flight capacity.
-            usage.attempts += 1;
-            usage.transmittedBytes += bytes;
-            usage.reservedInputTokens += tokens;
-            return true;
-          },
-          onScores: (batch, evaluation) => {
-            const cacheable = isCacheableEvaluation(evaluation, model, adapter, cachePolicy.mode);
-            const writes: ScoreCacheWrite[] = [];
-            for (const item of batch.items) {
-              const score = evaluation.scores.get(item.id);
-              if (score === undefined) {
-                continue;
-              }
-              const fragment = byId.get(item.id);
-              if (fragment === undefined) {
-                continue;
-              }
-              scored.push({ fragment, score, fromCache: false });
-              if (cacheable) {
-                writes.push({ identity: identities.get(fragment.id)!, score, meta: {
-                  modelRevision: model,
-                  layout: LAYOUT_VERSION, criterion: CRITERION_VERSION, chunker: fragment.chunker,
-                } });
-              }
-            }
-            if (writes.length > 0) measureSync('cache_write', () => this.#cache.writeMany(writes));
-            recordUsage(usage, evaluation.usage.inputTokens, Math.max(1, costOf(batch).tokens), {
-              enabledCaps, pricePerMillion, context,
-            });
-            if (evaluation.invalid.length > 0) {
-              context.addStopReason('INVALID_PROVIDER_RESPONSE');
-              context.diagnostics.record('INVALID_PROVIDER_RESPONSE', context.elapsedMs, { count: evaluation.invalid.length });
-            }
-          },
-          onFailure: (batch, failure, willRetry) => {
-            usage.unknownUsageAttempts += 1;
-            context.addStopReason('USAGE_UNKNOWN');
-            if (!willRetry && (!failure.cancelled || context.stop === null)) context.addStopReason(failure.code);
-            context.diagnostics.record(failure.code, context.elapsedMs, { count: batch.items.length });
-          },
-        });
-      }));
+      await this.#evaluate(provider, plan.batches, context, {
+        root, usage, enabledCaps, pricePerMillion, costOf, byId, scored, identities, model,
+        cacheMode: cachePolicy.mode, adapter,
+      });
     }
 
     return this.#render(context, request, prepared, scored, usage, plan, available, false, capture === undefined ? undefined : (inputs) => {
       capture(candidatePool(request, inputs, scored, available, config.search.threshold, { adapter, model }));
     });
+  }
+
+  /** Provider dispatch: admission, score collection and usage settlement per batch. */
+  async #evaluate(provider: ProviderClient, batches: readonly EvaluationBatch[], context: SearchContext, state: {
+    readonly root: AuthorizedRoot;
+    readonly usage: UsageAccount;
+    readonly enabledCaps: Partial<Record<ScanCap, number>>;
+    readonly pricePerMillion: number | null;
+    readonly costOf: (batch: EvaluationBatch) => BatchCost;
+    readonly byId: ReadonlyMap<string, PreparedFragment>;
+    readonly scored: Scored[];
+    readonly identities: ReadonlyMap<string, string>;
+    readonly model: string;
+    readonly adapter: string;
+    readonly cacheMode: string;
+  }): Promise<void> {
+    const { config } = this.#options.configuration;
+    const { root, usage, enabledCaps, pricePerMillion, costOf, byId, scored, identities, model, adapter, cacheMode } = state;
+  await measureAsync('evaluation', () => runPhase(context, 'evaluation', async () => {
+    await runEvaluations(provider, batches, context, {
+      concurrency: config.search.concurrency,
+      ...(config.search.retry === undefined ? {} : { retry: config.search.retry }),
+      bodyOf: (batch) => costOf(batch).body,
+      onDispatch: (batch) => admitBatch(batch, costOf(batch), { root, usage, enabledCaps, pricePerMillion, context }),
+      onScores: (batch, evaluation) => {
+        this.#recordScores(batch, evaluation, {
+          byId, scored, identities, model,
+          cacheable: isCacheableEvaluation(evaluation, model, adapter, cacheMode),
+        });
+        recordUsage(usage, evaluation.usage.inputTokens, Math.max(1, costOf(batch).tokens), {
+          enabledCaps, pricePerMillion, context,
+        });
+        if (evaluation.invalid.length > 0) {
+          context.addStopReason('INVALID_PROVIDER_RESPONSE');
+          context.diagnostics.record('INVALID_PROVIDER_RESPONSE', context.elapsedMs, { count: evaluation.invalid.length });
+        }
+      },
+      onFailure: (batch, failure, willRetry) => {
+        usage.unknownUsageAttempts += 1;
+        context.addStopReason('USAGE_UNKNOWN');
+        if (!willRetry && (!failure.cancelled || context.stop === null)) context.addStopReason(failure.code);
+        context.diagnostics.record(failure.code, context.elapsedMs, { count: batch.items.length });
+      },
+    });
+  }));
+  }
+
+  /**
+   * Both evaluation APIs judge each question independently against shared state.
+   * Hash its exact envelope and regroup only misses; neighbors cannot invalidate it.
+   */
+  #lookupCachedScores(fragments: readonly PreparedFragment[], options: {
+    readonly query: string;
+    readonly serialize: (batch: EvaluationBatch) => string;
+    readonly limits: ReturnType<typeof batchLimits>;
+    readonly countQuestionTokens: ReturnType<typeof questionTokenMemo>;
+    readonly identity: IdentityScope;
+  }): {
+    cached: Map<string, number>;
+    pending: PreparedFragment[];
+    identities: Map<string, string>;
+    singletonMeasures: Map<string, SerializedBatchMeasure>;
+  } {
+    const { query, serialize, limits, countQuestionTokens } = options;
+    const cached = new Map<string, number>();
+    const pending: PreparedFragment[] = [];
+    const identities = new Map<string, string>();
+    const singletonMeasures = new Map<string, SerializedBatchMeasure>();
+    for (const fragment of fragments) {
+      const hit = measureSync('cache_lookup', () => {
+        const body = serialize({ query, items: [fragment] });
+        const inputHash = createHash('sha256').update(body).digest('hex');
+        const identity = fragmentIdentity(query, fragment, inputHash, options.identity);
+        identities.set(fragment.id, identity);
+        const score = options.identity.cacheMode !== 'disabled' ? this.#cache.read(identity) : null;
+        if (score === null) singletonMeasures.set(fragment.id, measureSerializedBatch(body, limits, countQuestionTokens));
+        return score;
+      });
+      if (hit !== null) cached.set(fragment.id, hit);
+      else pending.push(fragment);
+    }
+    return { cached, pending, identities, singletonMeasures };
+  }
+
+  /** Collect a batch's scores and cache the ones a pinned model produced. */
+  #recordScores(batch: EvaluationBatch, evaluation: BatchEvaluation, target: {
+    readonly byId: ReadonlyMap<string, PreparedFragment>;
+    readonly scored: Scored[];
+    readonly identities: ReadonlyMap<string, string>;
+    readonly model: string;
+    readonly cacheable: boolean;
+  }): void {
+    const writes: ScoreCacheWrite[] = [];
+    for (const item of batch.items) {
+      const score = evaluation.scores.get(item.id);
+      const fragment = target.byId.get(item.id);
+      if (score === undefined || fragment === undefined) continue;
+      target.scored.push({ fragment, score, fromCache: false });
+      if (target.cacheable) {
+        writes.push({ identity: target.identities.get(fragment.id)!, score, meta: {
+          modelRevision: target.model,
+          layout: LAYOUT_VERSION, criterion: CRITERION_VERSION, chunker: fragment.chunker,
+        } });
+      }
+    }
+    if (writes.length > 0) measureSync('cache_write', () => this.#cache.writeMany(writes));
   }
 
   /** Inventory and preparation, with their stop reasons and diagnostics recorded. */
@@ -452,29 +439,170 @@ export class SearchEngine {
       unavailablePaths: freshness.unavailablePaths,
       policy: config.search.selection_policy ?? 'relevance',
     }));
-    let selection = select();
+    const selection = selectFresh(select, { freshness, snapshots, rounds: prepared.files.length + 1, context });
 
-    // Revalidate the files a range came from, at most once each, and fill the freed
-    // space from candidates already evaluated. No new provider work is ever started.
-    let staleFiles = 0;
-    for (let round = 0; round < prepared.files.length + 1; round += 1) {
-      let changed = false;
-      for (const range of selection.ranges) {
-        const verdict = measureSync('freshness', () => freshness.check(range.path, range.sha256));
-        if (verdict.verdict !== 'fresh') {
-          changed = true;
-          staleFiles += 1;
-          snapshots.delete(range.path);
-        }
+    const inputs = reportInputs({ context, request, prepared, scored, usage, plan, selection, freshness, rejected,
+      threshold: config.search.threshold,
+      pricePerMillion: config.provider.pricing?.input_usd_per_million_tokens ?? null,
+    });
+
+    capture?.(inputs);
+    const representedFor = (ranges: readonly SelectedRange[]): number => countRepresented(candidates, ranges, config.search.threshold, freshness.unavailablePaths);
+    const rendered: RenderedResponse = measureSync('rendering', () => renderSearchResult(inputs, rejected ? [] : selection.ranges, representedFor));
+    context.diagnostics.setResponseTokensMeasured(rendered.measuredTokens);
+    context.logger.log('info', context.searchId, 'search.complete', {
+      status: rendered.result.status,
+      excerpts: rendered.result.excerpts.length,
+      response_tokens: rendered.measuredTokens,
+      attempts: usage.attempts,
+    });
+    return { outcome: rendered.result, measuredTokens: rendered.measuredTokens, searchId: context.searchId };
+  }
+}
+
+/** Memoized batch costs; batching hands over measured bodies within a 16 MiB retention budget. */
+function batchCostMemo(model: string, serialize: (batch: EvaluationBatch) => string): {
+  costOf: (batch: EvaluationBatch) => BatchCost;
+  onBatchMeasure: (batch: EvaluationBatch, measure: SerializedBatchMeasure, body: string) => void;
+} {
+  const measuredBatches = new WeakMap<EvaluationBatch, BatchCost>();
+  let retainedPayloadBytes = 0;
+  const maxRetainedPayloadBytes = 16 * 1024 * 1024;
+  return {
+    costOf: (batch) => {
+      let cost = measuredBatches.get(batch);
+      if (cost === undefined) {
+        cost = batchCost(batch, model, serialize);
+        measuredBatches.set(batch, cost);
       }
-      if (!changed) {
-        break;
-      }
-      context.addStopReason('SOURCE_CHANGED');
-      context.diagnostics.record('SOURCE_CHANGED', context.elapsedMs, { count: staleFiles });
-      selection = select();
+      return cost;
+    },
+    onBatchMeasure: (batch, measure, body) => {
+      const retain = retainedPayloadBytes + measure.bytes <= maxRetainedPayloadBytes;
+      if (retain) retainedPayloadBytes += measure.bytes;
+      measuredBatches.set(batch, { tokens: measure.tokens!, bytes: measure.bytes, ...(retain ? { body } : {}) });
+    },
+  };
+}
+
+type IdentityScope = {
+  readonly endpoint: string;
+  readonly model: string;
+  readonly adapter: string;
+  readonly cacheMode: string;
+};
+
+function parseCallerRequest(rawRequest: unknown, config: LoadedConfiguration['config']) {
+  try {
+    return parseSearchRequest(rawRequest, {
+      default_response_tokens: config.search.default_response_tokens,
+      max_response_tokens: config.search.max_response_tokens,
+    });
+  } catch (cause) {
+    // Only a caller's request can be an invalid request; a contract failure later
+    // in the pipeline is a defect and must stay loud rather than masquerade as one.
+    throw cause instanceof ContractValidationError ? new RequestValidationError(cause) : cause;
+  }
+}
+
+function fragmentIdentity(query: string, fragment: PreparedFragment, batchHash: string, scope: IdentityScope): string {
+  return evaluationIdentity({
+    query,
+    path: fragment.path,
+    startLine: fragment.startLine,
+    endLine: fragment.endLine,
+    text: fragment.text,
+    label: fragment.label ?? null,
+    criterionVersion: CRITERION_VERSION,
+    layoutVersion: LAYOUT_VERSION,
+    chunkerVersion: fragment.chunker,
+    endpoint: scope.endpoint,
+    modelRevision: scope.model,
+    providerOptions: { adapter: scope.adapter, cachePolicy: scope.cacheMode },
+    batchComposition: [batchHash],
+  });
+}
+
+/** Last checks before a batch leaves the machine, then its synchronous reservation. */
+function admitBatch(batch: EvaluationBatch, cost: BatchCost, state: {
+  readonly root: AuthorizedRoot;
+  readonly usage: UsageAccount;
+  readonly enabledCaps: Partial<Record<ScanCap, number>>;
+  readonly pricePerMillion: number | null;
+  readonly context: SearchContext;
+}): boolean {
+  const { root, usage, context } = state;
+  root.assertCurrent();
+  // Revalidate each named entry before disclosure, while sending only the already
+  // captured snapshot bytes (never reread replacement text).
+  for (const path of new Set(batch.items.map((item) => item.path))) {
+    if (root.resolveEntry(path).kind !== 'file') {
+      throw new UnauthorizedPathError('not_regular_file', path, 'source type changed before dispatch');
     }
+  }
+  const tokens = Math.max(1, cost.tokens);
+  const bytes = cost.bytes;
+  if (exceedsEnabledCaps(usage, tokens, bytes, state.enabledCaps, state.pricePerMillion)) {
+    context.addStopReason('SCAN_CAP_REACHED');
+    return false;
+  }
+  // Filesystem checks and token accounting are synchronous; the deadline may have
+  // elapsed since the scheduler admitted this batch.
+  if (!context.canStartWork()) return false;
+  // Synchronous reservation before awaiting the provider: concurrent workers
+  // immediately see spent and in-flight capacity.
+  usage.attempts += 1;
+  usage.transmittedBytes += bytes;
+  usage.reservedInputTokens += tokens;
+  return true;
+}
 
+/**
+ * Revalidate the files a range came from, at most once each, and fill the freed
+ * space from candidates already evaluated. No new provider work is ever started.
+ */
+function selectFresh(select: () => SelectionResult, state: {
+  readonly freshness: FreshnessTracker;
+  readonly snapshots: Map<string, SourceSnapshot>;
+  readonly rounds: number;
+  readonly context: SearchContext;
+}): SelectionResult {
+  const { freshness, snapshots, context } = state;
+  let selection = select();
+  let staleFiles = 0;
+  for (let round = 0; round < state.rounds; round += 1) {
+    let changed = false;
+    for (const range of selection.ranges) {
+      const verdict = measureSync('freshness', () => freshness.check(range.path, range.sha256));
+      if (verdict.verdict !== 'fresh') {
+        changed = true;
+        staleFiles += 1;
+        snapshots.delete(range.path);
+      }
+    }
+    if (!changed) break;
+    context.addStopReason('SOURCE_CHANGED');
+    context.diagnostics.record('SOURCE_CHANGED', context.elapsedMs, { count: staleFiles });
+    selection = select();
+  }
+  return selection;
+}
+
+/** The report's counts and usage; records PROVIDER_UNAVAILABLE when work was silently lost. */
+function reportInputs(state: {
+  readonly context: SearchContext;
+  readonly request: { scope: string[]; max_context_tokens: number };
+  readonly prepared: PreparedScope;
+  readonly scored: readonly Scored[];
+  readonly usage: UsageAccount;
+  readonly plan: ScanPlan;
+  readonly selection: SelectionResult;
+  readonly freshness: FreshnessTracker;
+  readonly rejected: boolean;
+  readonly threshold: number;
+  readonly pricePerMillion: number | null;
+}): ReportInputs {
+  const { context, request, prepared, scored, usage, plan, selection, freshness, rejected, threshold, pricePerMillion } = state;
     const evaluated = scored.length;
     const remoteEvaluated = scored.filter((entry) => !entry.fromCache).length;
     const cacheReused = evaluated - remoteEvaluated;
@@ -486,10 +614,9 @@ export class SearchEngine {
     }
 
     const estimatedInputTokens = usage.knownInputTokens + usage.reservedInputTokens;
-    const pricing = config.provider.pricing;
-    const estimatedCostUsd = estimateInputCostUsd(estimatedInputTokens, pricing?.input_usd_per_million_tokens ?? null);
+    const estimatedCostUsd = estimateInputCostUsd(estimatedInputTokens, pricePerMillion);
 
-    const inputs: ReportInputs = {
+    return {
       searchId: context.searchId,
       scope: request.scope,
       inventoryComplete: prepared.inventory.complete && prepared.complete,
@@ -509,7 +636,7 @@ export class SearchEngine {
         aboveThreshold: selection.aboveThreshold,
         omittedStale: selection.omittedUnavailable,
       },
-      threshold: config.search.threshold,
+      threshold,
       duplicateRangesCollapsed: selection.duplicateRangesCollapsed,
       usage: {
         providerRequestAttempts: usage.attempts,
@@ -535,19 +662,6 @@ export class SearchEngine {
       diagnosticsTruncated: context.diagnostics.truncated,
       ...(rejected ? { rejected: true } : {}),
     };
-
-    capture?.(inputs);
-    const representedFor = (ranges: readonly SelectedRange[]): number => countRepresented(candidates, ranges, config.search.threshold, freshness.unavailablePaths);
-    const rendered: RenderedResponse = measureSync('rendering', () => renderSearchResult(inputs, rejected ? [] : selection.ranges, representedFor));
-    context.diagnostics.setResponseTokensMeasured(rendered.measuredTokens);
-    context.logger.log('info', context.searchId, 'search.complete', {
-      status: rendered.result.status,
-      excerpts: rendered.result.excerpts.length,
-      response_tokens: rendered.measuredTokens,
-      attempts: usage.attempts,
-    });
-    return { outcome: rendered.result, measuredTokens: rendered.measuredTokens, searchId: context.searchId };
-  }
 }
 
 /** Whether dispatching one more batch would pass an enabled cap, counting in-flight reservations. */

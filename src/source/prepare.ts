@@ -193,47 +193,24 @@ function* preparationSteps(
       break;
     }
 
-    let bytes;
-    try {
-      bytes = measureSync('source_read', () => root.readFileBytes(entry.absolutePath, options.inventory.maxFileBytes));
-    } catch (cause) {
-      if (cause instanceof UnauthorizedPathError) {
-        if (cause.refusal === 'changed' || cause.refusal === 'unavailable' || cause.refusal === 'missing') {
-          unreadable += 1;
-          complete = false;
-          continue;
-        }
-        excluded.push({ relativePath: entry.relativePath,
-          reason: cause.refusal === 'link' ? 'link' : cause.refusal === 'too_large' ? 'file_too_large' : 'not_regular_file' });
-        continue;
-      }
+    const read = readEntry(root, entry.absolutePath, options.inventory.maxFileBytes);
+    if (read.kind === 'unreadable') {
       unreadable += 1;
       complete = false;
       continue;
     }
+    if (read.kind === 'excluded') {
+      excluded.push({ relativePath: entry.relativePath, reason: read.reason });
+      continue;
+    }
+    const { bytes } = read;
 
     if (limits.preparedSourceBytes !== null && preparedBytes + bytes.length > limits.preparedSourceBytes) {
       complete = false;
       break;
     }
 
-    const cache = options.cache?.enabled === true ? options.cache : undefined;
-    const sha256 = cache === undefined ? undefined : measureSync('hash', () => hashBytes(bytes));
-    const cached = cache === undefined || sha256 === undefined ? undefined : measureSync('cache_lookup', () => cache.get(sha256, bytes.length));
-    const windowLimits = options.windowLimits ?? DEFAULT_WINDOW_LIMITS;
-    const chunker = options.chunker ?? DEFAULT_CHUNKER;
-    let outcome = prepareContent(entry.relativePath, entry.absolutePath, bytes, windowLimits, chunker, cached, sha256);
-    if (cache !== undefined && cached !== undefined && sha256 !== undefined) {
-      if (outcome.rejected) {
-        // An entry that does not fit its verified bytes is dropped and rebuilt from scratch.
-        cache.reject(sha256);
-        const rebuilt = cache.get(sha256, bytes.length);
-        outcome = prepareContent(entry.relativePath, entry.absolutePath, bytes, windowLimits, chunker, rebuilt, sha256);
-        if (outcome.changed && !outcome.rejected) cache.update(rebuilt);
-      } else if (outcome.changed) {
-        cache.update(cached);
-      }
-    }
+    const outcome = prepareWithCache(entry.relativePath, entry.absolutePath, bytes, options);
     if (outcome.kind === 'excluded') {
       excluded.push({ relativePath: entry.relativePath, reason: outcome.reason, ...(outcome.detail === null ? {} : { detail: outcome.detail }) });
       continue;
@@ -271,6 +248,45 @@ function* preparationSteps(
     inventory, files, fragments, excluded, unreadable, preparedBytes,
     complete: complete && inventory.complete, parseFallbacks,
   };
+}
+
+type EntryRead =
+  | { readonly kind: 'read'; readonly bytes: Buffer }
+  | { readonly kind: 'unreadable' }
+  | { readonly kind: 'excluded'; readonly reason: 'link' | 'file_too_large' | 'not_regular_file' };
+
+/** A vanished or changed file is unreadable (coverage is lost); a refused one is excluded. */
+function readEntry(root: AuthorizedRoot, absolutePath: string, maxFileBytes: number): EntryRead {
+  try {
+    return { kind: 'read', bytes: measureSync('source_read', () => root.readFileBytes(absolutePath, maxFileBytes)) };
+  } catch (cause) {
+    if (!(cause instanceof UnauthorizedPathError)) return { kind: 'unreadable' };
+    if (cause.refusal === 'changed' || cause.refusal === 'unavailable' || cause.refusal === 'missing') return { kind: 'unreadable' };
+    return { kind: 'excluded',
+      reason: cause.refusal === 'link' ? 'link' : cause.refusal === 'too_large' ? 'file_too_large' : 'not_regular_file' };
+  }
+}
+
+/** Chunk the bytes, reusing a verified preparation-cache entry when one exists. */
+function prepareWithCache(relativePath: string, absolutePath: string, bytes: Buffer, options: PrepareOptions): ContentOutcome {
+  const cache = options.cache?.enabled === true ? options.cache : undefined;
+  const sha256 = cache === undefined ? undefined : measureSync('hash', () => hashBytes(bytes));
+  const cached = cache === undefined || sha256 === undefined ? undefined : measureSync('cache_lookup', () => cache.get(sha256, bytes.length));
+  const windowLimits = options.windowLimits ?? DEFAULT_WINDOW_LIMITS;
+  const chunker = options.chunker ?? DEFAULT_CHUNKER;
+  let outcome = prepareContent(relativePath, absolutePath, bytes, windowLimits, chunker, cached, sha256);
+  if (cache !== undefined && cached !== undefined && sha256 !== undefined) {
+    if (outcome.rejected) {
+      // An entry that does not fit its verified bytes is dropped and rebuilt from scratch.
+      cache.reject(sha256);
+      const rebuilt = cache.get(sha256, bytes.length);
+      outcome = prepareContent(relativePath, absolutePath, bytes, windowLimits, chunker, rebuilt, sha256);
+      if (outcome.changed && !outcome.rejected) cache.update(rebuilt);
+    } else if (outcome.changed) {
+      cache.update(cached);
+    }
+  }
+  return outcome;
 }
 
 type ContentOutcome = { readonly changed: boolean; readonly rejected: boolean } & (

@@ -11,6 +11,7 @@
  * rather than being estimated into a comforting number.
  */
 import { exclusionCounts, prepareScope } from './source/prepare.ts';
+import type { PreparedScope } from './source/prepare.ts';
 import type { LoadedConfiguration } from './config.ts';
 import type { ScanCap } from './contracts.ts';
 import { buildBatches, enabledCapsOf, planScan } from './planning.ts';
@@ -86,16 +87,7 @@ export function inspectScope(configuration: LoadedConfiguration, options: Inspec
     },
   });
 
-  const byStrategy: Record<string, number> = {};
-  let referenceTokens = 0;
-  let sourceBytes = 0;
-  let largest = 0;
-  for (const fragment of prepared.fragments) {
-    byStrategy[fragment.classification] = (byStrategy[fragment.classification] ?? 0) + 1;
-    referenceTokens += fragment.tokenCount;
-    sourceBytes += fragment.byteCount;
-    largest = Math.max(largest, fragment.tokenCount);
-  }
+  const { byStrategy, referenceTokens, sourceBytes, largest } = fragmentStats(prepared);
 
   const excludedDirectories: Record<string, number> = {};
   for (const directory of prepared.inventory.excludedDirectories) {
@@ -124,33 +116,7 @@ export function inspectScope(configuration: LoadedConfiguration, options: Inspec
     .map(([cap]) => cap)
     .sort();
 
-  const notes: string[] = [];
-  if (!prepared.inventory.complete) {
-    notes.push('the inventory did not finish: counts are lower bounds and no full-coverage claim is possible');
-  }
-  if (!prepared.complete && prepared.inventory.complete) {
-    notes.push('preparation stopped on an enabled preparation cap: the fragment total is a lower bound');
-  }
-  if (prepared.unreadable > 0) {
-    notes.push(`${String(prepared.unreadable)} eligible file(s) could not be read`);
-  }
-  if (prepared.parseFallbacks > 0) {
-    notes.push(`${String(prepared.parseFallbacks)} syntax-chunked file(s) fell back to line windows after a lexical parse failure`);
-  }
-  if (!config.remote_evaluation_enabled) {
-    notes.push('remote evaluation is disabled: a search would be refused before any excerpt leaves this machine');
-  }
-  if (exceeded.length > 0) {
-    notes.push(`a complete cold search exceeds the enabled ${exceeded.join(', ')} cap(s): it would be refused before any provider request unless partial scans are allowed`);
-  }
-  notes.push('token and cost figures are local estimates under the pinned reference counter, not provider billing');
-  notes.push(`batch target: ${String(limits.totalTokens * limits.headroomRatio)} reference tokens, at most ${String(limits.maxItems)} questions and ${String(limits.maxRequestBytes)} wire bytes`);
-  if (adapter === 'openrouter') {
-    notes.push('OpenRouter advertises a 32k context; its use as an aggregate batch ceiling is a conservative local policy');
-  }
-  if (adapter === 'vercel-ai-gateway') {
-    notes.push('Gateway advertises a 32k context; its use as an aggregate batch ceiling is a conservative local policy');
-  }
+  const notes = inspectionNotes(prepared, config.remote_evaluation_enabled, exceeded, adapter, limits);
 
   return {
     repository_root: configuration.repositoryRoot,
@@ -185,6 +151,64 @@ export function inspectScope(configuration: LoadedConfiguration, options: Inspec
     remote_evaluation_enabled: config.remote_evaluation_enabled,
     notes,
   };
+}
+
+
+function fragmentStats(prepared: PreparedScope): {
+  byStrategy: Record<string, number>;
+  referenceTokens: number;
+  sourceBytes: number;
+  largest: number;
+} {
+  const byStrategy: Record<string, number> = {};
+  let referenceTokens = 0;
+  let sourceBytes = 0;
+  let largest = 0;
+  for (const fragment of prepared.fragments) {
+    byStrategy[fragment.classification] = (byStrategy[fragment.classification] ?? 0) + 1;
+    referenceTokens += fragment.tokenCount;
+    sourceBytes += fragment.byteCount;
+    largest = Math.max(largest, fragment.tokenCount);
+  }
+  return { byStrategy, referenceTokens, sourceBytes, largest };
+}
+
+/** Caveats a reader needs before trusting the counts and estimates. */
+function inspectionNotes(
+  prepared: PreparedScope,
+  remoteEvaluationEnabled: boolean,
+  exceeded: readonly ScanCap[],
+  adapter: string,
+  limits: ReturnType<typeof batchLimits>,
+): string[] {
+  const notes: string[] = [];
+  if (!prepared.inventory.complete) {
+    notes.push('the inventory did not finish: counts are lower bounds and no full-coverage claim is possible');
+  }
+  if (!prepared.complete && prepared.inventory.complete) {
+    notes.push('preparation stopped on an enabled preparation cap: the fragment total is a lower bound');
+  }
+  if (prepared.unreadable > 0) {
+    notes.push(`${String(prepared.unreadable)} eligible file(s) could not be read`);
+  }
+  if (prepared.parseFallbacks > 0) {
+    notes.push(`${String(prepared.parseFallbacks)} syntax-chunked file(s) fell back to line windows after a lexical parse failure`);
+  }
+  if (!remoteEvaluationEnabled) {
+    notes.push('remote evaluation is disabled: a search would be refused before any excerpt leaves this machine');
+  }
+  if (exceeded.length > 0) {
+    notes.push(`a complete cold search exceeds the enabled ${exceeded.join(', ')} cap(s): it would be refused before any provider request unless partial scans are allowed`);
+  }
+  notes.push('token and cost figures are local estimates under the pinned reference counter, not provider billing');
+  notes.push(`batch target: ${String(limits.totalTokens * limits.headroomRatio)} reference tokens, at most ${String(limits.maxItems)} questions and ${String(limits.maxRequestBytes)} wire bytes`);
+  if (adapter === 'openrouter') {
+    notes.push('OpenRouter advertises a 32k context; its use as an aggregate batch ceiling is a conservative local policy');
+  }
+  if (adapter === 'vercel-ai-gateway') {
+    notes.push('Gateway advertises a 32k context; its use as an aggregate batch ceiling is a conservative local policy');
+  }
+  return notes;
 }
 
 /** Human rendering; the JSON form is the report object itself. */
