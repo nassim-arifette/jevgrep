@@ -3,6 +3,8 @@ import { parseArgs } from 'node:util';
 import { createSearchEngine } from '../src/engine.ts';
 import { SearchProfiler } from '../src/profiling.ts';
 import { environment, positiveInteger, workspace, writeReport } from './bench/common.ts';
+import { writeCapture } from './bench/replay.ts';
+import type { CapturedPool } from './bench/replay.ts';
 import { datasetVersion, fixtureHashes, questions, validateDataset } from './bench/dataset.ts';
 import { liveProvider } from './bench/live-provider.ts';
 import { retrievalMetrics, summarizeRetrieval } from './bench/retrieval.ts';
@@ -10,11 +12,11 @@ import { retrievalMetrics, summarizeRetrieval } from './bench/retrieval.ts';
 const { values } = parseArgs({ options: {
   config: { type: 'string' }, output: { type: 'string' }, 'max-requests': { type: 'string' },
   'max-input-tokens': { type: 'string' }, 'response-tokens': { type: 'string' },
-  'validate-only': { type: 'boolean' }, help: { type: 'boolean' },
+  capture: { type: 'string' }, 'validate-only': { type: 'boolean' }, help: { type: 'boolean' },
 } });
 
 if (values.help) {
-  console.log('npm run bench:retrieval -- --validate-only\nnpm run bench:retrieval -- --config <trusted-config> [--max-requests 60] [--max-input-tokens 200000] [--response-tokens 4000] [--output benchmark-results/retrieval.json]');
+  console.log('npm run bench:retrieval -- --validate-only\nnpm run bench:retrieval -- --config <trusted-config> [--max-requests 60] [--max-input-tokens 200000] [--response-tokens 4000] [--output benchmark-results/retrieval.json] [--capture benchmark-results/pools-synthetic.json]');
 } else {
   const repositories = validateDataset();
   if (values['validate-only']) {
@@ -31,6 +33,7 @@ if (values.help) {
     const host = environment();
     const rows = [];
     const notRun: string[] = [];
+    const pools: CapturedPool[] = [];
     for (const question of questions) {
       if (live.exhausted()) {
         notRun.push(question.id);
@@ -42,7 +45,7 @@ if (values.help) {
         const profile = new SearchProfiler();
         const result = await createSearchEngine({ configuration: space.loaded, provider }).search({
           query: question.query, scope: ['.'], max_context_tokens: responseTokens,
-        }, { searchId: question.id, profile });
+        }, { searchId: question.id, profile, onCandidatePool: (pool) => { pools.push({ id: question.id, source: question.repository, pool }); } });
         rows.push({
           id: question.id, repository: question.repository, kind: question.kind,
           metrics: retrievalMetrics(question, result.outcome), responseTokens: result.measuredTokens,
@@ -73,6 +76,7 @@ if (values.help) {
       usage, summary: { ...metrics, planned: questions.length, notRun: notRun.length }, notRun, rows,
     };
     const path = writeReport(values.output ?? 'benchmark-results/retrieval.json', report);
+    if (values.capture !== undefined) console.log(`Candidate pools: ${writeCapture(values.capture, { kind: 'synthetic', dataset: datasetVersion, environment: host, settings: report.settings, pools })}`);
     console.log(JSON.stringify(report.summary, null, 2));
     console.log(`Report: ${path}`);
     if (!sourceStable || notRun.length > 0 || metrics.incomplete > 0) process.exitCode = 1;

@@ -142,6 +142,36 @@ This is a development pilot, not a held-out tuning set. Larger realistic reposit
 rename/decoy stress tests, annotated Python/Rust/Go cases, agent task success, live
 MCP interoperability and cancellation latency remain follow-up work.
 
+## Selection replay
+
+Candidate selection can be compared offline on identical candidates and scores.
+Live runners write every evaluated candidate of each search, with its saved score
+and the report inputs, when given `--capture`:
+
+```sh
+npm run bench:retrieval -- --config /path/to/config.json --capture benchmark-results/pools-synthetic.json
+npm run bench:real -- --config /path/to/config.json --split dev --capture benchmark-results/pools-real-dev.json
+```
+
+Pools hold ranges, hashes and scores, never source text. The replay re-slices the
+same pinned fixture or snapshot, refuses any file whose SHA-256 differs, and runs
+only local selection and rendering, so it makes no provider requests:
+
+```sh
+npm run bench:replay -- --tuning benchmarks/pools/synthetic-pilot-1.json,benchmarks/pools/swe-bench-sample-1-dev.json \
+  --heldout benchmarks/pools/swe-bench-sample-1-heldout.json [--budgets 1200,1600,2400,4000]
+```
+
+Each arm (`relevance`, `mmr`, `marginal` and their parameters) is measured at every
+response budget on the delivered excerpts, after merging, metadata and the measured
+envelope. Parameters are chosen on the tuning pools only; held-out pools are scored
+once with the chosen ones. The report also lists counterexamples, searches where an
+arm covers a different share of required evidence than `relevance`, and a calibration
+sweep of threshold, top-k and score gap including the negative questions. Replaying
+`relevance` at the captured budget reproduces the captured live responses exactly.
+The [2026-11-03 report](baselines/2026-11-03-selection-replay.md) records the first
+comparison; the captured pools are in [pools](pools/).
+
 ## Verification
 
 `npm run verify` includes tests for profile isolation and outcome equivalence, the

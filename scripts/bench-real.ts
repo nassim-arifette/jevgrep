@@ -9,12 +9,14 @@ import { loadManifest, mapLimit, type RealSplit } from './bench/real-tasks.ts';
 import { loadSnapshots } from './bench/snapshots.ts';
 import { groupBy, mean, plannedSummary } from './bench/report.ts';
 import { localizationMetrics } from './bench/retrieval.ts';
+import { writeCapture } from './bench/replay.ts';
+import type { CapturedPool } from './bench/replay.ts';
 
 const { values } = parseArgs({ options: {
   config: { type: 'string' }, split: { type: 'string' }, output: { type: 'string' }, mirrors: { type: 'string' },
   frozen: { type: 'string' }, freeze: { type: 'string' }, jobs: { type: 'string' }, only: { type: 'string' },
   'max-requests': { type: 'string' }, 'max-input-tokens': { type: 'string' }, 'response-tokens': { type: 'string' },
-  'validate-only': { type: 'boolean' }, help: { type: 'boolean' },
+  capture: { type: 'string' }, 'validate-only': { type: 'boolean' }, help: { type: 'boolean' },
 } });
 
 type Planned = { id: string; category: string; repository: string };
@@ -71,6 +73,7 @@ if (values.help) {
       const frozen = split === 'heldout' ? assertFrozen(values.frozen, identity) : null;
       const planned = queries.map(({ task, query }) => ({ id: query.id, category: query.category, repository: task.repository }));
       const notRun: string[] = [];
+      const pools: CapturedPool[] = [];
       const rows = (await mapLimit(queries, positiveInteger(values.jobs, 1), async ({ task, query }) => {
         if (live.exhausted()) { notRun.push(query.id); return null; }
         console.error(`Real ${query.id}`);
@@ -80,7 +83,7 @@ if (values.help) {
           const profile = new SearchProfiler();
           const result = await createSearchEngine({ configuration: space.loaded, provider: live.provider }).search({
             query: query.query, scope: ['.'], max_context_tokens: responseTokens,
-          }, { searchId: query.id, profile });
+          }, { searchId: query.id, profile, onCandidatePool: (pool) => { pools.push({ id: query.id, source: task.id, pool }); } });
           const metrics = localizationMetrics(query, result.outcome);
           console.error(`  ${query.id} ${'report' in result.outcome ? result.outcome.status : 'error'} R@5=${metrics?.recallAt5 ?? '-'}`);
           return {
@@ -109,6 +112,7 @@ if (values.help) {
         usage: live.usage, summary: { ...summarize(rows, planned), notRun: notRun.length }, notRun, rows,
       };
       const path = writeReport(values.output ?? `benchmark-results/real-${split}.json`, report);
+      if (values.capture !== undefined) console.log(`Candidate pools: ${writeCapture(values.capture, { kind: 'real', dataset: manifest.version, split, environment: host, settings, pools })}`);
       console.log(JSON.stringify(report.summary, null, 2));
       console.log(`Report: ${path}`);
       if (!sourceStable || notRun.length > 0 || report.summary.overall.incomplete > 0) process.exitCode = 1;

@@ -1,0 +1,1955 @@
+{
+  "schemaVersion": 1,
+  "kind": "selection-replay",
+  "createdAt": "2026-11-03T21:20:07.843Z",
+  "environment": {
+    "node": "v24.22.2",
+    "platform": "linux",
+    "architecture": "x64",
+    "cpu": "Intel(R) Xeon(R) Processor",
+    "logicalCpus": 8,
+    "totalMemoryBytes": 33654874112,
+    "revision": "9514636c2fb37cebb4f6c377a32312ca8fb6aedf",
+    "workingTree": "M package.json\n M scripts/bench-real.ts\n M scripts/bench-retrieval.ts\n M src/contracts.ts\n M src/engine.ts\n M src/response/selection.ts\n?? scripts/bench-replay.ts\n?? scripts/bench/replay.ts\n?? src/response/candidate-pool.ts",
+    "sourceHash": "82b3679ce221914ba901b3b4104b558ba293e33bef0b0aa5ba897f06572e03c5",
+    "harnessHash": "3e36aad58236a701af9b53c5fc162daaa7f5c30d73a6e55995a64894de503245",
+    "packageLockHash": "8140c20b32d758ef031a81dfa41397625a0be9a79b95575825bcfc3a4b944c78"
+  },
+  "semantics": {
+    "replay": "every arm re-selects from the same captured candidates and saved scores; no provider requests",
+    "cost": "responseTokens is the measured serialized response after merging, metadata and the mandatory report",
+    "tuning": "MMR and marginal parameters are chosen on the tuning split by mean evidence coverage over budgets; held-out is evaluated once with the chosen ones",
+    "counterexamples": "searches where an arm covers a different fraction of required evidence than relevance at the same budget"
+  },
+  "budgets": [
+    1200,
+    1600,
+    2400,
+    4000
+  ],
+  "tuningSearches": 45,
+  "heldoutSearches": 6,
+  "chosen": [
+    "mmr λ=0.85",
+    "marginal r=0.5 c=0"
+  ],
+  "tuning": [
+    {
+      "name": "relevance",
+      "policy": "relevance",
+      "tuning": {
+        "mmrLambda": 0.7,
+        "redundancyWeight": 1,
+        "costExponent": 0.5
+      },
+      "budgets": [
+        {
+          "requestedTokens": 1200,
+          "summary": {
+            "searches": 45,
+            "incomplete": 0,
+            "positives": 39,
+            "negatives": 6,
+            "recallAt1": 0.47863247863247865,
+            "recallAt5": 0.5128205128205128,
+            "mrr": 0.5897435897435898,
+            "evidenceCoverage": 0.5128205128205128,
+            "fullEvidenceSets": 0.4358974358974359,
+            "complementaryCoverage": 0,
+            "negativeAccuracy": 1,
+            "meanResponseTokens": 470.24444444444447,
+            "meanExcerpts": 0.7555555555555555,
+            "meanExcerptLines": 7.777777777777778
+          },
+          "counterexamples": []
+        },
+        {
+          "requestedTokens": 1600,
+          "summary": {
+            "searches": 45,
+            "incomplete": 0,
+            "positives": 39,
+            "negatives": 6,
+            "recallAt1": 0.5811965811965812,
+            "recallAt5": 0.7008547008547008,
+            "mrr": 0.7051282051282052,
+            "evidenceCoverage": 0.7008547008547008,
+            "fullEvidenceSets": 0.6666666666666666,
+            "complementaryCoverage": 0,
+            "negativeAccuracy": 1,
+            "meanResponseTokens": 739.8444444444444,
+            "meanExcerpts": 1.7333333333333334,
+            "meanExcerptLines": 31.77777777777778
+          },
+          "counterexamples": []
+        },
+        {
+          "requestedTokens": 2400,
+          "summary": {
+            "searches": 45,
+            "incomplete": 0,
+            "positives": 39,
+            "negatives": 6,
+            "recallAt1": 0.7350427350427351,
+            "recallAt5": 0.9059829059829059,
+            "mrr": 0.8846153846153846,
+            "evidenceCoverage": 0.9059829059829059,
+            "fullEvidenceSets": 0.8717948717948718,
+            "complementaryCoverage": 0,
+            "negativeAccuracy": 1,
+            "meanResponseTokens": 998.5333333333333,
+            "meanExcerpts": 2.0444444444444443,
+            "meanExcerptLines": 60.644444444444446
+          },
+          "counterexamples": []
+        },
+        {
+          "requestedTokens": 4000,
+          "summary": {
+            "searches": 45,
+            "incomplete": 0,
+            "positives": 39,
+            "negatives": 6,
+            "recallAt1": 0.7606837606837608,
+            "recallAt5": 0.9316239316239315,
+            "mrr": 0.9102564102564102,
+            "evidenceCoverage": 0.9316239316239315,
+            "fullEvidenceSets": 0.8974358974358975,
+            "complementaryCoverage": 0.1875,
+            "negativeAccuracy": 1,
+            "meanResponseTokens": 1513.8666666666666,
+            "meanExcerpts": 2.4444444444444446,
+            "meanExcerptLines": 116.88888888888889
+          },
+          "counterexamples": []
+        }
+      ],
+      "meanCoverage": 0.7628205128205127
+    },
+    {
+      "name": "mmr λ=0.3",
+      "policy": "mmr",
+      "tuning": {
+        "mmrLambda": 0.3,
+        "redundancyWeight": 1,
+        "costExponent": 0.5
+      },
+      "budgets": [
+        {
+          "requestedTokens": 1200,
+          "summary": {
+            "searches": 45,
+            "incomplete": 0,
+            "positives": 39,
+            "negatives": 6,
+            "recallAt1": 0.47863247863247865,
+            "recallAt5": 0.5128205128205128,
+            "mrr": 0.5897435897435898,
+            "evidenceCoverage": 0.5128205128205128,
+            "fullEvidenceSets": 0.4358974358974359,
+            "complementaryCoverage": 0,
+            "negativeAccuracy": 1,
+            "meanResponseTokens": 470.24444444444447,
+            "meanExcerpts": 0.7555555555555555,
+            "meanExcerptLines": 7.777777777777778
+          },
+          "counterexamples": []
+        },
+        {
+          "requestedTokens": 1600,
+          "summary": {
+            "searches": 45,
+            "incomplete": 0,
+            "positives": 39,
+            "negatives": 6,
+            "recallAt1": 0.5811965811965812,
+            "recallAt5": 0.6923076923076923,
+            "mrr": 0.7051282051282052,
+            "evidenceCoverage": 0.6923076923076923,
+            "fullEvidenceSets": 0.6410256410256411,
+            "complementaryCoverage": 0,
+            "negativeAccuracy": 1,
+            "meanResponseTokens": 739.6888888888889,
+            "meanExcerpts": 1.7333333333333334,
+            "meanExcerptLines": 31.733333333333334
+          },
+          "counterexamples": [
+            {
+              "id": "access-05",
+              "coverage": 0.6666666666666666,
+              "relevanceCoverage": 1
+            }
+          ]
+        },
+        {
+          "requestedTokens": 2400,
+          "summary": {
+            "searches": 45,
+            "incomplete": 0,
+            "positives": 39,
+            "negatives": 6,
+            "recallAt1": 0.7350427350427351,
+            "recallAt5": 0.8547008547008546,
+            "mrr": 0.8589743589743589,
+            "evidenceCoverage": 0.8547008547008546,
+            "fullEvidenceSets": 0.8205128205128205,
+            "complementaryCoverage": 0,
+            "negativeAccuracy": 1,
+            "meanResponseTokens": 993.3333333333334,
+            "meanExcerpts": 2.111111111111111,
+            "meanExcerptLines": 59.51111111111111
+          },
+          "counterexamples": [
+            {
+              "id": "psf__requests-1657:understand",
+              "coverage": 0,
+              "relevanceCoverage": 1
+            },
+            {
+              "id": "psf__requests-1768:change",
+              "coverage": 0,
+              "relevanceCoverage": 1
+            }
+          ]
+        },
+        {
+          "requestedTokens": 4000,
+          "summary": {
+            "searches": 45,
+            "incomplete": 0,
+            "positives": 39,
+            "negatives": 6,
+            "recallAt1": 0.7350427350427351,
+            "recallAt5": 0.8803418803418802,
+            "mrr": 0.8717948717948718,
+            "evidenceCoverage": 0.8803418803418802,
+            "fullEvidenceSets": 0.8461538461538461,
+            "complementaryCoverage": 0.5,
+            "negativeAccuracy": 1,
+            "meanResponseTokens": 1524.5777777777778,
+            "meanExcerpts": 2.7111111111111112,
+            "meanExcerptLines": 113.77777777777777
+          },
+          "counterexamples": [
+            {
+              "id": "psf__requests-3718:change",
+              "coverage": 0,
+              "relevanceCoverage": 1
+            },
+            {
+              "id": "psf__requests-1768:change",
+              "coverage": 0,
+              "relevanceCoverage": 1
+            }
+          ]
+        }
+      ],
+      "meanCoverage": 0.735042735042735
+    },
+    {
+      "name": "mmr λ=0.5",
+      "policy": "mmr",
+      "tuning": {
+        "mmrLambda": 0.5,
+        "redundancyWeight": 1,
+        "costExponent": 0.5
+      },
+      "budgets": [
+        {
+          "requestedTokens": 1200,
+          "summary": {
+            "searches": 45,
+            "incomplete": 0,
+            "positives": 39,
+            "negatives": 6,
+            "recallAt1": 0.47863247863247865,
+            "recallAt5": 0.5128205128205128,
+            "mrr": 0.5897435897435898,
+            "evidenceCoverage": 0.5128205128205128,
+            "fullEvidenceSets": 0.4358974358974359,
+            "complementaryCoverage": 0,
+            "negativeAccuracy": 1,
+            "meanResponseTokens": 470.24444444444447,
+            "meanExcerpts": 0.7555555555555555,
+            "meanExcerptLines": 7.777777777777778
+          },
+          "counterexamples": []
+        },
+        {
+          "requestedTokens": 1600,
+          "summary": {
+            "searches": 45,
+            "incomplete": 0,
+            "positives": 39,
+            "negatives": 6,
+            "recallAt1": 0.5811965811965812,
+            "recallAt5": 0.6923076923076923,
+            "mrr": 0.7051282051282052,
+            "evidenceCoverage": 0.6923076923076923,
+            "fullEvidenceSets": 0.6410256410256411,
+            "complementaryCoverage": 0,
+            "negativeAccuracy": 1,
+            "meanResponseTokens": 739.6888888888889,
+            "meanExcerpts": 1.7333333333333334,
+            "meanExcerptLines": 31.733333333333334
+          },
+          "counterexamples": [
+            {
+              "id": "access-05",
+              "coverage": 0.6666666666666666,
+              "relevanceCoverage": 1
+            }
+          ]
+        },
+        {
+          "requestedTokens": 2400,
+          "summary": {
+            "searches": 45,
+            "incomplete": 0,
+            "positives": 39,
+            "negatives": 6,
+            "recallAt1": 0.7350427350427351,
+            "recallAt5": 0.8803418803418802,
+            "mrr": 0.8717948717948718,
+            "evidenceCoverage": 0.8803418803418802,
+            "fullEvidenceSets": 0.8461538461538461,
+            "complementaryCoverage": 0,
+            "negativeAccuracy": 1,
+            "meanResponseTokens": 989.8666666666667,
+            "meanExcerpts": 2.066666666666667,
+            "meanExcerptLines": 59.13333333333333
+          },
+          "counterexamples": [
+            {
+              "id": "psf__requests-1768:change",
+              "coverage": 0,
+              "relevanceCoverage": 1
+            }
+          ]
+        },
+        {
+          "requestedTokens": 4000,
+          "summary": {
+            "searches": 45,
+            "incomplete": 0,
+            "positives": 39,
+            "negatives": 6,
+            "recallAt1": 0.7606837606837608,
+            "recallAt5": 0.9316239316239315,
+            "mrr": 0.9102564102564102,
+            "evidenceCoverage": 0.9316239316239315,
+            "fullEvidenceSets": 0.8974358974358975,
+            "complementaryCoverage": 0.375,
+            "negativeAccuracy": 1,
+            "meanResponseTokens": 1518.3555555555556,
+            "meanExcerpts": 2.577777777777778,
+            "meanExcerptLines": 115.17777777777778
+          },
+          "counterexamples": []
+        }
+      ],
+      "meanCoverage": 0.7542735042735041
+    },
+    {
+      "name": "mmr λ=0.7",
+      "policy": "mmr",
+      "tuning": {
+        "mmrLambda": 0.7,
+        "redundancyWeight": 1,
+        "costExponent": 0.5
+      },
+      "budgets": [
+        {
+          "requestedTokens": 1200,
+          "summary": {
+            "searches": 45,
+            "incomplete": 0,
+            "positives": 39,
+            "negatives": 6,
+            "recallAt1": 0.47863247863247865,
+            "recallAt5": 0.5128205128205128,
+            "mrr": 0.5897435897435898,
+            "evidenceCoverage": 0.5128205128205128,
+            "fullEvidenceSets": 0.4358974358974359,
+            "complementaryCoverage": 0,
+            "negativeAccuracy": 1,
+            "meanResponseTokens": 470.24444444444447,
+            "meanExcerpts": 0.7555555555555555,
+            "meanExcerptLines": 7.777777777777778
+          },
+          "counterexamples": []
+        },
+        {
+          "requestedTokens": 1600,
+          "summary": {
+            "searches": 45,
+            "incomplete": 0,
+            "positives": 39,
+            "negatives": 6,
+            "recallAt1": 0.5811965811965812,
+            "recallAt5": 0.6923076923076923,
+            "mrr": 0.7051282051282052,
+            "evidenceCoverage": 0.6923076923076923,
+            "fullEvidenceSets": 0.6410256410256411,
+            "complementaryCoverage": 0,
+            "negativeAccuracy": 1,
+            "meanResponseTokens": 739.6888888888889,
+            "meanExcerpts": 1.7333333333333334,
+            "meanExcerptLines": 31.733333333333334
+          },
+          "counterexamples": [
+            {
+              "id": "access-05",
+              "coverage": 0.6666666666666666,
+              "relevanceCoverage": 1
+            }
+          ]
+        },
+        {
+          "requestedTokens": 2400,
+          "summary": {
+            "searches": 45,
+            "incomplete": 0,
+            "positives": 39,
+            "negatives": 6,
+            "recallAt1": 0.7350427350427351,
+            "recallAt5": 0.8803418803418802,
+            "mrr": 0.8717948717948718,
+            "evidenceCoverage": 0.8803418803418802,
+            "fullEvidenceSets": 0.8461538461538461,
+            "complementaryCoverage": 0,
+            "negativeAccuracy": 1,
+            "meanResponseTokens": 991.2,
+            "meanExcerpts": 2.066666666666667,
+            "meanExcerptLines": 59.77777777777778
+          },
+          "counterexamples": [
+            {
+              "id": "psf__requests-1768:change",
+              "coverage": 0,
+              "relevanceCoverage": 1
+            }
+          ]
+        },
+        {
+          "requestedTokens": 4000,
+          "summary": {
+            "searches": 45,
+            "incomplete": 0,
+            "positives": 39,
+            "negatives": 6,
+            "recallAt1": 0.7606837606837608,
+            "recallAt5": 0.9316239316239315,
+            "mrr": 0.9102564102564102,
+            "evidenceCoverage": 0.9316239316239315,
+            "fullEvidenceSets": 0.8974358974358975,
+            "complementaryCoverage": 0.1875,
+            "negativeAccuracy": 1,
+            "meanResponseTokens": 1526.5777777777778,
+            "meanExcerpts": 2.5555555555555554,
+            "meanExcerptLines": 117.88888888888889
+          },
+          "counterexamples": []
+        }
+      ],
+      "meanCoverage": 0.7542735042735041
+    },
+    {
+      "name": "mmr λ=0.85",
+      "policy": "mmr",
+      "tuning": {
+        "mmrLambda": 0.85,
+        "redundancyWeight": 1,
+        "costExponent": 0.5
+      },
+      "budgets": [
+        {
+          "requestedTokens": 1200,
+          "summary": {
+            "searches": 45,
+            "incomplete": 0,
+            "positives": 39,
+            "negatives": 6,
+            "recallAt1": 0.47863247863247865,
+            "recallAt5": 0.5128205128205128,
+            "mrr": 0.5897435897435898,
+            "evidenceCoverage": 0.5128205128205128,
+            "fullEvidenceSets": 0.4358974358974359,
+            "complementaryCoverage": 0,
+            "negativeAccuracy": 1,
+            "meanResponseTokens": 470.24444444444447,
+            "meanExcerpts": 0.7555555555555555,
+            "meanExcerptLines": 7.777777777777778
+          },
+          "counterexamples": []
+        },
+        {
+          "requestedTokens": 1600,
+          "summary": {
+            "searches": 45,
+            "incomplete": 0,
+            "positives": 39,
+            "negatives": 6,
+            "recallAt1": 0.5811965811965812,
+            "recallAt5": 0.6923076923076923,
+            "mrr": 0.7051282051282052,
+            "evidenceCoverage": 0.6923076923076923,
+            "fullEvidenceSets": 0.6410256410256411,
+            "complementaryCoverage": 0,
+            "negativeAccuracy": 1,
+            "meanResponseTokens": 739.6888888888889,
+            "meanExcerpts": 1.7333333333333334,
+            "meanExcerptLines": 31.733333333333334
+          },
+          "counterexamples": [
+            {
+              "id": "access-05",
+              "coverage": 0.6666666666666666,
+              "relevanceCoverage": 1
+            }
+          ]
+        },
+        {
+          "requestedTokens": 2400,
+          "summary": {
+            "searches": 45,
+            "incomplete": 0,
+            "positives": 39,
+            "negatives": 6,
+            "recallAt1": 0.7350427350427351,
+            "recallAt5": 0.9059829059829059,
+            "mrr": 0.8846153846153846,
+            "evidenceCoverage": 0.9059829059829059,
+            "fullEvidenceSets": 0.8717948717948718,
+            "complementaryCoverage": 0,
+            "negativeAccuracy": 1,
+            "meanResponseTokens": 990.8,
+            "meanExcerpts": 2.066666666666667,
+            "meanExcerptLines": 59.62222222222222
+          },
+          "counterexamples": []
+        },
+        {
+          "requestedTokens": 4000,
+          "summary": {
+            "searches": 45,
+            "incomplete": 0,
+            "positives": 39,
+            "negatives": 6,
+            "recallAt1": 0.7606837606837608,
+            "recallAt5": 0.9316239316239315,
+            "mrr": 0.9102564102564102,
+            "evidenceCoverage": 0.9316239316239315,
+            "fullEvidenceSets": 0.8974358974358975,
+            "complementaryCoverage": 0.1875,
+            "negativeAccuracy": 1,
+            "meanResponseTokens": 1526.5777777777778,
+            "meanExcerpts": 2.5555555555555554,
+            "meanExcerptLines": 117.88888888888889
+          },
+          "counterexamples": []
+        }
+      ],
+      "meanCoverage": 0.7606837606837605
+    },
+    {
+      "name": "marginal r=0.5 c=0",
+      "policy": "marginal",
+      "tuning": {
+        "mmrLambda": 0.7,
+        "redundancyWeight": 0.5,
+        "costExponent": 0
+      },
+      "budgets": [
+        {
+          "requestedTokens": 1200,
+          "summary": {
+            "searches": 45,
+            "incomplete": 0,
+            "positives": 39,
+            "negatives": 6,
+            "recallAt1": 0.47863247863247865,
+            "recallAt5": 0.5128205128205128,
+            "mrr": 0.5897435897435898,
+            "evidenceCoverage": 0.5128205128205128,
+            "fullEvidenceSets": 0.4358974358974359,
+            "complementaryCoverage": 0,
+            "negativeAccuracy": 1,
+            "meanResponseTokens": 470.24444444444447,
+            "meanExcerpts": 0.7555555555555555,
+            "meanExcerptLines": 7.777777777777778
+          },
+          "counterexamples": []
+        },
+        {
+          "requestedTokens": 1600,
+          "summary": {
+            "searches": 45,
+            "incomplete": 0,
+            "positives": 39,
+            "negatives": 6,
+            "recallAt1": 0.5811965811965812,
+            "recallAt5": 0.6923076923076923,
+            "mrr": 0.7051282051282052,
+            "evidenceCoverage": 0.6923076923076923,
+            "fullEvidenceSets": 0.6410256410256411,
+            "complementaryCoverage": 0,
+            "negativeAccuracy": 1,
+            "meanResponseTokens": 739.6888888888889,
+            "meanExcerpts": 1.7333333333333334,
+            "meanExcerptLines": 31.733333333333334
+          },
+          "counterexamples": [
+            {
+              "id": "access-05",
+              "coverage": 0.6666666666666666,
+              "relevanceCoverage": 1
+            }
+          ]
+        },
+        {
+          "requestedTokens": 2400,
+          "summary": {
+            "searches": 45,
+            "incomplete": 0,
+            "positives": 39,
+            "negatives": 6,
+            "recallAt1": 0.7350427350427351,
+            "recallAt5": 0.8803418803418802,
+            "mrr": 0.8717948717948718,
+            "evidenceCoverage": 0.8803418803418802,
+            "fullEvidenceSets": 0.8461538461538461,
+            "complementaryCoverage": 0,
+            "negativeAccuracy": 1,
+            "meanResponseTokens": 991.2,
+            "meanExcerpts": 2.066666666666667,
+            "meanExcerptLines": 59.77777777777778
+          },
+          "counterexamples": [
+            {
+              "id": "psf__requests-1768:change",
+              "coverage": 0,
+              "relevanceCoverage": 1
+            }
+          ]
+        },
+        {
+          "requestedTokens": 4000,
+          "summary": {
+            "searches": 45,
+            "incomplete": 0,
+            "positives": 39,
+            "negatives": 6,
+            "recallAt1": 0.7606837606837608,
+            "recallAt5": 0.9316239316239315,
+            "mrr": 0.9102564102564102,
+            "evidenceCoverage": 0.9316239316239315,
+            "fullEvidenceSets": 0.8974358974358975,
+            "complementaryCoverage": 0.1875,
+            "negativeAccuracy": 1,
+            "meanResponseTokens": 1526.5777777777778,
+            "meanExcerpts": 2.5555555555555554,
+            "meanExcerptLines": 117.88888888888889
+          },
+          "counterexamples": []
+        }
+      ],
+      "meanCoverage": 0.7542735042735041
+    },
+    {
+      "name": "marginal r=0.5 c=0.5",
+      "policy": "marginal",
+      "tuning": {
+        "mmrLambda": 0.7,
+        "redundancyWeight": 0.5,
+        "costExponent": 0.5
+      },
+      "budgets": [
+        {
+          "requestedTokens": 1200,
+          "summary": {
+            "searches": 45,
+            "incomplete": 0,
+            "positives": 39,
+            "negatives": 6,
+            "recallAt1": 0.38461538461538464,
+            "recallAt5": 0.4273504273504274,
+            "mrr": 0.5,
+            "evidenceCoverage": 0.4273504273504274,
+            "fullEvidenceSets": 0.358974358974359,
+            "complementaryCoverage": 0,
+            "negativeAccuracy": 1,
+            "meanResponseTokens": 468.46666666666664,
+            "meanExcerpts": 0.8888888888888888,
+            "meanExcerptLines": 7.266666666666667
+          },
+          "counterexamples": [
+            {
+              "id": "migration-01",
+              "coverage": 0,
+              "relevanceCoverage": 1
+            },
+            {
+              "id": "migration-02",
+              "coverage": 0,
+              "relevanceCoverage": 1
+            },
+            {
+              "id": "migration-04",
+              "coverage": 0.3333333333333333,
+              "relevanceCoverage": 0.6666666666666666
+            },
+            {
+              "id": "migration-08",
+              "coverage": 0,
+              "relevanceCoverage": 1
+            }
+          ]
+        },
+        {
+          "requestedTokens": 1600,
+          "summary": {
+            "searches": 45,
+            "incomplete": 0,
+            "positives": 39,
+            "negatives": 6,
+            "recallAt1": 0.5213675213675213,
+            "recallAt5": 0.6410256410256411,
+            "mrr": 0.6410256410256411,
+            "evidenceCoverage": 0.6410256410256411,
+            "fullEvidenceSets": 0.5897435897435898,
+            "complementaryCoverage": 0.041666666666666664,
+            "negativeAccuracy": 1,
+            "meanResponseTokens": 707.4888888888889,
+            "meanExcerpts": 1.7333333333333334,
+            "meanExcerptLines": 27.622222222222224
+          },
+          "counterexamples": [
+            {
+              "id": "access-05",
+              "coverage": 0.6666666666666666,
+              "relevanceCoverage": 1
+            },
+            {
+              "id": "psf__requests-2821:understand",
+              "coverage": 0,
+              "relevanceCoverage": 1
+            },
+            {
+              "id": "psf__requests-2617:understand",
+              "coverage": 0,
+              "relevanceCoverage": 1
+            }
+          ]
+        },
+        {
+          "requestedTokens": 2400,
+          "summary": {
+            "searches": 45,
+            "incomplete": 0,
+            "positives": 39,
+            "negatives": 6,
+            "recallAt1": 0.7606837606837608,
+            "recallAt5": 0.8803418803418802,
+            "mrr": 0.8846153846153846,
+            "evidenceCoverage": 0.8803418803418802,
+            "fullEvidenceSets": 0.8461538461538461,
+            "complementaryCoverage": 0.10416666666666666,
+            "negativeAccuracy": 1,
+            "meanResponseTokens": 983.8222222222222,
+            "meanExcerpts": 2.1777777777777776,
+            "meanExcerptLines": 58.22222222222222
+          },
+          "counterexamples": [
+            {
+              "id": "psf__requests-1768:change",
+              "coverage": 0,
+              "relevanceCoverage": 1
+            }
+          ]
+        },
+        {
+          "requestedTokens": 4000,
+          "summary": {
+            "searches": 45,
+            "incomplete": 0,
+            "positives": 39,
+            "negatives": 6,
+            "recallAt1": 0.7350427350427351,
+            "recallAt5": 0.9059829059829059,
+            "mrr": 0.8846153846153846,
+            "evidenceCoverage": 0.9059829059829059,
+            "fullEvidenceSets": 0.8717948717948718,
+            "complementaryCoverage": 0.1875,
+            "negativeAccuracy": 1,
+            "meanResponseTokens": 1485.8,
+            "meanExcerpts": 2.6666666666666665,
+            "meanExcerptLines": 112.75555555555556
+          },
+          "counterexamples": [
+            {
+              "id": "psf__requests-3718:change",
+              "coverage": 0,
+              "relevanceCoverage": 1
+            }
+          ]
+        }
+      ],
+      "meanCoverage": 0.7136752136752137
+    },
+    {
+      "name": "marginal r=0.5 c=1",
+      "policy": "marginal",
+      "tuning": {
+        "mmrLambda": 0.7,
+        "redundancyWeight": 0.5,
+        "costExponent": 1
+      },
+      "budgets": [
+        {
+          "requestedTokens": 1200,
+          "summary": {
+            "searches": 45,
+            "incomplete": 0,
+            "positives": 39,
+            "negatives": 6,
+            "recallAt1": 0.358974358974359,
+            "recallAt5": 0.4017094017094017,
+            "mrr": 0.47435897435897434,
+            "evidenceCoverage": 0.4017094017094017,
+            "fullEvidenceSets": 0.3333333333333333,
+            "complementaryCoverage": 0,
+            "negativeAccuracy": 1,
+            "meanResponseTokens": 468.31111111111113,
+            "meanExcerpts": 0.8888888888888888,
+            "meanExcerptLines": 7.222222222222222
+          },
+          "counterexamples": [
+            {
+              "id": "access-01",
+              "coverage": 0,
+              "relevanceCoverage": 1
+            },
+            {
+              "id": "migration-01",
+              "coverage": 0,
+              "relevanceCoverage": 1
+            },
+            {
+              "id": "migration-02",
+              "coverage": 0,
+              "relevanceCoverage": 1
+            },
+            {
+              "id": "migration-04",
+              "coverage": 0.3333333333333333,
+              "relevanceCoverage": 0.6666666666666666
+            },
+            {
+              "id": "migration-08",
+              "coverage": 0,
+              "relevanceCoverage": 1
+            }
+          ]
+        },
+        {
+          "requestedTokens": 1600,
+          "summary": {
+            "searches": 45,
+            "incomplete": 0,
+            "positives": 39,
+            "negatives": 6,
+            "recallAt1": 0.4957264957264957,
+            "recallAt5": 0.6153846153846154,
+            "mrr": 0.6153846153846154,
+            "evidenceCoverage": 0.6153846153846154,
+            "fullEvidenceSets": 0.5641025641025641,
+            "complementaryCoverage": 0.041666666666666664,
+            "negativeAccuracy": 1,
+            "meanResponseTokens": 705.4222222222222,
+            "meanExcerpts": 1.7333333333333334,
+            "meanExcerptLines": 27.733333333333334
+          },
+          "counterexamples": [
+            {
+              "id": "access-05",
+              "coverage": 0.6666666666666666,
+              "relevanceCoverage": 1
+            },
+            {
+              "id": "psf__requests-1657:change",
+              "coverage": 0,
+              "relevanceCoverage": 1
+            },
+            {
+              "id": "psf__requests-2821:understand",
+              "coverage": 0,
+              "relevanceCoverage": 1
+            },
+            {
+              "id": "psf__requests-2617:understand",
+              "coverage": 0,
+              "relevanceCoverage": 1
+            }
+          ]
+        },
+        {
+          "requestedTokens": 2400,
+          "summary": {
+            "searches": 45,
+            "incomplete": 0,
+            "positives": 39,
+            "negatives": 6,
+            "recallAt1": 0.6581196581196581,
+            "recallAt5": 0.7777777777777778,
+            "mrr": 0.782051282051282,
+            "evidenceCoverage": 0.7777777777777778,
+            "fullEvidenceSets": 0.7435897435897436,
+            "complementaryCoverage": 0.10416666666666666,
+            "negativeAccuracy": 1,
+            "meanResponseTokens": 973.2,
+            "meanExcerpts": 2.2444444444444445,
+            "meanExcerptLines": 57.08888888888889
+          },
+          "counterexamples": [
+            {
+              "id": "psf__requests-774:change",
+              "coverage": 0,
+              "relevanceCoverage": 1
+            },
+            {
+              "id": "psf__requests-4718:change",
+              "coverage": 0,
+              "relevanceCoverage": 1
+            },
+            {
+              "id": "psf__requests-3718:understand",
+              "coverage": 0,
+              "relevanceCoverage": 1
+            },
+            {
+              "id": "psf__requests-1962:change",
+              "coverage": 0,
+              "relevanceCoverage": 1
+            },
+            {
+              "id": "psf__requests-1768:change",
+              "coverage": 0,
+              "relevanceCoverage": 1
+            }
+          ]
+        },
+        {
+          "requestedTokens": 4000,
+          "summary": {
+            "searches": 45,
+            "incomplete": 0,
+            "positives": 39,
+            "negatives": 6,
+            "recallAt1": 0.7350427350427351,
+            "recallAt5": 0.8803418803418802,
+            "mrr": 0.8717948717948718,
+            "evidenceCoverage": 0.8803418803418802,
+            "fullEvidenceSets": 0.8461538461538461,
+            "complementaryCoverage": 0.22916666666666666,
+            "negativeAccuracy": 1,
+            "meanResponseTokens": 1468.0222222222221,
+            "meanExcerpts": 2.7555555555555555,
+            "meanExcerptLines": 110.15555555555555
+          },
+          "counterexamples": [
+            {
+              "id": "psf__requests-3718:change",
+              "coverage": 0,
+              "relevanceCoverage": 1
+            },
+            {
+              "id": "psf__requests-1768:change",
+              "coverage": 0,
+              "relevanceCoverage": 1
+            }
+          ]
+        }
+      ],
+      "meanCoverage": 0.6688034188034188
+    },
+    {
+      "name": "marginal r=1 c=0",
+      "policy": "marginal",
+      "tuning": {
+        "mmrLambda": 0.7,
+        "redundancyWeight": 1,
+        "costExponent": 0
+      },
+      "budgets": [
+        {
+          "requestedTokens": 1200,
+          "summary": {
+            "searches": 45,
+            "incomplete": 0,
+            "positives": 39,
+            "negatives": 6,
+            "recallAt1": 0.47863247863247865,
+            "recallAt5": 0.5128205128205128,
+            "mrr": 0.5897435897435898,
+            "evidenceCoverage": 0.5128205128205128,
+            "fullEvidenceSets": 0.4358974358974359,
+            "complementaryCoverage": 0,
+            "negativeAccuracy": 1,
+            "meanResponseTokens": 470.24444444444447,
+            "meanExcerpts": 0.7555555555555555,
+            "meanExcerptLines": 7.777777777777778
+          },
+          "counterexamples": []
+        },
+        {
+          "requestedTokens": 1600,
+          "summary": {
+            "searches": 45,
+            "incomplete": 0,
+            "positives": 39,
+            "negatives": 6,
+            "recallAt1": 0.5811965811965812,
+            "recallAt5": 0.6923076923076923,
+            "mrr": 0.7051282051282052,
+            "evidenceCoverage": 0.6923076923076923,
+            "fullEvidenceSets": 0.6410256410256411,
+            "complementaryCoverage": 0,
+            "negativeAccuracy": 1,
+            "meanResponseTokens": 739.6888888888889,
+            "meanExcerpts": 1.7333333333333334,
+            "meanExcerptLines": 31.733333333333334
+          },
+          "counterexamples": [
+            {
+              "id": "access-05",
+              "coverage": 0.6666666666666666,
+              "relevanceCoverage": 1
+            }
+          ]
+        },
+        {
+          "requestedTokens": 2400,
+          "summary": {
+            "searches": 45,
+            "incomplete": 0,
+            "positives": 39,
+            "negatives": 6,
+            "recallAt1": 0.7350427350427351,
+            "recallAt5": 0.8803418803418802,
+            "mrr": 0.8717948717948718,
+            "evidenceCoverage": 0.8803418803418802,
+            "fullEvidenceSets": 0.8461538461538461,
+            "complementaryCoverage": 0,
+            "negativeAccuracy": 1,
+            "meanResponseTokens": 989.8666666666667,
+            "meanExcerpts": 2.066666666666667,
+            "meanExcerptLines": 59.13333333333333
+          },
+          "counterexamples": [
+            {
+              "id": "psf__requests-1768:change",
+              "coverage": 0,
+              "relevanceCoverage": 1
+            }
+          ]
+        },
+        {
+          "requestedTokens": 4000,
+          "summary": {
+            "searches": 45,
+            "incomplete": 0,
+            "positives": 39,
+            "negatives": 6,
+            "recallAt1": 0.7606837606837608,
+            "recallAt5": 0.9316239316239315,
+            "mrr": 0.9102564102564102,
+            "evidenceCoverage": 0.9316239316239315,
+            "fullEvidenceSets": 0.8974358974358975,
+            "complementaryCoverage": 0.375,
+            "negativeAccuracy": 1,
+            "meanResponseTokens": 1518.3555555555556,
+            "meanExcerpts": 2.577777777777778,
+            "meanExcerptLines": 115.17777777777778
+          },
+          "counterexamples": []
+        }
+      ],
+      "meanCoverage": 0.7542735042735041
+    },
+    {
+      "name": "marginal r=1 c=0.5",
+      "policy": "marginal",
+      "tuning": {
+        "mmrLambda": 0.7,
+        "redundancyWeight": 1,
+        "costExponent": 0.5
+      },
+      "budgets": [
+        {
+          "requestedTokens": 1200,
+          "summary": {
+            "searches": 45,
+            "incomplete": 0,
+            "positives": 39,
+            "negatives": 6,
+            "recallAt1": 0.38461538461538464,
+            "recallAt5": 0.4273504273504274,
+            "mrr": 0.5,
+            "evidenceCoverage": 0.4273504273504274,
+            "fullEvidenceSets": 0.358974358974359,
+            "complementaryCoverage": 0,
+            "negativeAccuracy": 1,
+            "meanResponseTokens": 468.46666666666664,
+            "meanExcerpts": 0.8888888888888888,
+            "meanExcerptLines": 7.266666666666667
+          },
+          "counterexamples": [
+            {
+              "id": "migration-01",
+              "coverage": 0,
+              "relevanceCoverage": 1
+            },
+            {
+              "id": "migration-02",
+              "coverage": 0,
+              "relevanceCoverage": 1
+            },
+            {
+              "id": "migration-04",
+              "coverage": 0.3333333333333333,
+              "relevanceCoverage": 0.6666666666666666
+            },
+            {
+              "id": "migration-08",
+              "coverage": 0,
+              "relevanceCoverage": 1
+            }
+          ]
+        },
+        {
+          "requestedTokens": 1600,
+          "summary": {
+            "searches": 45,
+            "incomplete": 0,
+            "positives": 39,
+            "negatives": 6,
+            "recallAt1": 0.5213675213675213,
+            "recallAt5": 0.6410256410256411,
+            "mrr": 0.6410256410256411,
+            "evidenceCoverage": 0.6410256410256411,
+            "fullEvidenceSets": 0.5897435897435898,
+            "complementaryCoverage": 0.041666666666666664,
+            "negativeAccuracy": 1,
+            "meanResponseTokens": 707.4888888888889,
+            "meanExcerpts": 1.7333333333333334,
+            "meanExcerptLines": 27.622222222222224
+          },
+          "counterexamples": [
+            {
+              "id": "access-05",
+              "coverage": 0.6666666666666666,
+              "relevanceCoverage": 1
+            },
+            {
+              "id": "psf__requests-2821:understand",
+              "coverage": 0,
+              "relevanceCoverage": 1
+            },
+            {
+              "id": "psf__requests-2617:understand",
+              "coverage": 0,
+              "relevanceCoverage": 1
+            }
+          ]
+        },
+        {
+          "requestedTokens": 2400,
+          "summary": {
+            "searches": 45,
+            "incomplete": 0,
+            "positives": 39,
+            "negatives": 6,
+            "recallAt1": 0.7606837606837608,
+            "recallAt5": 0.8803418803418802,
+            "mrr": 0.8846153846153846,
+            "evidenceCoverage": 0.8803418803418802,
+            "fullEvidenceSets": 0.8461538461538461,
+            "complementaryCoverage": 0.10416666666666666,
+            "negativeAccuracy": 1,
+            "meanResponseTokens": 983.8222222222222,
+            "meanExcerpts": 2.1777777777777776,
+            "meanExcerptLines": 58.22222222222222
+          },
+          "counterexamples": [
+            {
+              "id": "psf__requests-1768:change",
+              "coverage": 0,
+              "relevanceCoverage": 1
+            }
+          ]
+        },
+        {
+          "requestedTokens": 4000,
+          "summary": {
+            "searches": 45,
+            "incomplete": 0,
+            "positives": 39,
+            "negatives": 6,
+            "recallAt1": 0.7350427350427351,
+            "recallAt5": 0.9059829059829059,
+            "mrr": 0.8846153846153846,
+            "evidenceCoverage": 0.9059829059829059,
+            "fullEvidenceSets": 0.8717948717948718,
+            "complementaryCoverage": 0.3125,
+            "negativeAccuracy": 1,
+            "meanResponseTokens": 1511.2222222222222,
+            "meanExcerpts": 2.7777777777777777,
+            "meanExcerptLines": 113.5111111111111
+          },
+          "counterexamples": [
+            {
+              "id": "psf__requests-3718:change",
+              "coverage": 0,
+              "relevanceCoverage": 1
+            }
+          ]
+        }
+      ],
+      "meanCoverage": 0.7136752136752137
+    },
+    {
+      "name": "marginal r=1 c=1",
+      "policy": "marginal",
+      "tuning": {
+        "mmrLambda": 0.7,
+        "redundancyWeight": 1,
+        "costExponent": 1
+      },
+      "budgets": [
+        {
+          "requestedTokens": 1200,
+          "summary": {
+            "searches": 45,
+            "incomplete": 0,
+            "positives": 39,
+            "negatives": 6,
+            "recallAt1": 0.358974358974359,
+            "recallAt5": 0.4017094017094017,
+            "mrr": 0.47435897435897434,
+            "evidenceCoverage": 0.4017094017094017,
+            "fullEvidenceSets": 0.3333333333333333,
+            "complementaryCoverage": 0,
+            "negativeAccuracy": 1,
+            "meanResponseTokens": 468.31111111111113,
+            "meanExcerpts": 0.8888888888888888,
+            "meanExcerptLines": 7.222222222222222
+          },
+          "counterexamples": [
+            {
+              "id": "access-01",
+              "coverage": 0,
+              "relevanceCoverage": 1
+            },
+            {
+              "id": "migration-01",
+              "coverage": 0,
+              "relevanceCoverage": 1
+            },
+            {
+              "id": "migration-02",
+              "coverage": 0,
+              "relevanceCoverage": 1
+            },
+            {
+              "id": "migration-04",
+              "coverage": 0.3333333333333333,
+              "relevanceCoverage": 0.6666666666666666
+            },
+            {
+              "id": "migration-08",
+              "coverage": 0,
+              "relevanceCoverage": 1
+            }
+          ]
+        },
+        {
+          "requestedTokens": 1600,
+          "summary": {
+            "searches": 45,
+            "incomplete": 0,
+            "positives": 39,
+            "negatives": 6,
+            "recallAt1": 0.4957264957264957,
+            "recallAt5": 0.6153846153846154,
+            "mrr": 0.6153846153846154,
+            "evidenceCoverage": 0.6153846153846154,
+            "fullEvidenceSets": 0.5641025641025641,
+            "complementaryCoverage": 0.041666666666666664,
+            "negativeAccuracy": 1,
+            "meanResponseTokens": 705.4222222222222,
+            "meanExcerpts": 1.7333333333333334,
+            "meanExcerptLines": 27.733333333333334
+          },
+          "counterexamples": [
+            {
+              "id": "access-05",
+              "coverage": 0.6666666666666666,
+              "relevanceCoverage": 1
+            },
+            {
+              "id": "psf__requests-1657:change",
+              "coverage": 0,
+              "relevanceCoverage": 1
+            },
+            {
+              "id": "psf__requests-2821:understand",
+              "coverage": 0,
+              "relevanceCoverage": 1
+            },
+            {
+              "id": "psf__requests-2617:understand",
+              "coverage": 0,
+              "relevanceCoverage": 1
+            }
+          ]
+        },
+        {
+          "requestedTokens": 2400,
+          "summary": {
+            "searches": 45,
+            "incomplete": 0,
+            "positives": 39,
+            "negatives": 6,
+            "recallAt1": 0.6581196581196581,
+            "recallAt5": 0.7777777777777778,
+            "mrr": 0.782051282051282,
+            "evidenceCoverage": 0.7777777777777778,
+            "fullEvidenceSets": 0.7435897435897436,
+            "complementaryCoverage": 0.10416666666666666,
+            "negativeAccuracy": 1,
+            "meanResponseTokens": 973.2,
+            "meanExcerpts": 2.2444444444444445,
+            "meanExcerptLines": 57.08888888888889
+          },
+          "counterexamples": [
+            {
+              "id": "psf__requests-774:change",
+              "coverage": 0,
+              "relevanceCoverage": 1
+            },
+            {
+              "id": "psf__requests-4718:change",
+              "coverage": 0,
+              "relevanceCoverage": 1
+            },
+            {
+              "id": "psf__requests-3718:understand",
+              "coverage": 0,
+              "relevanceCoverage": 1
+            },
+            {
+              "id": "psf__requests-1962:change",
+              "coverage": 0,
+              "relevanceCoverage": 1
+            },
+            {
+              "id": "psf__requests-1768:change",
+              "coverage": 0,
+              "relevanceCoverage": 1
+            }
+          ]
+        },
+        {
+          "requestedTokens": 4000,
+          "summary": {
+            "searches": 45,
+            "incomplete": 0,
+            "positives": 39,
+            "negatives": 6,
+            "recallAt1": 0.7606837606837608,
+            "recallAt5": 0.9059829059829059,
+            "mrr": 0.8974358974358975,
+            "evidenceCoverage": 0.9059829059829059,
+            "fullEvidenceSets": 0.8717948717948718,
+            "complementaryCoverage": 0.22916666666666666,
+            "negativeAccuracy": 1,
+            "meanResponseTokens": 1481.1555555555556,
+            "meanExcerpts": 2.8,
+            "meanExcerptLines": 111.08888888888889
+          },
+          "counterexamples": [
+            {
+              "id": "psf__requests-3718:change",
+              "coverage": 0,
+              "relevanceCoverage": 1
+            }
+          ]
+        }
+      ],
+      "meanCoverage": 0.6752136752136751
+    }
+  ],
+  "heldout": [
+    {
+      "name": "relevance",
+      "policy": "relevance",
+      "tuning": {
+        "mmrLambda": 0.7,
+        "redundancyWeight": 1,
+        "costExponent": 0.5
+      },
+      "budgets": [
+        {
+          "requestedTokens": 1200,
+          "summary": {
+            "searches": 6,
+            "incomplete": 0,
+            "positives": 6,
+            "negatives": 0,
+            "recallAt1": 0,
+            "recallAt5": 0,
+            "mrr": 0,
+            "evidenceCoverage": 0,
+            "fullEvidenceSets": 0,
+            "complementaryCoverage": 0,
+            "negativeAccuracy": null,
+            "meanResponseTokens": 409.1666666666667,
+            "meanExcerpts": 0.16666666666666666,
+            "meanExcerptLines": 2.5
+          },
+          "counterexamples": []
+        },
+        {
+          "requestedTokens": 1600,
+          "summary": {
+            "searches": 6,
+            "incomplete": 0,
+            "positives": 6,
+            "negatives": 0,
+            "recallAt1": 0,
+            "recallAt5": 0,
+            "mrr": 0,
+            "evidenceCoverage": 0,
+            "fullEvidenceSets": 0,
+            "complementaryCoverage": 0,
+            "negativeAccuracy": null,
+            "meanResponseTokens": 750.5,
+            "meanExcerpts": 0.6666666666666666,
+            "meanExcerptLines": 36
+          },
+          "counterexamples": []
+        },
+        {
+          "requestedTokens": 2400,
+          "summary": {
+            "searches": 6,
+            "incomplete": 0,
+            "positives": 6,
+            "negatives": 0,
+            "recallAt1": 0.5833333333333334,
+            "recallAt5": 0.5833333333333334,
+            "mrr": 0.6666666666666666,
+            "evidenceCoverage": 0.5833333333333334,
+            "fullEvidenceSets": 0.5,
+            "complementaryCoverage": 0.20833333333333331,
+            "negativeAccuracy": null,
+            "meanResponseTokens": 1561.1666666666667,
+            "meanExcerpts": 1.6666666666666667,
+            "meanExcerptLines": 117.33333333333333
+          },
+          "counterexamples": []
+        },
+        {
+          "requestedTokens": 4000,
+          "summary": {
+            "searches": 6,
+            "incomplete": 0,
+            "positives": 6,
+            "negatives": 0,
+            "recallAt1": 0.75,
+            "recallAt5": 0.8114035087719298,
+            "mrr": 0.9166666666666666,
+            "evidenceCoverage": 0.8114035087719298,
+            "fullEvidenceSets": 0.6666666666666666,
+            "complementaryCoverage": 0.5,
+            "negativeAccuracy": null,
+            "meanResponseTokens": 2987,
+            "meanExcerpts": 2.6666666666666665,
+            "meanExcerptLines": 277
+          },
+          "counterexamples": []
+        }
+      ],
+      "meanCoverage": 0.3486842105263158
+    },
+    {
+      "name": "mmr λ=0.85",
+      "policy": "mmr",
+      "tuning": {
+        "mmrLambda": 0.85,
+        "redundancyWeight": 1,
+        "costExponent": 0.5
+      },
+      "budgets": [
+        {
+          "requestedTokens": 1200,
+          "summary": {
+            "searches": 6,
+            "incomplete": 0,
+            "positives": 6,
+            "negatives": 0,
+            "recallAt1": 0,
+            "recallAt5": 0,
+            "mrr": 0,
+            "evidenceCoverage": 0,
+            "fullEvidenceSets": 0,
+            "complementaryCoverage": 0,
+            "negativeAccuracy": null,
+            "meanResponseTokens": 409.1666666666667,
+            "meanExcerpts": 0.16666666666666666,
+            "meanExcerptLines": 2.5
+          },
+          "counterexamples": []
+        },
+        {
+          "requestedTokens": 1600,
+          "summary": {
+            "searches": 6,
+            "incomplete": 0,
+            "positives": 6,
+            "negatives": 0,
+            "recallAt1": 0,
+            "recallAt5": 0,
+            "mrr": 0,
+            "evidenceCoverage": 0,
+            "fullEvidenceSets": 0,
+            "complementaryCoverage": 0,
+            "negativeAccuracy": null,
+            "meanResponseTokens": 750.5,
+            "meanExcerpts": 0.6666666666666666,
+            "meanExcerptLines": 36
+          },
+          "counterexamples": []
+        },
+        {
+          "requestedTokens": 2400,
+          "summary": {
+            "searches": 6,
+            "incomplete": 0,
+            "positives": 6,
+            "negatives": 0,
+            "recallAt1": 0.5833333333333334,
+            "recallAt5": 0.5833333333333334,
+            "mrr": 0.6666666666666666,
+            "evidenceCoverage": 0.5833333333333334,
+            "fullEvidenceSets": 0.5,
+            "complementaryCoverage": 0.20833333333333331,
+            "negativeAccuracy": null,
+            "meanResponseTokens": 1561.1666666666667,
+            "meanExcerpts": 1.6666666666666667,
+            "meanExcerptLines": 117.33333333333333
+          },
+          "counterexamples": []
+        },
+        {
+          "requestedTokens": 4000,
+          "summary": {
+            "searches": 6,
+            "incomplete": 0,
+            "positives": 6,
+            "negatives": 0,
+            "recallAt1": 0.75,
+            "recallAt5": 0.8114035087719298,
+            "mrr": 0.9166666666666666,
+            "evidenceCoverage": 0.8114035087719298,
+            "fullEvidenceSets": 0.6666666666666666,
+            "complementaryCoverage": 0.5416666666666666,
+            "negativeAccuracy": null,
+            "meanResponseTokens": 2993.3333333333335,
+            "meanExcerpts": 2.6666666666666665,
+            "meanExcerptLines": 278.6666666666667
+          },
+          "counterexamples": []
+        }
+      ],
+      "meanCoverage": 0.3486842105263158
+    },
+    {
+      "name": "marginal r=0.5 c=0",
+      "policy": "marginal",
+      "tuning": {
+        "mmrLambda": 0.7,
+        "redundancyWeight": 0.5,
+        "costExponent": 0
+      },
+      "budgets": [
+        {
+          "requestedTokens": 1200,
+          "summary": {
+            "searches": 6,
+            "incomplete": 0,
+            "positives": 6,
+            "negatives": 0,
+            "recallAt1": 0,
+            "recallAt5": 0,
+            "mrr": 0,
+            "evidenceCoverage": 0,
+            "fullEvidenceSets": 0,
+            "complementaryCoverage": 0,
+            "negativeAccuracy": null,
+            "meanResponseTokens": 409.1666666666667,
+            "meanExcerpts": 0.16666666666666666,
+            "meanExcerptLines": 2.5
+          },
+          "counterexamples": []
+        },
+        {
+          "requestedTokens": 1600,
+          "summary": {
+            "searches": 6,
+            "incomplete": 0,
+            "positives": 6,
+            "negatives": 0,
+            "recallAt1": 0,
+            "recallAt5": 0,
+            "mrr": 0,
+            "evidenceCoverage": 0,
+            "fullEvidenceSets": 0,
+            "complementaryCoverage": 0,
+            "negativeAccuracy": null,
+            "meanResponseTokens": 750.5,
+            "meanExcerpts": 0.6666666666666666,
+            "meanExcerptLines": 36
+          },
+          "counterexamples": []
+        },
+        {
+          "requestedTokens": 2400,
+          "summary": {
+            "searches": 6,
+            "incomplete": 0,
+            "positives": 6,
+            "negatives": 0,
+            "recallAt1": 0.5833333333333334,
+            "recallAt5": 0.5833333333333334,
+            "mrr": 0.6666666666666666,
+            "evidenceCoverage": 0.5833333333333334,
+            "fullEvidenceSets": 0.5,
+            "complementaryCoverage": 0.20833333333333331,
+            "negativeAccuracy": null,
+            "meanResponseTokens": 1561.1666666666667,
+            "meanExcerpts": 1.6666666666666667,
+            "meanExcerptLines": 117.33333333333333
+          },
+          "counterexamples": []
+        },
+        {
+          "requestedTokens": 4000,
+          "summary": {
+            "searches": 6,
+            "incomplete": 0,
+            "positives": 6,
+            "negatives": 0,
+            "recallAt1": 0.75,
+            "recallAt5": 0.793859649122807,
+            "mrr": 0.9166666666666666,
+            "evidenceCoverage": 0.793859649122807,
+            "fullEvidenceSets": 0.6666666666666666,
+            "complementaryCoverage": 0.5416666666666666,
+            "negativeAccuracy": null,
+            "meanResponseTokens": 2974.5,
+            "meanExcerpts": 2.6666666666666665,
+            "meanExcerptLines": 274
+          },
+          "counterexamples": [
+            {
+              "id": "pallets__flask-4074:change",
+              "coverage": 0.2631578947368421,
+              "relevanceCoverage": 0.3684210526315789
+            }
+          ]
+        }
+      ],
+      "meanCoverage": 0.3442982456140351
+    }
+  ],
+  "calibration": [
+    {
+      "name": "threshold 0.3",
+      "arm": {
+        "policy": "relevance",
+        "threshold": 0.3
+      },
+      "summary": {
+        "searches": 45,
+        "incomplete": 0,
+        "positives": 39,
+        "negatives": 6,
+        "recallAt1": 0.7606837606837608,
+        "recallAt5": 0.9487179487179487,
+        "mrr": 0.9102564102564102,
+        "evidenceCoverage": 0.9487179487179487,
+        "fullEvidenceSets": 0.9487179487179487,
+        "complementaryCoverage": 0.1875,
+        "negativeAccuracy": 0.6666666666666666,
+        "meanResponseTokens": 1595.4444444444443,
+        "meanExcerpts": 2.911111111111111,
+        "meanExcerptLines": 122.73333333333333
+      }
+    },
+    {
+      "name": "threshold 0.5",
+      "arm": {
+        "policy": "relevance",
+        "threshold": 0.5
+      },
+      "summary": {
+        "searches": 45,
+        "incomplete": 0,
+        "positives": 39,
+        "negatives": 6,
+        "recallAt1": 0.7606837606837608,
+        "recallAt5": 0.9316239316239315,
+        "mrr": 0.9102564102564102,
+        "evidenceCoverage": 0.9316239316239315,
+        "fullEvidenceSets": 0.8974358974358975,
+        "complementaryCoverage": 0.1875,
+        "negativeAccuracy": 1,
+        "meanResponseTokens": 1513.8666666666666,
+        "meanExcerpts": 2.4444444444444446,
+        "meanExcerptLines": 116.88888888888889
+      }
+    },
+    {
+      "name": "threshold 0.6",
+      "arm": {
+        "policy": "relevance",
+        "threshold": 0.6
+      },
+      "summary": {
+        "searches": 45,
+        "incomplete": 0,
+        "positives": 39,
+        "negatives": 6,
+        "recallAt1": 0.7606837606837608,
+        "recallAt5": 0.9316239316239315,
+        "mrr": 0.9102564102564102,
+        "evidenceCoverage": 0.9316239316239315,
+        "fullEvidenceSets": 0.8974358974358975,
+        "complementaryCoverage": 0.14583333333333331,
+        "negativeAccuracy": 1,
+        "meanResponseTokens": 1500.4666666666667,
+        "meanExcerpts": 2.3777777777777778,
+        "meanExcerptLines": 116
+      }
+    },
+    {
+      "name": "threshold 0.7",
+      "arm": {
+        "policy": "relevance",
+        "threshold": 0.7
+      },
+      "summary": {
+        "searches": 45,
+        "incomplete": 0,
+        "positives": 39,
+        "negatives": 6,
+        "recallAt1": 0.7606837606837608,
+        "recallAt5": 0.9316239316239315,
+        "mrr": 0.9102564102564102,
+        "evidenceCoverage": 0.9316239316239315,
+        "fullEvidenceSets": 0.8974358974358975,
+        "complementaryCoverage": 0.14583333333333331,
+        "negativeAccuracy": 1,
+        "meanResponseTokens": 1430.5777777777778,
+        "meanExcerpts": 2.2666666666666666,
+        "meanExcerptLines": 107.75555555555556
+      }
+    },
+    {
+      "name": "threshold 0.8",
+      "arm": {
+        "policy": "relevance",
+        "threshold": 0.8
+      },
+      "summary": {
+        "searches": 45,
+        "incomplete": 0,
+        "positives": 39,
+        "negatives": 6,
+        "recallAt1": 0.7606837606837608,
+        "recallAt5": 0.9059829059829059,
+        "mrr": 0.9102564102564102,
+        "evidenceCoverage": 0.9059829059829059,
+        "fullEvidenceSets": 0.8461538461538461,
+        "complementaryCoverage": 0.14583333333333331,
+        "negativeAccuracy": 1,
+        "meanResponseTokens": 1303.2888888888888,
+        "meanExcerpts": 1.9555555555555555,
+        "meanExcerptLines": 95.11111111111111
+      }
+    },
+    {
+      "name": "threshold 0.9",
+      "arm": {
+        "policy": "relevance",
+        "threshold": 0.9
+      },
+      "summary": {
+        "searches": 45,
+        "incomplete": 0,
+        "positives": 39,
+        "negatives": 6,
+        "recallAt1": 0.7350427350427351,
+        "recallAt5": 0.8162393162393163,
+        "mrr": 0.8717948717948718,
+        "evidenceCoverage": 0.8162393162393163,
+        "fullEvidenceSets": 0.7435897435897436,
+        "complementaryCoverage": 0.08333333333333333,
+        "negativeAccuracy": 1,
+        "meanResponseTokens": 847.9777777777778,
+        "meanExcerpts": 1.2666666666666666,
+        "meanExcerptLines": 46.48888888888889
+      }
+    },
+    {
+      "name": "top-k 1",
+      "arm": {
+        "policy": "relevance",
+        "topK": 1
+      },
+      "summary": {
+        "searches": 45,
+        "incomplete": 0,
+        "positives": 39,
+        "negatives": 6,
+        "recallAt1": 0.7606837606837608,
+        "recallAt5": 0.7606837606837608,
+        "mrr": 0.8717948717948718,
+        "evidenceCoverage": 0.7606837606837608,
+        "fullEvidenceSets": 0.6666666666666666,
+        "complementaryCoverage": 0.041666666666666664,
+        "negativeAccuracy": 1,
+        "meanResponseTokens": 832.0888888888888,
+        "meanExcerpts": 0.8666666666666667,
+        "meanExcerptLines": 50.22222222222222
+      }
+    },
+    {
+      "name": "top-k 3",
+      "arm": {
+        "policy": "relevance",
+        "topK": 3
+      },
+      "summary": {
+        "searches": 45,
+        "incomplete": 0,
+        "positives": 39,
+        "negatives": 6,
+        "recallAt1": 0.7606837606837608,
+        "recallAt5": 0.9230769230769231,
+        "mrr": 0.9102564102564102,
+        "evidenceCoverage": 0.9230769230769231,
+        "fullEvidenceSets": 0.8717948717948718,
+        "complementaryCoverage": 0.1875,
+        "negativeAccuracy": 1,
+        "meanResponseTokens": 1441.5555555555557,
+        "meanExcerpts": 2.2444444444444445,
+        "meanExcerptLines": 108.37777777777778
+      }
+    },
+    {
+      "name": "top-k 5",
+      "arm": {
+        "policy": "relevance",
+        "topK": 5
+      },
+      "summary": {
+        "searches": 45,
+        "incomplete": 0,
+        "positives": 39,
+        "negatives": 6,
+        "recallAt1": 0.7606837606837608,
+        "recallAt5": 0.9316239316239315,
+        "mrr": 0.9102564102564102,
+        "evidenceCoverage": 0.9316239316239315,
+        "fullEvidenceSets": 0.8974358974358975,
+        "complementaryCoverage": 0.1875,
+        "negativeAccuracy": 1,
+        "meanResponseTokens": 1513.8666666666666,
+        "meanExcerpts": 2.4444444444444446,
+        "meanExcerptLines": 116.88888888888889
+      }
+    },
+    {
+      "name": "score gap 0.1",
+      "arm": {
+        "policy": "relevance",
+        "scoreGap": 0.1
+      },
+      "summary": {
+        "searches": 45,
+        "incomplete": 0,
+        "positives": 39,
+        "negatives": 6,
+        "recallAt1": 0.7606837606837608,
+        "recallAt5": 0.8888888888888888,
+        "mrr": 0.9102564102564102,
+        "evidenceCoverage": 0.8888888888888888,
+        "fullEvidenceSets": 0.8205128205128205,
+        "complementaryCoverage": 0.08333333333333333,
+        "negativeAccuracy": 1,
+        "meanResponseTokens": 1056.7555555555555,
+        "meanExcerpts": 1.6,
+        "meanExcerptLines": 68.8
+      }
+    },
+    {
+      "name": "score gap 0.2",
+      "arm": {
+        "policy": "relevance",
+        "scoreGap": 0.2
+      },
+      "summary": {
+        "searches": 45,
+        "incomplete": 0,
+        "positives": 39,
+        "negatives": 6,
+        "recallAt1": 0.7606837606837608,
+        "recallAt5": 0.9316239316239315,
+        "mrr": 0.9102564102564102,
+        "evidenceCoverage": 0.9316239316239315,
+        "fullEvidenceSets": 0.8974358974358975,
+        "complementaryCoverage": 0.14583333333333331,
+        "negativeAccuracy": 1,
+        "meanResponseTokens": 1436.888888888889,
+        "meanExcerpts": 2.2666666666666666,
+        "meanExcerptLines": 108.91111111111111
+      }
+    },
+    {
+      "name": "score gap 0.3",
+      "arm": {
+        "policy": "relevance",
+        "scoreGap": 0.3
+      },
+      "summary": {
+        "searches": 45,
+        "incomplete": 0,
+        "positives": 39,
+        "negatives": 6,
+        "recallAt1": 0.7606837606837608,
+        "recallAt5": 0.9316239316239315,
+        "mrr": 0.9102564102564102,
+        "evidenceCoverage": 0.9316239316239315,
+        "fullEvidenceSets": 0.8974358974358975,
+        "complementaryCoverage": 0.14583333333333331,
+        "negativeAccuracy": 1,
+        "meanResponseTokens": 1488.1333333333334,
+        "meanExcerpts": 2.3333333333333335,
+        "meanExcerptLines": 113.91111111111111
+      }
+    }
+  ]
+}
