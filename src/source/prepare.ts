@@ -17,7 +17,8 @@ import { performance } from 'node:perf_hooks';
 import { REFERENCE_COUNTER_ID, countReferenceTokens } from '../response/token-counter.ts';
 import { countProfile, measureSteps, measureSync } from '../profiling.ts';
 import { AuthorizedRoot, UnauthorizedPathError } from './authorization.ts';
-import { DEFAULT_WINDOW_LIMITS, chunkSnapshot, chunkerIdentityFor } from './chunker.ts';
+import { DEFAULT_CHUNKER, DEFAULT_WINDOW_LIMITS } from './chunker.ts';
+import type { SnapshotChunker } from './chunker.ts';
 import type { ChunkResult, PreparedFragment, WindowLimits } from './chunker.ts';
 import { inventorySteps } from './inventory.ts';
 import type { InventoryOptions, InventoryResult } from './inventory.ts';
@@ -106,6 +107,8 @@ export const NO_PREPARATION_LIMITS: PreparationLimits = Object.freeze({
 export type PrepareOptions = {
   readonly inventory: InventoryOptions;
   readonly windowLimits?: WindowLimits;
+  /** Benchmark seam for chunking experiments; production always uses the default chunker. */
+  readonly chunker?: SnapshotChunker;
   readonly limits?: PreparationLimits;
   /** Interrupts preparation between files; the result is then explicitly incomplete. */
   readonly shouldStop?: () => boolean;
@@ -218,13 +221,14 @@ function* preparationSteps(
     const sha256 = cache === undefined ? undefined : measureSync('hash', () => hashBytes(bytes));
     const cached = cache === undefined || sha256 === undefined ? undefined : measureSync('cache_lookup', () => cache.get(sha256, bytes.length));
     const windowLimits = options.windowLimits ?? DEFAULT_WINDOW_LIMITS;
-    let outcome = prepareContent(entry.relativePath, entry.absolutePath, bytes, windowLimits, cached, sha256);
+    const chunker = options.chunker ?? DEFAULT_CHUNKER;
+    let outcome = prepareContent(entry.relativePath, entry.absolutePath, bytes, windowLimits, chunker, cached, sha256);
     if (cache !== undefined && cached !== undefined && sha256 !== undefined) {
       if (outcome.rejected) {
         // An entry that does not fit its verified bytes is dropped and rebuilt from scratch.
         cache.reject(sha256);
         const rebuilt = cache.get(sha256, bytes.length);
-        outcome = prepareContent(entry.relativePath, entry.absolutePath, bytes, windowLimits, rebuilt, sha256);
+        outcome = prepareContent(entry.relativePath, entry.absolutePath, bytes, windowLimits, chunker, rebuilt, sha256);
         if (outcome.changed && !outcome.rejected) cache.update(rebuilt);
       } else if (outcome.changed) {
         cache.update(cached);
@@ -288,6 +292,7 @@ function prepareContent(
   absolutePath: string,
   bytes: Buffer,
   windowLimits: WindowLimits,
+  chunker: SnapshotChunker,
   entry: PreparationEntry | undefined,
   sha256: string | undefined,
 ): ContentOutcome {
@@ -333,14 +338,14 @@ function prepareContent(
     }
   }
 
-  const key = chunkKey(chunkerIdentityFor(relativePath), windowLimits);
+  const key = chunkKey(chunker.identity(relativePath), windowLimits);
   const record = entry?.chunks[key];
   let chunked = record === undefined || rejected ? null : resultOf(record, snapshot);
   if (record !== undefined && chunked === null) rejected = true;
   if (chunked !== null) {
     countProfile('preparation_cache_chunks_reused');
   } else {
-    chunked = measureSync('chunking', () => chunkSnapshot(snapshot, windowLimits));
+    chunked = measureSync('chunking', () => chunker.chunk(snapshot, windowLimits));
     if (entry !== undefined && isRecordable(chunked)) {
       entry.chunks[key] = recordOf(chunked);
       changed = true;

@@ -47,7 +47,7 @@ import { selectRanges } from './response/selection.ts';
 import type { SelectedRange } from './response/selection.ts';
 import { REFERENCE_COUNTER_ID } from './response/token-counter.ts';
 import { UnauthorizedPathError } from './source/authorization.ts';
-import type { PreparedFragment } from './source/chunker.ts';
+import type { PreparedFragment, SnapshotChunker } from './source/chunker.ts';
 import { FreshnessTracker, rootReader } from './source/freshness.ts';
 import { exclusionCounts, prepareScopeCooperatively } from './source/prepare.ts';
 import { PreparationCache, preparationCacheDirectory } from './source/preparation-cache.ts';
@@ -71,6 +71,8 @@ export type EngineOptions = {
   readonly cache?: ScoreCache;
   /** Content-verified preparation reuse; defaults to a bounded store beside the score cache. */
   readonly preparationCache?: PreparationCache;
+  /** Benchmark seam for chunking experiments (E1); defaults to the production chunker. */
+  readonly chunker?: SnapshotChunker;
   readonly clock?: Clock;
   readonly logger?: SearchLogger;
   readonly env?: NodeJS.ProcessEnv;
@@ -206,6 +208,7 @@ export class SearchEngine {
       },
       shouldStop: () => !context.canStartWork(),
       cache: this.#preparationCache,
+      ...(this.#options.chunker === undefined ? {} : { chunker: this.#options.chunker }),
     })));
 
     // A lost authorization cannot become permission to send an earlier partial

@@ -5,7 +5,8 @@ import { SearchProfiler } from '../src/profiling.ts';
 import { environment, positiveInteger, projectRoot, workspace, writeReport } from './bench/common.ts';
 import { assertFrozen, digest, writeFreeze } from './bench/freeze.ts';
 import { liveProvider } from './bench/live-provider.ts';
-import { loadManifest, mapLimit, type RealSplit } from './bench/real-tasks.ts';
+import { chunkingArm } from './bench/chunking-arms.ts';
+import { javascriptManifestPath, loadManifest, mapLimit, type RealSplit } from './bench/real-tasks.ts';
 import { loadSnapshots } from './bench/snapshots.ts';
 import { groupBy, mean, plannedSummary } from './bench/report.ts';
 import { localizationMetrics } from './bench/retrieval.ts';
@@ -16,7 +17,7 @@ const { values } = parseArgs({ options: {
   config: { type: 'string' }, split: { type: 'string' }, output: { type: 'string' }, mirrors: { type: 'string' },
   frozen: { type: 'string' }, freeze: { type: 'string' }, jobs: { type: 'string' }, only: { type: 'string' },
   'max-requests': { type: 'string' }, 'max-input-tokens': { type: 'string' }, 'response-tokens': { type: 'string' },
-  capture: { type: 'string' }, 'validate-only': { type: 'boolean' }, help: { type: 'boolean' },
+  capture: { type: 'string' }, 'validate-only': { type: 'boolean' }, help: { type: 'boolean' }, javascript: { type: 'boolean' }, chunker: { type: 'string' },
 } });
 
 type Planned = { id: string; category: string; repository: string };
@@ -42,10 +43,14 @@ if (values.help) {
     'npm run bench:real -- --validate-only',
     'npm run bench:real -- --config <trusted-config> --split dev [--jobs 1] [--max-requests 400] [--output benchmark-results/real-dev.json]',
     'npm run bench:real -- --config <trusted-config> --split heldout --freeze benchmark-results/real-heldout.freeze.json',
+    'npm run bench:real -- --javascript --chunker line-windows|typescript-v2|recursive|recursive-compact|recursive-enclosing --config <trusted-config> --split dev   (E1)',
     'npm run bench:real -- --config <trusted-config> --split heldout --frozen benchmark-results/real-heldout.freeze.json',
   ].join('\n'));
 } else {
-  const manifest = loadManifest();
+  // The JS/TS manifest (E1) has no audit file; its labels come from the patches alone.
+  const manifest = values.javascript ? loadManifest(javascriptManifestPath, {}) : loadManifest();
+  const chunkerArm = values.chunker ?? 'recursive';
+  const chunker = chunkingArm(chunkerArm);
   const split = (values.split ?? 'dev') as RealSplit;
   if (split !== 'dev' && split !== 'heldout') throw new Error('--split must be dev or heldout');
   const only = values.only?.split(',');
@@ -62,7 +67,7 @@ if (values.help) {
     const responseTokens = positiveInteger(values['response-tokens'], 4_000);
     if (responseTokens > live.template.config.search.max_response_tokens) throw new Error('response budget exceeds trusted configuration maximum');
     const host = environment();
-    const settings = { provider: live.settings, search: live.template.config.search, scanCaps: live.template.config.scan_caps, responseTokens, caps: live.caps, scoreCache: 'disabled' };
+    const settings = { provider: live.settings, search: live.template.config.search, scanCaps: live.template.config.scan_caps, responseTokens, caps: live.caps, scoreCache: 'disabled', chunker: chunkerArm };
     const identity = {
       split, datasetHash: digest(tasks), sourceHash: host.sourceHash, harnessHash: host.harnessHash,
       packageLockHash: host.packageLockHash, settingsHash: digest(settings), model: live.provider.model,
@@ -81,7 +86,7 @@ if (values.help) {
         const started = performance.now();
         try {
           const profile = new SearchProfiler();
-          const result = await createSearchEngine({ configuration: space.loaded, provider: live.provider }).search({
+          const result = await createSearchEngine({ configuration: space.loaded, provider: live.provider, chunker }).search({
             query: query.query, scope: ['.'], max_context_tokens: responseTokens,
           }, { searchId: query.id, profile, onCandidatePool: (pool) => { pools.push({ id: query.id, source: task.id, pool }); } });
           const metrics = localizationMetrics(query, result.outcome);
