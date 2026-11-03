@@ -49,7 +49,7 @@ import { REFERENCE_COUNTER_ID } from './response/token-counter.ts';
 import { UnauthorizedPathError } from './source/authorization.ts';
 import type { PreparedFragment } from './source/chunker.ts';
 import { FreshnessTracker, rootReader } from './source/freshness.ts';
-import { exclusionCounts, prepareScope } from './source/prepare.ts';
+import { exclusionCounts, prepareScopeCooperatively } from './source/prepare.ts';
 import { PreparationCache, preparationCacheDirectory } from './source/preparation-cache.ts';
 import type { PreparedScope } from './source/prepare.ts';
 import type { SourceSnapshot } from './source/snapshot.ts';
@@ -192,7 +192,7 @@ export class SearchEngine {
     );
 
     const root = sourceRoot;
-    const prepared = await measureAsync('preparation', () => runPhase(context, 'preparation', async () => prepareScope(root, request.scope, {
+    const prepared = await measureAsync('preparation', () => runPhase(context, 'preparation', () => prepareScopeCooperatively(root, request.scope, {
       inventory: {
         respectGitignore: config.source.respect_gitignore,
         maxFileBytes: config.source.max_file_bytes,

@@ -17,7 +17,10 @@
  * - `complete` and `partial` are `isError: false`; `rejected` and `error` are `isError: true`;
  * - one active search, one queued search, then `BUSY`;
  * - a cancelled call never produces a later result;
- * - closing stdin ends the process cleanly.
+ * - closing stdin ends the process cleanly;
+ * - an input line is bounded before `JSON.parse()`, even one that never ends;
+ * - output a client does not read is bounded: past the limit, or on a stream error,
+ *   every call is cancelled and the server stops.
  */
 import { randomUUID } from 'node:crypto';
 import type { Readable, Writable } from 'node:stream';
@@ -73,6 +76,11 @@ const METHOD_NOT_FOUND = -32601;
 const INVALID_PARAMS = -32602;
 const INTERNAL_ERROR = -32603;
 
+/** Longest accepted JSON-RPC line, in UTF-16 code units (an upper bound on its bytes / 3). */
+export const MAX_MESSAGE_LENGTH = 1_048_576;
+/** Unread output, in bytes, after which the client is treated as gone. */
+export const MAX_PENDING_OUTPUT_BYTES = 16_777_216;
+
 export type McpServerOptions = {
   readonly engine: SearchEngine;
   readonly input: Readable;
@@ -104,15 +112,38 @@ export function runMcpServer(options: McpServerOptions): Promise<void> {
   let running: ActiveCall | null = null;
   let queued: ActiveCall | null = null;
   let buffer = '';
+  let discarding = false;
   let closed = false;
+  let abandoned = false;
 
   const log = (line: string): void => {
     errorOutput.write(`${line}\n`);
   };
 
-  const send = (message: unknown): void => {
-    output.write(`${JSON.stringify(message)}\n`);
+  // The client stopped reading or the stream broke: nothing more can be delivered, so
+  // cancel every call and stop reading instead of buffering without bound.
+  const abandon = (reason: string): void => {
+    if (abandoned) return;
+    abandoned = true;
+    log(`jevgrep mcp stopped: ${reason}`);
+    for (const call of active.values()) call.controller.abort();
+    if (queued !== null) {
+      const call = queued;
+      queued = null;
+      active.delete(callKey(call.id));
+      call.resolve();
+    }
+    input.destroy();
   };
+
+  const send = (message: unknown): void => {
+    if (abandoned) return;
+    output.write(`${JSON.stringify(message)}\n`);
+    if (output.writableLength > MAX_PENDING_OUTPUT_BYTES) abandon('output is not being read');
+  };
+  output.on('error', () => {
+    abandon('output stream failed');
+  });
 
   const sendError = (id: JsonRpcId | null, code: number, message: string): void => {
     send({ jsonrpc: '2.0', id, error: { code, message } });
@@ -282,14 +313,31 @@ export function runMcpServer(options: McpServerOptions): Promise<void> {
 
   return new Promise<void>((resolve) => {
     input.setEncoding('utf8');
+    const oversized = (): void => {
+      sendError(null, INVALID_REQUEST, 'message too large');
+      log('jevgrep mcp discarded an oversized message');
+    };
     input.on('data', (chunk: string) => {
-      buffer += chunk;
+      let rest = chunk;
+      if (discarding) {
+        const end = rest.indexOf('\n');
+        if (end === -1) return;
+        discarding = false;
+        rest = rest.slice(end + 1);
+      }
+      buffer += rest;
       let newline = buffer.indexOf('\n');
-      while (newline !== -1) {
+      while (newline !== -1 && !abandoned) {
         const line = buffer.slice(0, newline);
         buffer = buffer.slice(newline + 1);
-        consume(line);
+        if (line.length > MAX_MESSAGE_LENGTH) oversized();
+        else consume(line);
         newline = buffer.indexOf('\n');
+      }
+      if (buffer.length > MAX_MESSAGE_LENGTH) {
+        buffer = '';
+        discarding = true;
+        oversized();
       }
     });
     const finish = (): void => {
@@ -297,7 +345,7 @@ export function runMcpServer(options: McpServerOptions): Promise<void> {
         return;
       }
       closed = true;
-      if (buffer.trim().length > 0) {
+      if (!discarding && !abandoned && buffer.trim().length > 0) {
         consume(buffer);
         buffer = '';
       }

@@ -13,12 +13,13 @@
  * coverage (requirement R8).
  */
 import { createHash } from 'node:crypto';
+import { performance } from 'node:perf_hooks';
 import { REFERENCE_COUNTER_ID, countReferenceTokens } from '../response/token-counter.ts';
-import { countProfile, measureSync } from '../profiling.ts';
+import { countProfile, measureSteps, measureSync } from '../profiling.ts';
 import { AuthorizedRoot, UnauthorizedPathError } from './authorization.ts';
 import { DEFAULT_WINDOW_LIMITS, chunkSnapshot, chunkerIdentityFor } from './chunker.ts';
 import type { ChunkResult, PreparedFragment, WindowLimits } from './chunker.ts';
-import { inventoryScope } from './inventory.ts';
+import { inventorySteps } from './inventory.ts';
 import type { InventoryOptions, InventoryResult } from './inventory.ts';
 import {
   chunkKey, decodeLineTokens, encodeLineTokens, isRecordable, recordOf, resultOf,
@@ -123,7 +124,51 @@ export function prepareScope(
   scope: readonly string[],
   options: PrepareOptions,
 ): PreparedScope {
-  const inventory = measureSync('inventory', () => inventoryScope(root, scope, options.inventory));
+  const steps = preparationSteps(root, scope, options);
+  for (;;) {
+    const step = steps.next();
+    if (step.done === true) return step.value;
+  }
+}
+
+/** Longest stretch of preparation work between two returns to the event loop. */
+export const PREPARATION_SLICE_MS = 10;
+
+/**
+ * `prepareScope` that returns to the event loop at least every `sliceMs` of work.
+ *
+ * Preparation is synchronous CPU and file work; without yielding, a stdio MCP server
+ * cannot read a cancellation, a ping or a second request until it ends. Yields happen
+ * between files, so the longest single file bounds the pause. The result is identical
+ * to `prepareScope`.
+ */
+export async function prepareScopeCooperatively(
+  root: AuthorizedRoot,
+  scope: readonly string[],
+  options: PrepareOptions,
+  sliceMs: number = PREPARATION_SLICE_MS,
+): Promise<PreparedScope> {
+  const steps = preparationSteps(root, scope, options);
+  let sliceStart = performance.now();
+  for (;;) {
+    const step = steps.next();
+    if (step.done === true) return step.value;
+    if (performance.now() - sliceStart >= sliceMs) {
+      await new Promise<void>((resolve) => {
+        setImmediate(resolve);
+      });
+      sliceStart = performance.now();
+    }
+  }
+}
+
+/** The preparation loop, suspended before each file so a caller can interleave other work. */
+function* preparationSteps(
+  root: AuthorizedRoot,
+  scope: readonly string[],
+  options: PrepareOptions,
+): Generator<undefined, PreparedScope, undefined> {
+  const inventory = yield* measureSteps('inventory', inventorySteps(root, scope, options.inventory));
   const limits = options.limits ?? NO_PREPARATION_LIMITS;
 
   const files: PreparedFile[] = [];
@@ -135,6 +180,7 @@ export function prepareScope(
   let complete = inventory.complete;
 
   for (const entry of inventory.files) {
+    yield;
     if (options.shouldStop?.() === true) {
       complete = false;
       break;

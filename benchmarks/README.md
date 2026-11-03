@@ -42,6 +42,15 @@ developed and the user's real cache are not benchmark inputs.
 writes versus one grouped write. It verifies score read-back and alternates the
 order of the two paths. It measures cache persistence only, not a full search.
 
+`bench:cancellation -- --root <repository>` measures how long preparation keeps
+running after a stop is due (`--after-ms`, default 200), as an MCP cancellation
+would request it. The synchronous arm cannot see the stop until preparation ends;
+the cooperative arm used by searches returns to the event loop at least every 10 ms,
+between directory entries and between files, so the largest single file bounds the
+latency. On clap (631 eligible files, about 12 s of preparation) the latency fell
+from 11.1 s to 6 ms (median of three); on the Go source tree (14 065 eligible files,
+about 186 s of preparation, inventory included) it fell from 183 s to 7 ms.
+
 Reports contain raw samples and min/median/max summaries, Node/OS/CPU information,
 Git revision and working-tree status, source and lockfile fingerprints, elapsed
 time, cache/fragment counts, response tokens and modeled transmission volume.
