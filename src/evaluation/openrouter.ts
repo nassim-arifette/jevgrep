@@ -5,7 +5,7 @@
  */
 import { ProviderError, type BatchEvaluation, type EvaluationBatch, type ProviderClient } from './contracts.ts';
 import { fetchTransport, type ProviderTransport } from './http.ts';
-import { buildRequestPayload, evaluateDecisionRequest } from './jev.ts';
+import { CRITERION_REFERENCE, buildRequestPayload, evaluateDecisionRequest } from './jev.ts';
 
 export const OPENROUTER_JEV_MODEL = 'typesafe/jev-1.13' as const;
 export const OPENROUTER_BASE_URL = 'https://openrouter.ai' as const;
@@ -22,12 +22,12 @@ export function serializeOpenRouterBatch(batch: EvaluationBatch): string {
   const payload = buildRequestPayload(batch, OPENROUTER_JEV_MODEL);
   return JSON.stringify({
     ...payload,
-    questions: Object.fromEntries(Object.entries(payload.questions).map(([id, question]) => [id, {
+    questions: Object.fromEntries(Object.entries(payload.questions).map(([id, question]) => [id, question.criteria === undefined ? question : {
       ...question,
       // DecisionsNoulQuestion requires both keys when criteria are supplied.
       criteria: {
         ...question.criteria,
-        false: batch.criterion === undefined
+        false: batch.layout === 'layout-compact-ref-1' ? CRITERION_REFERENCE.false : batch.criterion === undefined
           ? 'This excerpt contains no concrete evidence useful for investigating the search question.'
           : 'The criterion does not hold for this excerpt.',
       },

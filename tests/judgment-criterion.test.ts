@@ -16,7 +16,7 @@ test('a batch without a judgment criterion keeps the relevance criterion on ever
   const direct = buildRequestPayload(BATCH, 'jev-1.13.0');
   assert.equal(direct.state.criterion, RELEVANCE_CRITERION);
   assert.equal(direct.state.criterion_version, CRITERION_VERSION);
-  assert.equal(direct.questions['f-1']?.criteria.true, RELEVANCE_CRITERION);
+  assert.equal(direct.questions['f-1']?.criteria?.true, RELEVANCE_CRITERION);
   const gateway = JSON.parse(serializeGatewayBatch(BATCH)) as { state: Record<string, string>; questions: Record<string, { criteria: { true: string } }> };
   assert.equal(gateway.state['criterion_version'], CRITERION_VERSION);
   assert.equal(gateway.questions['f-1']?.criteria.true, RELEVANCE_CRITERION);
@@ -27,7 +27,7 @@ test('an experimental judgment criterion replaces the criterion text and version
   const direct = buildRequestPayload(batch, 'jev-1.13.0');
   assert.equal(direct.state.criterion, FOCUSED.text);
   assert.equal(direct.state.criterion_version, FOCUSED.version);
-  assert.equal(direct.questions['f-1']?.criteria.true, FOCUSED.text);
+  assert.equal(direct.questions['f-1']?.criteria?.true, FOCUSED.text);
   const gateway = serializeGatewayBatch(batch);
   assert.ok(gateway.includes(FOCUSED.version) && !gateway.includes(RELEVANCE_CRITERION));
   const openrouter = JSON.parse(serializeOpenRouterBatch(batch)) as { questions: Record<string, { criteria: { true: string; false: string } }> };

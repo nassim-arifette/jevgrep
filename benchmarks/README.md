@@ -269,6 +269,23 @@ arm against the configured provider under `--max-requests` and `--max-input-toke
 caps and compares fresh scores with the captured ones. The
 [2026-11-03 report](baselines/2026-11-03-supplied-candidates.md) records the first run.
 
+## Compact Jev payloads (section 11)
+
+`bench:layouts` re-judges every captured candidate under one versioned request
+layout, on identical chunks, then replays the default selection offline with each
+layout's scores:
+
+```sh
+npm run bench:layouts -- judge --config /path/to/config.json --layout layout-a-1 --output benchmark-results/layouts-a.json
+npm run bench:layouts -- judge --config /path/to/config.json --layout layout-compact-state-1 --output benchmark-results/layouts-state.json
+npm run bench:layouts -- analyze --judgments benchmark-results/layouts-a.json,benchmark-results/layouts-state.json[,...]
+```
+
+`analyze` needs a `layout-a-1` rerun as the reference and uses the captured pool
+scores as a second layout-A sample for the noise floor. It reports quality per
+group, score agreement and cost. The
+[2026-11-03 report](baselines/2026-11-03-compact-payloads.md) kept `layout-a-1`.
+
 ## Verification
 
 `npm run verify` includes tests for profile isolation and outcome equivalence, the

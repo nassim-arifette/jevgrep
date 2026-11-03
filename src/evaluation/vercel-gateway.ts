@@ -16,7 +16,9 @@ import {
 } from 'ai';
 
 import { ProviderError, type BatchEvaluation, type EvaluationBatch, type InvalidAnswer, type ProviderClient } from './contracts.ts';
-import { CRITERION_VERSION, LAYOUT_VERSION, RELEVANCE_CRITERION, questionInstructions, parseRetryAfter, inspectResponseKeys } from './jev.ts';
+import {
+  CRITERION_VERSION, LAYOUT_VERSION, RELEVANCE_CRITERION, inspectResponseKeys, layoutCriteria, parseRetryAfter, questionInstructions,
+} from './jev.ts';
 import { boundedFetch } from './http.ts';
 
 /** Validate each association before the SDK's all-or-nothing envelope validator. */
@@ -93,19 +95,18 @@ function buildGatewayInput(batch: EvaluationBatch): {
 } {
   const criterion = batch.criterion?.text ?? RELEVANCE_CRITERION;
   const questions: Record<string, GatewayBooleanQuestion> = {};
+  const criteria = layoutCriteria(batch);
   for (const item of batch.items) {
-    questions[item.id] = {
-      type: 'boolean',
-      instructions: questionInstructions(item),
-      criteria: { true: criterion },
-    };
+    questions[item.id] = criteria === undefined
+      ? { type: 'boolean', instructions: questionInstructions(item) }
+      : { type: 'boolean', instructions: questionInstructions(item), criteria };
   }
   return {
     state: {
       search_question: batch.query,
       criterion,
       criterion_version: batch.criterion?.version ?? CRITERION_VERSION,
-      layout: LAYOUT_VERSION,
+      layout: batch.layout ?? LAYOUT_VERSION,
     },
     questions,
   };
