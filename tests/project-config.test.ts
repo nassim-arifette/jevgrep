@@ -75,7 +75,7 @@ test('the development scripts cover compile, type check, test and smoke', () => 
   );
   assert.match(manifest.scripts['smoke'] ?? '', /^node scripts\/smoke\.ts$/);
   const verify = manifest.scripts['verify'] ?? '';
-  for (const step of ['npm run typecheck', 'npm test', 'npm run build', 'npm run smoke']) {
+  for (const step of ['npm run lint', 'npm run typecheck', 'npm test', 'npm run build', 'npm run smoke']) {
     assert.ok(verify.includes(step), `npm run verify must include '${step}'`);
   }
 });

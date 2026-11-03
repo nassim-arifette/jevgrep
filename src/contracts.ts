@@ -82,7 +82,7 @@ const usd = refine(numberValue(0, Number.MAX_SAFE_INTEGER / 1_000_000_000, false
   path, 'USD amounts must be representable as integer nanodollars');
 });
 const identifier = refine(textValue(128), (value, path) => {
-  requireContract(/^[A-Za-z0-9][A-Za-z0-9._:@/+\-]*$/.test(value), path, 'expected a bounded identifier');
+  requireContract(/^[A-Za-z0-9][A-Za-z0-9._:@/+-]*$/.test(value), path, 'expected a bounded identifier');
 });
 const version = literal(SCHEMA_VERSION);
 const responseTokens = numberValue(CONTRACT_LIMITS.min_response_tokens, Number.MAX_SAFE_INTEGER);
@@ -184,6 +184,7 @@ const pricingSchema = object({
 export const configurationSchema = refine(object({
   schema_version: literal(CONFIG_SCHEMA_VERSION),
   repository_root: refine(textValue(4_096), (value, path) => {
+    // oxlint-disable-next-line no-control-regex -- control characters are rejected on purpose
     requireContract(!/[\u0000-\u001f\u007f]/.test(value), path, 'control characters are forbidden');
     requireContract((value.startsWith('/') && !value.startsWith('//')) || /^[A-Za-z]:[\\/]/.test(value),
       path, 'expected an absolute POSIX or Windows drive path');

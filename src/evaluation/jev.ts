@@ -203,7 +203,7 @@ export function inspectResponseKeys(rawText: string, ids: readonly string[]): { 
   const stack: Frame[] = [];
   // JSON has already been parsed successfully. String tokens are decoded so escaped
   // keys cannot bypass correlation, and nesting distinguishes data from answer keys.
-  for (const token of rawText.matchAll(/"(?:[^"\\]|\\[\s\S])*"\s*:?|[{}\[\]]/g)) {
+  for (const token of rawText.matchAll(/"(?:[^"\\]|\\[\s\S])*"\s*:?|[{}[\]]/g)) {
     const value = token[0];
     const parent = stack.at(-1);
     if (value === '{' || value === '[') {

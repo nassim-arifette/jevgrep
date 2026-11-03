@@ -214,7 +214,7 @@ export function environmentWithProfileSecrets(
   const paths = basename(profilesDirectory) === 'profiles'
     ? [join(dirname(profilesDirectory), 'secrets.env'), join(profileDirectory, 'secrets.env')]
     : [globalSecretsPath(base), join(profileDirectory, 'secrets.env')];
-  for (const path of [...new Set(paths)]) {
+  for (const path of new Set(paths)) {
     repositoryRoot?.assertCurrent();
     const text = readOptional(new LocalDirectory(dirname(path), repositoryRoot), basename(path), 32_768);
     if (text === undefined) continue;
