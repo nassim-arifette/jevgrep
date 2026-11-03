@@ -25,8 +25,10 @@ jevgrep --version
 ```
 
 For development checks, run `npm run verify`. Runtime dependencies are
-`@ai-sdk/gateway`, `ai`, `tiktoken` and `typescript-parser`; exact versions are in
-[package.json](../package.json). The tokenizer vocabulary ships with its package.
+`@ai-sdk/gateway`, `ai`, `tiktoken`, `typescript-parser` and `web-tree-sitter`; exact
+versions are in [package.json](../package.json). The tokenizer vocabulary ships with its
+package, and the Go and Rust Tree-sitter grammars ship as WASM files inside JevGrep, so
+installing runs no native build.
 
 ## Configure a provider
 

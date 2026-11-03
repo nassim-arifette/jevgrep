@@ -12,7 +12,7 @@ import { join } from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
-const BINARY_EXTENSIONS = new Set(['.png', '.jpg', '.jpeg', '.gif', '.ico', '.mp4', '.ttf', '.woff', '.woff2', '.zip']);
+const BINARY_EXTENSIONS = new Set(['.png', '.jpg', '.jpeg', '.gif', '.ico', '.mp4', '.ttf', '.woff', '.woff2', '.zip', '.wasm']);
 const VENDORED = /(^|\/)[^/]+\.min\.js$/;
 const decoder = new TextDecoder('utf-8', { fatal: true });
 

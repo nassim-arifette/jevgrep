@@ -59,6 +59,7 @@
     "@ai-sdk/gateway": "4.0.87",
     "ai": "7.0.107",
     "tiktoken": "1.0.22",
-    "typescript-parser": "npm:typescript@6.0.2"
+    "typescript-parser": "npm:typescript@6.0.2",
+    "web-tree-sitter": "0.27.1"
   }
 }
