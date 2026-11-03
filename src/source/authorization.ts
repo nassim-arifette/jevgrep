@@ -198,7 +198,7 @@ export class AuthorizedRoot {
     const chain = [...this.#anchor];
     let current = this.path;
     const parts = normalized === '.' ? [] : normalized.split('/');
-    const requestedPaths = [...chain.map((entry) => entry.path)];
+    const requestedPaths = chain.map((entry) => entry.path);
     for (const part of parts) {
       current = join(current, part);
       requestedPaths.push(current);

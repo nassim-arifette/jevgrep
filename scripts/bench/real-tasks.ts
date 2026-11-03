@@ -131,7 +131,7 @@ function documentationLines(text: string): Set<number> {
     let rest = line;
     for (;;) {
       if (open === null) {
-        const match = /("""|\'\'\')/.exec(rest);
+        const match = /("""|''')/.exec(rest);
         if (!match) break;
         open = match[1]!;
         rest = rest.slice(match.index + 3);
@@ -142,7 +142,7 @@ function documentationLines(text: string): Set<number> {
         rest = rest.slice(close + 3);
       }
     }
-    if (startsOpen || open !== null || /^\s*(#|$)/.test(line) || /^\s*[rRuU]?("""|\'\'\').*("""|\'\'\')\s*$/.test(line)) result.add(index + 1);
+    if (startsOpen || open !== null || /^\s*(#|$)/.test(line) || /^\s*[rRuU]?("""|''').*("""|''')\s*$/.test(line)) result.add(index + 1);
   });
   return result;
 }

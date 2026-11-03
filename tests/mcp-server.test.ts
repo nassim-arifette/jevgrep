@@ -144,7 +144,7 @@ test('the tool schema cannot change the root, credential, endpoint, model or cap
   const active = session();
   active.send({ jsonrpc: '2.0', id: 1, method: 'tools/list' });
   const messages = await active.responses();
-  const tools = (messages[0]?.['result'] as { tools: { inputSchema: { properties: Record<string, unknown>; additionalProperties: boolean } }[] }).tools;
+  const tools = (messages[0]!['result'] as { tools: { inputSchema: { properties: Record<string, unknown>; additionalProperties: boolean } }[] }).tools;
   const schema = tools[0]?.inputSchema;
   assert.ok(schema !== undefined);
   assert.deepEqual(Object.keys(schema.properties).sort(), ['allow_partial_scan', 'max_context_tokens', 'query', 'scope']);
@@ -195,8 +195,8 @@ test('an unknown tool and an unknown method are protocol errors, not silent succ
   active.send({ jsonrpc: '2.0', id: 6, method: 'ping' });
   const messages = await active.responses();
 
-  assert.ok((messages.find((message) => message['id'] === 4)?.['error'] as { code: number }).code === -32602);
-  assert.ok((messages.find((message) => message['id'] === 5)?.['error'] as { code: number }).code === -32601);
+  assert.ok((messages.find((message) => message['id'] === 4)!['error'] as { code: number }).code === -32602);
+  assert.ok((messages.find((message) => message['id'] === 5)!['error'] as { code: number }).code === -32601);
   assert.deepEqual(messages.find((message) => message['id'] === 6)?.['result'], {});
 });
 
@@ -211,8 +211,8 @@ test('malformed and primitive input return protocol errors without crashing or e
   const messages = await active.responses();
   assert.equal(messages.length, 9);
   assert.deepEqual(messages[0], { jsonrpc: '2.0', id: null, error: { code: -32700, message: 'invalid JSON message' } });
-  assert.equal((messages[1]?.['error'] as { code: number }).code, -32600);
-  assert.equal((messages[7]?.['error'] as { code: number }).code, -32602);
+  assert.equal((messages[1]!['error'] as { code: number }).code, -32600);
+  assert.equal((messages[7]!['error'] as { code: number }).code, -32602);
   assert.deepEqual(messages[8]?.['result'], {});
   assert.ok(!JSON.stringify(messages).includes('malformed-secret'));
 });

@@ -28,6 +28,12 @@ import type { Readable, Writable } from 'node:stream';
 import { createSearchError } from './contracts.ts';
 import type { SearchOutcome } from './contracts.ts';
 import type { SearchEngine } from './engine.ts';
+import { createCallScheduler } from './mcp-calls.ts';
+import { createLineFramer } from './mcp-framing.ts';
+import {
+  INTERNAL_ERROR, INVALID_PARAMS, INVALID_REQUEST, METHOD_NOT_FOUND, PARSE_ERROR, parseRequest,
+} from './mcp-jsonrpc.ts';
+import type { JsonRpcId, JsonRpcRequest } from './mcp-jsonrpc.ts';
 
 export const MCP_PROTOCOL_VERSION = '2025-06-18';
 export const SUPPORTED_PROTOCOL_VERSIONS: readonly string[] = ['2025-06-18', '2025-03-26', '2024-11-05'];
@@ -61,21 +67,6 @@ export const TOOL_INPUT_SCHEMA = Object.freeze({
   additionalProperties: false,
 });
 
-type JsonRpcId = string | number;
-
-type JsonRpcRequest = {
-  jsonrpc: '2.0';
-  id?: JsonRpcId;
-  method: string;
-  params?: unknown;
-};
-
-const PARSE_ERROR = -32700;
-const INVALID_REQUEST = -32600;
-const METHOD_NOT_FOUND = -32601;
-const INVALID_PARAMS = -32602;
-const INTERNAL_ERROR = -32603;
-
 /** Longest accepted JSON-RPC line, in UTF-16 code units (an upper bound on its bytes / 3). */
 export const MAX_MESSAGE_LENGTH = 1_048_576;
 /** Unread output, in bytes, after which the client is treated as gone. */
@@ -91,13 +82,26 @@ export type McpServerOptions = {
   readonly onClose?: () => void;
 };
 
-type ActiveCall = {
-  readonly id: JsonRpcId;
-  readonly startedAtMs: number;
-  readonly controller: AbortController;
-  readonly arguments: unknown;
-  readonly resolve: () => void;
-};
+const TOOL_LIST = Object.freeze({
+  tools: [{
+    name: TOOL_NAME,
+    description: TOOL_DESCRIPTION,
+    inputSchema: TOOL_INPUT_SCHEMA,
+    annotations: { readOnlyHint: true, openWorldHint: true, title: 'Semantic code search' },
+  }],
+});
+
+function initializeResult(params: unknown, serverVersion: string): Record<string, unknown> {
+  const requested = ((params ?? {}) as { protocolVersion?: unknown }).protocolVersion;
+  const protocolVersion = typeof requested === 'string' && SUPPORTED_PROTOCOL_VERSIONS.includes(requested)
+    ? requested : MCP_PROTOCOL_VERSION;
+  return {
+    protocolVersion,
+    capabilities: { tools: { listChanged: false } },
+    serverInfo: { name: 'jevgrep', version: serverVersion },
+    instructions: 'One tool: semantic_search_code. Evidence is returned as original excerpts under a response budget.',
+  };
+}
 
 /**
  * Run the server until its input ends.
@@ -107,12 +111,7 @@ type ActiveCall = {
  */
 export function runMcpServer(options: McpServerOptions): Promise<void> {
   const { engine, input, output, errorOutput } = options;
-  const active = new Map<string, ActiveCall>();
   const inFlight = new Set<Promise<void>>();
-  let running: ActiveCall | null = null;
-  let queued: ActiveCall | null = null;
-  let buffer = '';
-  let discarding = false;
   let closed = false;
   let abandoned = false;
 
@@ -120,40 +119,17 @@ export function runMcpServer(options: McpServerOptions): Promise<void> {
     errorOutput.write(`${line}\n`);
   };
 
-  // The client stopped reading or the stream broke: nothing more can be delivered, so
-  // cancel every call and stop reading instead of buffering without bound.
-  const abandon = (reason: string): void => {
-    if (abandoned) return;
-    abandoned = true;
-    log(`jevgrep mcp stopped: ${reason}`);
-    for (const call of active.values()) call.controller.abort();
-    if (queued !== null) {
-      const call = queued;
-      queued = null;
-      active.delete(callKey(call.id));
-      call.resolve();
-    }
-    input.destroy();
-  };
-
   const send = (message: unknown): void => {
     if (abandoned) return;
     output.write(`${JSON.stringify(message)}\n`);
     if (output.writableLength > MAX_PENDING_OUTPUT_BYTES) abandon('output is not being read');
   };
-  output.on('error', () => {
-    abandon('output stream failed');
-  });
 
   const sendError = (id: JsonRpcId | null, code: number, message: string): void => {
     send({ jsonrpc: '2.0', id, error: { code, message } });
   };
 
-  // Keep numeric and string ids distinct, including while a call is queued.
-  const callKey = (id: JsonRpcId): string => JSON.stringify(id);
-
-  const execute = async (call: ActiveCall): Promise<void> => {
-    running = call;
+  const calls = createCallScheduler(async (call) => {
     try {
       const { outcome } = await engine.search(call.arguments, {
         signal: call.controller.signal, startedAtMs: call.startedAtMs,
@@ -166,46 +142,41 @@ export function runMcpServer(options: McpServerOptions): Promise<void> {
       if (!call.controller.signal.aborted) {
         sendError(call.id, INTERNAL_ERROR, 'the search failed before a report could be produced');
       }
-    } finally {
-      active.delete(callKey(call.id));
-      running = null;
-      call.resolve();
-      if (queued !== null) {
-        const next = queued;
-        queued = null;
-        void execute(next);
-      }
     }
-  };
+  });
 
-  const handleToolCall = (id: JsonRpcId, params: unknown): Promise<void> => {
+  // The client stopped reading or the stream broke: nothing more can be delivered, so
+  // cancel every call and stop reading instead of buffering without bound.
+  const abandon = (reason: string): void => {
+    if (abandoned) return;
+    abandoned = true;
+    log(`jevgrep mcp stopped: ${reason}`);
+    calls.cancelAll();
+    input.destroy();
+  };
+  output.on('error', () => {
+    abandon('output stream failed');
+  });
+
+  const startToolCall = (id: JsonRpcId, params: unknown): Promise<void> => {
     const record = (params ?? {}) as Record<string, unknown>;
     if (record['name'] !== TOOL_NAME) {
       sendError(id, INVALID_PARAMS, 'unknown tool');
       return Promise.resolve();
     }
-    if (active.has(callKey(id))) {
+    if (calls.has(id)) {
       sendError(id, INVALID_REQUEST, 'request id is already in use');
       return Promise.resolve();
     }
-
-    // One active search and one queued search; anything beyond that is BUSY
-    // (specification section 6.3).
-    if (running !== null && queued !== null) {
-      send({
-        jsonrpc: '2.0', id,
-        result: toolResult(createSearchError('BUSY', randomUUID())),
-      });
+    if (calls.isFull()) {
+      send({ jsonrpc: '2.0', id, result: toolResult(createSearchError('BUSY', randomUUID())) });
       return Promise.resolve();
     }
     return new Promise<void>((resolve) => {
-      const call: ActiveCall = {
+      calls.submit({
         id, startedAtMs: engine.clock.nowMs, controller: new AbortController(),
         arguments: record['arguments'] ?? {}, resolve,
-      };
-      active.set(callKey(id), call);
-      if (running === null) void execute(call);
-      else queued = call;
+      });
     });
   };
 
@@ -213,21 +184,9 @@ export function runMcpServer(options: McpServerOptions): Promise<void> {
     const id = message.id ?? null;
     if (id === null && !message.method.startsWith('notifications/')) return;
     switch (message.method) {
-      case 'initialize': {
-        const requested = ((message.params ?? {}) as { protocolVersion?: unknown }).protocolVersion;
-        const protocolVersion = typeof requested === 'string' && SUPPORTED_PROTOCOL_VERSIONS.includes(requested)
-          ? requested : MCP_PROTOCOL_VERSION;
-        send({
-          jsonrpc: '2.0', id,
-          result: {
-            protocolVersion,
-            capabilities: { tools: { listChanged: false } },
-            serverInfo: { name: 'jevgrep', version: options.serverVersion },
-            instructions: 'One tool: semantic_search_code. Evidence is returned as original excerpts under a response budget.',
-          },
-        });
+      case 'initialize':
+        send({ jsonrpc: '2.0', id, result: initializeResult(message.params, options.serverVersion) });
         return;
-      }
       case 'notifications/initialized':
       case 'notifications/roots/list_changed':
         return;
@@ -235,37 +194,18 @@ export function runMcpServer(options: McpServerOptions): Promise<void> {
         send({ jsonrpc: '2.0', id, result: {} });
         return;
       case 'tools/list':
-        send({
-          jsonrpc: '2.0', id,
-          result: {
-            tools: [{
-              name: TOOL_NAME,
-              description: TOOL_DESCRIPTION,
-              inputSchema: TOOL_INPUT_SCHEMA,
-              annotations: { readOnlyHint: true, openWorldHint: true, title: 'Semantic code search' },
-            }],
-          },
-        });
+        send({ jsonrpc: '2.0', id, result: TOOL_LIST });
         return;
       case 'tools/call': {
-        if (id === null) {
-          return;
-        }
-        const pending = handleToolCall(id, message.params);
+        if (id === null) return;
+        const pending = startToolCall(id, message.params);
         inFlight.add(pending);
         void pending.finally(() => inFlight.delete(pending));
         return;
       }
       case 'notifications/cancelled': {
         const requestId = ((message.params ?? {}) as { requestId?: unknown }).requestId;
-        if (typeof requestId !== 'string' && typeof requestId !== 'number') return;
-        const call = active.get(callKey(requestId));
-        call?.controller.abort();
-        if (call !== undefined && queued === call) {
-          queued = null;
-          active.delete(callKey(call.id));
-          call.resolve();
-        }
+        if (typeof requestId === 'string' || typeof requestId === 'number') calls.cancel(requestId);
         return;
       }
       default:
@@ -274,83 +214,35 @@ export function runMcpServer(options: McpServerOptions): Promise<void> {
   };
 
   const consume = (line: string): void => {
-    const trimmed = line.trim();
-    if (trimmed.length === 0) {
-      return;
+    const parsed = parseRequest(line);
+    if (parsed.kind === 'request') {
+      handle(parsed.request);
+    } else if (parsed.kind === 'invalid') {
+      sendError(parsed.id, parsed.code, parsed.message);
+      if (parsed.code === PARSE_ERROR) log('jevgrep mcp received an unparsable message');
     }
-    let parsed: unknown;
-    try {
-      parsed = JSON.parse(trimmed);
-    } catch {
-      sendError(null, PARSE_ERROR, 'invalid JSON message');
-      log('jevgrep mcp received an unparsable message');
-      return;
-    }
-    if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
-      sendError(null, INVALID_REQUEST, 'not a JSON-RPC 2.0 message');
-      return;
-    }
-    const record = parsed as Record<string, unknown>;
-    const id = record['id'];
-    const validId = typeof id === 'string' || (typeof id === 'number' && Number.isFinite(id));
-    if (record['jsonrpc'] !== '2.0' || typeof record['method'] !== 'string'
-      || (Object.hasOwn(record, 'id') && !validId)) {
-      sendError(validId ? id : null, INVALID_REQUEST, 'invalid JSON-RPC request');
-      return;
-    }
-    const params = record['params'];
-    if (params !== undefined && (typeof params !== 'object' || params === null || Array.isArray(params))) {
-      if (validId) sendError(id, INVALID_PARAMS, 'expected object parameters');
-      return;
-    }
-    const message = parsed as JsonRpcRequest;
-    if (typeof message.method !== 'string') {
-      sendError(message.id ?? null, INVALID_REQUEST, 'missing method');
-      return;
-    }
-    handle(message);
   };
+
+  const framer = createLineFramer({
+    maxLength: MAX_MESSAGE_LENGTH,
+    onLine: consume,
+    onOversized: () => {
+      sendError(null, INVALID_REQUEST, 'message too large');
+      log('jevgrep mcp discarded an oversized message');
+    },
+    stopped: () => abandoned,
+  });
 
   return new Promise<void>((resolve) => {
     input.setEncoding('utf8');
-    const oversized = (): void => {
-      sendError(null, INVALID_REQUEST, 'message too large');
-      log('jevgrep mcp discarded an oversized message');
-    };
-    input.on('data', (chunk: string) => {
-      let rest = chunk;
-      if (discarding) {
-        const end = rest.indexOf('\n');
-        if (end === -1) return;
-        discarding = false;
-        rest = rest.slice(end + 1);
-      }
-      buffer += rest;
-      let newline = buffer.indexOf('\n');
-      while (newline !== -1 && !abandoned) {
-        const line = buffer.slice(0, newline);
-        buffer = buffer.slice(newline + 1);
-        if (line.length > MAX_MESSAGE_LENGTH) oversized();
-        else consume(line);
-        newline = buffer.indexOf('\n');
-      }
-      if (buffer.length > MAX_MESSAGE_LENGTH) {
-        buffer = '';
-        discarding = true;
-        oversized();
-      }
-    });
+    input.on('data', (chunk: string) => framer.push(chunk));
     const finish = (): void => {
-      if (closed) {
-        return;
-      }
+      if (closed) return;
       closed = true;
-      if (!discarding && !abandoned && buffer.trim().length > 0) {
-        consume(buffer);
-        buffer = '';
-      }
+      const rest = framer.flush();
+      if (rest !== null && !abandoned) consume(rest);
       // Let pending calls settle so the process never exits mid-response.
-      void Promise.allSettled([...inFlight]).then(() => {
+      void Promise.allSettled(inFlight).then(() => {
         options.onClose?.();
         resolve();
       });

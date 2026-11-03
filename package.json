@@ -37,6 +37,7 @@
   "scripts": {
     "build": "node node_modules/typescript/bin/tsc -p tsconfig.build.json && node scripts/make-executable.ts",
     "typecheck": "node node_modules/typescript/bin/tsc -p tsconfig.json",
+    "lint": "oxlint --deny-warnings src scripts tests",
     "test": "node --test \"tests/*.test.ts\" \"tests/contract/*.test.ts\"",
     "smoke": "node scripts/smoke.ts",
     "format:check": "node scripts/check-format.ts",
@@ -53,12 +54,13 @@
     "bench:criteria": "node scripts/bench-criteria.ts",
     "bench:layouts": "node scripts/bench-layouts.ts",
     "bench:replay": "node scripts/bench-replay.ts",
-    "verify": "npm run format:check && npm run typecheck && npm test && npm run build && npm run smoke",
+    "verify": "npm run format:check && npm run lint && npm run typecheck && npm test && npm run build && npm run smoke",
     "prepublishOnly": "npm run verify",
     "bench:candidates": "node scripts/bench-candidates.ts"
   },
   "devDependencies": {
     "@types/node": "24.13.6",
+    "oxlint": "1.89.0",
     "typescript": "7.0.2"
   },
   "dependencies": {

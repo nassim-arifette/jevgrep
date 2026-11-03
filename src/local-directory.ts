@@ -99,6 +99,7 @@ export class LocalDirectory {
       root.assertCurrent(); parentRoot.assertCurrent();
     } finally {
       try { parentRoot.resolveEntry(temporary); parentRoot.assertCurrent(); fs.unlinkSync(temporaryPath); }
+      // oxlint-disable-next-line no-unsafe-finally -- a failed cleanup must stay loud
       catch (cause) { if (!isMissing(cause)) throw cause; }
     }
   }
@@ -144,6 +145,7 @@ export class LocalDirectory {
         const directory = AuthorizedRoot.open(join(root.path, name));
         root.assertCurrent(); directory.assertCurrent(); fs.rmdirSync(directory.path);
       } catch (cause) {
+        // oxlint-disable-next-line no-unsafe-finally -- a failed cleanup must stay loud
         if (!isMissing(cause) && !['ENOTEMPTY', 'EEXIST'].includes((cause as NodeJS.ErrnoException).code ?? '')) throw cause;
       }
     }

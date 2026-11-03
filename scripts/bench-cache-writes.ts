@@ -40,6 +40,7 @@ function measure(mode: 'individual' | 'grouped'): number {
     const target = resolve(directory);
     const parent = resolve(tmpdir());
     if (relative(parent, target).startsWith(`..${sep}`) || !basename(target).startsWith('jevgrep-cache-paired-')) {
+      // oxlint-disable-next-line no-unsafe-finally -- never delete an unexpected directory
       throw new Error('unsafe benchmark cleanup target');
     }
     rmSync(target, { recursive: true, force: true });

@@ -10,6 +10,7 @@ export type RelativePathCheck =
   | { readonly ok: true; readonly normalized: string }
   | { readonly ok: false; readonly violation: RelativePathViolation };
 
+// oxlint-disable-next-line no-control-regex -- control characters are rejected on purpose
 const UNSUPPORTED_CHARACTERS = /[\u0000-\u001f\u007f<>:"|?*]/;
 const AMBIGUOUS_TRAILING = /[. ]$/;
 const WINDOWS_DEVICE_NAME = /^(con|prn|aux|nul|com[1-9¹²³]|lpt[1-9¹²³])(?:\.|$)/i;

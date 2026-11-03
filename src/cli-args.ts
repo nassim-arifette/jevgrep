@@ -71,6 +71,7 @@ function scopeEntryError(value: string): string | undefined {
   if (/^[\\/]/.test(value) || /^[A-Za-z]:/.test(value)) {
     return `scope '${value}' must be a relative path inside the authorized repository`;
   }
+  // oxlint-disable-next-line no-control-regex -- control characters are rejected on purpose
   if (/[\u0000-\u001f\u007f]/.test(value)) {
     return `scope '${value}' contains a control character`;
   }

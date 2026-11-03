@@ -152,7 +152,7 @@ test('the same snapshot and limits produce the same windows in the same order', 
     assert.equal(new Set(ids).size, ids.length, 'window identifiers must be unique');
     assert.deepEqual(
       first.windows.map((window) => window.startLine),
-      [...first.windows.map((window) => window.startLine)].sort((left, right) => left - right),
+      first.windows.map((window) => window.startLine).sort((left, right) => left - right),
     );
   }
 });
