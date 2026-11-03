@@ -24,6 +24,14 @@ import { createWorkspace, withRemoteEnabled } from './helpers/search-workspace.t
  */
 const spaces: { cleanup(): void }[] = [];
 
+async function until(condition: () => boolean, timeoutMs = 10_000): Promise<void> {
+  const started = Date.now();
+  while (!condition()) {
+    if (Date.now() - started > timeoutMs) throw new Error('condition was not reached');
+    await new Promise((resolve) => setTimeout(resolve, 1));
+  }
+}
+
 const FILES = {
   'src/cache.ts': 'export function invalidate(userId) {\n  store.delete(userId);\n}\n',
   'src/other.ts': 'export const version = "1.0.0";\n',
@@ -233,6 +241,7 @@ test('one call waits, the third is BUSY, and a queued cancellation frees its slo
     send(1, 'first');
     send('1', 'cancelled queued call');
     send(3, 'too many');
+    await until(() => calls === 1);
     await new Promise((resolve) => setImmediate(resolve));
     assert.equal(calls, 1, 'the queued request has not entered the engine');
     active.send({ jsonrpc: '2.0', method: 'notifications/cancelled', params: { requestId: '1' } });
@@ -306,6 +315,7 @@ test('time spent in the queue consumes the search deadline before any provider d
     params: { name: TOOL_NAME, arguments: { query: `query ${String(id)}` } },
   });
   try {
+    await until(() => calls === 1);
     await new Promise((resolve) => setImmediate(resolve));
     assert.equal(calls, 1);
     clock.advanceBy(active.deadlineMs + 1);
