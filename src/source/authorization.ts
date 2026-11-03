@@ -7,6 +7,7 @@ import fs from 'node:fs';
 import type { BigIntStats, Dirent } from 'node:fs';
 import { constants as bufferConstants } from 'node:buffer';
 import { isAbsolute, join, parse, resolve, sep } from 'node:path';
+import { checkRelativePath } from '../path-policy.ts';
 import { assertNoReparsePoints, AttributeCheckError } from './windows-attributes.ts';
 
 export type PathRefusal = 'outside_root' | 'link' | 'not_regular_file'
@@ -31,19 +32,13 @@ export type ResolvedEntry = {
   readonly sizeBytes: number;
 };
 
-const WINDOWS_RESERVED = /^(con|prn|aux|nul|com[1-9¹²³]|lpt[1-9¹²³])(\.|$)/i;
-
 /** Validate before touching the filesystem, using the shared portable path policy. */
 export function assertSafeRelativePath(input: string): string {
-  const fail = (): never => {
+  const checked = input.length === 0 ? null : checkRelativePath(input);
+  if (checked === null || !checked.ok) {
     throw new UnauthorizedPathError('unsupported_path_syntax', input, 'unsupported relative path syntax');
-  };
-  if (input.length === 0 || /[\u0000-\u001f\u007f<>:"|?*]/.test(input)) return fail();
-  const unified = input.replaceAll('\\', '/');
-  if (unified.startsWith('/')) return fail();
-  const segments = unified.split('/').filter((segment) => segment !== '' && segment !== '.');
-  if (segments.some((segment) => segment === '..' || /[. ]$/.test(segment) || WINDOWS_RESERVED.test(segment))) return fail();
-  return segments.join('/') || '.';
+  }
+  return checked.normalized;
 }
 
 type CheckedEntry = { readonly path: string; readonly stats: BigIntStats };

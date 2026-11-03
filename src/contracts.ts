@@ -3,6 +3,8 @@ import {
   object, refine, requireContract, schema, textValue,
 } from './contract-schema.ts';
 import type { Infer } from './contract-schema.ts';
+import { checkRelativePath } from './path-policy.ts';
+import type { RelativePathViolation } from './path-policy.ts';
 export { ContractValidationError } from './contract-schema.ts';
 
 export const SCHEMA_VERSION = '1';
@@ -81,17 +83,18 @@ const identifier = refine(textValue(128), (value, path) => {
 const version = literal(SCHEMA_VERSION);
 const responseTokens = numberValue(CONTRACT_LIMITS.min_response_tokens, Number.MAX_SAFE_INTEGER);
 
+const PATH_VIOLATION_MESSAGES: Readonly<Record<RelativePathViolation, string>> = {
+  absolute: 'absolute and namespace paths are forbidden',
+  syntax: 'unsupported path syntax',
+  traversal: 'parent traversal is forbidden',
+  trailing: 'ambiguous trailing path characters',
+  device: 'device names are forbidden',
+};
+
 function normalizedPath(input: string, path: string): string {
-  requireContract(!/^[\\/]/.test(input), path, 'absolute and namespace paths are forbidden');
-  requireContract(!/[\u0000-\u001f\u007f<>:"|?*]/.test(input), path, 'unsupported path syntax');
-  const segments = input.replaceAll('\\', '/').split('/');
-  requireContract(!segments.includes('..'), path, 'parent traversal is forbidden');
-  const parts = segments.filter((part) => part !== '' && part !== '.');
-  for (const part of parts) {
-    requireContract(!/[. ]$/.test(part), path, 'ambiguous trailing path characters');
-    requireContract(!/^(con|prn|aux|nul|com[1-9¹²³]|lpt[1-9¹²³])(?:\.|$)/i.test(part), path, 'device names are forbidden');
-  }
-  return parts.join('/') || '.';
+  const checked = checkRelativePath(input);
+  if (!checked.ok) requireContract(false, path, PATH_VIOLATION_MESSAGES[checked.violation]);
+  return checked.normalized;
 }
 
 const scopePath = refine(textValue(CONTRACT_LIMITS.scope_bytes), (value, path) => {
