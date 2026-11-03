@@ -11,6 +11,7 @@ import type { CliIo } from '../src/cli.ts';
 import { createSearchEngine } from '../src/engine.ts';
 import { ScoreCache } from '../src/evaluation/cache.ts';
 import type { BatchEvaluation, EvaluationBatch, ProviderClient } from '../src/evaluation/jev.ts';
+import { estimateInputCostUsd } from '../src/pricing.ts';
 import { CLI_EXIT_CODES } from '../src/search-response.ts';
 import { preparationCacheDirectory } from '../src/source/preparation-cache.ts';
 import { createWorkspace, withRemoteEnabled } from './helpers/search-workspace.ts';
@@ -129,6 +130,24 @@ test('inspect reports scope, exclusions, fragments and estimates without a provi
   assert.equal(report.estimates.cache_hits, null, 'an unknown quantity stays identified as unknown');
   assert.equal(report.estimates.cost_usd, null, 'no USD estimate without a dated pricing record');
   assert.ok(report.estimates.requests >= 1);
+});
+
+test('inspect estimates USD with the same nanodollar policy as a search', async () => {
+  const space = workspace((config) => ({
+    ...withRemoteEnabled(config),
+    provider: {
+      ...config.provider,
+      pricing: { model: config.provider.model, verified_at: '2026-09-20', input_usd_per_million_tokens: 0.15, output_usd_per_million_tokens: 0 },
+    },
+  }));
+  const captured = capture();
+  const code = await executeCommand(
+    parsed(['inspect', '--config', space.configPath, '--json']), captured.io, dependencies(space),
+  );
+  assert.equal(code, CLI_EXIT_CODES.complete, captured.err.join(''));
+  const report = JSON.parse(captured.out.join('')) as { estimates: { input_tokens: number; cost_usd: number | null } };
+  assert.ok(report.estimates.input_tokens > 0);
+  assert.equal(report.estimates.cost_usd, estimateInputCostUsd(report.estimates.input_tokens, 0.15));
 });
 
 test('the human inspect rendering names what it could not count', async () => {

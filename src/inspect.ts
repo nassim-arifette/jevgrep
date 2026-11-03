@@ -15,6 +15,7 @@ import type { LoadedConfiguration } from './config.ts';
 import { buildBatches } from './engine.ts';
 import type { EvaluationBatch } from './evaluation/jev.ts';
 import { batchLimits } from './evaluation/policy.ts';
+import { estimateInputCostUsd } from './pricing.ts';
 import { configuredAdapter, serializeConfiguredBatch } from './evaluation/provider.ts';
 import { countReferenceTokens } from './response/token-counter.ts';
 
@@ -100,9 +101,7 @@ export function inspectScope(configuration: LoadedConfiguration, options: Inspec
   const batches = buildBatches(prepared.fragments, query, { limits, serialize });
   const estimatedInputTokens = batches.reduce((total, batch) => total + countReferenceTokens(serialize(batch)), 0);
   const pricing = config.provider.pricing;
-  const estimatedCost = pricing == null
-    ? null
-    : Number(((estimatedInputTokens * pricing.input_usd_per_million_tokens) / 1_000_000).toFixed(6));
+  const estimatedCost = estimateInputCostUsd(estimatedInputTokens, pricing?.input_usd_per_million_tokens ?? null);
 
   const notes: string[] = [];
   if (!prepared.inventory.complete) {
