@@ -222,6 +222,19 @@ export function inventoryScope(
   scope: readonly string[],
   options: InventoryOptions,
 ): InventoryResult {
+  const steps = inventorySteps(root, scope, options);
+  for (;;) {
+    const step = steps.next();
+    if (step.done === true) return step.value;
+  }
+}
+
+/** The inventory walk, suspended before each directory entry so a caller can yield. */
+export function* inventorySteps(
+  root: AuthorizedRoot,
+  scope: readonly string[],
+  options: InventoryOptions,
+): Generator<undefined, InventoryResult, undefined> {
   const rules = new EligibilityRules(options);
   const accumulator: Accumulator = {
     files: [], excluded: [], excludedDirectories: [], seen: new Set<string>(),
@@ -277,7 +290,7 @@ export function inventoryScope(
       accumulator.traversalErrors += 1;
       continue;
     }
-    walkDirectory(root, accumulator, rules, inherited, options, resolved.absolutePath, relativeDirectory);
+    yield* walkDirectory(root, accumulator, rules, inherited, options, resolved.absolutePath, relativeDirectory);
   }
 
   accumulator.files.sort((left, right) => (left.relativePath < right.relativePath ? -1 : left.relativePath > right.relativePath ? 1 : 0));
@@ -374,7 +387,7 @@ function considerFile(
   });
 }
 
-function walkDirectory(
+function* walkDirectory(
   root: AuthorizedRoot,
   accumulator: Accumulator,
   rules: EligibilityRules,
@@ -382,7 +395,7 @@ function walkDirectory(
   options: InventoryOptions,
   absoluteDirectory: string,
   relativeDirectory: string,
-): void {
+): Generator<undefined, void, undefined> {
   if (options.shouldStop?.() === true) {
     accumulator.complete = false;
     return;
@@ -415,6 +428,7 @@ function walkDirectory(
   entries.sort((left, right) => (left.name < right.name ? -1 : left.name > right.name ? 1 : 0));
 
   for (const entry of entries) {
+    yield;
     if (options.shouldStop?.() === true) {
       accumulator.complete = false;
       return;
@@ -441,7 +455,7 @@ function walkDirectory(
         });
         continue;
       }
-      walkDirectory(root, accumulator, rules, stack, options, absolutePath, relativePath);
+      yield* walkDirectory(root, accumulator, rules, stack, options, absolutePath, relativePath);
       continue;
     }
     if (!entry.isFile()) {

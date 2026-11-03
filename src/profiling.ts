@@ -103,6 +103,22 @@ export async function measureAsync<T>(stage: ProfileStage, work: () => Promise<T
   finally { profile.record(stage, performance.now() - start); }
 }
 
+/** `measureSync` for a step generator: time spent suspended between steps is not counted. */
+export function* measureSteps<T>(stage: ProfileStage, steps: Generator<undefined, T, undefined>): Generator<undefined, T, undefined> {
+  const profile = active.getStore();
+  let elapsed = 0;
+  for (;;) {
+    const start = performance.now();
+    const step = steps.next();
+    elapsed += performance.now() - start;
+    if (step.done === true) {
+      profile?.record(stage, elapsed);
+      return step.value;
+    }
+    yield;
+  }
+}
+
 export function countProfile(name: string, value: number | (() => number) = 1): void {
   const profile = active.getStore();
   if (profile !== undefined) profile.count(name, typeof value === 'function' ? value() : value);
