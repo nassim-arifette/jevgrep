@@ -1,0 +1,255 @@
+jevgrep: complete
+coverage: scope src | files 45/45 eligible | 170 fragments | coverage complete
+
+4 excerpts
+
+src/source/authorization.ts:201-281 score 0.96
+  #resolveWalk(normalized: string): Walk {
+    this.assertCurrent();
+    const chain = [...this.#anchor];
+    let current = this.path;
+    const parts = normalized === '.' ? [] : normalized.split('/');
+    const requestedPaths = [...chain.map((entry) => entry.path)];
+    for (const part of parts) {
+      current = join(current, part);
+      requestedPaths.push(current);
+    }
+    checkWindows(requestedPaths, normalized);
+    current = this.path;
+    for (const [index, part] of parts.entries()) {
+      const candidate = join(current, part);
+      const stats = metadata(candidate);
+      if (index < parts.length - 1 && !stats.isDirectory()) return fail('not_regular_file', normalized);
+      const canonical = fs.realpathSync.native(candidate);
+      if (!contained(canonical, this.path)) return fail('outside_root', normalized);
+      if (!sameObject(stats, metadata(canonical))) return fail('changed', normalized);
+      current = canonical;
+      chain.push({ path: current, stats });
+    }
+    this.#checked(() => checkChain(chain));
+    const last = chain.at(-1)!;
+    if (last.stats.size > BigInt(Number.MAX_SAFE_INTEGER)) return fail('too_large', normalized);
+    return {
+      entry: {
+        relativePath: this.relativize(current), absolutePath: current,
+        kind: last.stats.isDirectory() ? 'directory' : 'file', sizeBytes: Number(last.stats.size),
+      },
+      chain,
+    };
+  }
+
+  /** No caller performs unchecked readdir or ignore-file reads. */
+  readDirectory(relativePath: string): Dirent[] {
+    const checked = this.#walk(relativePath);
+    if (checked.entry.kind !== 'directory') return fail('not_regular_file', relativePath);
+    const entries = fs.readdirSync(checked.entry.absolutePath, { withFileTypes: true });
+    this.#checked(() => checkChain(checked.chain));
+    return entries;
+  }
+
+  /**
+   * Open once, bind fstat identity before any content read, then read to EOF under
+   * an actual byte ceiling. Reject observed growth, truncation and replacements.
+   */
+  readFileBytes(absolutePath: string, maxBytes: number): Buffer {
+    if (!Number.isSafeInteger(maxBytes) || maxBytes < 0 || maxBytes >= bufferConstants.MAX_LENGTH) {
+      throw new RangeError('maxBytes must be a non-negative supported Buffer length');
+    }
+    const checked = this.#walk(this.relativize(absolutePath));
+    if (checked.entry.kind !== 'file') return fail('not_regular_file', absolutePath);
+    const flags = fs.constants.O_RDONLY | (fs.constants.O_NOFOLLOW ?? 0) | (fs.constants.O_NONBLOCK ?? 0);
+    const descriptor = fs.openSync(checked.entry.absolutePath, flags);
+    try {
+      const before = fs.fstatSync(descriptor, { bigint: true });
+      if (!before.isFile()) return fail('not_regular_file', absolutePath);
+      if (!unchanged(checked.chain.at(-1)!.stats, before)) return fail('changed', absolutePath);
+      this.#checked(() => checkChain(checked.chain));
+      if (before.size > BigInt(maxBytes)) return fail('too_large', absolutePath);
+      const chunks: Buffer[] = [];
+      let total = 0;
+      for (;;) {
+        const chunk = Buffer.allocUnsafe(Math.min(65_536, maxBytes + 1 - total));
+        const count = fs.readSync(descriptor, chunk, 0, chunk.length, total);
+        if (count === 0) break;
+        total += count;
+        if (total > maxBytes) return fail('too_large', absolutePath);
+        chunks.push(chunk.subarray(0, count));
+      }
+      const after = fs.fstatSync(descriptor, { bigint: true });
+      if (!unchanged(before, after) || after.size !== BigInt(total)) return fail('changed', absolutePath);
+      this.#checked(() => checkChain(checked.chain));
+      if (!unchanged(after, metadata(checked.entry.absolutePath))) return fail('changed', absolutePath);
+      return Buffer.concat(chunks, total);
+    } finally {
+      fs.closeSync(descriptor);
+    }
+  }
+}
+
+
+src/cli-args.ts:57-108 score 0.95
+/**
+ * Early refusal of a scope entry the contract would reject later.
+ *
+ * The search path delegates the whole request to src/contracts.ts, which owns these rules.
+ * `inspect` has no request object of its own, so the same documented limits
+ * (specification 4.1: no absolute path, no traversal, no control character; at most 32
+ * entries and 4,096 UTF-8 bytes in total) are applied here to refuse it before any file is
+ * opened. Consolidate this with the contracts module as soon as it exposes a scope
+ * validator; the shape of the refusal is the CLI's, the rule is the specification's.
+ */
+function scopeEntryError(value: string): string | undefined {
+  if (value.trim().length === 0) {
+    return "'--scope' needs a non-empty relative path";
+  }
+  if (/^[\\/]/.test(value) || /^[A-Za-z]:/.test(value)) {
+    return `scope '${value}' must be a relative path inside the authorized repository`;
+  }
+  if (/[\u0000-\u001f\u007f]/.test(value)) {
+    return `scope '${value}' contains a control character`;
+  }
+  if (value.replaceAll('\\', '/').split('/').includes('..')) {
+    return `scope '${value}' must not traverse outside the authorized repository`;
+  }
+  return undefined;
+}
+
+function scopeError(scope: readonly string[]): string | undefined {
+  if (scope.length > CONTRACT_LIMITS.scope_entries) {
+    return `at most ${String(CONTRACT_LIMITS.scope_entries)} scope entries are accepted`;
+  }
+  const bytes = scope.reduce((total, entry) => total + Buffer.byteLength(entry, 'utf8'), 0);
+  if (bytes > CONTRACT_LIMITS.scope_bytes) {
+    return `the scope exceeds ${String(CONTRACT_LIMITS.scope_bytes)} UTF-8 bytes`;
+  }
+  for (const entry of scope) {
+    const refusal = scopeEntryError(entry);
+    if (refusal !== undefined) {
+      return refusal;
+    }
+  }
+  return undefined;
+}
+
+/** Options a command accepts, in the order the help should document them. */
+export function allowedOptionsFor(command: string): readonly string[] | undefined {
+  return ALLOWED_OPTIONS[command];
+}
+
+function refuse(message: string): CliParseResult {
+  return { kind: 'error', message };
+}
+
+
+
+src/config.ts:134-219 score 0.95
+/**
+ * Read and validate a trusted configuration file.
+ *
+ * The path is resolved against the process working directory, then canonicalized, so
+ * the file that is validated is the file that is read.
+ */
+export function loadConfiguration(configPath: string, options: LoadOptions = {}): LoadedConfiguration {
+  const cwd = options.cwd ?? process.cwd();
+  const absolute = resolve(cwd, configPath);
+
+  let text: string;
+  let realConfigPath: string;
+  try {
+    const parent = AuthorizedRoot.open(dirname(absolute));
+    const entry = parent.resolveEntry(basename(absolute));
+    realConfigPath = entry.absolutePath;
+    text = parent.readFileBytes(realConfigPath, 1_048_576).toString('utf8');
+  } catch (cause) {
+    throw new ConfigurationError('INVALID_CONFIG',
+      `cannot read the configuration file ${absolute} (${describeErrno(cause)})`);
+  }
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    // Native JSON parse messages can include source bytes from the configuration.
+    throw new ConfigurationError('INVALID_CONFIG', `${absolute} is not valid JSON`);
+  }
+
+  let config: Configuration;
+  try {
+    config = configurationSchema.parse(parsed);
+  } catch (cause) {
+    if (cause instanceof ContractValidationError) {
+      throw new ConfigurationError('INVALID_CONFIG', `${absolute}: ${cause.message}`);
+    }
+    throw cause;
+  }
+
+  let sourceRoot: AuthorizedRoot;
+  let cacheDirectory: string;
+  try {
+    sourceRoot = AuthorizedRoot.open(config.repository_root);
+    cacheDirectory = futureDirectory(join(userDataDirectory(options.env ?? process.env), 'scores',
+      configurationFingerprint(config, sourceRoot.path)));
+  } catch {
+    throw new ConfigurationError('INVALID_CONFIG', 'repository_root or cache ancestors failed filesystem authorization');
+  }
+  const repositoryRoot = sourceRoot.path;
+  if (isInsideDirectory(realConfigPath, repositoryRoot)) {
+    throw new ConfigurationError('INVALID_CONFIG',
+      'the trusted configuration must live outside the repository it authorizes; a repository-local file cannot grant authorization');
+  }
+
+  const fingerprint = configurationFingerprint(config, repositoryRoot);
+  if (isInsideDirectory(cacheDirectory, repositoryRoot)) {
+    throw new ConfigurationError('INVALID_CONFIG',
+      `the cache directory ${cacheDirectory} would sit inside the authorized repository; set JEVGREP_CACHE_HOME elsewhere`);
+  }
+
+  return { configPath: realConfigPath, config, repositoryRoot, sourceRoot, cacheDirectory, fingerprint };
+}
+
+/**
+ * Resolve the provider secret for a real search.
+ *
+ * Both failures are reported before any provider work: disclosure disabled is not the
+ * same problem as a missing credential, and neither is a search result.
+ */
+export function resolveCredential(loaded: LoadedConfiguration, env: NodeJS.ProcessEnv = process.env): string {
+  if (!loaded.config.remote_evaluation_enabled) {
+    throw new ConfigurationError('REMOTE_DISABLED',
+      `remote evaluation is disabled in ${loaded.configPath}; set "remote_evaluation_enabled": true to send eligible excerpts to ${loaded.config.provider.base_url}`);
+  }
+  const name = loaded.config.provider.api_key_env;
+  const secret = env[name];
+  if (secret === undefined || secret.trim().length === 0) {
+    throw new ConfigurationError('CREDENTIAL_MISSING',
+      `the environment variable ${name} is empty or unset; export the provider credential before searching`);
+  }
+  return secret;
+}
+
+export type CredentialState = 'present' | 'missing' | 'not_required';
+
+
+
+src/local-directory.ts:171-188 score 0.88
+  #cleanLockCandidates(): void {
+    const root = this.root();
+    for (const name of fs.readdirSync(root.path)) {
+      const match = /^\.lock-([1-9][0-9]*)-[0-9a-f-]{36}\.owner$/.exec(name);
+      if (match === null) continue;
+      try {
+        try { process.kill(Number(match[1]), 0); continue; }
+        catch (cause) { if ((cause as NodeJS.ErrnoException).code !== 'ESRCH') continue; }
+        const candidate = AuthorizedRoot.open(join(root.path, name));
+        const marker = name.slice('.lock-'.length);
+        const files = fs.readdirSync(candidate.path);
+        if (files.length > 2 || files.some((file) => file !== marker && !(file.startsWith(`${marker}.`) && /^[0-9a-f-]{36}\.tmp$/.test(file.slice(marker.length + 1))))) continue;
+        for (const file of files) { candidate.assertCurrent(); this.remove(`${name}/${file}`); }
+        root.assertCurrent(); candidate.assertCurrent(); fs.rmdirSync(candidate.path);
+      } catch { /* Unknown or concurrently changed state remains untouched. */ }
+    }
+  }
+}
+
+
+human view: limit 4000 reference tokens (tiktoken@1.0.22/cl100k_base); JSON is measured separately

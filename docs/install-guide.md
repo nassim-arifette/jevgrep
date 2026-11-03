@@ -6,10 +6,14 @@ Vercel AI Gateway or OpenRouter. This guide covers installation, repository auth
 ## Install
 
 Requires Node.js 24 and npm. The package name is `@nassim-arifette/jevgrep`;
-the unscoped package `jevgrep` belongs to a different project. Until the first npm
-release, install from this repository.
+the unscoped package `jevgrep` belongs to a different project.
 
-From this repository:
+```bash
+npm install -g @nassim-arifette/jevgrep
+jevgrep --version
+```
+
+To install a development checkout instead:
 
 ```bash
 git clone https://github.com/nassim-arifette/jevgrep.git
@@ -18,12 +22,6 @@ npm ci
 npm run build
 npm link
 jevgrep --version
-```
-
-After publication, install it with:
-
-```bash
-npm install -g @nassim-arifette/jevgrep
 ```
 
 For development checks, run `npm run verify`. Runtime dependencies are
@@ -146,7 +144,7 @@ policy. Vercel and OpenRouter model aliases use this short-lived policy.
 Scores from a rolling alias can be stale within its reuse window.
 
 Requests pack fragments by the full serialized token estimate, with provider-specific
-headroom and local question/byte limits. See [request batching](../README.md#request-batching).
+headroom and local question/byte limits. See [request batching](reference.md#request-batching).
 
 Optional `search.retry` settings default to two retries, a 250 ms base delay and a
 5,000 ms maximum jittered delay. `Retry-After` applies across workers. Ambiguous
@@ -185,7 +183,7 @@ does not scan or contact a provider. A tool call uses the same engine and author
 as CLI search. Each process serves one repository; use separate server names/profiles
 if configuring several repositories.
 
-See the [README MCP examples](../README.md#use-through-mcp) for Claude Code, Codex and
+See the [README MCP examples](../README.md#connect-your-coding-agent) for Claude Code, Codex and
 clients using JSON configuration. The examples follow the
 [Codex](https://developers.openai.com/codex/mcp) and
 [Claude Code](https://code.claude.com/docs/en/mcp) documentation.

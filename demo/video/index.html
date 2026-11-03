@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=1920, height=1080">
+<script src="assets/gsap.min.js"></script>
+<style>
+@font-face { font-family: Manrope; src: url(assets/fonts/Manrope-latin.woff2) format("woff2"); font-weight: 200 800; }
+@font-face { font-family: JBMono; src: url(assets/fonts/JetBrainsMono-Regular.ttf); font-weight: 400; }
+@font-face { font-family: JBMono; src: url(assets/fonts/JetBrainsMono-Bold.ttf); font-weight: 700; }
+:root { --paper:#f4f1ea; --ink:#16140f; --soft:#3d3a33; --mute:#8a8478; --line:#d9d3c5; --accent:#c2410c; --tint:#fde7d6; }
+* { margin:0; padding:0; box-sizing:border-box; }
+html, body { width:1920px; height:1080px; overflow:hidden; background:var(--paper); color:var(--ink); font-family:Manrope, sans-serif; }
+#root { position:relative; width:1920px; height:1080px; overflow:hidden; background:var(--paper); }
+.scene { position:absolute; inset:0; background:var(--paper); }
+.mono { font-family:JBMono, monospace; font-variant-ligatures:none; }
+.eb { font-size:24px; letter-spacing:7px; font-weight:700; color:var(--accent); }
+.h1 { font-size:132px; line-height:.98; letter-spacing:-4px; font-weight:800; }
+.h2 { font-size:76px; line-height:1.04; letter-spacing:-2px; font-weight:800; }
+.lead { font-size:36px; line-height:1.38; color:var(--soft); }
+.acc { color:var(--accent); }
+.card { background:#fff; border:2px solid var(--ink); border-radius:8px; box-shadow:14px 14px 0 var(--ink); overflow:hidden; }
+.cardh { display:flex; justify-content:space-between; align-items:center; padding:18px 28px; border-bottom:2px solid var(--ink); font-family:JBMono, monospace; font-size:22px; }
+.dots span { display:inline-block; width:14px; height:14px; border-radius:50%; border:2px solid var(--ink); margin-right:8px; }
+.ln { display:flex; white-space:pre; overflow:hidden; font-family:JBMono, monospace; font-variant-ligatures:none; font-size:21px; line-height:1.6; }
+.ln .n { flex:none; width:70px; text-align:right; margin-right:24px; color:#a39e92; }
+.ln.hl { background:var(--tint); } .ln.hl .n { color:var(--accent); font-weight:700; }
+.mut { color:var(--mute); }
+.wm { position:absolute; right:110px; top:76px; font-size:30px; font-weight:800; letter-spacing:-.5px; }
+/* s1 */
+#s1-wrap { position:absolute; left:150px; top:270px; width:1500px; }
+#s1-sub { margin-top:40px; max-width:1180px; }
+/* s2 */
+#s2-title { position:absolute; left:150px; top:120px; width:1620px; }
+#s2-left { position:absolute; left:150px; top:420px; width:760px; }
+#s2-right { position:absolute; left:1010px; top:420px; width:760px; height:520px; }
+.tline { padding:30px 30px; font-size:25px; line-height:1.7; }
+.prompt { color:var(--accent); font-weight:700; }
+.flist { padding:16px 0; }
+.fo { display:flex; gap:16px; align-items:center; padding:7px 28px; font-family:JBMono, monospace; font-size:21px; color:var(--soft); }
+.fo .ext { font-size:13px; font-weight:700; color:#fff; background:#8a8478; border-radius:4px; padding:2px 6px; }
+#s2-count { position:absolute; right:28px; bottom:22px; font-family:JBMono, monospace; font-size:22px; color:var(--accent); font-weight:700; }
+/* s3 */
+#s3-card { position:absolute; left:150px; top:170px; width:1620px; }
+#s3-body { padding:36px 40px; font-family:JBMono, monospace; font-variant-ligatures:none; font-size:26px; line-height:1.6; }
+#s3-type, #s3-type2 { display:inline-block; white-space:nowrap; clip-path:inset(0 100% 0 0); vertical-align:top; }
+.cmdwrap { display:flex; gap:16px; white-space:nowrap; }
+#s3-bar { margin:34px 0 10px; height:10px; width:100%; background:var(--line); border-radius:5px; overflow:hidden; }
+#s3-fill { height:100%; width:100%; background:var(--accent); transform-origin:0 50%; transform:scaleX(0); }
+#s3-scan { font-size:22px; color:var(--mute); }
+#s3-out { margin-top:30px; }
+.ok { font-size:26px; font-weight:700; }
+.rr { display:flex; justify-content:space-between; padding:14px 0; border-bottom:1.5px dashed var(--line); font-size:25px; }
+.rs { color:var(--accent); font-weight:700; }
+#s3-time { text-align:right; padding:0 40px 26px; font-size:22px; color:var(--mute); }
+/* s4 */
+#s4-left { position:absolute; left:150px; top:200px; width:560px; }
+#s4-card { position:absolute; left:770px; top:110px; width:1040px; }
+#s4-code { padding:14px 0 18px; }
+#s4-code .ln { font-size:17px; line-height:1.55; }
+#s4-more { padding:0 28px 18px 118px; font-family:JBMono, monospace; font-size:19px; color:var(--mute); }
+/* s5 */
+#s5-title { position:absolute; left:150px; top:120px; width:1620px; }
+#s5-cmd { position:absolute; left:150px; top:380px; width:1620px; }
+#s5-chat { position:absolute; left:150px; top:560px; width:1620px; }
+.bub { padding:22px 28px; font-size:27px; line-height:1.45; }
+.bub b { font-weight:800; }
+.tool { margin:0 28px 22px; border:2px solid var(--ink); border-radius:6px; background:var(--paper); padding:16px 22px; font-family:JBMono, monospace; font-size:21px; line-height:1.6; }
+/* s6 */
+#s6-title { position:absolute; left:150px; top:120px; width:1620px; }
+#s6-a { position:absolute; left:150px; top:420px; width:780px; }
+#s6-b { position:absolute; left:1000px; top:420px; width:770px; }
+.big { font-size:92px; font-weight:800; letter-spacing:-3px; line-height:1; }
+.lab { font-size:24px; color:var(--mute); margin-top:10px; }
+/* s7 */
+#s7-wrap { position:absolute; left:150px; top:250px; width:1620px; }
+#s7-npm { margin-top:56px; display:inline-block; padding:26px 36px; font-size:36px; }
+#s7-url { margin-top:46px; font-size:30px; color:var(--soft); }
+</style>
+</head>
+<body>
+<div id="root" data-composition-id="main" data-start="0" data-duration="44" data-width="1920" data-height="1080">
+
+<section id="s1" class="clip scene" data-start="0" data-duration="5" data-track-index="1" style="z-index:1">
+  <div id="s1-wrap">
+    <p class="eb" id="s1-eb">SEMANTIC CODE SEARCH FOR CODING AGENTS</p>
+    <h1 class="h1" id="s1-h" style="margin-top:28px">Find code by<br>what it <span class="acc">does</span>.</h1>
+    <p class="lead" id="s1-sub">Ask a question in plain English. Get the exact lines that answer it.</p>
+  </div>
+  <div class="wm" id="s1-wm">JevGrep</div>
+</section>
+
+<section id="s2" class="clip scene" data-start="5" data-duration="7" data-track-index="2" style="z-index:2">
+  <div id="s2-title"><p class="eb">THE PROBLEM</p><h2 class="h2" style="margin-top:20px">You know what the code does.<br><span class="mut">Not what it is called.</span></h2></div>
+  <div id="s2-left" class="card"><div class="cardh"><span class="dots"><span></span><span></span><span></span></span><span class="mut">terminal</span></div>
+    <div class="tline"><div><span class="prompt">$</span> rg "path escape" src</div><div class="mut" id="s2-none">(no matches)</div></div></div>
+  <div id="s2-right" class="card"><div class="cardh"><span>coding agent</span><span class="mut">exploring src/</span></div>
+    <div class="flist"><div class="fo" id="fo0"><span class="ext">TS</span>chunker.ts</div><div class="fo" id="fo1"><span class="ext">TS</span>freshness.ts</div><div class="fo" id="fo2"><span class="ext">TS</span>ignore-rules.ts</div><div class="fo" id="fo3"><span class="ext">TS</span>inventory.ts</div><div class="fo" id="fo4"><span class="ext">TS</span>javascript-boundaries.ts</div><div class="fo" id="fo5"><span class="ext">TS</span>line-windows.ts</div><div class="fo" id="fo6"><span class="ext">TS</span>prepare.ts</div><div class="fo" id="fo7"><span class="ext">TS</span>snapshot.ts</div><div class="fo" id="fo8"><span class="ext">TS</span>windows-attributes.ts</div><div class="fo" id="fo9"><span class="ext">TS</span>authorization.ts</div></div><div id="s2-count">10 files opened…</div></div>
+  <div class="wm">JevGrep</div>
+</section>
+
+<section id="s3" class="clip scene" data-start="12" data-duration="10" data-track-index="3" style="z-index:3">
+  <div id="s3-card" class="card"><div class="cardh"><span class="dots"><span></span><span></span><span></span></span><span class="mut">~/jevgrep</span></div>
+    <div id="s3-body">
+      <div class="cmdwrap"><span class="prompt">$</span><span id="s3-type">jevgrep search --scope src \</span></div>
+      <div class="cmdwrap" style="padding-left:32px"><span id="s3-type2">--query &quot;Where is filesystem access controlled, and what prevents path escapes?&quot;</span></div>
+      <div id="s3-bar"><div id="s3-fill"></div></div>
+      <div id="s3-scan">scoring 45 files · 170 fragments with Jev</div>
+      <div id="s3-out">
+        <div class="ok" id="s3-ok">jevgrep: complete <span class="mut" style="font-weight:400">· coverage complete · 4 excerpts</span></div>
+        <div style="margin-top:14px"><div class="rr" id="rr0"><span class="rp">src/source/authorization.ts<span class="mut">:201-281</span></span><span class="rs">score 0.96</span></div><div class="rr" id="rr1"><span class="rp">src/cli-args.ts<span class="mut">:57-108</span></span><span class="rs">score 0.95</span></div><div class="rr" id="rr2"><span class="rp">src/config.ts<span class="mut">:134-219</span></span><span class="rs">score 0.95</span></div><div class="rr" id="rr3"><span class="rp">src/local-directory.ts<span class="mut">:171-188</span></span><span class="rs">score 0.88</span></div></div>
+      </div>
+    </div>
+    <div id="s3-time" class="mono">live run · 3.9 s</div>
+  </div>
+</section>
+
+<section id="s4" class="clip scene" data-start="22" data-duration="8" data-track-index="4" style="z-index:4">
+  <div id="s4-left"><p class="eb">THE ANSWER</p><h2 class="h2" style="margin-top:20px">The original lines.<br><span class="acc">The exact path.</span></h2>
+    <p class="lead" style="margin-top:30px">Never a summary. Open the file and keep working.</p></div>
+  <div id="s4-card" class="card"><div class="cardh"><span>src/source/authorization.ts · 201–281</span><span class="acc" style="font-weight:700">score 0.96</span></div>
+    <div id="s4-code"><div class="ln"><span class="n">201</span><span class="t">  #resolveWalk(normalized: string): Walk {</span></div>
+<div class="ln"><span class="n">202</span><span class="t">    this.assertCurrent();</span></div>
+<div class="ln"><span class="n">203</span><span class="t">    const chain = [...this.#anchor];</span></div>
+<div class="ln"><span class="n">204</span><span class="t">    let current = this.path;</span></div>
+<div class="ln"><span class="n">205</span><span class="t">    const parts = normalized === &#x27;.&#x27; ? [] : normalized.split(&#x27;/&#x27;);</span></div>
+<div class="ln"><span class="n">206</span><span class="t">    const requestedPaths = [...chain.map((entry) =&gt; entry.path)];</span></div>
+<div class="ln"><span class="n">207</span><span class="t">    for (const part of parts) {</span></div>
+<div class="ln"><span class="n">208</span><span class="t">      current = join(current, part);</span></div>
+<div class="ln"><span class="n">209</span><span class="t">      requestedPaths.push(current);</span></div>
+<div class="ln"><span class="n">210</span><span class="t">    }</span></div>
+<div class="ln"><span class="n">211</span><span class="t">    checkWindows(requestedPaths, normalized);</span></div>
+<div class="ln"><span class="n">212</span><span class="t">    current = this.path;</span></div>
+<div class="ln"><span class="n">213</span><span class="t">    for (const [index, part] of parts.entries()) {</span></div>
+<div class="ln"><span class="n">214</span><span class="t">      const candidate = join(current, part);</span></div>
+<div class="ln"><span class="n">215</span><span class="t">      const stats = metadata(candidate);</span></div>
+<div class="ln"><span class="n">216</span><span class="t">      if (index &lt; parts.length - 1 &amp;&amp; !stats.isDirectory()) return fail(&#x27;not_regular_file&#x27;, normalized);</span></div>
+<div class="ln hl"><span class="n">217</span><span class="t">      const canonical = fs.realpathSync.native(candidate);</span></div>
+<div class="ln hl"><span class="n">218</span><span class="t">      if (!contained(canonical, this.path)) return fail(&#x27;outside_root&#x27;, normalized);</span></div>
+<div class="ln"><span class="n">219</span><span class="t">      if (!sameObject(stats, metadata(canonical))) return fail(&#x27;changed&#x27;, normalized);</span></div>
+<div class="ln"><span class="n">220</span><span class="t">      current = canonical;</span></div>
+<div class="ln"><span class="n">221</span><span class="t">      chain.push({ path: current, stats });</span></div>
+<div class="ln"><span class="n">222</span><span class="t">    }</span></div>
+<div class="ln"><span class="n">223</span><span class="t">    this.#checked(() =&gt; checkChain(chain));</span></div></div><div id="s4-more">… 58 more lines in this excerpt</div></div>
+</section>
+
+<section id="s5" class="clip scene" data-start="30" data-duration="7" data-track-index="5" style="z-index:5">
+  <div id="s5-title"><p class="eb">BUILT FOR AGENTS</p><h2 class="h2" style="margin-top:20px">One MCP tool. <span class="acc">Less context.</span></h2></div>
+  <div id="s5-cmd" class="card"><div class="tline mono" style="font-size:24px"><span class="prompt">$</span> claude mcp add --transport stdio jevgrep -- jevgrep mcp --config "…/config.json"</div></div>
+  <div id="s5-chat" class="card">
+    <div class="bub" id="s5-q"><b>You:</b> Where is filesystem access controlled, and what prevents path escapes?</div>
+    <div class="tool" id="s5-t">→ jevgrep · semantic_search_code<br><span class="acc">← 4 excerpts · src/source/authorization.ts:201-281 · score 0.96</span></div>
+  </div>
+</section>
+
+<section id="s6" class="clip scene" data-start="37" data-duration="3.5" data-track-index="6" style="z-index:6">
+  <div id="s6-title"><p class="eb">YOU STAY IN CONTROL</p><h2 class="h2" style="margin-top:20px">Nothing is sent until you say <span class="acc">yes</span>.</h2></div>
+  <div id="s6-a" class="card"><div class="tline mono" style="font-size:23px">Allow sending eligible source excerpts from this repository to Vercel AI Gateway? <span class="prompt">[y/N]</span></div></div>
+  <div id="s6-b"><div class="big">18.3 s <span class="mut">→</span> <span class="acc">1.5 s</span></div><div class="lab">same question again, served from the local score cache</div></div>
+</section>
+
+<section id="s7" class="clip scene" data-start="40.5" data-duration="3.5" data-track-index="7" style="z-index:7">
+  <div id="s7-wrap"><h1 class="h1" id="s7-h">JevGrep</h1>
+    <div id="s7-npm" class="card mono"><span class="prompt">$</span> npm install -g @nassim-arifette/jevgrep</div>
+    <p id="s7-url" class="mono">github.com/nassim-arifette/jevgrep</p></div>
+</section>
+
+</div>
+<script>
+const tl = gsap.timeline({ paused: true });
+const inBlur = (sel, t, d = 0.5) => tl.fromTo(sel, { opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0px)", duration: d, ease: "expo.out" }, t);
+const rise = (sel, t, d = 0.7) => tl.fromTo(sel, { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: d, ease: "power4.out" }, t);
+// s1
+inBlur("#s1-eb", 0.2); inBlur("#s1-h", 0.45, 0.6); inBlur("#s1-sub", 1.2); inBlur("#s1-wm", 1.4);
+tl.to("#s1-wrap", { opacity: 0, filter: "blur(8px)", duration: 0.25, ease: "power3.in" }, 4.7);
+// s2 (scene starts at 5)
+inBlur("#s2-title", 5.15); rise("#s2-left", 5.6); rise("#s2-right", 5.8);
+tl.fromTo("#s2-none", { opacity: 0 }, { opacity: 1, duration: 0.2 }, 6.6);
+tl.fromTo("#fo0", { opacity: 0, x: -12 }, { opacity: 1, x: 0, duration: 0.25, ease: "power3.out" }, 6.40);tl.fromTo("#fo1", { opacity: 0, x: -12 }, { opacity: 1, x: 0, duration: 0.25, ease: "power3.out" }, 6.78);tl.fromTo("#fo2", { opacity: 0, x: -12 }, { opacity: 1, x: 0, duration: 0.25, ease: "power3.out" }, 7.16);tl.fromTo("#fo3", { opacity: 0, x: -12 }, { opacity: 1, x: 0, duration: 0.25, ease: "power3.out" }, 7.54);tl.fromTo("#fo4", { opacity: 0, x: -12 }, { opacity: 1, x: 0, duration: 0.25, ease: "power3.out" }, 7.92);tl.fromTo("#fo5", { opacity: 0, x: -12 }, { opacity: 1, x: 0, duration: 0.25, ease: "power3.out" }, 8.30);tl.fromTo("#fo6", { opacity: 0, x: -12 }, { opacity: 1, x: 0, duration: 0.25, ease: "power3.out" }, 8.68);tl.fromTo("#fo7", { opacity: 0, x: -12 }, { opacity: 1, x: 0, duration: 0.25, ease: "power3.out" }, 9.06);tl.fromTo("#fo8", { opacity: 0, x: -12 }, { opacity: 1, x: 0, duration: 0.25, ease: "power3.out" }, 9.44);tl.fromTo("#fo9", { opacity: 0, x: -12 }, { opacity: 1, x: 0, duration: 0.25, ease: "power3.out" }, 9.82);
+tl.fromTo("#s2-count", { opacity: 0 }, { opacity: 1, duration: 0.3 }, 9.6);
+// s3 (12)
+rise("#s3-card", 12.1, 0.6);
+tl.fromTo("#s3-type", { clipPath: "inset(0 100% 0 0)" }, { clipPath: "inset(0 0% 0 0)", duration: 0.8, ease: "steps(28)" }, 12.8);
+tl.fromTo("#s3-type2", { clipPath: "inset(0 100% 0 0)" }, { clipPath: "inset(0 0% 0 0)", duration: 1.9, ease: "steps(80)" }, 13.7);
+tl.fromTo("#s3-bar", { opacity: 0 }, { opacity: 1, duration: 0.2 }, 15.6);
+tl.fromTo("#s3-scan", { opacity: 0 }, { opacity: 1, duration: 0.2 }, 15.6);
+tl.fromTo("#s3-fill", { scaleX: 0 }, { scaleX: 1, duration: 1.6, ease: "power1.inOut" }, 15.7);
+tl.fromTo("#s3-ok", { opacity: 0 }, { opacity: 1, duration: 0.25 }, 17.5);
+tl.fromTo("#rr0", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.35, ease: "power3.out" }, 17.80);tl.fromTo("#rr1", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.35, ease: "power3.out" }, 17.92);tl.fromTo("#rr2", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.35, ease: "power3.out" }, 18.04);tl.fromTo("#rr3", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.35, ease: "power3.out" }, 18.16);
+tl.fromTo("#s3-time", { opacity: 0 }, { opacity: 1, duration: 0.3 }, 18.4);
+tl.fromTo("#rr0", { backgroundColor: "rgba(253,231,214,0)" }, { backgroundColor: "rgba(253,231,214,1)", duration: 0.4 }, 20.2);
+// s4 (22)
+inBlur("#s4-left", 22.2); rise("#s4-card", 22.35, 0.7);
+tl.fromTo("#s4-code .hl", { backgroundColor: "rgba(253,231,214,0)" }, { backgroundColor: "rgba(253,231,214,1)", duration: 0.5 }, 24.0);
+// s5 (30)
+inBlur("#s5-title", 30.15); rise("#s5-cmd", 30.6); rise("#s5-chat", 31.6);
+tl.fromTo("#s5-t", { opacity: 0 }, { opacity: 1, duration: 0.35 }, 33.0);
+// s6 (37)
+inBlur("#s6-title", 37.1); rise("#s6-a", 37.5); rise("#s6-b", 38.2);
+// s7 (40.5)
+inBlur("#s7-h", 40.6, 0.6); rise("#s7-npm", 41.0); inBlur("#s7-url", 41.5);
+window.__timelines = window.__timelines || {};
+window.__timelines["main"] = tl;
+tl.seek(0);
+</script>
+</body>
+</html>
