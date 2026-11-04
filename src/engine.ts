@@ -32,7 +32,7 @@ import { ProviderError } from './evaluation/contracts.ts';
 import { CRITERION_VERSION, LAYOUT_VERSION, buildRequestPayload } from './evaluation/jev.ts';
 import type { BatchEvaluation, EvaluationBatch, ProviderClient } from './evaluation/contracts.ts';
 import { createConfiguredProvider } from './evaluation/provider.ts';
-import { batchLimits, measureSerializedBatch, isOpenRouterModelRevision, scoreCachePolicy, MAX_ROLLING_TTL_SECONDS, type SerializedBatchMeasure } from './evaluation/policy.ts';
+import { batchLimits, measureSerializedBatch, isOpenRouterModelRevision, scoreCachePolicy, MAX_ROLLING_TTL_SECONDS, type SerializedBatchMeasure, type BatchLimits } from './evaluation/policy.ts';
 import { runEvaluations } from './evaluation/scheduler.ts';
 import { SearchContext, SearchLogger, isAbortError, runPhase, systemClock } from './lifecycle.ts';
 import type { Clock } from './lifecycle.ts';
@@ -80,9 +80,20 @@ export type EngineOptions = {
   readonly chunker?: SnapshotChunker;
   /** Evaluation and preparation order of an allowed partial scan (section 10); a complete scan is unaffected. */
   readonly candidateOrder?: CandidateOrder;
+  /** Benchmark seam: stop an allowed partial scan once enough confident hits are in hand. */
+  readonly earlyStop?: EarlyStopPolicy;
+  /** Benchmark seam: override provider batch limits (smaller batches give an early stop finer grain). */
+  readonly batchLimits?: Partial<BatchLimits>;
   readonly clock?: Clock;
   readonly logger?: SearchLogger;
   readonly env?: NodeJS.ProcessEnv;
+};
+
+/** Stop rule for an allowed partial scan: after `min_share` of the candidates are scored, stop once `hits` scores reach `confident_score`. */
+export type EarlyStopPolicy = {
+  readonly min_share: number;
+  readonly confident_score: number;
+  readonly hits: number;
 };
 
 export type SearchInvocation = {
@@ -233,7 +244,7 @@ export class SearchEngine {
       return payload;
     });
     const { costOf, onBatchMeasure } = batchCostMemo(model, serialize);
-    const limits = batchLimits(adapter);
+    const limits = { ...batchLimits(adapter), ...this.#options.batchLimits };
     const countQuestionTokens = questionTokenMemo();
     const { cached, pending, identities, singletonMeasures } = this.#lookupCachedScores(prepared.fragments, {
       query: request.query, serialize, limits, countQuestionTokens,
@@ -294,6 +305,8 @@ export class SearchEngine {
       await this.#evaluate(provider, plan.batches, context, {
         root, usage, enabledCaps, pricePerMillion, costOf, byId, scored, identities, model,
         cacheMode: cachePolicy.mode, adapter,
+        earlyStop: partialOrder === null ? null : this.#options.earlyStop ?? null,
+        totalFragments: prepared.fragments.length,
       });
     }
 
@@ -315,15 +328,27 @@ export class SearchEngine {
     readonly model: string;
     readonly adapter: string;
     readonly cacheMode: string;
+    readonly earlyStop: EarlyStopPolicy | null;
+    readonly totalFragments: number;
   }): Promise<void> {
     const { config } = this.#options.configuration;
     const { root, usage, enabledCaps, pricePerMillion, costOf, byId, scored, identities, model, adapter, cacheMode } = state;
+    const threshold = config.search.threshold;
+    const confidentEnough = (): boolean => state.earlyStop !== null
+      && scored.length >= state.earlyStop.min_share * state.totalFragments
+      && scored.filter((entry) => entry.score >= Math.max(threshold, state.earlyStop!.confident_score)).length >= state.earlyStop.hits;
   await measureAsync('evaluation', () => runPhase(context, 'evaluation', async () => {
     await runEvaluations(provider, batches, context, {
       concurrency: config.search.concurrency,
       ...(config.search.retry === undefined ? {} : { retry: config.search.retry }),
       bodyOf: (batch) => costOf(batch).body,
-      onDispatch: (batch) => admitBatch(batch, costOf(batch), { root, usage, enabledCaps, pricePerMillion, context }),
+      onDispatch: (batch) => {
+        if (confidentEnough()) {
+          context.addStopReason('SCAN_CAP_REACHED');
+          return false;
+        }
+        return admitBatch(batch, costOf(batch), { root, usage, enabledCaps, pricePerMillion, context });
+      },
       onScores: (batch, evaluation) => {
         this.#recordScores(batch, evaluation, {
           byId, scored, identities, model,

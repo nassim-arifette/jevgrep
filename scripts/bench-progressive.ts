@@ -10,24 +10,24 @@
 import { join } from 'node:path';
 import { parseArgs } from 'node:util';
 import type { Configuration, ScanCap, SearchResult } from '../src/contracts.ts';
-import { createSearchEngine } from '../src/engine.ts';
+import { createSearchEngine, type EarlyStopPolicy } from '../src/engine.ts';
 import type { EvaluationBatch, ProviderClient } from '../src/evaluation/contracts.ts';
 import { serializeConfiguredBatch } from '../src/evaluation/provider.ts';
 import { PATH_ORDER, PRIORITY_VERSION, type CandidateOrder } from '../src/priority.ts';
 import { countReferenceTokens } from '../src/response/token-counter.ts';
 import type { Evidence } from './bench/dataset.ts';
 import { environment, projectRoot, workspace, writeReport } from './bench/common.ts';
-import { loadManifest, type RealQuery, type RealTask } from './bench/real-tasks.ts';
+import { loadManifest, systemsManifestPath, type RealQuery, type RealTask } from './bench/real-tasks.ts';
 import { mean } from './bench/report.ts';
 import { covered, localizationRangeMetrics, type Range } from './bench/retrieval.ts';
 import { loadPool, replayProvider, sha256, type PoolQuery } from './bench/score-pool.ts';
 import { loadSnapshots } from './bench/snapshots.ts';
 
 const { values } = parseArgs({ options: {
-  replay: { type: 'string' }, mirrors: { type: 'string' }, output: { type: 'string' }, budgets: { type: 'string' }, help: { type: 'boolean' },
+  replay: { type: 'string' }, mirrors: { type: 'string' }, output: { type: 'string' }, budgets: { type: 'string' }, 'go-rust': { type: 'boolean' }, 'early-stop': { type: 'boolean' }, 'batch-tokens': { type: 'string' }, concurrency: { type: 'string' }, help: { type: 'boolean' },
 } });
 if (values.help) {
-  console.log('npm run bench:progressive -- [--replay benchmarks/pools/e7-swe-bench-sample-1-scores.json] [--budgets 0.1,0.25,0.5] [--output benchmark-results/progressive.json]');
+  console.log('npm run bench:progressive -- [--replay benchmarks/pools/e7-swe-bench-sample-1-scores.json] [--budgets 0.1,0.25,0.5] [--go-rust] [--output benchmark-results/progressive.json]');
   process.exit(0);
 }
 
@@ -40,10 +40,17 @@ const ORDERS: Readonly<Record<string, CandidateOrder>> = {
   'priority+reserve25': { kind: 'priority', reserve: 0.25 },
   'priority+reserve50': { kind: 'priority', reserve: 0.5 },
 };
+const EARLY_STOP_POLICIES: readonly EarlyStopPolicy[] = [
+  { min_share: 0.1, confident_score: 0.9, hits: 1 },
+  { min_share: 0.1, confident_score: 0.9, hits: 3 },
+  { min_share: 0.25, confident_score: 0.9, hits: 1 },
+  { min_share: 0.25, confident_score: 0.9, hits: 3 },
+  { min_share: 0.25, confident_score: 0.95, hits: 3 },
+];
 
 const overlaps = (unit: Evidence, range: Range): boolean => unit.path === range.path && range.start_line <= unit.endLine && range.end_line >= unit.startLine;
 
-type RunOptions = { readonly order: CandidateOrder; readonly caps: Partial<Record<ScanCap, number>>; readonly rounds?: number };
+type RunOptions = { readonly order: CandidateOrder; readonly caps: Partial<Record<ScanCap, number>>; readonly rounds?: number; readonly earlyStop?: EarlyStopPolicy };
 type Round = {
   status: SearchResult['status']; stop: readonly string[]; remote: number; reused: number; total: number | null; requests: number; tokens: number;
   candidateRecall: number | null; firstUsefulBatch: number | null; metrics: ReturnType<typeof localizationRangeMetrics> | null;
@@ -52,7 +59,8 @@ type Round = {
 
 async function run(task: RealTask, query: RealQuery, files: Readonly<Record<string, string>>, entry: PoolQuery, options: RunOptions): Promise<Round[]> {
   const configure = (base: Configuration): Configuration => ({
-    ...base, remote_evaluation_enabled: true, provider: pool.provider, search: pool.search,
+    ...base, remote_evaluation_enabled: true, provider: pool.provider,
+    search: { ...pool.search, ...(options.earlyStop !== undefined && values.concurrency !== undefined ? { concurrency: Number(values.concurrency) } : {}) },
     scan_caps: { ...base.scan_caps, ...options.caps },
     // Continuation reuses the score cache; a single round never reads it.
     cache: { ...base.cache, enabled: (options.rounds ?? 1) > 1 },
@@ -79,7 +87,7 @@ async function run(task: RealTask, query: RealQuery, files: Readonly<Record<stri
         },
       };
       let evaluated: Range[] = [];
-      const engine = createSearchEngine({ configuration: space.loaded, provider, candidateOrder: options.order });
+      const engine = createSearchEngine({ configuration: space.loaded, provider, candidateOrder: options.order, ...(options.earlyStop === undefined ? {} : { earlyStop: options.earlyStop, ...(values['batch-tokens'] === undefined ? {} : { batchLimits: { totalTokens: Number(values['batch-tokens']) } }) }) });
       const outcome = (await engine.search(
         { query: query.query, scope: ['.'], max_context_tokens: responseTokens, allow_partial_scan: true },
         { searchId: `${query.id}-${String(round)}`, onCandidatePool: (captured) => {
@@ -104,11 +112,12 @@ async function run(task: RealTask, query: RealQuery, files: Readonly<Record<stri
   return rounds;
 }
 
-const manifest = loadManifest();
+const manifest = values['go-rust'] ? loadManifest(systemsManifestPath, {}) : loadManifest();
 const snapshots = await loadSnapshots(manifest.tasks, values.mirrors ?? join(projectRoot, 'benchmark-results/mirrors'));
-const queries = manifest.tasks.flatMap((task) => task.queries.map((query) => ({ task, query })));
-for (const { query } of queries) {
-  if (pool.queries[query.id]?.questionSha256 !== sha256(query.query)) throw new Error(`${query.id} missing from the score pool`);
+const allQueries = manifest.tasks.flatMap((task) => task.queries.map((query) => ({ task, query })));
+const queries = allQueries.filter(({ query }) => pool.queries[query.id]?.questionSha256 === sha256(query.query));
+for (const { query } of allQueries) {
+  if (!queries.some((entry) => entry.query.id === query.id)) console.error(`skipping ${query.id}: missing from the score pool`);
 }
 
 type Row = { id: string; split: string; experiment: string; arm: string; budget: number; rounds: Round[] };
@@ -121,6 +130,16 @@ for (const { task, query } of queries) {
   const fullTokens = full!.tokens;
   const fileCount = Object.keys(files).length;
   rows.push({ id: query.id, split: task.split, experiment: 'exhaustive', arm: 'path', budget: 1, rounds: [full!] });
+  if (values['early-stop']) {
+    for (const [arm, order] of Object.entries(ORDERS)) {
+      if (arm === 'path' || arm === 'priority+reserve50') continue;
+      for (const policy of EARLY_STOP_POLICIES) {
+        rows.push({ id: query.id, split: task.split, experiment: 'early-stop', arm: `${arm} hits=${String(policy.hits)} conf=${String(policy.confident_score)}`,
+          budget: policy.min_share, rounds: await run(task, query, files, entry, { order, caps: {}, earlyStop: policy }) });
+      }
+    }
+    continue;
+  }
   for (const budget of budgets) {
     for (const [arm, order] of Object.entries(ORDERS)) {
       const tokenCap = { estimated_input_tokens: Math.max(1, Math.floor(budget * fullTokens)) };
@@ -159,7 +178,7 @@ const summary: Record<string, unknown> = {};
 console.log(['arm', 'R@1', 'R@5', 'MRR', 'candidate recall', 'useful found', 'first useful batch', 'requests', 'tokens',
   'evaluated share', 'complete (with unevaluated)', 'new excerpts'].join(' | '));
 for (const split of ['dev', 'heldout']) {
-  for (const experiment of ['exhaustive', 'token-cap', 'file-cap', 'continuation']) {
+  for (const experiment of ['exhaustive', 'early-stop', 'token-cap', 'file-cap', 'continuation']) {
     const arms = [...new Set(rows.filter((row) => row.experiment === experiment).map((row) => `${row.arm}@${String(row.budget)}`))];
     for (const key of arms) {
       const [arm, budget] = key.split('@');
