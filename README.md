@@ -55,10 +55,23 @@ Terra finds a little more, but it costs 25 to 50 times as much, takes three time
 long and only works while the whole repository fits in its context window. JevGrep
 gives most of that quality at a fraction of the price on repositories of any size.
 
-We also tried swapping Jev for other judges inside JevGrep, on 65 searches. The
-OpenAI models found slightly more, but they returned code for questions that have
-no answer in the repository; Jev was the only judge that stayed silent every time
-and found the counterevidence for every false premise, at 2 to 20 times lower cost.
+We also kept JevGrep and swapped only the model that scores each fragment, on 65
+searches. "No answer" is the share of questions with no answer in the repository
+where nothing is returned; "False premise" is the share of questions built on a
+wrong assumption where the code that contradicts it is found.
+
+| Judge inside JevGrep | R@5 | No answer | False premise | Cost per search | Time per search |
+|---|---:|---:|---:|---:|---:|
+| **Jev 1.13 / 1.14** | 0.91 | **100 %** | **100 %** | **$0.002** | 6–7 s |
+| Luna Decisions | 0.93 | 67 % | 75 % | $0.005 | 4.6 s |
+| `gpt-6-luna`, no reasoning | 0.95 | 100 % | 77 % | $0.004 | 8 s |
+| `gpt-6-luna`, medium | 0.93 | 67 % | 100 % | $0.004 | 13 s |
+| `gpt-6.1-terra`, no reasoning | 0.96 | 50 % | 100 % | $0.042 | 12 s |
+| `gpt-6.1-terra`, medium | 0.96 | 33 % | 100 % | $0.043 | 13 s |
+
+The OpenAI judges find slightly more, but they return code when the repository has
+no answer. Jev is the only judge that passes both checks, at 2 to 20 times lower
+cost. Those two checks rest on 6 and 14 questions.
 
 The methodology, every number and the scripts to rerun them are in
 [models alone](benchmarks/baselines/2026-11-04-models-alone.md),
