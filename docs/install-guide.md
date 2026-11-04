@@ -183,6 +183,13 @@ preparation cap (`candidate_files`, `fragments`, `prepared_source_bytes`) stops 
 the same files again, so narrow the scope instead. MCP clients pass the token as the
 `continuation` argument. Continue only when the evidence so far is not enough.
 
+Repeat `--query` (up to 8 times) to ask several questions over the same scope and
+options in one run. The scope is inventoried and parsed once, and each question gets
+its own result, budget and coverage; with `--json` stdout is `{"results":[...]}` in
+question order. Remote evaluation is paid per question, and a closing line reports
+the provider attempts, estimated tokens and cost across all of them. The exit code is
+the most severe one among the questions. `--continuation` takes a single question.
+
 Exit codes are `0` complete (including an empty selection), `2` invalid request,
 configuration problem or preflight rejection, `3` partial, `4` fatal failure, and
 `130` interrupted. Results go to stdout and diagnostics to stderr.
