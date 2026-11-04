@@ -210,6 +210,17 @@ repetitions and per query; near-tied fragments decide many Recall@1 differences.
 captured candidate pool cannot replay a chunking change, because the pool itself is
 made of fragments, so arms must be run live.
 
+## Go/Rust chunking comparison
+
+`go-rust-line-windows` replaces Tree-sitter boundaries with line windows for Go and
+Rust files only; `recursive` is production. The task set is `--go-rust`
+([real-tasks/README.md](real-tasks/README.md#go-and-rust-tasks)). Over four live
+repetitions on TypeSafe `jev-1.13.0`, syntax chunking matched or beat line windows on
+every held-out metric (R@5 0.623 against 0.538) with 6–8 % fewer input tokens, while
+line windows had a higher dev R@1 (0.649 against 0.573) driven by four queries. Syntax
+chunking stays the default. See the
+[2026-11-04 results](baselines/2026-11-04-go-rust-chunking.md).
+
 ## Additional criteria on ambiguous candidates (E8)
 
 Focused Jev judgments are compared with the single relevance judgment on a bounded
