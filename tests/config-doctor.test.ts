@@ -42,7 +42,7 @@ test('a generated configuration starts with remote evaluation disabled and every
   assert.equal(config.source.follow_links, false);
   assert.equal(config.logging.include_source, false);
   assert.equal(config.search.deadline_ms, 300_000);
-  assert.equal(config.search.default_response_tokens, 4_000);
+  assert.equal(config.search.default_response_tokens, 8_000);
 });
 
 test('the configuration must live outside the repository it authorizes', () => {

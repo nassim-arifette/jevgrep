@@ -14,7 +14,7 @@ test('request validation preserves exact query bytes, defaults and caller-owned 
   assert.equal(parsed.query, original.query);
   assert.deepEqual(parsed.scope, ['src', 'tests']);
   assert.deepEqual(parseSearchRequest({ query: ' Find it\r\n' }), {
-    query: ' Find it\r\n', scope: ['.'], max_context_tokens: 4_000, allow_partial_scan: false,
+    query: ' Find it\r\n', scope: ['.'], max_context_tokens: 8_000, allow_partial_scan: false,
   });
   assert.equal(searchRequestSchema.safeParse(validRequest).success, true);
   assert.equal(searchRequestSchema.safeParse(invalidRequest).success, false);

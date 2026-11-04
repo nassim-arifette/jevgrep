@@ -15,7 +15,7 @@ export const CONTRACT_LIMITS = Object.freeze({
   scope_entries: 32,
   scope_bytes: 4_096,
   min_response_tokens: 1_024,
-  default_response_tokens: 4_000,
+  default_response_tokens: 8_000,
   max_response_tokens: 16_000,
   error_bytes: 4_096,
   error_tokens: 1_024,

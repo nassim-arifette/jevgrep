@@ -52,7 +52,7 @@ test('the search help documents the response budget bounds and the query sources
   assert.match(help, /--query-file/);
   assert.match(help, /--allow-partial/);
   assert.match(help, /--max-context-tokens/);
-  assert.match(help, /4[ ,]?000/);
+  assert.match(help, /8[ ,]?000/);
   assert.match(help, /1[ ,]?024/);
   assert.match(help, /16[ ,]?000/);
 });

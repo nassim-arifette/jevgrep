@@ -24,7 +24,7 @@ const OPTION_TEXT: Record<string, string> = {
   '--query': '--query <text>             the search question, kept verbatim; repeat for up to 8 questions over one preparation',
   '--query-file': '--query-file <path>        read the question from a file (multiline queries)',
   '--scope': '--scope <relative path>    repeatable, default ".", never absolute and never traversing',
-  '--max-context-tokens': '--max-context-tokens <n>   response budget in reference tokens (min 1024; configured default/max: initially 4000/16000)',
+  '--max-context-tokens': '--max-context-tokens <n>   response budget in reference tokens (min 1024; configured default/max: initially 8000/16000)',
   '--allow-partial': '--allow-partial            allow a partial scan explicitly (default: refuse)',
   '--continuation': '--continuation <token>     continue a partial search with the token it printed (same query and scope)',
   '--json': '--json                     canonical JSON on stdout instead of the human view',
