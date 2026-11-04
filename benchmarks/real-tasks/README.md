@@ -44,6 +44,25 @@ labels come from the patches alone. Only library sources are exported.
 JS/TS hunks are classified with JS comment and import rules, and these tasks have no
 docstring-derived code-understanding queries.
 
+### Go and Rust tasks
+
+`swe-bench-multilingual-go-rust-1.json` is imported from the same dataset with seed
+`jevgrep-go-rust-1`, for Go/Rust syntax chunking experiments (`npm run bench:real --
+--go-rust`). It has no audit file. Only non-test Go/Rust sources are exported, and
+patch edits to other files (changelogs, lockfiles, docs) are dropped instead of
+disqualifying the task. Code-understanding queries quote the first sentence of the
+Go or Rust doc comment of the edited function; a Go comment that starts with the
+function name drops it.
+
+| Repository | Split | Tasks | Exported paths |
+| --- | --- | --- | --- |
+| `caddyserver/caddy` | dev | 9 | root `*.go`, `caddyconfig/` |
+| `sharkdp/bat` | dev | 6 | `src/` |
+| `gin-gonic/gin` | heldout | 6 | `*.go` outside `examples/`, `docs/`, `testdata/` |
+| `tokio-rs/axum` | heldout | 4 | `axum/src/`, `axum-extra/src/`, `axum-core/src/` |
+
+Go and Rust hunks are classified with C-style comment rules and `import`/`use` lists.
+
 ## Query categories and labels
 
 | Category | Query | Required evidence | Complementary evidence |
