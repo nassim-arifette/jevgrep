@@ -63,6 +63,10 @@ export const TOOL_INPUT_SCHEMA = Object.freeze({
       type: 'boolean',
       description: 'Allow a deterministic partial scan instead of refusing a scope that exceeds an enabled cap.',
     },
+    continuation: {
+      type: 'string',
+      description: 'Token from continuation.next of a partial result, to evaluate what that search left out without repeating delivered excerpts. Repeat the same query and scope. Continue only when the evidence so far is insufficient.',
+    },
   },
   required: ['query'],
   additionalProperties: false,

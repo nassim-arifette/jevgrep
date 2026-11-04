@@ -21,6 +21,7 @@ import {
 import type { ScanCap, SearchResult, StopReason } from '../contracts.ts';
 import type { SelectedRange } from './selection.ts';
 import { countReferenceTokens } from './token-counter.ts';
+import { CONTINUATION_PREFIX } from '../continuation.ts';
 
 export type ReportUsage = {
   readonly providerRequestAttempts: number;
@@ -69,6 +70,11 @@ export type ReportInputs = {
   readonly usage: ReportUsage;
   readonly preflight: ReportPreflight;
   readonly requestedTokens: number;
+  /** Present only when continuation is available, that is, when scores are cached. */
+  readonly continuation?: {
+    readonly previouslyDelivered: number;
+    readonly next: (ranges: readonly SelectedRange[]) => string | null;
+  };
   readonly counterId: string;
   readonly stopReasons: readonly StopReason[];
   readonly diagnosticsTruncated: boolean;
@@ -140,6 +146,8 @@ export function mandatoryEnvelopeTokens(searchId: string, scope: readonly string
       stop_reasons: [...STOP_REASONS],
       diagnostics_truncated: false,
     },
+    // Delivered-fragment digests grow with the excerpts and are paid from their budget.
+    continuation: { next: `${CONTINUATION_PREFIX}${'A'.repeat(11)}`, previously_delivered_omitted: MAX_COUNT },
   };
   return countReferenceTokens(JSON.stringify(envelope));
 }
@@ -206,7 +214,8 @@ function assembleResult(inputs: ReportInputs, ranges: readonly SelectedRange[], 
   const excerpts = ranges.map(toExcerpt);
   const evaluated = inputs.fragments.remoteEvaluated + inputs.fragments.cacheReused;
   const omittedStale = inputs.fragments.omittedStale;
-  const omittedByBudget = inputs.fragments.aboveThreshold - representedFragments - omittedStale;
+  const omittedByBudget = inputs.fragments.aboveThreshold - representedFragments - omittedStale
+    - (inputs.continuation?.previouslyDelivered ?? 0);
   const fullyScanned = inputs.rejected !== true
     && inputs.inventoryComplete
     && inputs.fragments.total !== null
@@ -282,6 +291,13 @@ function assembleResult(inputs: ReportInputs, ranges: readonly SelectedRange[], 
       stop_reasons: [...inputs.stopReasons],
       diagnostics_truncated: inputs.diagnosticsTruncated,
     },
+    ...(inputs.continuation === undefined ? {} : { continuation: {
+      // Offered while unevaluated fragments or budget-omitted evidence remain; a
+      // preparation cap stops at the same prefix again and is not continuable.
+      next: (status === 'partial' || status === 'complete') && (inputs.fragments.notEvaluated > 0 || omittedByBudget > 0)
+        ? inputs.continuation.next(ranges) : null,
+      previously_delivered_omitted: inputs.continuation.previouslyDelivered,
+    } }),
   } as SearchResult;
 }
 
@@ -306,13 +322,19 @@ export function renderSearchResult(
 ): RenderedResponse {
   let current = [...ranges];
   let removed = 0;
+  let effective = inputs;
 
   for (;;) {
-    const result = assembleResult(inputs, current, representedFor(current));
+    const result = assembleResult(effective, current, representedFor(current));
     const validated = searchResultSchema.parse(result);
     const text = JSON.stringify(validated);
     const measured = countReferenceTokens(text);
     if (measured <= inputs.requestedTokens || current.length === 0) {
+      if (measured > inputs.requestedTokens && effective.continuation !== undefined && result.continuation?.next != null) {
+        // Earlier deliveries alone outgrow the budget: end the continuation chain instead.
+        effective = { ...effective, continuation: { ...effective.continuation, next: () => null } };
+        continue;
+      }
       if (measured > inputs.requestedTokens) {
         // Nothing left to remove: the mandatory report alone exceeds the budget, which
         // the preflight envelope is meant to have refused before any paid work.

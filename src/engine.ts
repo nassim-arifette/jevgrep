@@ -45,7 +45,10 @@ import type { ReportInputs, RenderedResponse } from './response/render.ts';
 import { CANDIDATE_POOL_VERSION } from './response/candidate-pool.ts';
 import type { CandidatePool } from './response/candidate-pool.ts';
 import { selectRanges } from './response/selection.ts';
-import type { SelectedRange, SelectionResult } from './response/selection.ts';
+import type { Candidate, SelectedRange, SelectionResult } from './response/selection.ts';
+import {
+  ContinuationError, bindingDigest, decodeContinuation, deliveredKey, encodeContinuation, type ContinuationState,
+} from './continuation.ts';
 import { REFERENCE_COUNTER_ID } from './response/token-counter.ts';
 import { UnauthorizedPathError } from './source/authorization.ts';
 import type { AuthorizedRoot } from './source/authorization.ts';
@@ -195,6 +198,7 @@ export class SearchEngine {
 
     // Cache lookup precedes planning and scheduling (specification section 6.3).
     const model = provider.model;
+    const continuation = continuationOf(request, model, config);
     const adapter = config.provider.adapter ?? 'typesafe-direct';
     const cachePolicy = scoreCachePolicy(adapter, model, config.cache);
     const serialize = (batch: EvaluationBatch): string => measureSync('serialization', () => {
@@ -257,7 +261,7 @@ export class SearchEngine {
     if (plan.rejected || (context.stopReasons().includes('PREPARATION_LIMIT')
       && config.search.require_fit && !request.allow_partial_scan)) {
       context.addStopReason('SCOPE_EXCEEDS_SCAN_BUDGET');
-      return this.#render(context, request, prepared, [], usage, plan, available, true);
+      return this.#render(context, request, prepared, [], usage, plan, available, true, continuation);
     }
     if (plan.capReached) context.addStopReason('SCAN_CAP_REACHED');
 
@@ -268,7 +272,7 @@ export class SearchEngine {
       });
     }
 
-    return this.#render(context, request, prepared, scored, usage, plan, available, false, capture === undefined ? undefined : (inputs) => {
+    return this.#render(context, request, prepared, scored, usage, plan, available, false, continuation, capture === undefined ? undefined : (inputs) => {
       capture(candidatePool(request, inputs, scored, available, config.search.threshold, { adapter, model }));
     });
   }
@@ -429,6 +433,7 @@ export class SearchEngine {
     plan: ScanPlan,
     availableTokens: number,
     rejected: boolean,
+    continuation: Continuation | null,
     capture?: (inputs: ReportInputs) => void,
   ): SearchOutcomeWithDiagnostics {
     const { config } = this.#options.configuration;
@@ -440,7 +445,11 @@ export class SearchEngine {
       this.#options.configuration.sourceRoot, config.source.max_file_bytes,
     ));
 
-    const candidates = scored.map(({ fragment, score }) => ({ fragment, score }));
+    const delivered = continuation?.state?.delivered;
+    const candidates = scored.map(({ fragment, score }) => ({ fragment, score }))
+      .filter(({ fragment, score }) => delivered === undefined || score < config.search.threshold
+        || !delivered.has(deliveredKey(fragment)));
+    const previouslyDelivered = scored.length - candidates.length;
     const sliceLines = (path: string, startLine: number, endLine: number): string | null => {
       const snapshot = snapshots.get(path);
       return snapshot === undefined ? null : snapshot.sliceLines(startLine, endLine).text;
@@ -456,10 +465,18 @@ export class SearchEngine {
     }));
     const selection = selectFresh(select, { freshness, snapshots, rounds: prepared.files.length + 1, context });
 
-    const inputs = reportInputs({ context, request, prepared, scored, usage, plan, selection, freshness, rejected,
-      threshold: config.search.threshold,
-      pricePerMillion: config.provider.pricing?.input_usd_per_million_tokens ?? null,
-    });
+    const inputs: ReportInputs = {
+      ...reportInputs({ context, request, prepared, scored, usage, plan, selection, freshness, rejected,
+        threshold: config.search.threshold,
+        pricePerMillion: config.provider.pricing?.input_usd_per_million_tokens ?? null,
+        previouslyDelivered,
+      }),
+      ...(continuation === null ? {} : { continuation: {
+        previouslyDelivered,
+        next: (ranges: readonly SelectedRange[]) => encodeContinuation(continuation.binding,
+          deliveredAfter(delivered, candidates, ranges, config.search.threshold)),
+      } }),
+    };
 
     capture?.(inputs);
     const representedFor = (ranges: readonly SelectedRange[]): number => countRepresented(candidates, ranges, config.search.threshold, freshness.unavailablePaths);
@@ -506,6 +523,52 @@ type IdentityScope = {
   readonly adapter: string;
   readonly cacheMode: string;
 };
+
+type Continuation = { readonly binding: Buffer; readonly state: ContinuationState | null };
+
+/**
+ * Continuation state of a request, or null when scores are not cached: without the
+ * cache a continued search would evaluate everything again, so none is offered.
+ */
+function continuationOf(
+  request: ReturnType<typeof parseCallerRequest>, model: string, config: LoadedConfiguration['config'],
+): Continuation | null {
+  const adapter = config.provider.adapter ?? 'typesafe-direct';
+  const cached = scoreCachePolicy(adapter, model, config.cache).mode !== 'disabled';
+  if (!cached) {
+    if (request.continuation === undefined) return null;
+    throw new RequestValidationError(new ContractValidationError('$.continuation',
+      'continuation needs the score cache, which is disabled for this provider profile'));
+  }
+  const binding = bindingDigest({
+    query: request.query, scope: request.scope, adapter, endpoint: config.provider.base_url, model,
+    threshold: config.search.threshold, selectionPolicy: config.search.selection_policy ?? 'relevance',
+    versions: { criterion: CRITERION_VERSION, layout: LAYOUT_VERSION },
+  });
+  if (request.continuation === undefined) return { binding, state: null };
+  try {
+    return { binding, state: decodeContinuation(request.continuation, binding) };
+  } catch (cause) {
+    if (!(cause instanceof ContinuationError)) throw cause;
+    throw new RequestValidationError(new ContractValidationError('$.continuation', cause.message));
+  }
+}
+
+/** Earlier deliveries plus every qualifying fragment the given ranges represent. */
+function deliveredAfter(
+  previous: ReadonlySet<string> | undefined, candidates: readonly Candidate[],
+  ranges: readonly SelectedRange[], threshold: number,
+): Set<string> {
+  const keys = new Set(previous ?? []);
+  for (const { fragment, score } of candidates) {
+    if (score < threshold) continue;
+    if (ranges.some((range) => range.path === fragment.path && range.sha256 === fragment.sha256
+      && range.startLine <= fragment.startLine && fragment.endLine <= range.endLine)) {
+      keys.add(deliveredKey(fragment));
+    }
+  }
+  return keys;
+}
 
 function parseCallerRequest(rawRequest: unknown, config: LoadedConfiguration['config']) {
   try {
@@ -616,6 +679,8 @@ function reportInputs(state: {
   readonly rejected: boolean;
   readonly threshold: number;
   readonly pricePerMillion: number | null;
+  /** Qualifying fragments a continuation withheld from selection because they were delivered before. */
+  readonly previouslyDelivered: number;
 }): ReportInputs {
   const { context, request, prepared, scored, usage, plan, selection, freshness, rejected, threshold, pricePerMillion } = state;
     const evaluated = scored.length;
@@ -648,7 +713,7 @@ function reportInputs(state: {
         cacheReused,
         notEvaluated,
         belowThreshold: selection.belowThreshold,
-        aboveThreshold: selection.aboveThreshold,
+        aboveThreshold: selection.aboveThreshold + state.previouslyDelivered,
         omittedStale: selection.omittedUnavailable,
       },
       threshold,

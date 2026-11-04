@@ -5,6 +5,7 @@ import {
 import type { Infer } from './contract-schema.ts';
 import { checkRelativePath } from './path-policy.ts';
 import type { RelativePathViolation } from './path-policy.ts';
+import { MAX_CONTINUATION_TOKEN_LENGTH } from './continuation.ts';
 export { ContractValidationError } from './contract-schema.ts';
 
 export const SCHEMA_VERSION = '1';
@@ -137,11 +138,12 @@ export function createSearchRequestSchema(limits: ResponseLimits = defaultRespon
     scope: scopeSchema,
     max_context_tokens: numberValue(CONTRACT_LIMITS.min_response_tokens, limits.max_response_tokens),
     allow_partial_scan: booleanValue,
+    continuation: textValue(MAX_CONTINUATION_TOKEN_LENGTH),
   });
 }
 export const searchRequestSchema = createSearchRequestSchema();
 export type SearchRequest = Infer<typeof searchRequestSchema>;
-export type ResolvedSearchRequest = Required<SearchRequest>;
+export type ResolvedSearchRequest = Required<Omit<SearchRequest, 'continuation'>> & Pick<SearchRequest, 'continuation'>;
 
 /** Pure lexical validation. Filesystem authorization remains the source reader's job. */
 export function parseSearchRequest(input: unknown, limits: ResponseLimits = defaultResponseLimits): ResolvedSearchRequest {
@@ -151,6 +153,7 @@ export function parseSearchRequest(input: unknown, limits: ResponseLimits = defa
     scope: normalizeScope(request.scope ?? ['.']),
     max_context_tokens: request.max_context_tokens ?? limits.default_response_tokens,
     allow_partial_scan: request.allow_partial_scan ?? false,
+    ...(request.continuation === undefined ? {} : { continuation: request.continuation }),
   };
 }
 
@@ -331,6 +334,11 @@ const resultShape = object({
     stop_reasons: array(enumeration(STOP_REASONS), 0, STOP_REASONS.length),
     diagnostics_truncated: booleanValue,
   }),
+}, {
+  continuation: object({
+    next: nullable(textValue(MAX_CONTINUATION_TOKEN_LENGTH)),
+    previously_delivered_omitted: count,
+  }),
 });
 export type SearchResult = Infer<typeof resultShape>;
 export type Excerpt = SearchResult['excerpts'][number];
@@ -365,8 +373,9 @@ function validateResult(value: SearchResult, path: string): void {
   const evaluated = sum([f.remote_evaluated, f.cache_reused], path);
   const knownTotal = sum([evaluated, f.not_evaluated], path);
   check(evaluated === sum([f.below_threshold, f.above_threshold], path), 'successful evaluations must equal threshold categories');
-  check(f.above_threshold === sum([f.represented_in_response, f.omitted_by_response_budget, f.omitted_stale], path),
-    'qualifying fragments must equal represented, budget-omitted and stale categories');
+  const deliveredBefore = value.continuation?.previously_delivered_omitted ?? 0;
+  check(f.above_threshold === sum([f.represented_in_response, f.omitted_by_response_budget, f.omitted_stale, deliveredBefore], path),
+    'qualifying fragments must equal represented, budget-omitted, stale and previously delivered categories');
   check(f.total === null || f.total === knownTotal, 'fragment total does not match terminal categories');
   check(report.inventory_complete || f.total === null, 'incomplete inventory requires an unknown fragment total');
   check(files.unreadable === 0 || f.total === null, 'unreadable source prevents a known prepared total');

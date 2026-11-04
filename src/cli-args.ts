@@ -35,6 +35,7 @@ type OptionState = {
   readonly queryFile: string | undefined;
   readonly scope: readonly string[];
   readonly maxContextTokens: string | undefined;
+  readonly continuation: string | undefined;
   readonly allowPartial: boolean;
   readonly json: boolean;
   readonly root: string | undefined;
@@ -45,7 +46,7 @@ type OptionState = {
 /** Options each command accepts, so a misplaced flag is refused instead of ignored. */
 const ALLOWED_OPTIONS: Record<string, readonly string[]> = {
   init: ['--root', '--provider', '--global'],
-  search: ['--config', '--query', '--query-file', '--scope', '--max-context-tokens', '--allow-partial', '--json'],
+  search: ['--config', '--query', '--query-file', '--scope', '--max-context-tokens', '--allow-partial', '--continuation', '--json'],
   inspect: ['--config', '--scope', '--json'],
   doctor: ['--config'],
   mcp: ['--config'],
@@ -111,7 +112,7 @@ function readOptions(
   argv: readonly string[],
   allowed: readonly string[],
 ): { readonly state: OptionState; readonly error: string | undefined } {
-  const mutable: MutableOptions = { config: undefined, query: undefined, queryFile: undefined, scope: [], maxContextTokens: undefined, allowPartial: false, json: false, root: undefined, provider: undefined, global: false };
+  const mutable: MutableOptions = { config: undefined, query: undefined, queryFile: undefined, scope: [], maxContextTokens: undefined, continuation: undefined, allowPartial: false, json: false, root: undefined, provider: undefined, global: false };
   const state = mutable;
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -157,6 +158,7 @@ type MutableOptions = {
   queryFile: string | undefined;
   scope: string[];
   maxContextTokens: string | undefined;
+  continuation: string | undefined;
   allowPartial: boolean;
   json: boolean;
   root: string | undefined;
@@ -167,6 +169,10 @@ type MutableOptions = {
 /** Store one option that takes a value, or explain why it is refused. */
 function applyValueOption(state: MutableOptions, option: string, value: string): string | undefined {
   switch (option) {
+    case '--continuation':
+      if (state.continuation !== undefined) return "option '--continuation' was given twice";
+      state.continuation = value;
+      return undefined;
     case '--root':
       if (state.root !== undefined) return "option '--root' was given twice";
       state.root = value;
@@ -246,6 +252,7 @@ function searchCommand(
     query: text,
     scope,
     allow_partial_scan: state.allowPartial,
+    ...(state.continuation === undefined ? {} : { continuation: state.continuation }),
   };
   if (state.maxContextTokens !== undefined) {
     raw['max_context_tokens'] = Number(state.maxContextTokens);

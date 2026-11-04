@@ -169,8 +169,19 @@ Add `--allow-partial` to permit a deterministic partial scan when an enabled cap
 would otherwise reject the search. A partial scan prepares and evaluates candidates
 in a local lexical priority order (question terms in the fragment text, file name and
 symbol label), so the evaluated share holds the most likely fragments first; it is
-still reported as partial. Repeating the same search continues it: cached scores are
-reused and only the remaining fragments are sent, within the same caps.
+still reported as partial.
+
+When fragments were left unevaluated or relevant evidence did not fit the response
+budget, the result carries a continuation token (`continuation.next` in JSON, a
+`continue: --continuation <token>` line in the human view). Run the same query and
+scope with `--continuation <token>` to get the rest: cached scores are reused, only
+the remaining fragments are sent within the same caps, and excerpts delivered earlier
+are not repeated (`continuation.previously_delivered_omitted` counts them). A file
+edited in between is treated as new evidence. The token is refused if the query,
+scope, provider or evaluation policy changed, and it needs the score cache. A
+preparation cap (`candidate_files`, `fragments`, `prepared_source_bytes`) stops at
+the same files again, so narrow the scope instead. MCP clients pass the token as the
+`continuation` argument. Continue only when the evidence so far is not enough.
 
 Exit codes are `0` complete (including an empty selection), `2` invalid request,
 configuration problem or preflight rejection, `3` partial, `4` fatal failure, and
