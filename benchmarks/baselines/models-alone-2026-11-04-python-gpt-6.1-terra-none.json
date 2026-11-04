@@ -1,0 +1,1284 @@
+{
+  "rows": [
+    {
+      "arm": "openai-solo",
+      "id": "psf__requests-1657:change",
+      "task": "psf__requests-1657",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 4618.729855,
+      "complete": true,
+      "returnedChars": 6309,
+      "ranges": [
+        {
+          "path": "requests/sessions.py",
+          "start_line": 229,
+          "end_line": 267
+        },
+        {
+          "path": "requests/sessions.py",
+          "start_line": 37,
+          "end_line": 65
+        },
+        {
+          "path": "requests/hooks.py",
+          "start_line": 17,
+          "end_line": 45
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 149,
+          "end_line": 159
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 196,
+          "end_line": 216
+        },
+        {
+          "path": "requests/sessions.py",
+          "start_line": 434,
+          "end_line": 469
+        },
+        {
+          "path": "test_requests.py",
+          "start_line": 451,
+          "end_line": 470
+        },
+        {
+          "path": "requests/sessions.py",
+          "start_line": 188,
+          "end_line": 189
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": 0.5
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6.1-terra",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 194805,
+          "cachedTokens": 0,
+          "outputTokens": 144,
+          "reasoningTokens": 0
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "psf__requests-1657:understand",
+      "task": "psf__requests-1657",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "code-understanding",
+      "latencyMs": 3559.4623759999995,
+      "complete": true,
+      "returnedChars": 2649,
+      "ranges": [
+        {
+          "path": "requests/models.py",
+          "start_line": 230,
+          "end_line": 244
+        },
+        {
+          "path": "requests/sessions.py",
+          "start_line": 229,
+          "end_line": 267
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 278,
+          "end_line": 292
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 1,
+        "reciprocalRank": 0.5,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 2,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6.1-terra",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 194761,
+          "cachedTokens": 0,
+          "outputTokens": 61,
+          "reasoningTokens": 0
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "psf__requests-2821:change",
+      "task": "psf__requests-2821",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 5651.491618,
+      "complete": true,
+      "returnedChars": 7528,
+      "ranges": [
+        {
+          "path": "requests/models.py",
+          "start_line": 406,
+          "end_line": 459
+        },
+        {
+          "path": "requests/adapters.py",
+          "start_line": 323,
+          "end_line": 371
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 461,
+          "end_line": 493
+        },
+        {
+          "path": "requests/__init__.py",
+          "start_line": 51,
+          "end_line": 56
+        },
+        {
+          "path": "test_requests.py",
+          "start_line": 1076,
+          "end_line": 1090
+        },
+        {
+          "path": "requests/sessions.py",
+          "start_line": 442,
+          "end_line": 473
+        },
+        {
+          "path": "requests/sessions.py",
+          "start_line": 567,
+          "end_line": 585
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 0,
+        "reciprocalRank": 0,
+        "evidenceCoverage": 0,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 6,
+        "complementaryCoverage": 0
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6.1-terra",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 302469,
+          "cachedTokens": 0,
+          "outputTokens": 131,
+          "reasoningTokens": 0
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "psf__requests-2821:understand",
+      "task": "psf__requests-2821",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "code-understanding",
+      "latencyMs": 3757.812701,
+      "complete": true,
+      "returnedChars": 194,
+      "ranges": [
+        {
+          "path": "requests/models.py",
+          "start_line": 318,
+          "end_line": 322
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6.1-terra",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 301584,
+          "cachedTokens": 0,
+          "outputTokens": 28,
+          "reasoningTokens": 0
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "psf__requests-774:change",
+      "task": "psf__requests-774",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 36439.997528,
+      "complete": true,
+      "returnedChars": 6108,
+      "ranges": [
+        {
+          "path": "requests/models.py",
+          "start_line": 398,
+          "end_line": 447
+        },
+        {
+          "path": "requests/exceptions.py",
+          "start_line": 28,
+          "end_line": 41
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 223,
+          "end_line": 257
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 280,
+          "end_line": 313
+        },
+        {
+          "path": "tests/test_requests.py",
+          "start_line": 910,
+          "end_line": 928
+        },
+        {
+          "path": "requests/safe_mode.py",
+          "start_line": 19,
+          "end_line": 39
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": 0
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6.1-terra",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 199127,
+          "cachedTokens": 0,
+          "outputTokens": 112,
+          "reasoningTokens": 0
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "psf__requests-774:understand",
+      "task": "psf__requests-774",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "code-understanding",
+      "latencyMs": 13540.704953999997,
+      "complete": true,
+      "returnedChars": 1518,
+      "ranges": [
+        {
+          "path": "requests/models.py",
+          "start_line": 398,
+          "end_line": 447
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6.1-terra",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 198705,
+          "cachedTokens": 0,
+          "outputTokens": 28,
+          "reasoningTokens": 0
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "psf__requests-4718:change",
+      "task": "psf__requests-4718",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 20354.346707000004,
+      "complete": true,
+      "returnedChars": 12574,
+      "ranges": [
+        {
+          "path": "requests/sessions.py",
+          "start_line": 231,
+          "end_line": 253
+        },
+        {
+          "path": "requests/sessions.py",
+          "start_line": 166,
+          "end_line": 205
+        },
+        {
+          "path": "tests/test_requests.py",
+          "start_line": 1576,
+          "end_line": 1591
+        },
+        {
+          "path": "requests/sessions.py",
+          "start_line": 97,
+          "end_line": 116
+        },
+        {
+          "path": "requests/sessions.py",
+          "start_line": 596,
+          "end_line": 655
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 534,
+          "end_line": 554
+        },
+        {
+          "path": "requests/auth.py",
+          "start_line": 79,
+          "end_line": 97
+        },
+        {
+          "path": "requests/utils.py",
+          "start_line": 166,
+          "end_line": 214
+        },
+        {
+          "path": "tests/test_lowlevel.py",
+          "start_line": 27,
+          "end_line": 89
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": 0.3333333333333333
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6.1-terra",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 136364,
+          "cachedTokens": 0,
+          "outputTokens": 165,
+          "reasoningTokens": 0
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "psf__requests-4718:understand",
+      "task": "psf__requests-4718",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "code-understanding",
+      "latencyMs": 8664.902315,
+      "complete": true,
+      "returnedChars": 2812,
+      "ranges": [
+        {
+          "path": "requests/sessions.py",
+          "start_line": 231,
+          "end_line": 253
+        },
+        {
+          "path": "requests/sessions.py",
+          "start_line": 184,
+          "end_line": 205
+        },
+        {
+          "path": "tests/test_requests.py",
+          "start_line": 1576,
+          "end_line": 1591
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6.1-terra",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 135813,
+          "cachedTokens": 0,
+          "outputTokens": 65,
+          "reasoningTokens": 0
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "psf__requests-3718:change",
+      "task": "psf__requests-3718",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 16210.492278999998,
+      "complete": true,
+      "returnedChars": 7291,
+      "ranges": [
+        {
+          "path": "requests/models.py",
+          "start_line": 762,
+          "end_line": 780
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 676,
+          "end_line": 729
+        },
+        {
+          "path": "requests/sessions.py",
+          "start_line": 602,
+          "end_line": 643
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 569,
+          "end_line": 586
+        },
+        {
+          "path": "requests/adapters.py",
+          "start_line": 240,
+          "end_line": 275
+        },
+        {
+          "path": "tests/test_requests.py",
+          "start_line": 1097,
+          "end_line": 1126
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": 0
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6.1-terra",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 330176,
+          "cachedTokens": 0,
+          "outputTokens": 113,
+          "reasoningTokens": 0
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "psf__requests-3718:understand",
+      "task": "psf__requests-3718",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "code-understanding",
+      "latencyMs": 20889.279670000004,
+      "complete": true,
+      "returnedChars": 678,
+      "ranges": [
+        {
+          "path": "requests/models.py",
+          "start_line": 762,
+          "end_line": 780
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6.1-terra",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 329371,
+          "cachedTokens": 0,
+          "outputTokens": 28,
+          "reasoningTokens": 0
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "psf__requests-1962:change",
+      "task": "psf__requests-1962",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 20793.297090000007,
+      "complete": true,
+      "returnedChars": 3919,
+      "ranges": [
+        {
+          "path": "requests/sessions.py",
+          "start_line": 513,
+          "end_line": 532
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 521,
+          "end_line": 559
+        },
+        {
+          "path": "requests/auth.py",
+          "start_line": 149,
+          "end_line": 182
+        },
+        {
+          "path": "test_requests.py",
+          "start_line": 115,
+          "end_line": 119
+        },
+        {
+          "path": "test_requests.py",
+          "start_line": 208,
+          "end_line": 212
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": 0
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6.1-terra",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 264256,
+          "cachedTokens": 0,
+          "outputTokens": 93,
+          "reasoningTokens": 0
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "psf__requests-1768:change",
+      "task": "psf__requests-1768",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 15377.997019000002,
+      "complete": true,
+      "returnedChars": 6707,
+      "ranges": [
+        {
+          "path": "requests/utils.py",
+          "start_line": 557,
+          "end_line": 564
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 451,
+          "end_line": 471
+        },
+        {
+          "path": "requests/auth.py",
+          "start_line": 27,
+          "end_line": 30
+        },
+        {
+          "path": "requests/adapters.py",
+          "start_line": 262,
+          "end_line": 286
+        },
+        {
+          "path": "test_requests.py",
+          "start_line": 562,
+          "end_line": 564
+        },
+        {
+          "path": "requests/sessions.py",
+          "start_line": 232,
+          "end_line": 270
+        },
+        {
+          "path": "requests/utils.py",
+          "start_line": 65,
+          "end_line": 100
+        },
+        {
+          "path": "test_requests.py",
+          "start_line": 221,
+          "end_line": 234
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 312,
+          "end_line": 350
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": 0
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6.1-terra",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 256000,
+          "cachedTokens": 0,
+          "outputTokens": 158,
+          "reasoningTokens": 0
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "psf__requests-1768:understand",
+      "task": "psf__requests-1768",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "code-understanding",
+      "latencyMs": 14289.252864000002,
+      "complete": true,
+      "returnedChars": 434,
+      "ranges": [
+        {
+          "path": "requests/utils.py",
+          "start_line": 557,
+          "end_line": 564
+        },
+        {
+          "path": "test_requests.py",
+          "start_line": 562,
+          "end_line": 564
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6.1-terra",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 255918,
+          "cachedTokens": 0,
+          "outputTokens": 44,
+          "reasoningTokens": 0
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "psf__requests-2617:change",
+      "task": "psf__requests-2617",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 10829.405239999993,
+      "complete": true,
+      "returnedChars": 9287,
+      "ranges": [
+        {
+          "path": "requests/models.py",
+          "start_line": 328,
+          "end_line": 332
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 246,
+          "end_line": 261
+        },
+        {
+          "path": "requests/sessions.py",
+          "start_line": 346,
+          "end_line": 384
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 298,
+          "end_line": 313
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 101,
+          "end_line": 159
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 415,
+          "end_line": 468
+        },
+        {
+          "path": "requests/adapters.py",
+          "start_line": 337,
+          "end_line": 371
+        },
+        {
+          "path": "requests/sessions.py",
+          "start_line": 436,
+          "end_line": 451
+        },
+        {
+          "path": "test_requests.py",
+          "start_line": 535,
+          "end_line": 539
+        },
+        {
+          "path": "requests/utils.py",
+          "start_line": 676,
+          "end_line": 692
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0.5,
+        "recallAt5": 0.5,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 0.5,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": 0
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6.1-terra",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 276407,
+          "cachedTokens": 0,
+          "outputTokens": 175,
+          "reasoningTokens": 0
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "psf__requests-2617:understand",
+      "task": "psf__requests-2617",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "code-understanding",
+      "latencyMs": 15227.088600000003,
+      "complete": true,
+      "returnedChars": 194,
+      "ranges": [
+        {
+          "path": "requests/models.py",
+          "start_line": 328,
+          "end_line": 332
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6.1-terra",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 275707,
+          "cachedTokens": 0,
+          "outputTokens": 28,
+          "reasoningTokens": 0
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "pallets__flask-4074:change",
+      "task": "pallets__flask-4074",
+      "repository": "pallets/flask",
+      "split": "heldout",
+      "category": "change-localization",
+      "latencyMs": 37178.87990099998,
+      "complete": true,
+      "returnedChars": 11659,
+      "ranges": [
+        {
+          "path": "src/flask/blueprints.py",
+          "start_line": 259,
+          "end_line": 287
+        },
+        {
+          "path": "src/flask/blueprints.py",
+          "start_line": 77,
+          "end_line": 105
+        },
+        {
+          "path": "src/flask/helpers.py",
+          "start_line": 267,
+          "end_line": 324
+        },
+        {
+          "path": "src/flask/wrappers.py",
+          "start_line": 60,
+          "end_line": 78
+        },
+        {
+          "path": "src/flask/blueprints.py",
+          "start_line": 363,
+          "end_line": 388
+        },
+        {
+          "path": "src/flask/app.py",
+          "start_line": 1032,
+          "end_line": 1089
+        },
+        {
+          "path": "src/flask/blueprints.py",
+          "start_line": 296,
+          "end_line": 329
+        },
+        {
+          "path": "tests/test_blueprints.py",
+          "start_line": 131,
+          "end_line": 148
+        },
+        {
+          "path": "tests/test_blueprints.py",
+          "start_line": 151,
+          "end_line": 173
+        },
+        {
+          "path": "src/flask/app.py",
+          "start_line": 1783,
+          "end_line": 1795
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0.05263157894736842,
+        "recallAt5": 0.2631578947368421,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 0.42105263157894735,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": 0.3333333333333333
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6.1-terra",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 181675,
+          "cachedTokens": 0,
+          "outputTokens": 206,
+          "reasoningTokens": 0
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "pallets__flask-4074:understand",
+      "task": "pallets__flask-4074",
+      "repository": "pallets/flask",
+      "split": "heldout",
+      "category": "code-understanding",
+      "latencyMs": 56838.944212,
+      "complete": true,
+      "returnedChars": 3755,
+      "ranges": [
+        {
+          "path": "src/flask/app.py",
+          "start_line": 734,
+          "end_line": 759
+        },
+        {
+          "path": "src/flask/templating.py",
+          "start_line": 18,
+          "end_line": 30
+        },
+        {
+          "path": "src/flask/templating.py",
+          "start_line": 133,
+          "end_line": 165
+        },
+        {
+          "path": "src/flask/scaffold.py",
+          "start_line": 608,
+          "end_line": 614
+        },
+        {
+          "path": "tests/test_templating.py",
+          "start_line": 10,
+          "end_line": 29
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6.1-terra",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 181528,
+          "cachedTokens": 0,
+          "outputTokens": 108,
+          "reasoningTokens": 0
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "pallets__flask-4544:change",
+      "task": "pallets__flask-4544",
+      "repository": "pallets/flask",
+      "split": "heldout",
+      "category": "change-localization",
+      "latencyMs": 9314.762954000005,
+      "complete": true,
+      "returnedChars": 5602,
+      "ranges": [
+        {
+          "path": "src/flask/cli.py",
+          "start_line": 719,
+          "end_line": 747
+        },
+        {
+          "path": "src/flask/cli.py",
+          "start_line": 762,
+          "end_line": 774
+        },
+        {
+          "path": "src/flask/cli.py",
+          "start_line": 675,
+          "end_line": 716
+        },
+        {
+          "path": "tests/test_cli.py",
+          "start_line": 547,
+          "end_line": 557
+        },
+        {
+          "path": "tests/test_cli.py",
+          "start_line": 560,
+          "end_line": 596
+        },
+        {
+          "path": "src/flask/cli.py",
+          "start_line": 817,
+          "end_line": 861
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 1,
+        "reciprocalRank": 0.5,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 2,
+        "complementaryCoverage": 1
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6.1-terra",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 186785,
+          "cachedTokens": 0,
+          "outputTokens": 122,
+          "reasoningTokens": 0
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "pallets__flask-4992:change",
+      "task": "pallets__flask-4992",
+      "repository": "pallets/flask",
+      "split": "heldout",
+      "category": "change-localization",
+      "latencyMs": 55606.38879799997,
+      "complete": true,
+      "returnedChars": 2698,
+      "ranges": [
+        {
+          "path": "src/flask/config.py",
+          "start_line": 232,
+          "end_line": 273
+        },
+        {
+          "path": "tests/test_config.py",
+          "start_line": 33,
+          "end_line": 37
+        },
+        {
+          "path": "tests/test_config.py",
+          "start_line": 178,
+          "end_line": 187
+        },
+        {
+          "path": "src/flask/config.py",
+          "start_line": 275,
+          "end_line": 292
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": 0.3333333333333333
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6.1-terra",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 195169,
+          "cachedTokens": 0,
+          "outputTokens": 82,
+          "reasoningTokens": 0
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "pallets__flask-4992:understand",
+      "task": "pallets__flask-4992",
+      "repository": "pallets/flask",
+      "split": "heldout",
+      "category": "code-understanding",
+      "latencyMs": 35128.073473,
+      "complete": true,
+      "returnedChars": 2698,
+      "ranges": [
+        {
+          "path": "src/flask/config.py",
+          "start_line": 232,
+          "end_line": 273
+        },
+        {
+          "path": "tests/test_config.py",
+          "start_line": 33,
+          "end_line": 37
+        },
+        {
+          "path": "tests/test_config.py",
+          "start_line": 178,
+          "end_line": 187
+        },
+        {
+          "path": "src/flask/config.py",
+          "start_line": 275,
+          "end_line": 292
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6.1-terra",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 194909,
+          "cachedTokens": 0,
+          "outputTokens": 82,
+          "reasoningTokens": 0
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "pallets__flask-4045:change",
+      "task": "pallets__flask-4045",
+      "repository": "pallets/flask",
+      "split": "heldout",
+      "category": "change-localization",
+      "latencyMs": 57806.650357000006,
+      "complete": true,
+      "returnedChars": 5320,
+      "ranges": [
+        {
+          "path": "src/flask/blueprints.py",
+          "start_line": 171,
+          "end_line": 201
+        },
+        {
+          "path": "src/flask/blueprints.py",
+          "start_line": 353,
+          "end_line": 369
+        },
+        {
+          "path": "tests/test_blueprints.py",
+          "start_line": 256,
+          "end_line": 277
+        },
+        {
+          "path": "tests/test_basic.py",
+          "start_line": 1633,
+          "end_line": 1654
+        },
+        {
+          "path": "tests/test_blueprints.py",
+          "start_line": 343,
+          "end_line": 392
+        },
+        {
+          "path": "src/flask/blueprints.py",
+          "start_line": 342,
+          "end_line": 351
+        },
+        {
+          "path": "src/flask/wrappers.py",
+          "start_line": 72,
+          "end_line": 78
+        },
+        {
+          "path": "src/flask/app.py",
+          "start_line": 2072,
+          "end_line": 2076
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0.5,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": 0.8333333333333334
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6.1-terra",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 180778,
+          "cachedTokens": 0,
+          "outputTokens": 167,
+          "reasoningTokens": 0
+        }
+      }
+    }
+  ]
+}

@@ -35,6 +35,37 @@ answer stays within a token budget you set. Every eligible UTF-8 text file is sc
 configuration and tests included. Nothing is sent until you have authorized the
 repository and had the chance to check what would leave your computer.
 
+## How it compares
+
+We asked the same 55 real questions about six open-source repositories (21 in
+Python, 34 in Go and Rust) to JevGrep and to the alternatives an agent could use
+instead. R@5 is the share of questions where the expected code is in the first five
+results.
+
+| Rank | Tool | R@5 Python | R@5 Go/Rust | Cost per question | Time per question |
+|---:|---|---:|---:|---:|---:|
+| 1 | `gpt-6.1-terra` given the whole repository | 0.894 | 0.737 | $0.12–0.23 | 9–15 s |
+| 2 | **JevGrep** | 0.851 | 0.687 | **$0.005** | **4 s** |
+| 3 | `gpt-6-luna` given the whole repository | 0.803 | 0.688 | $0.01–0.02 | 3–4 s |
+| 4 | CodeGraph | 0.491 | 0.339 | free, needs an index | 1 s |
+| 5 | BM25 | 0.429 | 0.338 | free | < 0.1 s |
+| 6 | ripgrep | 0.325 | 0.244 | free | 0.3 s |
+
+Terra finds a little more, but it costs 25 to 50 times as much, takes three times as
+long and only works while the whole repository fits in its context window. JevGrep
+gives most of that quality at a fraction of the price on repositories of any size.
+
+We also tried swapping Jev for other judges inside JevGrep, on 65 searches. The
+OpenAI models found slightly more, but they returned code for questions that have
+no answer in the repository; Jev was the only judge that stayed silent every time
+and found the counterevidence for every false premise, at 2 to 20 times lower cost.
+
+The methodology, every number and the scripts to rerun them are in
+[models alone](benchmarks/baselines/2026-11-04-models-alone.md),
+[CodeGraph](benchmarks/baselines/2026-11-04-codegraph-comparison.md) and
+[judges](benchmarks/baselines/2026-11-04-judge-comparison.md). These are single
+runs on a modest question set, so treat small gaps as noise.
+
 ## Getting started
 
 You need Node.js 24 and an API key from one of the supported providers:

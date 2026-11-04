@@ -1,0 +1,2134 @@
+{
+  "rows": [
+    {
+      "arm": "openai-solo",
+      "id": "caddyserver__caddy-6288:change",
+      "task": "caddyserver__caddy-6288",
+      "repository": "caddyserver/caddy",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 9633.254436,
+      "complete": true,
+      "returnedChars": 7888,
+      "ranges": [
+        {
+          "path": "caddyconfig/httpcaddyfile/httptype.go",
+          "start_line": 1386,
+          "end_line": 1447
+        },
+        {
+          "path": "caddyconfig/caddyfile/lexer.go",
+          "start_line": 180,
+          "end_line": 234
+        },
+        {
+          "path": "caddyconfig/caddyfile/lexer.go",
+          "start_line": 343,
+          "end_line": 384
+        },
+        {
+          "path": "caddyconfig/caddyfile/dispenser.go",
+          "start_line": 82,
+          "end_line": 118
+        },
+        {
+          "path": "caddyconfig/caddyfile/parse.go",
+          "start_line": 563,
+          "end_line": 614
+        },
+        {
+          "path": "caddyconfig/httpcaddyfile/httptype.go",
+          "start_line": 97,
+          "end_line": 116
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 0.5,
+        "reciprocalRank": 0.3333333333333333,
+        "evidenceCoverage": 0.5,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 3,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6.1-terra",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 164583,
+          "cachedTokens": 0,
+          "outputTokens": 150,
+          "reasoningTokens": 0
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "caddyserver__caddy-6051:change",
+      "task": "caddyserver__caddy-6051",
+      "repository": "caddyserver/caddy",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 82262.226985,
+      "complete": true,
+      "returnedChars": 2419,
+      "ranges": [
+        {
+          "path": "caddyconfig/caddyfile/lexer.go",
+          "start_line": 297,
+          "end_line": 336
+        },
+        {
+          "path": "caddyconfig/caddyfile/lexer.go",
+          "start_line": 180,
+          "end_line": 204
+        },
+        {
+          "path": "caddyconfig/caddyfile/formatter.go",
+          "start_line": 118,
+          "end_line": 124
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6.1-terra",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 161557,
+          "cachedTokens": 0,
+          "outputTokens": 78,
+          "reasoningTokens": 0
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "caddyserver__caddy-6051:understand",
+      "task": "caddyserver__caddy-6051",
+      "repository": "caddyserver/caddy",
+      "split": "dev",
+      "category": "code-understanding",
+      "latencyMs": 81494.418604,
+      "complete": true,
+      "returnedChars": 1659,
+      "ranges": [
+        {
+          "path": "caddyconfig/caddyfile/lexer.go",
+          "start_line": 297,
+          "end_line": 336
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6.1-terra",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 161454,
+          "cachedTokens": 0,
+          "outputTokens": 34,
+          "reasoningTokens": 0
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "caddyserver__caddy-4774:change",
+      "task": "caddyserver__caddy-4774",
+      "repository": "caddyserver/caddy",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 3758.342267,
+      "complete": true,
+      "returnedChars": 8373,
+      "ranges": [
+        {
+          "path": "caddyconfig/httpcaddyfile/options.go",
+          "start_line": 28,
+          "end_line": 55
+        },
+        {
+          "path": "caddyconfig/httpcaddyfile/options.go",
+          "start_line": 270,
+          "end_line": 280
+        },
+        {
+          "path": "caddyconfig/httpcaddyfile/addresses.go",
+          "start_line": 177,
+          "end_line": 241
+        },
+        {
+          "path": "caddyconfig/httpcaddyfile/httptype.go",
+          "start_line": 320,
+          "end_line": 376
+        },
+        {
+          "path": "caddyconfig/httpcaddyfile/builtins.go",
+          "start_line": 53,
+          "end_line": 63
+        },
+        {
+          "path": "caddyconfig/caddyfile/dispenser.go",
+          "start_line": 303,
+          "end_line": 313
+        },
+        {
+          "path": "caddyconfig/httpcaddyfile/addresses.go",
+          "start_line": 78,
+          "end_line": 132
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0.14285714285714285,
+        "recallAt5": 0.5714285714285714,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 0.8571428571428571,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": 0
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6.1-terra",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 132334,
+          "cachedTokens": 0,
+          "outputTokens": 172,
+          "reasoningTokens": 0
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "caddyserver__caddy-4774:understand",
+      "task": "caddyserver__caddy-4774",
+      "repository": "caddyserver/caddy",
+      "split": "dev",
+      "category": "code-understanding",
+      "latencyMs": 54936.26989400001,
+      "complete": true,
+      "returnedChars": 2172,
+      "ranges": [
+        {
+          "path": "caddyconfig/httpcaddyfile/addresses.go",
+          "start_line": 78,
+          "end_line": 132
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6.1-terra",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 131936,
+          "cachedTokens": 0,
+          "outputTokens": 35,
+          "reasoningTokens": 0
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "caddyserver__caddy-5761:change",
+      "task": "caddyserver__caddy-5761",
+      "repository": "caddyserver/caddy",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 3515.503944,
+      "complete": true,
+      "returnedChars": 6502,
+      "ranges": [
+        {
+          "path": "caddyconfig/caddyfile/lexer.go",
+          "start_line": 97,
+          "end_line": 164
+        },
+        {
+          "path": "caddyconfig/caddyfile/lexer.go",
+          "start_line": 166,
+          "end_line": 190
+        },
+        {
+          "path": "caddyconfig/caddyfile/lexer.go",
+          "start_line": 283,
+          "end_line": 322
+        },
+        {
+          "path": "caddyconfig/caddyfile/lexer.go",
+          "start_line": 51,
+          "end_line": 74
+        },
+        {
+          "path": "caddyconfig/caddyfile/parse.go",
+          "start_line": 30,
+          "end_line": 65
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6.1-terra",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 156042,
+          "cachedTokens": 0,
+          "outputTokens": 122,
+          "reasoningTokens": 0
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "caddyserver__caddy-5761:understand",
+      "task": "caddyserver__caddy-5761",
+      "repository": "caddyserver/caddy",
+      "split": "dev",
+      "category": "code-understanding",
+      "latencyMs": 19397.541499,
+      "complete": true,
+      "returnedChars": 1331,
+      "ranges": [
+        {
+          "path": "caddyconfig/caddyfile/lexer.go",
+          "start_line": 97,
+          "end_line": 137
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 0,
+        "reciprocalRank": 0,
+        "evidenceCoverage": 0,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6.1-terra",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 155979,
+          "cachedTokens": 0,
+          "outputTokens": 34,
+          "reasoningTokens": 0
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "caddyserver__caddy-5404:change",
+      "task": "caddyserver__caddy-5404",
+      "repository": "caddyserver/caddy",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 10826.313928000003,
+      "complete": true,
+      "returnedChars": 3861,
+      "ranges": [
+        {
+          "path": "caddyconfig/caddyfile/lexer.go",
+          "start_line": 283,
+          "end_line": 315
+        },
+        {
+          "path": "caddyconfig/caddyfile/lexer.go",
+          "start_line": 139,
+          "end_line": 190
+        },
+        {
+          "path": "caddyconfig/caddyfile/lexer_fuzz.go",
+          "start_line": 19,
+          "end_line": 28
+        },
+        {
+          "path": "caddyconfig/caddyfile/lexer.go",
+          "start_line": 51,
+          "end_line": 74
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0.6666666666666666,
+        "recallAt5": 0.6666666666666666,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 0.6666666666666666,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6.1-terra",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 150812,
+          "cachedTokens": 0,
+          "outputTokens": 102,
+          "reasoningTokens": 0
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "caddyserver__caddy-5404:understand",
+      "task": "caddyserver__caddy-5404",
+      "repository": "caddyserver/caddy",
+      "split": "dev",
+      "category": "code-understanding",
+      "latencyMs": 8308.426020000014,
+      "complete": true,
+      "returnedChars": 1511,
+      "ranges": [
+        {
+          "path": "caddyconfig/caddyfile/lexer.go",
+          "start_line": 283,
+          "end_line": 315
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6.1-terra",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 149631,
+          "cachedTokens": 0,
+          "outputTokens": 34,
+          "reasoningTokens": 0
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "caddyserver__caddy-5870:change",
+      "task": "caddyserver__caddy-5870",
+      "repository": "caddyserver/caddy",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 39467.092680999995,
+      "complete": true,
+      "returnedChars": 7307,
+      "ranges": [
+        {
+          "path": "admin.go",
+          "start_line": 1174,
+          "end_line": 1220
+        },
+        {
+          "path": "admin.go",
+          "start_line": 1120,
+          "end_line": 1172
+        },
+        {
+          "path": "admin.go",
+          "start_line": 979,
+          "end_line": 1023
+        },
+        {
+          "path": "caddy.go",
+          "start_line": 150,
+          "end_line": 200
+        },
+        {
+          "path": "admin.go",
+          "start_line": 840,
+          "end_line": 874
+        },
+        {
+          "path": "caddy.go",
+          "start_line": 202,
+          "end_line": 215
+        },
+        {
+          "path": "admin.go",
+          "start_line": 1222,
+          "end_line": 1240
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6.1-terra",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 157376,
+          "cachedTokens": 0,
+          "outputTokens": 126,
+          "reasoningTokens": 0
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "caddyserver__caddy-5870:understand",
+      "task": "caddyserver__caddy-5870",
+      "repository": "caddyserver/caddy",
+      "split": "dev",
+      "category": "code-understanding",
+      "latencyMs": 19394.476188,
+      "complete": true,
+      "returnedChars": 4952,
+      "ranges": [
+        {
+          "path": "admin.go",
+          "start_line": 1073,
+          "end_line": 1118
+        },
+        {
+          "path": "admin.go",
+          "start_line": 1120,
+          "end_line": 1172
+        },
+        {
+          "path": "admin.go",
+          "start_line": 1174,
+          "end_line": 1240
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 0,
+        "reciprocalRank": 0,
+        "evidenceCoverage": 0,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6.1-terra",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 156916,
+          "cachedTokens": 0,
+          "outputTokens": 63,
+          "reasoningTokens": 0
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "caddyserver__caddy-5626:change",
+      "task": "caddyserver__caddy-5626",
+      "repository": "caddyserver/caddy",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 14346.930368000001,
+      "complete": true,
+      "returnedChars": 11614,
+      "ranges": [
+        {
+          "path": "caddyconfig/caddyfile/parse.go",
+          "start_line": 561,
+          "end_line": 613
+        },
+        {
+          "path": "caddyconfig/caddyfile/parse.go",
+          "start_line": 443,
+          "end_line": 515
+        },
+        {
+          "path": "caddyconfig/caddyfile/parse.go",
+          "start_line": 337,
+          "end_line": 373
+        },
+        {
+          "path": "caddyconfig/caddyfile/parse.go",
+          "start_line": 303,
+          "end_line": 335
+        },
+        {
+          "path": "caddyconfig/caddyfile/parse.go",
+          "start_line": 180,
+          "end_line": 206
+        },
+        {
+          "path": "caddyconfig/caddyfile/dispenser.go",
+          "start_line": 454,
+          "end_line": 478
+        },
+        {
+          "path": "caddyconfig/httpcaddyfile/directives.go",
+          "start_line": 297,
+          "end_line": 364
+        },
+        {
+          "path": "caddyconfig/caddyfile/importargs.go",
+          "start_line": 88,
+          "end_line": 137
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 0.2,
+        "reciprocalRank": 0.5,
+        "evidenceCoverage": 0.4,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 2,
+        "complementaryCoverage": 0
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6.1-terra",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 155079,
+          "cachedTokens": 0,
+          "outputTokens": 189,
+          "reasoningTokens": 0
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "caddyserver__caddy-5626:understand",
+      "task": "caddyserver__caddy-5626",
+      "repository": "caddyserver/caddy",
+      "split": "dev",
+      "category": "code-understanding",
+      "latencyMs": 5878.614134000003,
+      "complete": true,
+      "returnedChars": 421,
+      "ranges": [
+        {
+          "path": "caddyconfig/caddyfile/dispenser.go",
+          "start_line": 97,
+          "end_line": 114
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6.1-terra",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 154888,
+          "cachedTokens": 0,
+          "outputTokens": 34,
+          "reasoningTokens": 0
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "caddyserver__caddy-5995:change",
+      "task": "caddyserver__caddy-5995",
+      "repository": "caddyserver/caddy",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 37176.852203999995,
+      "complete": true,
+      "returnedChars": 4380,
+      "ranges": [
+        {
+          "path": "replacer.go",
+          "start_line": 132,
+          "end_line": 188
+        },
+        {
+          "path": "caddyconfig/caddyfile/lexer.go",
+          "start_line": 206,
+          "end_line": 234
+        },
+        {
+          "path": "caddyconfig/httpcaddyfile/shorthands.go",
+          "start_line": 81,
+          "end_line": 93
+        },
+        {
+          "path": "caddyconfig/httpcaddyfile/httptype.go",
+          "start_line": 94,
+          "end_line": 97
+        },
+        {
+          "path": "caddyconfig/caddyfile/dispenser.go",
+          "start_line": 196,
+          "end_line": 203
+        },
+        {
+          "path": "caddyconfig/caddyfile/adapter.go",
+          "start_line": 31,
+          "end_line": 64
+        },
+        {
+          "path": "replacer_fuzz.go",
+          "start_line": 19,
+          "end_line": 25
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6.1-terra",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 160514,
+          "cachedTokens": 0,
+          "outputTokens": 160,
+          "reasoningTokens": 0
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "caddyserver__caddy-6411:change",
+      "task": "caddyserver__caddy-6411",
+      "repository": "caddyserver/caddy",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 14698.491937999996,
+      "complete": true,
+      "returnedChars": 4225,
+      "ranges": [
+        {
+          "path": "replacer.go",
+          "start_line": 337,
+          "end_line": 358
+        },
+        {
+          "path": "replacer.go",
+          "start_line": 407,
+          "end_line": 423
+        },
+        {
+          "path": "replacer.go",
+          "start_line": 32,
+          "end_line": 44
+        },
+        {
+          "path": "caddyconfig/httpcaddyfile/options.go",
+          "start_line": 204,
+          "end_line": 221
+        },
+        {
+          "path": "caddyconfig/httpcaddyfile/tlsapp.go",
+          "start_line": 443,
+          "end_line": 477
+        },
+        {
+          "path": "replacer.go",
+          "start_line": 225,
+          "end_line": 263
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6.1-terra",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 166502,
+          "cachedTokens": 0,
+          "outputTokens": 122,
+          "reasoningTokens": 0
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "gin-gonic__gin-2755:change",
+      "task": "gin-gonic__gin-2755",
+      "repository": "gin-gonic/gin",
+      "split": "heldout",
+      "category": "change-localization",
+      "latencyMs": 3037.6914120000147,
+      "complete": true,
+      "returnedChars": 3953,
+      "ranges": [
+        {
+          "path": "tree.go",
+          "start_line": 450,
+          "end_line": 479
+        },
+        {
+          "path": "tree.go",
+          "start_line": 506,
+          "end_line": 529
+        },
+        {
+          "path": "test_helpers.go",
+          "start_line": 9,
+          "end_line": 16
+        },
+        {
+          "path": "gin.go",
+          "start_line": 202,
+          "end_line": 205
+        },
+        {
+          "path": "gin.go",
+          "start_line": 291,
+          "end_line": 310
+        },
+        {
+          "path": "gin.go",
+          "start_line": 499,
+          "end_line": 508
+        },
+        {
+          "path": "gin.go",
+          "start_line": 510,
+          "end_line": 541
+        },
+        {
+          "path": "context.go",
+          "start_line": 88,
+          "end_line": 101
+        },
+        {
+          "path": "gin.go",
+          "start_line": 487,
+          "end_line": 497
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6.1-terra",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 61479,
+          "cachedTokens": 0,
+          "outputTokens": 148,
+          "reasoningTokens": 0
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "gin-gonic__gin-2755:understand",
+      "task": "gin-gonic__gin-2755",
+      "repository": "gin-gonic/gin",
+      "split": "heldout",
+      "category": "code-understanding",
+      "latencyMs": 2294.793222999986,
+      "complete": true,
+      "returnedChars": 1159,
+      "ranges": [
+        {
+          "path": "tree.go",
+          "start_line": 402,
+          "end_line": 439
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 0,
+        "reciprocalRank": 0,
+        "evidenceCoverage": 0,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6.1-terra",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 60919,
+          "cachedTokens": 0,
+          "outputTokens": 27,
+          "reasoningTokens": 0
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "gin-gonic__gin-4003:change",
+      "task": "gin-gonic__gin-4003",
+      "repository": "gin-gonic/gin",
+      "split": "heldout",
+      "category": "change-localization",
+      "latencyMs": 7984.169384000008,
+      "complete": true,
+      "returnedChars": 2826,
+      "ranges": [
+        {
+          "path": "gin.go",
+          "start_line": 690,
+          "end_line": 712
+        },
+        {
+          "path": "gin.go",
+          "start_line": 185,
+          "end_line": 223
+        },
+        {
+          "path": "gin.go",
+          "start_line": 623,
+          "end_line": 633
+        },
+        {
+          "path": "gin.go",
+          "start_line": 714,
+          "end_line": 731
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6.1-terra",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 68768,
+          "cachedTokens": 0,
+          "outputTokens": 72,
+          "reasoningTokens": 0
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "gin-gonic__gin-3741:change",
+      "task": "gin-gonic__gin-3741",
+      "repository": "gin-gonic/gin",
+      "split": "heldout",
+      "category": "change-localization",
+      "latencyMs": 2258.5866490000044,
+      "complete": true,
+      "returnedChars": 2338,
+      "ranges": [
+        {
+          "path": "logger.go",
+          "start_line": 81,
+          "end_line": 95
+        },
+        {
+          "path": "logger.go",
+          "start_line": 131,
+          "end_line": 152
+        },
+        {
+          "path": "logger.go",
+          "start_line": 233,
+          "end_line": 269
+        },
+        {
+          "path": "response_writer.go",
+          "start_line": 64,
+          "end_line": 79
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6.1-terra",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 65687,
+          "cachedTokens": 0,
+          "outputTokens": 73,
+          "reasoningTokens": 0
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "gin-gonic__gin-3741:understand",
+      "task": "gin-gonic__gin-3741",
+      "repository": "gin-gonic/gin",
+      "split": "heldout",
+      "category": "code-understanding",
+      "latencyMs": 1648.5016630000027,
+      "complete": true,
+      "returnedChars": 475,
+      "ranges": [
+        {
+          "path": "logger.go",
+          "start_line": 81,
+          "end_line": 95
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6.1-terra",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 65582,
+          "cachedTokens": 0,
+          "outputTokens": 27,
+          "reasoningTokens": 0
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "gin-gonic__gin-2121:change",
+      "task": "gin-gonic__gin-2121",
+      "repository": "gin-gonic/gin",
+      "split": "heldout",
+      "category": "change-localization",
+      "latencyMs": 2897.273270000005,
+      "complete": true,
+      "returnedChars": 2021,
+      "ranges": [
+        {
+          "path": "render/reader.go",
+          "start_line": 21,
+          "end_line": 30
+        },
+        {
+          "path": "context.go",
+          "start_line": 912,
+          "end_line": 920
+        },
+        {
+          "path": "render/reader.go",
+          "start_line": 37,
+          "end_line": 45
+        },
+        {
+          "path": "context.go",
+          "start_line": 806,
+          "end_line": 819
+        },
+        {
+          "path": "recovery.go",
+          "start_line": 29,
+          "end_line": 35
+        },
+        {
+          "path": "recovery.go",
+          "start_line": 74,
+          "end_line": 84
+        },
+        {
+          "path": "render/render.go",
+          "start_line": 36,
+          "end_line": 41
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6.1-terra",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 54118,
+          "cachedTokens": 0,
+          "outputTokens": 124,
+          "reasoningTokens": 0
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "gin-gonic__gin-2121:understand",
+      "task": "gin-gonic__gin-2121",
+      "repository": "gin-gonic/gin",
+      "split": "heldout",
+      "category": "code-understanding",
+      "latencyMs": 8116.109726999974,
+      "complete": true,
+      "returnedChars": 710,
+      "ranges": [
+        {
+          "path": "render/reader.go",
+          "start_line": 21,
+          "end_line": 30
+        },
+        {
+          "path": "render/reader.go",
+          "start_line": 32,
+          "end_line": 45
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6.1-terra",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 53565,
+          "cachedTokens": 0,
+          "outputTokens": 46,
+          "reasoningTokens": 0
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "gin-gonic__gin-3820:change",
+      "task": "gin-gonic__gin-3820",
+      "repository": "gin-gonic/gin",
+      "split": "heldout",
+      "category": "change-localization",
+      "latencyMs": 3452.232802000013,
+      "complete": true,
+      "returnedChars": 7180,
+      "ranges": [
+        {
+          "path": "binding/multipart_form_mapping.go",
+          "start_line": 26,
+          "end_line": 33
+        },
+        {
+          "path": "binding/form_mapping.go",
+          "start_line": 81,
+          "end_line": 133
+        },
+        {
+          "path": "binding/form_mapping.go",
+          "start_line": 167,
+          "end_line": 198
+        },
+        {
+          "path": "binding/form_mapping.go",
+          "start_line": 200,
+          "end_line": 251
+        },
+        {
+          "path": "binding/form.go",
+          "start_line": 49,
+          "end_line": 62
+        },
+        {
+          "path": "binding/default_validator.go",
+          "start_line": 48,
+          "end_line": 75
+        },
+        {
+          "path": "context.go",
+          "start_line": 685,
+          "end_line": 697
+        },
+        {
+          "path": "binding/binding.go",
+          "start_line": 89,
+          "end_line": 114
+        },
+        {
+          "path": "binding/form_mapping.go",
+          "start_line": 140,
+          "end_line": 165
+        },
+        {
+          "path": "binding/binding_nomsgpack.go",
+          "start_line": 85,
+          "end_line": 108
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 1,
+        "reciprocalRank": 0.25,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 4,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6.1-terra",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 66681,
+          "cachedTokens": 0,
+          "outputTokens": 184,
+          "reasoningTokens": 0
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "gin-gonic__gin-3227:change",
+      "task": "gin-gonic__gin-3227",
+      "repository": "gin-gonic/gin",
+      "split": "heldout",
+      "category": "change-localization",
+      "latencyMs": 19939.52769400002,
+      "complete": true,
+      "returnedChars": 6744,
+      "ranges": [
+        {
+          "path": "gin.go",
+          "start_line": 601,
+          "end_line": 630
+        },
+        {
+          "path": "gin.go",
+          "start_line": 680,
+          "end_line": 690
+        },
+        {
+          "path": "gin.go",
+          "start_line": 83,
+          "end_line": 99
+        },
+        {
+          "path": "tree.go",
+          "start_line": 648,
+          "end_line": 670
+        },
+        {
+          "path": "tree.go",
+          "start_line": 688,
+          "end_line": 720
+        },
+        {
+          "path": "tree.go",
+          "start_line": 799,
+          "end_line": 804
+        },
+        {
+          "path": "tree.go",
+          "start_line": 819,
+          "end_line": 847
+        },
+        {
+          "path": "tree.go",
+          "start_line": 859,
+          "end_line": 870
+        },
+        {
+          "path": "gin.go",
+          "start_line": 171,
+          "end_line": 209
+        },
+        {
+          "path": "gin.go",
+          "start_line": 692,
+          "end_line": 704
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 0,
+        "reciprocalRank": 0,
+        "evidenceCoverage": 0,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": null,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6.1-terra",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 65612,
+          "cachedTokens": 0,
+          "outputTokens": 162,
+          "reasoningTokens": 0
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "sharkdp__bat-562:change",
+      "task": "sharkdp__bat-562",
+      "repository": "sharkdp/bat",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 2245.871608000016,
+      "complete": true,
+      "returnedChars": 7335,
+      "ranges": [
+        {
+          "path": "src/clap_app.rs",
+          "start_line": 4,
+          "end_line": 40
+        },
+        {
+          "path": "src/clap_app.rs",
+          "start_line": 378,
+          "end_line": 424
+        },
+        {
+          "path": "src/main.rs",
+          "start_line": 196,
+          "end_line": 242
+        },
+        {
+          "path": "src/app.rs",
+          "start_line": 111,
+          "end_line": 136
+        },
+        {
+          "path": "src/main.rs",
+          "start_line": 85,
+          "end_line": 99
+        },
+        {
+          "path": "src/app.rs",
+          "start_line": 280,
+          "end_line": 295
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6.1-terra",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 27595,
+          "cachedTokens": 0,
+          "outputTokens": 112,
+          "reasoningTokens": 0
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "sharkdp__bat-2650:change",
+      "task": "sharkdp__bat-2650",
+      "repository": "sharkdp/bat",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 9150.951442999998,
+      "complete": true,
+      "returnedChars": 10332,
+      "ranges": [
+        {
+          "path": "src/syntax_mapping.rs",
+          "start_line": 212,
+          "end_line": 245
+        },
+        {
+          "path": "src/assets.rs",
+          "start_line": 179,
+          "end_line": 236
+        },
+        {
+          "path": "src/assets.rs",
+          "start_line": 257,
+          "end_line": 289
+        },
+        {
+          "path": "src/assets.rs",
+          "start_line": 301,
+          "end_line": 339
+        },
+        {
+          "path": "src/assets.rs",
+          "start_line": 651,
+          "end_line": 669
+        },
+        {
+          "path": "src/assets.rs",
+          "start_line": 604,
+          "end_line": 613
+        },
+        {
+          "path": "src/syntax_mapping.rs",
+          "start_line": 275,
+          "end_line": 289
+        },
+        {
+          "path": "src/bin/bat/app.rs",
+          "start_line": 120,
+          "end_line": 138
+        },
+        {
+          "path": "src/input.rs",
+          "start_line": 113,
+          "end_line": 125
+        },
+        {
+          "path": "src/printer.rs",
+          "start_line": 230,
+          "end_line": 248
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6.1-terra",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 73741,
+          "cachedTokens": 0,
+          "outputTokens": 180,
+          "reasoningTokens": 0
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "sharkdp__bat-2201:change",
+      "task": "sharkdp__bat-2201",
+      "repository": "sharkdp/bat",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 8449.406227999978,
+      "complete": true,
+      "returnedChars": 5479,
+      "ranges": [
+        {
+          "path": "src/bin/bat/app.rs",
+          "start_line": 79,
+          "end_line": 105
+        },
+        {
+          "path": "src/bin/bat/app.rs",
+          "start_line": 52,
+          "end_line": 77
+        },
+        {
+          "path": "src/bin/bat/clap_app.rs",
+          "start_line": 293,
+          "end_line": 318
+        },
+        {
+          "path": "src/bin/bat/clap_app.rs",
+          "start_line": 69,
+          "end_line": 82
+        },
+        {
+          "path": "src/bin/bat/config.rs",
+          "start_line": 89,
+          "end_line": 115
+        },
+        {
+          "path": "src/output.rs",
+          "start_line": 27,
+          "end_line": 42
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 1,
+        "reciprocalRank": 0.3333333333333333,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 3,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6.1-terra",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 65690,
+          "cachedTokens": 0,
+          "outputTokens": 127,
+          "reasoningTokens": 0
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "sharkdp__bat-2393:change",
+      "task": "sharkdp__bat-2393",
+      "repository": "sharkdp/bat",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 34959.600670000014,
+      "complete": true,
+      "returnedChars": 2768,
+      "ranges": [
+        {
+          "path": "src/bin/bat/main.rs",
+          "start_line": 63,
+          "end_line": 74
+        },
+        {
+          "path": "src/bin/bat/assets.rs",
+          "start_line": 21,
+          "end_line": 25
+        },
+        {
+          "path": "src/bin/bat/assets.rs",
+          "start_line": 53,
+          "end_line": 65
+        },
+        {
+          "path": "src/bin/bat/clap_app.rs",
+          "start_line": 553,
+          "end_line": 580
+        },
+        {
+          "path": "src/bin/bat/main.rs",
+          "start_line": 43,
+          "end_line": 61
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0.08333333333333333,
+        "recallAt5": 0.25,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 0.25,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6.1-terra",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 66046,
+          "cachedTokens": 0,
+          "outputTokens": 109,
+          "reasoningTokens": 0
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "sharkdp__bat-3108:change",
+      "task": "sharkdp__bat-3108",
+      "repository": "sharkdp/bat",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 8976.055793999985,
+      "complete": true,
+      "returnedChars": 6968,
+      "ranges": [
+        {
+          "path": "src/bin/bat/clap_app.rs",
+          "start_line": 96,
+          "end_line": 110
+        },
+        {
+          "path": "src/bin/bat/clap_app.rs",
+          "start_line": 320,
+          "end_line": 348
+        },
+        {
+          "path": "src/bin/bat/app.rs",
+          "start_line": 98,
+          "end_line": 125
+        },
+        {
+          "path": "src/bin/bat/app.rs",
+          "start_line": 374,
+          "end_line": 399
+        },
+        {
+          "path": "src/bin/bat/app.rs",
+          "start_line": 58,
+          "end_line": 96
+        },
+        {
+          "path": "src/controller.rs",
+          "start_line": 54,
+          "end_line": 77
+        },
+        {
+          "path": "src/output.rs",
+          "start_line": 27,
+          "end_line": 42
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0.25,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6.1-terra",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 85439,
+          "cachedTokens": 0,
+          "outputTokens": 143,
+          "reasoningTokens": 0
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "sharkdp__bat-2835:change",
+      "task": "sharkdp__bat-2835",
+      "repository": "sharkdp/bat",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 3009.8280620000005,
+      "complete": true,
+      "returnedChars": 13329,
+      "ranges": [
+        {
+          "path": "src/printer.rs",
+          "start_line": 315,
+          "end_line": 415
+        },
+        {
+          "path": "src/printer.rs",
+          "start_line": 290,
+          "end_line": 303
+        },
+        {
+          "path": "src/printer.rs",
+          "start_line": 602,
+          "end_line": 695
+        },
+        {
+          "path": "src/printer.rs",
+          "start_line": 180,
+          "end_line": 211
+        },
+        {
+          "path": "src/bin/bat/app.rs",
+          "start_line": 146,
+          "end_line": 165
+        },
+        {
+          "path": "src/input.rs",
+          "start_line": 30,
+          "end_line": 70
+        },
+        {
+          "path": "src/controller.rs",
+          "start_line": 199,
+          "end_line": 235
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": 0
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6.1-terra",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 73138,
+          "cachedTokens": 0,
+          "outputTokens": 131,
+          "reasoningTokens": 0
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "tokio-rs__axum-1730:change",
+      "task": "tokio-rs__axum-1730",
+      "repository": "tokio-rs/axum",
+      "split": "heldout",
+      "category": "change-localization",
+      "latencyMs": 16190.590604999998,
+      "complete": true,
+      "returnedChars": 9008,
+      "ranges": [
+        {
+          "path": "axum/src/routing/mod.rs",
+          "start_line": 374,
+          "end_line": 395
+        },
+        {
+          "path": "axum/src/routing/mod.rs",
+          "start_line": 397,
+          "end_line": 423
+        },
+        {
+          "path": "axum/src/routing/mod.rs",
+          "start_line": 613,
+          "end_line": 654
+        },
+        {
+          "path": "axum/src/routing/mod.rs",
+          "start_line": 425,
+          "end_line": 477
+        },
+        {
+          "path": "axum/src/routing/method_routing.rs",
+          "start_line": 622,
+          "end_line": 631
+        },
+        {
+          "path": "axum/src/routing/method_routing.rs",
+          "start_line": 708,
+          "end_line": 748
+        },
+        {
+          "path": "axum/src/routing/method_routing.rs",
+          "start_line": 1251,
+          "end_line": 1268
+        },
+        {
+          "path": "axum/src/boxed.rs",
+          "start_line": 15,
+          "end_line": 41
+        },
+        {
+          "path": "axum/src/routing/tests/fallback.rs",
+          "start_line": 53,
+          "end_line": 64
+        },
+        {
+          "path": "axum/src/routing/method_routing.rs",
+          "start_line": 1504,
+          "end_line": 1526
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 0,
+        "reciprocalRank": 0,
+        "evidenceCoverage": 0,
+        "negativeCorrect": null,
+        "fileRecall": 0,
+        "firstOverlapRank": null,
+        "complementaryCoverage": 0
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6.1-terra",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 223094,
+          "cachedTokens": 0,
+          "outputTokens": 229,
+          "reasoningTokens": 0
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "tokio-rs__axum-1119:change",
+      "task": "tokio-rs__axum-1119",
+      "repository": "tokio-rs/axum",
+      "split": "heldout",
+      "category": "change-localization",
+      "latencyMs": 85414.807394,
+      "complete": true,
+      "returnedChars": 13553,
+      "ranges": [
+        {
+          "path": "axum/src/routing/mod.rs",
+          "start_line": 473,
+          "end_line": 528
+        },
+        {
+          "path": "axum/src/routing/mod.rs",
+          "start_line": 530,
+          "end_line": 541
+        },
+        {
+          "path": "axum/src/routing/tests/mod.rs",
+          "start_line": 318,
+          "end_line": 388
+        },
+        {
+          "path": "axum/src/routing/tests/mod.rs",
+          "start_line": 390,
+          "end_line": 431
+        },
+        {
+          "path": "axum/src/routing/tests/nest.rs",
+          "start_line": 369,
+          "end_line": 427
+        },
+        {
+          "path": "axum/src/routing/tests/nest.rs",
+          "start_line": 429,
+          "end_line": 456
+        },
+        {
+          "path": "axum/src/routing/mod.rs",
+          "start_line": 177,
+          "end_line": 254
+        },
+        {
+          "path": "axum/src/routing/tests/fallback.rs",
+          "start_line": 4,
+          "end_line": 32
+        },
+        {
+          "path": "axum/src/routing/mod.rs",
+          "start_line": 649,
+          "end_line": 658
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 0,
+        "reciprocalRank": 0,
+        "evidenceCoverage": 0,
+        "negativeCorrect": null,
+        "fileRecall": 0,
+        "firstOverlapRank": null,
+        "complementaryCoverage": 0.7
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6.1-terra",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 166869,
+          "cachedTokens": 0,
+          "outputTokens": 200,
+          "reasoningTokens": 0
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "tokio-rs__axum-1934:change",
+      "task": "tokio-rs__axum-1934",
+      "repository": "tokio-rs/axum",
+      "split": "heldout",
+      "category": "change-localization",
+      "latencyMs": 40790.21514799999,
+      "complete": true,
+      "returnedChars": 9401,
+      "ranges": [
+        {
+          "path": "axum/src/extract/matched_path.rs",
+          "start_line": 125,
+          "end_line": 151
+        },
+        {
+          "path": "axum/src/extract/matched_path.rs",
+          "start_line": 153,
+          "end_line": 169
+        },
+        {
+          "path": "axum/src/routing/mod.rs",
+          "start_line": 259,
+          "end_line": 277
+        },
+        {
+          "path": "axum/src/routing/mod.rs",
+          "start_line": 288,
+          "end_line": 326
+        },
+        {
+          "path": "axum/src/routing/path_router.rs",
+          "start_line": 275,
+          "end_line": 325
+        },
+        {
+          "path": "axum/src/routing/path_router.rs",
+          "start_line": 165,
+          "end_line": 194
+        },
+        {
+          "path": "axum/src/routing/tests/nest.rs",
+          "start_line": 203,
+          "end_line": 211
+        },
+        {
+          "path": "axum/src/extract/matched_path.rs",
+          "start_line": 228,
+          "end_line": 266
+        },
+        {
+          "path": "axum/src/routing/tests/fallback.rs",
+          "start_line": 169,
+          "end_line": 209
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 0,
+        "reciprocalRank": 0,
+        "evidenceCoverage": 0,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": null,
+        "complementaryCoverage": 0
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6.1-terra",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 235865,
+          "cachedTokens": 0,
+          "outputTokens": 204,
+          "reasoningTokens": 0
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "tokio-rs__axum-2096:change",
+      "task": "tokio-rs__axum-2096",
+      "repository": "tokio-rs/axum",
+      "split": "heldout",
+      "category": "change-localization",
+      "latencyMs": 11240.171138999984,
+      "complete": true,
+      "returnedChars": 9544,
+      "ranges": [
+        {
+          "path": "axum/src/routing/mod.rs",
+          "start_line": 182,
+          "end_line": 223
+        },
+        {
+          "path": "axum/src/routing/mod.rs",
+          "start_line": 148,
+          "end_line": 168
+        },
+        {
+          "path": "axum/src/routing/path_router.rs",
+          "start_line": 124,
+          "end_line": 180
+        },
+        {
+          "path": "axum/src/routing/path_router.rs",
+          "start_line": 19,
+          "end_line": 33
+        },
+        {
+          "path": "axum/src/routing/mod.rs",
+          "start_line": 260,
+          "end_line": 290
+        },
+        {
+          "path": "axum/src/routing/mod.rs",
+          "start_line": 302,
+          "end_line": 314
+        },
+        {
+          "path": "axum/src/routing/tests/fallback.rs",
+          "start_line": 72,
+          "end_line": 98
+        },
+        {
+          "path": "axum/src/routing/tests/fallback.rs",
+          "start_line": 167,
+          "end_line": 183
+        },
+        {
+          "path": "axum/src/routing/tests/merge.rs",
+          "start_line": 145,
+          "end_line": 155
+        },
+        {
+          "path": "axum/src/routing/path_router.rs",
+          "start_line": 291,
+          "end_line": 343
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 0,
+        "reciprocalRank": 0,
+        "evidenceCoverage": 0,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": null,
+        "complementaryCoverage": 0
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6.1-terra",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 239999,
+          "cachedTokens": 0,
+          "outputTokens": 221,
+          "reasoningTokens": 0
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,1404 @@
+{
+  "schemaVersion": 1,
+  "kind": "retriever-comparison",
+  "createdAt": "2026-11-04T12:37:37.156Z",
+  "environment": {
+    "node": "v24.19.0",
+    "platform": "linux",
+    "architecture": "x64",
+    "cpu": "Intel(R) Xeon(R) Processor",
+    "logicalCpus": 8,
+    "totalMemoryBytes": 33654874112,
+    "revision": "562e7e5fa0e9ab2e1107fc011c46804c690a68db",
+    "workingTree": "M scripts/bench-compare.ts\n?? node_modules\n?? scripts/bench-openai-judges.ts",
+    "sourceHash": "67ec62d1fc8fabd0d4f4795d88c6aac939f8a199733c03445cb14efcd56acd89",
+    "harnessHash": "cc326d0c8b93fc60876bc1530d3cec0686d0488001d1f9ffd29401252f6efe48",
+    "packageLockHash": "37aedfa15a94c84ec716c28109e43f59223658b03775581380cc0fdcd4899db7"
+  },
+  "dataset": {
+    "version": "swe-bench-sample-1",
+    "source": {
+      "dataset": "princeton-nlp/SWE-bench",
+      "split": "test",
+      "license": "MIT (dataset); issue text and code from the upstream repositories",
+      "revision": "e48e2bd1e9fecd5bbd641e9414ac59da9f2e69f6"
+    },
+    "tasks": 12,
+    "queries": 21
+  },
+  "settings": {
+    "arms": [
+      "jevgrep"
+    ],
+    "top": 10,
+    "responseTokens": 4000,
+    "codegraph": "codegraph",
+    "layaUrl": "http://127.0.0.1:8765",
+    "jevgrep": {
+      "adapter": "typesafe-direct",
+      "model": "jev-1.13.0",
+      "baseUrl": "https://api.typesafe.ai",
+      "pricing": {
+        "model": "jev-1.13.0",
+        "verified_at": "2026-09-20",
+        "input_usd_per_million_tokens": 0.042,
+        "output_usd_per_million_tokens": 0
+      }
+    },
+    "replay": null
+  },
+  "semantics": {
+    "ranking": "each arm returns ranked line ranges; the same localization metrics score every arm",
+    "recallAt5OverPlanned": "incomplete or failed queries count as zero",
+    "returned": "context size delivered to the caller: lines in the top 5 ranges and characters of all returned ranges",
+    "labels": "patch sites and quoted-docstring functions; not exhaustive relevance",
+    "replay": "captured Jev scores per fragment; candidate arms mask every other fragment, so Jev work is the candidate set only",
+    "candidateRecall": "share of required evidence units fully inside the evaluated candidate fragments (an upper bound on what Jev can return)",
+    "jevInputTokens": "reference-token estimate for evaluating the candidate set alone, batched like the engine"
+  },
+  "usage": {
+    "attempts": 67,
+    "reservedInputTokens": 2384936,
+    "reportedInputTokens": 2308557,
+    "unknownUsageAttempts": 0,
+    "blocked": false
+  },
+  "graphIndexes": {},
+  "summary": {
+    "jevgrep": {
+      "overall": {
+        "planned": 21,
+        "complete": 21,
+        "completionRate": 1,
+        "recallAt1": 0.6904761904761905,
+        "recallAt5": 0.8508771929824561,
+        "mrr": 0.8015873015873015,
+        "fileRecall": 0.9444444444444445,
+        "complementaryCoverage": 0.3055555555555555,
+        "recallAt5OverPlanned": 0.8508771929824561,
+        "returnedLinesTop5": 298.42857142857144,
+        "returnedChars": 10282.904761904761,
+        "latencyMs": {
+          "n": 21,
+          "median": 4561.529146000004,
+          "p95": 7046.556395000007,
+          "p95Note": null
+        }
+      },
+      "indexMs": {
+        "n": 0,
+        "median": null,
+        "p95": null,
+        "p95Note": "insufficient samples (0 < 20)"
+      },
+      "byCategory": {
+        "change-localization": {
+          "planned": 12,
+          "complete": 12,
+          "completionRate": 1,
+          "recallAt1": 0.5416666666666666,
+          "recallAt5": 0.7390350877192983,
+          "mrr": 0.6944444444444445,
+          "fileRecall": 0.9027777777777777,
+          "complementaryCoverage": 0.3055555555555555,
+          "recallAt5OverPlanned": 0.7390350877192983,
+          "returnedLinesTop5": 296,
+          "returnedChars": 10087.666666666666,
+          "latencyMs": {
+            "n": 12,
+            "median": 5001.833104500003,
+            "p95": null,
+            "p95Note": "insufficient samples (12 < 20)"
+          }
+        },
+        "code-understanding": {
+          "planned": 9,
+          "complete": 9,
+          "completionRate": 1,
+          "recallAt1": 0.8888888888888888,
+          "recallAt5": 1,
+          "mrr": 0.9444444444444444,
+          "fileRecall": 1,
+          "complementaryCoverage": null,
+          "recallAt5OverPlanned": 1,
+          "returnedLinesTop5": 301.6666666666667,
+          "returnedChars": 10543.222222222223,
+          "latencyMs": {
+            "n": 9,
+            "median": 4285.153437000001,
+            "p95": null,
+            "p95Note": "insufficient samples (9 < 20)"
+          }
+        }
+      },
+      "byRepository": {
+        "pallets/flask": {
+          "planned": 6,
+          "complete": 6,
+          "completionRate": 1,
+          "recallAt1": 0.75,
+          "recallAt5": 0.8114035087719298,
+          "mrr": 0.9166666666666666,
+          "fileRecall": 0.8888888888888888,
+          "complementaryCoverage": 0.5416666666666666,
+          "recallAt5OverPlanned": 0.8114035087719298,
+          "returnedLinesTop5": 287.8333333333333,
+          "returnedChars": 9775.5,
+          "latencyMs": {
+            "n": 6,
+            "median": 6059.527383000001,
+            "p95": null,
+            "p95Note": "insufficient samples (6 < 20)"
+          }
+        },
+        "psf/requests": {
+          "planned": 15,
+          "complete": 15,
+          "completionRate": 1,
+          "recallAt1": 0.6666666666666666,
+          "recallAt5": 0.8666666666666667,
+          "mrr": 0.7555555555555554,
+          "fileRecall": 0.9666666666666667,
+          "complementaryCoverage": 0.1875,
+          "recallAt5OverPlanned": 0.8666666666666667,
+          "returnedLinesTop5": 302.6666666666667,
+          "returnedChars": 10485.866666666667,
+          "latencyMs": {
+            "n": 15,
+            "median": 2952.9235770000014,
+            "p95": null,
+            "p95Note": "insufficient samples (15 < 20)"
+          }
+        }
+      },
+      "byEvidenceSpread": {
+        "multi-file": {
+          "planned": 3,
+          "complete": 3,
+          "completionRate": 1,
+          "recallAt1": 0,
+          "recallAt5": 0.12280701754385964,
+          "mrr": 0.16666666666666666,
+          "fileRecall": 0.611111111111111,
+          "complementaryCoverage": 0,
+          "recallAt5OverPlanned": 0.12280701754385964,
+          "returnedLinesTop5": 300,
+          "returnedChars": 10843,
+          "latencyMs": {
+            "n": 3,
+            "median": 5442.137063000002,
+            "p95": null,
+            "p95Note": "insufficient samples (3 < 20)"
+          }
+        },
+        "single-file": {
+          "planned": 18,
+          "complete": 18,
+          "completionRate": 1,
+          "recallAt1": 0.8055555555555556,
+          "recallAt5": 0.9722222222222222,
+          "mrr": 0.9074074074074073,
+          "fileRecall": 1,
+          "complementaryCoverage": 0.4074074074074074,
+          "recallAt5OverPlanned": 0.9722222222222222,
+          "returnedLinesTop5": 298.1666666666667,
+          "returnedChars": 10189.555555555555,
+          "latencyMs": {
+            "n": 18,
+            "median": 4423.341291500003,
+            "p95": null,
+            "p95Note": "insufficient samples (18 < 20)"
+          }
+        }
+      }
+    }
+  },
+  "paired": null,
+  "rows": [
+    {
+      "arm": "jevgrep",
+      "id": "psf__requests-1657:change",
+      "task": "psf__requests-1657",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 6933.937126000001,
+      "complete": true,
+      "returnedChars": 9432,
+      "ranges": [
+        {
+          "path": "requests/sessions.py",
+          "start_line": 229,
+          "end_line": 268
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 149,
+          "end_line": 311
+        },
+        {
+          "path": "requests/sessions.py",
+          "start_line": 1,
+          "end_line": 67
+        },
+        {
+          "path": "requests/hooks.py",
+          "start_line": 1,
+          "end_line": 45
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": 0.5
+      },
+      "error": null,
+      "detail": {
+        "status": "complete",
+        "stop": [],
+        "usage": {
+          "provider_request_attempts": 2,
+          "provider_input_tokens_reported": 54752,
+          "provider_input_tokens_known_subtotal": 54752,
+          "provider_input_tokens_estimated": 54752,
+          "estimated_cost_usd": 0.002299584,
+          "reported_cost_usd": null,
+          "attempts_with_unknown_usage": 0,
+          "transmitted_bytes": 229328,
+          "elapsed_ms": 6917
+        },
+        "measuredTokens": 2975
+      }
+    },
+    {
+      "arm": "jevgrep",
+      "id": "psf__requests-1657:understand",
+      "task": "psf__requests-1657",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "code-understanding",
+      "latencyMs": 7017.847027,
+      "complete": true,
+      "returnedChars": 11433,
+      "ranges": [
+        {
+          "path": "requests/models.py",
+          "start_line": 149,
+          "end_line": 246
+        },
+        {
+          "path": "requests/sessions.py",
+          "start_line": 229,
+          "end_line": 364
+        },
+        {
+          "path": "test_requests.py",
+          "start_line": 36,
+          "end_line": 130
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 1,
+        "reciprocalRank": 0.5,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 2,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "status": "complete",
+        "stop": [],
+        "usage": {
+          "provider_request_attempts": 2,
+          "provider_input_tokens_reported": 54664,
+          "provider_input_tokens_known_subtotal": 54664,
+          "provider_input_tokens_estimated": 54664,
+          "estimated_cost_usd": 0.002295888,
+          "reported_cost_usd": null,
+          "attempts_with_unknown_usage": 0,
+          "transmitted_bytes": 228968,
+          "elapsed_ms": 6977
+        },
+        "measuredTokens": 3391
+      }
+    },
+    {
+      "arm": "jevgrep",
+      "id": "psf__requests-2821:change",
+      "task": "psf__requests-2821",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 5535.447248,
+      "complete": true,
+      "returnedChars": 10326,
+      "ranges": [
+        {
+          "path": "requests/adapters.py",
+          "start_line": 323,
+          "end_line": 439
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 406,
+          "end_line": 494
+        },
+        {
+          "path": "HISTORY.rst",
+          "start_line": 1,
+          "end_line": 80
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 0,
+        "reciprocalRank": 0,
+        "evidenceCoverage": 0,
+        "negativeCorrect": null,
+        "fileRecall": 0.5,
+        "firstOverlapRank": null,
+        "complementaryCoverage": 0
+      },
+      "error": null,
+      "detail": {
+        "status": "complete",
+        "stop": [],
+        "usage": {
+          "provider_request_attempts": 2,
+          "provider_input_tokens_reported": 75736,
+          "provider_input_tokens_known_subtotal": 75736,
+          "provider_input_tokens_estimated": 75736,
+          "estimated_cost_usd": 0.003180912,
+          "reported_cost_usd": null,
+          "attempts_with_unknown_usage": 0,
+          "transmitted_bytes": 313064,
+          "elapsed_ms": 5521
+        },
+        "measuredTokens": 2942
+      }
+    },
+    {
+      "arm": "jevgrep",
+      "id": "psf__requests-2821:understand",
+      "task": "psf__requests-2821",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "code-understanding",
+      "latencyMs": 4928.236560000001,
+      "complete": true,
+      "returnedChars": 10485,
+      "ranges": [
+        {
+          "path": "requests/models.py",
+          "start_line": 254,
+          "end_line": 323
+        },
+        {
+          "path": "requests/sessions.py",
+          "start_line": 352,
+          "end_line": 484
+        },
+        {
+          "path": "test_requests.py",
+          "start_line": 1594,
+          "end_line": 1712
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "status": "complete",
+        "stop": [],
+        "usage": {
+          "provider_request_attempts": 2,
+          "provider_input_tokens_reported": 73792,
+          "provider_input_tokens_known_subtotal": 73792,
+          "provider_input_tokens_estimated": 73792,
+          "estimated_cost_usd": 0.003099264,
+          "reported_cost_usd": null,
+          "attempts_with_unknown_usage": 0,
+          "transmitted_bytes": 308012,
+          "elapsed_ms": 4919
+        },
+        "measuredTokens": 3237
+      }
+    },
+    {
+      "arm": "jevgrep",
+      "id": "psf__requests-774:change",
+      "task": "psf__requests-774",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 1770.2996459999995,
+      "complete": true,
+      "returnedChars": 8606,
+      "ranges": [
+        {
+          "path": "requests/models.py",
+          "start_line": 398,
+          "end_line": 574
+        },
+        {
+          "path": "requests/safe_mode.py",
+          "start_line": 1,
+          "end_line": 39
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 177,
+          "end_line": 226
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": 0
+      },
+      "error": null,
+      "detail": {
+        "status": "complete",
+        "stop": [],
+        "usage": {
+          "provider_request_attempts": 2,
+          "provider_input_tokens_reported": 57697,
+          "provider_input_tokens_known_subtotal": 57697,
+          "provider_input_tokens_estimated": 57697,
+          "estimated_cost_usd": 0.002423274,
+          "reported_cost_usd": null,
+          "attempts_with_unknown_usage": 0,
+          "transmitted_bytes": 241521,
+          "elapsed_ms": 1762
+        },
+        "measuredTokens": 2636
+      }
+    },
+    {
+      "arm": "jevgrep",
+      "id": "psf__requests-774:understand",
+      "task": "psf__requests-774",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "code-understanding",
+      "latencyMs": 2006.4740649999985,
+      "complete": true,
+      "returnedChars": 10826,
+      "ranges": [
+        {
+          "path": "requests/models.py",
+          "start_line": 398,
+          "end_line": 574
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 227,
+          "end_line": 314
+        },
+        {
+          "path": "tests/test_requests.py",
+          "start_line": 63,
+          "end_line": 125
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "status": "complete",
+        "stop": [],
+        "usage": {
+          "provider_request_attempts": 2,
+          "provider_input_tokens_reported": 56771,
+          "provider_input_tokens_known_subtotal": 56771,
+          "provider_input_tokens_estimated": 56771,
+          "estimated_cost_usd": 0.002384382,
+          "reported_cost_usd": null,
+          "attempts_with_unknown_usage": 0,
+          "transmitted_bytes": 238347,
+          "elapsed_ms": 2001
+        },
+        "measuredTokens": 3157
+      }
+    },
+    {
+      "arm": "jevgrep",
+      "id": "psf__requests-4718:change",
+      "task": "psf__requests-4718",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 4561.529146000004,
+      "complete": true,
+      "returnedChars": 12508,
+      "ranges": [
+        {
+          "path": "requests/sessions.py",
+          "start_line": 95,
+          "end_line": 318
+        },
+        {
+          "path": "tests/test_requests.py",
+          "start_line": 1527,
+          "end_line": 1611
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": 1
+      },
+      "error": null,
+      "detail": {
+        "status": "complete",
+        "stop": [],
+        "usage": {
+          "provider_request_attempts": 4,
+          "provider_input_tokens_reported": 151908,
+          "provider_input_tokens_known_subtotal": 151908,
+          "provider_input_tokens_estimated": 151908,
+          "estimated_cost_usd": 0.006380136,
+          "reported_cost_usd": null,
+          "attempts_with_unknown_usage": 0,
+          "transmitted_bytes": 570926,
+          "elapsed_ms": 4555
+        },
+        "measuredTokens": 3409
+      }
+    },
+    {
+      "arm": "jevgrep",
+      "id": "psf__requests-4718:understand",
+      "task": "psf__requests-4718",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "code-understanding",
+      "latencyMs": 4285.153437000001,
+      "complete": true,
+      "returnedChars": 9231,
+      "ranges": [
+        {
+          "path": "requests/sessions.py",
+          "start_line": 231,
+          "end_line": 318
+        },
+        {
+          "path": "tests/test_requests.py",
+          "start_line": 1527,
+          "end_line": 1611
+        },
+        {
+          "path": "tests/test_lowlevel.py",
+          "start_line": 27,
+          "end_line": 91
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "status": "complete",
+        "stop": [],
+        "usage": {
+          "provider_request_attempts": 4,
+          "provider_input_tokens_reported": 149304,
+          "provider_input_tokens_known_subtotal": 149304,
+          "provider_input_tokens_estimated": 149304,
+          "estimated_cost_usd": 0.006270768,
+          "reported_cost_usd": null,
+          "attempts_with_unknown_usage": 0,
+          "transmitted_bytes": 561618,
+          "elapsed_ms": 4280
+        },
+        "measuredTokens": 2950
+      }
+    },
+    {
+      "arm": "jevgrep",
+      "id": "psf__requests-3718:change",
+      "task": "psf__requests-3718",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 3109.359851000001,
+      "complete": true,
+      "returnedChars": 11367,
+      "ranges": [
+        {
+          "path": "requests/sessions.py",
+          "start_line": 569,
+          "end_line": 672
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 559,
+          "end_line": 658
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 762,
+          "end_line": 863
+        },
+        {
+          "path": "tests/test_requests.py",
+          "start_line": 1671,
+          "end_line": 1691
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 1,
+        "reciprocalRank": 0.3333333333333333,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 3,
+        "complementaryCoverage": 0
+      },
+      "error": null,
+      "detail": {
+        "status": "complete",
+        "stop": [],
+        "usage": {
+          "provider_request_attempts": 3,
+          "provider_input_tokens_reported": 101349,
+          "provider_input_tokens_known_subtotal": 101349,
+          "provider_input_tokens_estimated": 101349,
+          "estimated_cost_usd": 0.004256658,
+          "reported_cost_usd": null,
+          "attempts_with_unknown_usage": 0,
+          "transmitted_bytes": 423301,
+          "elapsed_ms": 3103
+        },
+        "measuredTokens": 3305
+      }
+    },
+    {
+      "arm": "jevgrep",
+      "id": "psf__requests-3718:understand",
+      "task": "psf__requests-3718",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "code-understanding",
+      "latencyMs": 2952.9235770000014,
+      "complete": true,
+      "returnedChars": 12083,
+      "ranges": [
+        {
+          "path": "requests/models.py",
+          "start_line": 762,
+          "end_line": 863
+        },
+        {
+          "path": "requests/sessions.py",
+          "start_line": 569,
+          "end_line": 672
+        },
+        {
+          "path": "tests/testserver/server.py",
+          "start_line": 1,
+          "end_line": 25
+        },
+        {
+          "path": "requests/sessions.py",
+          "start_line": 89,
+          "end_line": 197
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "status": "complete",
+        "stop": [],
+        "usage": {
+          "provider_request_attempts": 3,
+          "provider_input_tokens_reported": 98424,
+          "provider_input_tokens_known_subtotal": 98424,
+          "provider_input_tokens_estimated": 98424,
+          "estimated_cost_usd": 0.004133808,
+          "reported_cost_usd": null,
+          "attempts_with_unknown_usage": 0,
+          "transmitted_bytes": 412930,
+          "elapsed_ms": 2947
+        },
+        "measuredTokens": 3369
+      }
+    },
+    {
+      "arm": "jevgrep",
+      "id": "psf__requests-1962:change",
+      "task": "psf__requests-1962",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 2146.642844000002,
+      "complete": true,
+      "returnedChars": 8678,
+      "ranges": [
+        {
+          "path": "requests/sessions.py",
+          "start_line": 466,
+          "end_line": 567
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 503,
+          "end_line": 614
+        },
+        {
+          "path": "requests/auth.py",
+          "start_line": 149,
+          "end_line": 193
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": 0
+      },
+      "error": null,
+      "detail": {
+        "status": "complete",
+        "stop": [],
+        "usage": {
+          "provider_request_attempts": 2,
+          "provider_input_tokens_reported": 61247,
+          "provider_input_tokens_known_subtotal": 61247,
+          "provider_input_tokens_estimated": 61247,
+          "estimated_cost_usd": 0.002572374,
+          "reported_cost_usd": null,
+          "attempts_with_unknown_usage": 0,
+          "transmitted_bytes": 256091,
+          "elapsed_ms": 2137
+        },
+        "measuredTokens": 2709
+      }
+    },
+    {
+      "arm": "jevgrep",
+      "id": "psf__requests-1768:change",
+      "task": "psf__requests-1768",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 2353.9502619999985,
+      "complete": true,
+      "returnedChars": 10264,
+      "ranges": [
+        {
+          "path": "requests/models.py",
+          "start_line": 312,
+          "end_line": 385
+        },
+        {
+          "path": "requests/utils.py",
+          "start_line": 519,
+          "end_line": 583
+        },
+        {
+          "path": "requests/adapters.py",
+          "start_line": 216,
+          "end_line": 287
+        },
+        {
+          "path": "requests/sessions.py",
+          "start_line": 232,
+          "end_line": 271
+        },
+        {
+          "path": "requests/adapters.py",
+          "start_line": 1,
+          "end_line": 47
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 1,
+        "reciprocalRank": 0.5,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 2,
+        "complementaryCoverage": 0
+      },
+      "error": null,
+      "detail": {
+        "status": "complete",
+        "stop": [],
+        "usage": {
+          "provider_request_attempts": 2,
+          "provider_input_tokens_reported": 55755,
+          "provider_input_tokens_known_subtotal": 55755,
+          "provider_input_tokens_estimated": 55755,
+          "estimated_cost_usd": 0.00234171,
+          "reported_cost_usd": null,
+          "attempts_with_unknown_usage": 0,
+          "transmitted_bytes": 234279,
+          "elapsed_ms": 2340
+        },
+        "measuredTokens": 3236
+      }
+    },
+    {
+      "arm": "jevgrep",
+      "id": "psf__requests-1768:understand",
+      "task": "psf__requests-1768",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "code-understanding",
+      "latencyMs": 1667.5916159999979,
+      "complete": true,
+      "returnedChars": 10449,
+      "ranges": [
+        {
+          "path": "requests/utils.py",
+          "start_line": 519,
+          "end_line": 583
+        },
+        {
+          "path": "test_requests.py",
+          "start_line": 489,
+          "end_line": 570
+        },
+        {
+          "path": "requests/adapters.py",
+          "start_line": 216,
+          "end_line": 287
+        },
+        {
+          "path": "requests/adapters.py",
+          "start_line": 1,
+          "end_line": 47
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 1,
+          "end_line": 39
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "status": "complete",
+        "stop": [],
+        "usage": {
+          "provider_request_attempts": 2,
+          "provider_input_tokens_reported": 55565,
+          "provider_input_tokens_known_subtotal": 55565,
+          "provider_input_tokens_estimated": 55565,
+          "estimated_cost_usd": 0.00233373,
+          "reported_cost_usd": null,
+          "attempts_with_unknown_usage": 0,
+          "transmitted_bytes": 233497,
+          "elapsed_ms": 1662
+        },
+        "measuredTokens": 3414
+      }
+    },
+    {
+      "arm": "jevgrep",
+      "id": "psf__requests-2617:change",
+      "task": "psf__requests-2617",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 2151.0836439999985,
+      "complete": true,
+      "returnedChars": 11045,
+      "ranges": [
+        {
+          "path": "requests/models.py",
+          "start_line": 52,
+          "end_line": 161
+        },
+        {
+          "path": "test_requests.py",
+          "start_line": 503,
+          "end_line": 576
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 415,
+          "end_line": 503
+        },
+        {
+          "path": "requests/sessions.py",
+          "start_line": 346,
+          "end_line": 385
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 0,
+        "reciprocalRank": 0,
+        "evidenceCoverage": 0,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": null,
+        "complementaryCoverage": 0
+      },
+      "error": null,
+      "detail": {
+        "status": "complete",
+        "stop": [],
+        "usage": {
+          "provider_request_attempts": 2,
+          "provider_input_tokens_reported": 73977,
+          "provider_input_tokens_known_subtotal": 73977,
+          "provider_input_tokens_estimated": 73977,
+          "estimated_cost_usd": 0.003107034,
+          "reported_cost_usd": null,
+          "attempts_with_unknown_usage": 0,
+          "transmitted_bytes": 307607,
+          "elapsed_ms": 2146
+        },
+        "measuredTokens": 3347
+      }
+    },
+    {
+      "arm": "jevgrep",
+      "id": "psf__requests-2617:understand",
+      "task": "psf__requests-2617",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "code-understanding",
+      "latencyMs": 2080.9179730000033,
+      "complete": true,
+      "returnedChars": 10555,
+      "ranges": [
+        {
+          "path": "requests/models.py",
+          "start_line": 162,
+          "end_line": 333
+        },
+        {
+          "path": "requests/sessions.py",
+          "start_line": 346,
+          "end_line": 478
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "status": "complete",
+        "stop": [],
+        "usage": {
+          "provider_request_attempts": 2,
+          "provider_input_tokens_reported": 72441,
+          "provider_input_tokens_known_subtotal": 72441,
+          "provider_input_tokens_estimated": 72441,
+          "estimated_cost_usd": 0.003042522,
+          "reported_cost_usd": null,
+          "attempts_with_unknown_usage": 0,
+          "transmitted_bytes": 302345,
+          "elapsed_ms": 2075
+        },
+        "measuredTokens": 3080
+      }
+    },
+    {
+      "arm": "jevgrep",
+      "id": "pallets__flask-4074:change",
+      "task": "pallets__flask-4074",
+      "repository": "pallets/flask",
+      "split": "heldout",
+      "category": "change-localization",
+      "latencyMs": 5442.137063000002,
+      "complete": true,
+      "returnedChars": 11158,
+      "ranges": [
+        {
+          "path": "src/flask/helpers.py",
+          "start_line": 267,
+          "end_line": 341
+        },
+        {
+          "path": "src/flask/blueprints.py",
+          "start_line": 1,
+          "end_line": 107
+        },
+        {
+          "path": "src/flask/blueprints.py",
+          "start_line": 259,
+          "end_line": 362
+        },
+        {
+          "path": "src/flask/blueprints.py",
+          "start_line": 553,
+          "end_line": 567
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 0.3684210526315789,
+        "reciprocalRank": 0.5,
+        "evidenceCoverage": 0.3684210526315789,
+        "negativeCorrect": null,
+        "fileRecall": 0.3333333333333333,
+        "firstOverlapRank": 2,
+        "complementaryCoverage": 0
+      },
+      "error": null,
+      "detail": {
+        "status": "complete",
+        "stop": [],
+        "usage": {
+          "provider_request_attempts": 5,
+          "provider_input_tokens_reported": 180657,
+          "provider_input_tokens_known_subtotal": 180657,
+          "provider_input_tokens_estimated": 180657,
+          "estimated_cost_usd": 0.007587594,
+          "reported_cost_usd": null,
+          "attempts_with_unknown_usage": 0,
+          "transmitted_bytes": 782566,
+          "elapsed_ms": 5434
+        },
+        "measuredTokens": 3208
+      }
+    },
+    {
+      "arm": "jevgrep",
+      "id": "pallets__flask-4074:understand",
+      "task": "pallets__flask-4074",
+      "repository": "pallets/flask",
+      "split": "heldout",
+      "category": "code-understanding",
+      "latencyMs": 5283.428774,
+      "complete": true,
+      "returnedChars": 9527,
+      "ranges": [
+        {
+          "path": "src/flask/app.py",
+          "start_line": 676,
+          "end_line": 760
+        },
+        {
+          "path": "src/flask/templating.py",
+          "start_line": 1,
+          "end_line": 45
+        },
+        {
+          "path": "src/flask/templating.py",
+          "start_line": 133,
+          "end_line": 165
+        },
+        {
+          "path": "src/flask/scaffold.py",
+          "start_line": 164,
+          "end_line": 238
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "status": "complete",
+        "stop": [],
+        "usage": {
+          "provider_request_attempts": 5,
+          "provider_input_tokens_reported": 179877,
+          "provider_input_tokens_known_subtotal": 179877,
+          "provider_input_tokens_estimated": 179877,
+          "estimated_cost_usd": 0.007554834,
+          "reported_cost_usd": null,
+          "attempts_with_unknown_usage": 0,
+          "transmitted_bytes": 779311,
+          "elapsed_ms": 5272
+        },
+        "measuredTokens": 2918
+      }
+    },
+    {
+      "arm": "jevgrep",
+      "id": "pallets__flask-4544:change",
+      "task": "pallets__flask-4544",
+      "repository": "pallets/flask",
+      "split": "heldout",
+      "category": "change-localization",
+      "latencyMs": 7939.597983,
+      "complete": true,
+      "returnedChars": 8055,
+      "ranges": [
+        {
+          "path": "src/flask/cli.py",
+          "start_line": 675,
+          "end_line": 863
+        },
+        {
+          "path": "tests/test_cli.py",
+          "start_line": 522,
+          "end_line": 604
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": 1
+      },
+      "error": null,
+      "detail": {
+        "status": "complete",
+        "stop": [],
+        "usage": {
+          "provider_request_attempts": 5,
+          "provider_input_tokens_reported": 186500,
+          "provider_input_tokens_known_subtotal": 186500,
+          "provider_input_tokens_estimated": 186500,
+          "estimated_cost_usd": 0.007833,
+          "reported_cost_usd": null,
+          "attempts_with_unknown_usage": 0,
+          "transmitted_bytes": 805046,
+          "elapsed_ms": 7929
+        },
+        "measuredTokens": 2740
+      }
+    },
+    {
+      "arm": "jevgrep",
+      "id": "pallets__flask-4992:change",
+      "task": "pallets__flask-4992",
+      "repository": "pallets/flask",
+      "split": "heldout",
+      "category": "change-localization",
+      "latencyMs": 7046.556395000007,
+      "complete": true,
+      "returnedChars": 9062,
+      "ranges": [
+        {
+          "path": "src/flask/config.py",
+          "start_line": 194,
+          "end_line": 274
+        },
+        {
+          "path": "tests/test_config.py",
+          "start_line": 1,
+          "end_line": 208
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": 1
+      },
+      "error": null,
+      "detail": {
+        "status": "complete",
+        "stop": [],
+        "usage": {
+          "provider_request_attempts": 6,
+          "provider_input_tokens_reported": 195611,
+          "provider_input_tokens_known_subtotal": 195611,
+          "provider_input_tokens_estimated": 195611,
+          "estimated_cost_usd": 0.008215662,
+          "reported_cost_usd": null,
+          "attempts_with_unknown_usage": 0,
+          "transmitted_bytes": 841186,
+          "elapsed_ms": 7038
+        },
+        "measuredTokens": 3071
+      }
+    },
+    {
+      "arm": "jevgrep",
+      "id": "pallets__flask-4992:understand",
+      "task": "pallets__flask-4992",
+      "repository": "pallets/flask",
+      "split": "heldout",
+      "category": "code-understanding",
+      "latencyMs": 6580.068818,
+      "complete": true,
+      "returnedChars": 10300,
+      "ranges": [
+        {
+          "path": "src/flask/config.py",
+          "start_line": 101,
+          "end_line": 274
+        },
+        {
+          "path": "tests/test_config.py",
+          "start_line": 1,
+          "end_line": 101
+        },
+        {
+          "path": "src/flask/cli.py",
+          "start_line": 446,
+          "end_line": 480
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "status": "complete",
+        "stop": [],
+        "usage": {
+          "provider_request_attempts": 5,
+          "provider_input_tokens_reported": 193547,
+          "provider_input_tokens_known_subtotal": 193547,
+          "provider_input_tokens_estimated": 193547,
+          "estimated_cost_usd": 0.008128974,
+          "reported_cost_usd": null,
+          "attempts_with_unknown_usage": 0,
+          "transmitted_bytes": 833745,
+          "elapsed_ms": 6572
+        },
+        "measuredTokens": 3296
+      }
+    },
+    {
+      "arm": "jevgrep",
+      "id": "pallets__flask-4045:change",
+      "task": "pallets__flask-4045",
+      "repository": "pallets/flask",
+      "split": "heldout",
+      "category": "change-localization",
+      "latencyMs": 5538.985948000001,
+      "complete": true,
+      "returnedChars": 10551,
+      "ranges": [
+        {
+          "path": "src/flask/blueprints.py",
+          "start_line": 255,
+          "end_line": 434
+        },
+        {
+          "path": "tests/test_blueprints.py",
+          "start_line": 343,
+          "end_line": 459
+        },
+        {
+          "path": "tests/test_apps/blueprintapp/apps/admin/__init__.py",
+          "start_line": 1,
+          "end_line": 20
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0.5,
+        "recallAt5": 0.5,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 0.5,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": 0.16666666666666666
+      },
+      "error": null,
+      "detail": {
+        "status": "complete",
+        "stop": [],
+        "usage": {
+          "provider_request_attempts": 5,
+          "provider_input_tokens_reported": 178983,
+          "provider_input_tokens_known_subtotal": 178983,
+          "provider_input_tokens_estimated": 178983,
+          "estimated_cost_usd": 0.007517286,
+          "reported_cost_usd": null,
+          "attempts_with_unknown_usage": 0,
+          "transmitted_bytes": 775103,
+          "elapsed_ms": 5531
+        },
+        "measuredTokens": 3237
+      }
+    }
+  ]
+}

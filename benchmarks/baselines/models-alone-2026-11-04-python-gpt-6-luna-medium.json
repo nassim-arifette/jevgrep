@@ -1,0 +1,959 @@
+{
+  "rows": [
+    {
+      "arm": "openai-solo",
+      "id": "psf__requests-1657:change",
+      "task": "psf__requests-1657",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 10701.786338,
+      "complete": true,
+      "returnedChars": 3034,
+      "ranges": [
+        {
+          "path": "requests/sessions.py",
+          "start_line": 37,
+          "end_line": 65
+        },
+        {
+          "path": "requests/sessions.py",
+          "start_line": 229,
+          "end_line": 267
+        },
+        {
+          "path": "test_requests.py",
+          "start_line": 451,
+          "end_line": 470
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 1,
+        "reciprocalRank": 0.5,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 2,
+        "complementaryCoverage": 0.5
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6-luna",
+        "effort": "medium",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 194805,
+          "cachedTokens": 0,
+          "outputTokens": 297,
+          "reasoningTokens": 233
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "psf__requests-1657:understand",
+      "task": "psf__requests-1657",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "code-understanding",
+      "latencyMs": 3644.4540830000005,
+      "complete": true,
+      "returnedChars": 475,
+      "ranges": [
+        {
+          "path": "requests/models.py",
+          "start_line": 230,
+          "end_line": 244
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 0,
+        "reciprocalRank": 0,
+        "evidenceCoverage": 0,
+        "negativeCorrect": null,
+        "fileRecall": 0,
+        "firstOverlapRank": null,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6-luna",
+        "effort": "medium",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 194761,
+          "cachedTokens": 0,
+          "outputTokens": 110,
+          "reasoningTokens": 80
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "psf__requests-2821:change",
+      "task": "psf__requests-2821",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 17250.88636,
+      "complete": true,
+      "returnedChars": 1587,
+      "ranges": [
+        {
+          "path": "requests/__init__.py",
+          "start_line": 51,
+          "end_line": 56
+        },
+        {
+          "path": "requests/adapters.py",
+          "start_line": 337,
+          "end_line": 371
+        },
+        {
+          "path": "HISTORY.rst",
+          "start_line": 39,
+          "end_line": 42
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 0,
+        "reciprocalRank": 0,
+        "evidenceCoverage": 0,
+        "negativeCorrect": null,
+        "fileRecall": 0,
+        "firstOverlapRank": null,
+        "complementaryCoverage": 0
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6-luna",
+        "effort": "medium",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 302469,
+          "cachedTokens": 0,
+          "outputTokens": 1395,
+          "reasoningTokens": 1329
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "psf__requests-2821:understand",
+      "task": "psf__requests-2821",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "code-understanding",
+      "latencyMs": 38532.662103999995,
+      "complete": true,
+      "returnedChars": 195,
+      "ranges": [
+        {
+          "path": "requests/models.py",
+          "start_line": 318,
+          "end_line": 323
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6-luna",
+        "effort": "medium",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 301584,
+          "cachedTokens": 0,
+          "outputTokens": 55,
+          "reasoningTokens": 25
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "psf__requests-774:change",
+      "task": "psf__requests-774",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 66826.317813,
+      "complete": true,
+      "returnedChars": 1518,
+      "ranges": [
+        {
+          "path": "requests/models.py",
+          "start_line": 398,
+          "end_line": 447
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": 0
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6-luna",
+        "effort": "medium",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 199127,
+          "cachedTokens": 0,
+          "outputTokens": 103,
+          "reasoningTokens": 73
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "psf__requests-774:understand",
+      "task": "psf__requests-774",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "code-understanding",
+      "latencyMs": 2656.542504000001,
+      "complete": true,
+      "returnedChars": 1518,
+      "ranges": [
+        {
+          "path": "requests/models.py",
+          "start_line": 398,
+          "end_line": 447
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6-luna",
+        "effort": "medium",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 198705,
+          "cachedTokens": 0,
+          "outputTokens": 60,
+          "reasoningTokens": 30
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "psf__requests-4718:change",
+      "task": "psf__requests-4718",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 8782.756464999999,
+      "complete": true,
+      "returnedChars": 1656,
+      "ranges": [
+        {
+          "path": "requests/sessions.py",
+          "start_line": 231,
+          "end_line": 253
+        },
+        {
+          "path": "tests/test_requests.py",
+          "start_line": 1576,
+          "end_line": 1592
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": 0.6666666666666666
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6-luna",
+        "effort": "medium",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 136364,
+          "cachedTokens": 0,
+          "outputTokens": 161,
+          "reasoningTokens": 111
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "psf__requests-4718:understand",
+      "task": "psf__requests-4718",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "code-understanding",
+      "latencyMs": 2290.4123560000007,
+      "complete": true,
+      "returnedChars": 986,
+      "ranges": [
+        {
+          "path": "requests/sessions.py",
+          "start_line": 231,
+          "end_line": 253
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6-luna",
+        "effort": "medium",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 135813,
+          "cachedTokens": 0,
+          "outputTokens": 53,
+          "reasoningTokens": 22
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "psf__requests-3718:change",
+      "task": "psf__requests-3718",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 13430.785669,
+      "complete": true,
+      "returnedChars": 4891,
+      "ranges": [
+        {
+          "path": "requests/models.py",
+          "start_line": 676,
+          "end_line": 729
+        },
+        {
+          "path": "requests/sessions.py",
+          "start_line": 569,
+          "end_line": 643
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 0,
+        "reciprocalRank": 0,
+        "evidenceCoverage": 0,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": null,
+        "complementaryCoverage": 0
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6-luna",
+        "effort": "medium",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 330176,
+          "cachedTokens": 0,
+          "outputTokens": 466,
+          "reasoningTokens": 419
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "psf__requests-3718:understand",
+      "task": "psf__requests-3718",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "code-understanding",
+      "latencyMs": 20918.005192999997,
+      "complete": true,
+      "returnedChars": 678,
+      "ranges": [
+        {
+          "path": "requests/models.py",
+          "start_line": 762,
+          "end_line": 780
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6-luna",
+        "effort": "medium",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 329371,
+          "cachedTokens": 0,
+          "outputTokens": 52,
+          "reasoningTokens": 22
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "psf__requests-1962:change",
+      "task": "psf__requests-1962",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 49788.551982,
+      "complete": true,
+      "returnedChars": 871,
+      "ranges": [
+        {
+          "path": "requests/sessions.py",
+          "start_line": 513,
+          "end_line": 532
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 546,
+          "end_line": 550
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": 0
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6-luna",
+        "effort": "medium",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 264256,
+          "cachedTokens": 0,
+          "outputTokens": 169,
+          "reasoningTokens": 122
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "psf__requests-1768:change",
+      "task": "psf__requests-1768",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 4498.614673999997,
+      "complete": true,
+      "returnedChars": 1357,
+      "ranges": [
+        {
+          "path": "requests/utils.py",
+          "start_line": 557,
+          "end_line": 565
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 451,
+          "end_line": 472
+        },
+        {
+          "path": "test_requests.py",
+          "start_line": 562,
+          "end_line": 565
+        },
+        {
+          "path": "requests/auth.py",
+          "start_line": 27,
+          "end_line": 30
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": 1
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6-luna",
+        "effort": "medium",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 256000,
+          "cachedTokens": 0,
+          "outputTokens": 243,
+          "reasoningTokens": 165
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "psf__requests-1768:understand",
+      "task": "psf__requests-1768",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "code-understanding",
+      "latencyMs": 19785.701050000003,
+      "complete": true,
+      "returnedChars": 261,
+      "ranges": [
+        {
+          "path": "requests/utils.py",
+          "start_line": 557,
+          "end_line": 565
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6-luna",
+        "effort": "medium",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 255918,
+          "cachedTokens": 0,
+          "outputTokens": 55,
+          "reasoningTokens": 25
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "psf__requests-2617:change",
+      "task": "psf__requests-2617",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 11487.663035000001,
+      "complete": true,
+      "returnedChars": 4664,
+      "ranges": [
+        {
+          "path": "requests/models.py",
+          "start_line": 102,
+          "end_line": 159
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 415,
+          "end_line": 468
+        },
+        {
+          "path": "test_requests.py",
+          "start_line": 938,
+          "end_line": 957
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 0,
+        "reciprocalRank": 0,
+        "evidenceCoverage": 0,
+        "negativeCorrect": null,
+        "fileRecall": 0.5,
+        "firstOverlapRank": null,
+        "complementaryCoverage": 0
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6-luna",
+        "effort": "medium",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 276407,
+          "cachedTokens": 0,
+          "outputTokens": 812,
+          "reasoningTokens": 750
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "psf__requests-2617:understand",
+      "task": "psf__requests-2617",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "code-understanding",
+      "latencyMs": 88034.50218299999,
+      "complete": true,
+      "returnedChars": 195,
+      "ranges": [
+        {
+          "path": "requests/models.py",
+          "start_line": 328,
+          "end_line": 333
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6-luna",
+        "effort": "medium",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 275707,
+          "cachedTokens": 0,
+          "outputTokens": 53,
+          "reasoningTokens": 23
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "pallets__flask-4074:change",
+      "task": "pallets__flask-4074",
+      "repository": "pallets/flask",
+      "split": "heldout",
+      "category": "change-localization",
+      "latencyMs": 19181.24648300001,
+      "complete": true,
+      "returnedChars": 5011,
+      "ranges": [
+        {
+          "path": "src/flask/blueprints.py",
+          "start_line": 77,
+          "end_line": 105
+        },
+        {
+          "path": "src/flask/blueprints.py",
+          "start_line": 259,
+          "end_line": 316
+        },
+        {
+          "path": "src/flask/helpers.py",
+          "start_line": 267,
+          "end_line": 288
+        },
+        {
+          "path": "src/flask/wrappers.py",
+          "start_line": 72,
+          "end_line": 78
+        },
+        {
+          "path": "tests/test_blueprints.py",
+          "start_line": 131,
+          "end_line": 149
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0.05263157894736842,
+        "recallAt5": 0.2631578947368421,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 0.2631578947368421,
+        "negativeCorrect": null,
+        "fileRecall": 0.6666666666666666,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": 0.3333333333333333
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6-luna",
+        "effort": "medium",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 181675,
+          "cachedTokens": 0,
+          "outputTokens": 608,
+          "reasoningTokens": 498
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "pallets__flask-4074:understand",
+      "task": "pallets__flask-4074",
+      "repository": "pallets/flask",
+      "split": "heldout",
+      "category": "code-understanding",
+      "latencyMs": 20248.005014999988,
+      "complete": true,
+      "returnedChars": 1697,
+      "ranges": [
+        {
+          "path": "src/flask/app.py",
+          "start_line": 734,
+          "end_line": 759
+        },
+        {
+          "path": "src/flask/templating.py",
+          "start_line": 18,
+          "end_line": 30
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6-luna",
+        "effort": "medium",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 181528,
+          "cachedTokens": 0,
+          "outputTokens": 150,
+          "reasoningTokens": 98
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "pallets__flask-4544:change",
+      "task": "pallets__flask-4544",
+      "repository": "pallets/flask",
+      "split": "heldout",
+      "category": "change-localization",
+      "latencyMs": 9361.900384000008,
+      "complete": true,
+      "returnedChars": 1917,
+      "ranges": [
+        {
+          "path": "src/flask/cli.py",
+          "start_line": 719,
+          "end_line": 747
+        },
+        {
+          "path": "src/flask/cli.py",
+          "start_line": 762,
+          "end_line": 775
+        },
+        {
+          "path": "tests/test_cli.py",
+          "start_line": 547,
+          "end_line": 558
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 1,
+        "reciprocalRank": 0.5,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 2,
+        "complementaryCoverage": 1
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6-luna",
+        "effort": "medium",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 186785,
+          "cachedTokens": 0,
+          "outputTokens": 197,
+          "reasoningTokens": 128
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "pallets__flask-4992:change",
+      "task": "pallets__flask-4992",
+      "repository": "pallets/flask",
+      "split": "heldout",
+      "category": "change-localization",
+      "latencyMs": 3677.126999,
+      "complete": true,
+      "returnedChars": 2130,
+      "ranges": [
+        {
+          "path": "src/flask/config.py",
+          "start_line": 232,
+          "end_line": 273
+        },
+        {
+          "path": "tests/test_config.py",
+          "start_line": 33,
+          "end_line": 38
+        },
+        {
+          "path": "tests/test_config.py",
+          "start_line": 178,
+          "end_line": 187
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": 0.3333333333333333
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6-luna",
+        "effort": "medium",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 195169,
+          "cachedTokens": 0,
+          "outputTokens": 179,
+          "reasoningTokens": 113
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "pallets__flask-4992:understand",
+      "task": "pallets__flask-4992",
+      "repository": "pallets/flask",
+      "split": "heldout",
+      "category": "code-understanding",
+      "latencyMs": 2481.269212000014,
+      "complete": true,
+      "returnedChars": 1469,
+      "ranges": [
+        {
+          "path": "src/flask/config.py",
+          "start_line": 232,
+          "end_line": 273
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6-luna",
+        "effort": "medium",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 194909,
+          "cachedTokens": 0,
+          "outputTokens": 52,
+          "reasoningTokens": 20
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "pallets__flask-4045:change",
+      "task": "pallets__flask-4045",
+      "repository": "pallets/flask",
+      "split": "heldout",
+      "category": "change-localization",
+      "latencyMs": 10926.992534999998,
+      "complete": true,
+      "returnedChars": 2548,
+      "ranges": [
+        {
+          "path": "src/flask/blueprints.py",
+          "start_line": 171,
+          "end_line": 201
+        },
+        {
+          "path": "src/flask/blueprints.py",
+          "start_line": 353,
+          "end_line": 370
+        },
+        {
+          "path": "tests/test_blueprints.py",
+          "start_line": 256,
+          "end_line": 278
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0.5,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": 0.16666666666666666
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6-luna",
+        "effort": "medium",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 180778,
+          "cachedTokens": 0,
+          "outputTokens": 361,
+          "reasoningTokens": 289
+        }
+      }
+    }
+  ]
+}
