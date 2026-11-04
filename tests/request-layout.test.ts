@@ -3,7 +3,7 @@ import { createHash } from 'node:crypto';
 import { test } from 'node:test';
 
 import type { EvaluationBatch } from '../src/evaluation/contracts.ts';
-import { CRITERION_REFERENCE, RELEVANCE_CRITERION, buildRequestPayload, questionInstructions } from '../src/evaluation/jev.ts';
+import { CRITERION_REFERENCE, LAYOUT_VERSION, RELEVANCE_CRITERION, buildRequestPayload, questionInstructions } from '../src/evaluation/jev.ts';
 import { serializeOpenRouterBatch } from '../src/evaluation/openrouter.ts';
 import { serializeGatewayBatch } from '../src/evaluation/vercel-gateway.ts';
 import { planChunks } from '../scripts/bench/layouts.ts';
@@ -23,7 +23,7 @@ const serializers = {
   openrouter: serializeOpenRouterBatch,
 };
 
-test('without a compact layout every transport sends the bytes it sent before layouts existed', () => {
+test('layout-a-1 still sends the bytes it sent before layouts existed; no field means the production layout', () => {
   // SHA-256 of the payloads serialized before the layout seam was added.
   const before = {
     direct: 'ce7af1f5e97366155a2cd250444f0252f62e920159a4a673e37633d4f3724ca8',
@@ -31,10 +31,10 @@ test('without a compact layout every transport sends the bytes it sent before la
     openrouter: '57c5d73026ed0083907d4f8364e3a1d18fada7c4e6bac370cd46e9268bc74c65',
   };
   for (const [name, serialize] of Object.entries(serializers)) {
-    assert.equal(hash(serialize(BATCH)), before[name as keyof typeof before], name);
-    assert.equal(serialize({ ...BATCH, layout: 'layout-a-1' }), serialize(BATCH), name);
+    assert.equal(hash(serialize({ ...BATCH, layout: 'layout-a-1' })), before[name as keyof typeof before], name);
+    assert.equal(serialize({ ...BATCH, layout: LAYOUT_VERSION }), serialize(BATCH), name);
   }
-  assert.equal(hash(serializeGatewayBatch({ ...BATCH, criterion: FOCUSED })),
+  assert.equal(hash(serializeGatewayBatch({ ...BATCH, layout: 'layout-a-1', criterion: FOCUSED })),
     '6685c982a3e99bd1ee6453c8034e466923f83ce85707c811a9c7965bd349c1ab');
 });
 

@@ -1,0 +1,474 @@
+{
+  "schemaVersion": 1,
+  "kind": "layout-comparison",
+  "createdAt": "2026-11-04T11:47:10.198Z",
+  "environment": {
+    "node": "v24.22.2",
+    "platform": "linux",
+    "architecture": "x64",
+    "cpu": "Intel(R) Xeon(R) Processor",
+    "logicalCpus": 8,
+    "totalMemoryBytes": 33654874112,
+    "revision": "235f3be5d15627b96be5153e1f96e1bf7fdb7318",
+    "workingTree": "M README.md\n M docs/install-guide.md\n M scripts/bench-layouts.ts\n M src/evaluation/cache.ts\n M src/evaluation/contracts.ts\n M src/evaluation/jev.ts\n M src/evaluation/vercel-gateway.ts\n M tests/jev-adapter.test.ts\n M tests/judgment-criterion.test.ts\n M tests/multiquestion-search.test.ts\n M tests/provider-http.test.ts\n M tests/request-layout.test.ts\n M tests/vercel-gateway-adapter.test.ts\n?? node_modules",
+    "sourceHash": "67ec62d1fc8fabd0d4f4795d88c6aac939f8a199733c03445cb14efcd56acd89",
+    "harnessHash": "7e1dda8fc8f263437030863eadbe37bb47e4c3058f671d8021c9dea7718f23c7",
+    "packageLockHash": "37aedfa15a94c84ec716c28109e43f59223658b03775581380cc0fdcd4899db7"
+  },
+  "pools": [
+    "benchmarks/pools/synthetic-pilot-1.json",
+    "benchmarks/pools/swe-bench-sample-1-dev.json",
+    "benchmarks/pools/swe-bench-sample-1-heldout.json",
+    "benchmarks/pools/false-premise-1.json"
+  ],
+  "judgments": [
+    "/home/ubuntu/e12/cache-identity/judgments-layout-a-1.json",
+    "/home/ubuntu/e12/cache-identity/judgments-layout-a-nolines-1-keys.json",
+    "/home/ubuntu/e12/cache-identity/judgments-layout-a-noloc-1.json"
+  ],
+  "semantics": {
+    "reference": "the first layout-a-1 rerun; captured layout-a-1 scores are a second layout-A sample and set the noise floor",
+    "agreement": "absolute score difference and threshold crossings per candidate, and searches whose replayed result changed, against the reference",
+    "cost": "requests, reported input tokens and serialized bytes for every captured candidate, on identical chunks"
+  },
+  "results": [
+    {
+      "name": "captured layout-a-1",
+      "layout": "layout-a-1",
+      "cost": null,
+      "groups": {
+        "all": {
+          "searches": 65,
+          "incomplete": 0,
+          "recallAt1": 0.7592592592592594,
+          "recallAt5": 0.9155945419103314,
+          "mrr": 0.9111111111111111,
+          "coverage": 0.9155945419103314,
+          "counterCoverage": 1,
+          "negativeAccuracy": 1,
+          "unannotated": 1.2923076923076924,
+          "excerpts": 2.523076923076923,
+          "vsReference": {
+            "candidates": 5009,
+            "meanAbsDelta": 0.018907965661809464,
+            "p95AbsDelta": 0.08,
+            "crossings": 60,
+            "changedSearches": 13
+          }
+        },
+        "synthetic": {
+          "searches": 30,
+          "incomplete": 0,
+          "recallAt1": 0.7777777777777778,
+          "recallAt5": 0.9722222222222222,
+          "mrr": 0.9791666666666666,
+          "coverage": 0.9722222222222222,
+          "counterCoverage": null,
+          "negativeAccuracy": 1,
+          "unannotated": 0.9666666666666667,
+          "excerpts": 2.066666666666667,
+          "vsReference": {
+            "candidates": 190,
+            "meanAbsDelta": 0.029105263157894686,
+            "p95AbsDelta": 0.11,
+            "crossings": 4,
+            "changedSearches": 4
+          }
+        },
+        "real-dev": {
+          "searches": 15,
+          "incomplete": 0,
+          "recallAt1": 0.7333333333333333,
+          "recallAt5": 0.8666666666666667,
+          "mrr": 0.8,
+          "coverage": 0.8666666666666667,
+          "counterCoverage": null,
+          "negativeAccuracy": null,
+          "unannotated": 2.2,
+          "excerpts": 3.2,
+          "vsReference": {
+            "candidates": 1749,
+            "meanAbsDelta": 0.026895368782161314,
+            "p95AbsDelta": 0.10999999999999999,
+            "crossings": 36,
+            "changedSearches": 5
+          }
+        },
+        "real-heldout": {
+          "searches": 6,
+          "incomplete": 0,
+          "recallAt1": 0.75,
+          "recallAt5": 0.8114035087719298,
+          "mrr": 0.9166666666666666,
+          "coverage": 0.8114035087719298,
+          "counterCoverage": null,
+          "negativeAccuracy": null,
+          "unannotated": 1.1666666666666667,
+          "excerpts": 2.6666666666666665,
+          "vsReference": {
+            "candidates": 1773,
+            "meanAbsDelta": 0.0136040609137057,
+            "p95AbsDelta": 0.05000000000000002,
+            "crossings": 10,
+            "changedSearches": 3
+          }
+        },
+        "false-premise": {
+          "searches": 14,
+          "incomplete": 0,
+          "recallAt1": null,
+          "recallAt5": null,
+          "mrr": null,
+          "coverage": null,
+          "counterCoverage": 1,
+          "negativeAccuracy": null,
+          "unannotated": 1.0714285714285714,
+          "excerpts": 2.7142857142857144,
+          "vsReference": {
+            "candidates": 1297,
+            "meanAbsDelta": 0.013893600616808038,
+            "p95AbsDelta": 0.06,
+            "crossings": 10,
+            "changedSearches": 1
+          }
+        }
+      }
+    },
+    {
+      "name": "layout-a-1",
+      "layout": "layout-a-1",
+      "cost": {
+        "requests": 128,
+        "errors": 0,
+        "unknownUsage": 0,
+        "candidates": 5009,
+        "reportedInputTokens": 3208972,
+        "tokensPerCandidate": 640.6412457576363,
+        "bytesPerCandidate": 2692.9205430225593,
+        "msP50": 313.5419089999996,
+        "msP95": 15473.568847300001
+      },
+      "groups": {
+        "all": {
+          "searches": 65,
+          "incomplete": 0,
+          "recallAt1": 0.7370370370370372,
+          "recallAt5": 0.8933723196881092,
+          "mrr": 0.8888888888888888,
+          "coverage": 0.8933723196881092,
+          "counterCoverage": 1,
+          "negativeAccuracy": 1,
+          "unannotated": 1.3076923076923077,
+          "excerpts": 2.523076923076923,
+          "vsReference": {
+            "candidates": 5009,
+            "meanAbsDelta": 0,
+            "p95AbsDelta": 0,
+            "crossings": 0,
+            "changedSearches": 0
+          }
+        },
+        "synthetic": {
+          "searches": 30,
+          "incomplete": 0,
+          "recallAt1": 0.7777777777777778,
+          "recallAt5": 0.9722222222222222,
+          "mrr": 0.9791666666666666,
+          "coverage": 0.9722222222222222,
+          "counterCoverage": null,
+          "negativeAccuracy": 1,
+          "unannotated": 0.9,
+          "excerpts": 2,
+          "vsReference": {
+            "candidates": 190,
+            "meanAbsDelta": 0,
+            "p95AbsDelta": 0,
+            "crossings": 0,
+            "changedSearches": 0
+          }
+        },
+        "real-dev": {
+          "searches": 15,
+          "incomplete": 0,
+          "recallAt1": 0.6666666666666666,
+          "recallAt5": 0.8,
+          "mrr": 0.7333333333333333,
+          "coverage": 0.8,
+          "counterCoverage": null,
+          "negativeAccuracy": null,
+          "unannotated": 2.4,
+          "excerpts": 3.2666666666666666,
+          "vsReference": {
+            "candidates": 1749,
+            "meanAbsDelta": 0,
+            "p95AbsDelta": 0,
+            "crossings": 0,
+            "changedSearches": 0
+          }
+        },
+        "real-heldout": {
+          "searches": 6,
+          "incomplete": 0,
+          "recallAt1": 0.75,
+          "recallAt5": 0.8114035087719298,
+          "mrr": 0.9166666666666666,
+          "coverage": 0.8114035087719298,
+          "counterCoverage": null,
+          "negativeAccuracy": null,
+          "unannotated": 1,
+          "excerpts": 2.6666666666666665,
+          "vsReference": {
+            "candidates": 1773,
+            "meanAbsDelta": 0,
+            "p95AbsDelta": 0,
+            "crossings": 0,
+            "changedSearches": 0
+          }
+        },
+        "false-premise": {
+          "searches": 14,
+          "incomplete": 0,
+          "recallAt1": null,
+          "recallAt5": null,
+          "mrr": null,
+          "coverage": null,
+          "counterCoverage": 1,
+          "negativeAccuracy": null,
+          "unannotated": 1.1428571428571428,
+          "excerpts": 2.7857142857142856,
+          "vsReference": {
+            "candidates": 1297,
+            "meanAbsDelta": 0,
+            "p95AbsDelta": 0,
+            "crossings": 0,
+            "changedSearches": 0
+          }
+        }
+      }
+    },
+    {
+      "name": "layout-a-nolines-1",
+      "layout": "layout-a-nolines-1",
+      "cost": {
+        "requests": 126,
+        "errors": 0,
+        "unknownUsage": 0,
+        "candidates": 5009,
+        "reportedInputTokens": 3158760,
+        "tokensPerCandidate": 630.6168895987223,
+        "bytesPerCandidate": 2652.616091036135,
+        "msP50": 281.7265019999977,
+        "msP95": 15524.270112249997
+      },
+      "groups": {
+        "all": {
+          "searches": 65,
+          "incomplete": 0,
+          "recallAt1": 0.7592592592592594,
+          "recallAt5": 0.9155945419103314,
+          "mrr": 0.9111111111111111,
+          "coverage": 0.9155945419103314,
+          "counterCoverage": 1,
+          "negativeAccuracy": 1,
+          "unannotated": 1.3384615384615384,
+          "excerpts": 2.5846153846153848,
+          "vsReference": {
+            "candidates": 5009,
+            "meanAbsDelta": 0.009656618087442535,
+            "p95AbsDelta": 0.03999999999999998,
+            "crossings": 27,
+            "changedSearches": 7
+          }
+        },
+        "synthetic": {
+          "searches": 30,
+          "incomplete": 0,
+          "recallAt1": 0.7777777777777778,
+          "recallAt5": 0.9722222222222222,
+          "mrr": 0.9791666666666666,
+          "coverage": 0.9722222222222222,
+          "counterCoverage": null,
+          "negativeAccuracy": 1,
+          "unannotated": 0.9333333333333333,
+          "excerpts": 2.033333333333333,
+          "vsReference": {
+            "candidates": 190,
+            "meanAbsDelta": 0.013473684210526303,
+            "p95AbsDelta": 0.050000000000000044,
+            "crossings": 1,
+            "changedSearches": 1
+          }
+        },
+        "real-dev": {
+          "searches": 15,
+          "incomplete": 0,
+          "recallAt1": 0.7333333333333333,
+          "recallAt5": 0.8666666666666667,
+          "mrr": 0.8,
+          "coverage": 0.8666666666666667,
+          "counterCoverage": null,
+          "negativeAccuracy": null,
+          "unannotated": 2.3333333333333335,
+          "excerpts": 3.3333333333333335,
+          "vsReference": {
+            "candidates": 1749,
+            "meanAbsDelta": 0.013098913664951507,
+            "p95AbsDelta": 0.04999999999999999,
+            "crossings": 14,
+            "changedSearches": 4
+          }
+        },
+        "real-heldout": {
+          "searches": 6,
+          "incomplete": 0,
+          "recallAt1": 0.75,
+          "recallAt5": 0.8114035087719298,
+          "mrr": 0.9166666666666666,
+          "coverage": 0.8114035087719298,
+          "counterCoverage": null,
+          "negativeAccuracy": null,
+          "unannotated": 1.1666666666666667,
+          "excerpts": 2.8333333333333335,
+          "vsReference": {
+            "candidates": 1773,
+            "meanAbsDelta": 0.007580372250422921,
+            "p95AbsDelta": 0.02999999999999997,
+            "crossings": 6,
+            "changedSearches": 1
+          }
+        },
+        "false-premise": {
+          "searches": 14,
+          "incomplete": 0,
+          "recallAt1": null,
+          "recallAt5": null,
+          "mrr": null,
+          "coverage": null,
+          "counterCoverage": 1,
+          "negativeAccuracy": null,
+          "unannotated": 1.2142857142857142,
+          "excerpts": 2.857142857142857,
+          "vsReference": {
+            "candidates": 1297,
+            "meanAbsDelta": 0.007293754818812574,
+            "p95AbsDelta": 0.03,
+            "crossings": 6,
+            "changedSearches": 1
+          }
+        }
+      }
+    },
+    {
+      "name": "layout-a-noloc-1",
+      "layout": "layout-a-noloc-1",
+      "cost": {
+        "requests": 128,
+        "errors": 0,
+        "unknownUsage": 0,
+        "candidates": 5009,
+        "reportedInputTokens": 3120370,
+        "tokensPerCandidate": 622.9526851666999,
+        "bytesPerCandidate": 2650.257536434418,
+        "msP50": 252.89627800000744,
+        "msP95": 15062.322679950006
+      },
+      "groups": {
+        "all": {
+          "searches": 65,
+          "incomplete": 0,
+          "recallAt1": 0.7370370370370372,
+          "recallAt5": 0.8933723196881092,
+          "mrr": 0.8888888888888888,
+          "coverage": 0.8933723196881092,
+          "counterCoverage": 0.9285714285714286,
+          "negativeAccuracy": 1,
+          "unannotated": 1.5692307692307692,
+          "excerpts": 2.7846153846153845,
+          "vsReference": {
+            "candidates": 5009,
+            "meanAbsDelta": 0.029065681772809052,
+            "p95AbsDelta": 0.1,
+            "crossings": 69,
+            "changedSearches": 14
+          }
+        },
+        "synthetic": {
+          "searches": 30,
+          "incomplete": 0,
+          "recallAt1": 0.7361111111111112,
+          "recallAt5": 0.9722222222222222,
+          "mrr": 0.9583333333333334,
+          "coverage": 0.9722222222222222,
+          "counterCoverage": null,
+          "negativeAccuracy": 1,
+          "unannotated": 0.9666666666666667,
+          "excerpts": 2.066666666666667,
+          "vsReference": {
+            "candidates": 190,
+            "meanAbsDelta": 0.046157894736842044,
+            "p95AbsDelta": 0.1554999999999998,
+            "crossings": 2,
+            "changedSearches": 2
+          }
+        },
+        "real-dev": {
+          "searches": 15,
+          "incomplete": 0,
+          "recallAt1": 0.7333333333333333,
+          "recallAt5": 0.8,
+          "mrr": 0.7666666666666667,
+          "coverage": 0.8,
+          "counterCoverage": null,
+          "negativeAccuracy": null,
+          "unannotated": 2.4,
+          "excerpts": 3.3333333333333335,
+          "vsReference": {
+            "candidates": 1749,
+            "meanAbsDelta": 0.033224699828473626,
+            "p95AbsDelta": 0.10999999999999999,
+            "crossings": 33,
+            "changedSearches": 4
+          }
+        },
+        "real-heldout": {
+          "searches": 6,
+          "incomplete": 0,
+          "recallAt1": 0.75,
+          "recallAt5": 0.8114035087719298,
+          "mrr": 0.9166666666666666,
+          "coverage": 0.8114035087719298,
+          "counterCoverage": null,
+          "negativeAccuracy": null,
+          "unannotated": 3.5,
+          "excerpts": 5.166666666666667,
+          "vsReference": {
+            "candidates": 1773,
+            "meanAbsDelta": 0.030851663846587843,
+            "p95AbsDelta": 0.10000000000000002,
+            "crossings": 24,
+            "changedSearches": 4
+          }
+        },
+        "false-premise": {
+          "searches": 14,
+          "incomplete": 0,
+          "recallAt1": null,
+          "recallAt5": null,
+          "mrr": null,
+          "coverage": null,
+          "counterCoverage": 0.9285714285714286,
+          "negativeAccuracy": null,
+          "unannotated": 1.1428571428571428,
+          "excerpts": 2.7142857142857144,
+          "vsReference": {
+            "candidates": 1297,
+            "meanAbsDelta": 0.01851195065535874,
+            "p95AbsDelta": 0.07999999999999996,
+            "crossings": 10,
+            "changedSearches": 4
+          }
+        }
+      }
+    }
+  ]
+}

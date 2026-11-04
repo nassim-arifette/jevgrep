@@ -200,7 +200,10 @@ search sends it:
 
 - the eligible source fragments of the authorized repository;
 - your question;
-- repository-relative paths and line ranges.
+- repository-relative paths and the name of the enclosing symbol, when there is one.
+
+Line numbers stay on your machine: they are not needed to judge an excerpt, and
+leaving them out lets the cache keep the score of a function that only moved.
 
 JevGrep leaves out `.env` files, common credential files, dependencies, build output,
 generated and minified files, and files that look like they contain secrets. It

@@ -27,6 +27,9 @@ export type RequestLayout =
   /** Location-independent layouts: no `Lines:` header, or no `File:` and `Lines:` headers. */
   | 'layout-a-nolines-1' | 'layout-a-noloc-1';
 
+/** Layouts that never show the model a line range, so a moved excerpt keeps its cached score. */
+export const LINE_FREE_LAYOUTS: ReadonlySet<RequestLayout> = new Set(['layout-a-nolines-1', 'layout-a-noloc-1']);
+
 export type EvaluationBatch = {
   readonly query: string;
   readonly items: readonly BatchItem[];
