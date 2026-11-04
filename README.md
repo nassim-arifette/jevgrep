@@ -5,52 +5,51 @@
 [![MCP](https://img.shields.io/badge/MCP-compatible-7C3AED?logo=modelcontextprotocol&logoColor=white)](https://modelcontextprotocol.io/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-**Find code by what it does, not by what it is called.**
-
-Ask a question in plain English, such as *“Where is session expiry handled?”*, and
-JevGrep returns the exact source lines that answer it, with file paths and line
-numbers. Use it from your terminal, or plug it into Claude Code, Codex or any MCP
-client so your coding agent stops opening file after file to find its way around.
+JevGrep finds code from a description of what it does. Ask something like *"Where is
+session expiry handled?"* and it returns the source lines that answer it, with file
+paths and line numbers. You can run it in a terminal or add it to Claude Code, Codex
+or another MCP client, so your coding agent can look things up instead of opening
+one file after another.
 
 <p align="center">
   <a href="https://github.com/nassim-arifette/jevgrep/blob/main/docs/assets/jevgrep-demo.mp4">
     <img src="https://raw.githubusercontent.com/nassim-arifette/jevgrep/main/docs/assets/jevgrep-demo.gif" alt="Animated JevGrep demo: a plain-English question returns the exact source lines, paths and scores" width="900">
   </a>
   <br>
-  <sub>▶ <a href="https://github.com/nassim-arifette/jevgrep/blob/main/docs/assets/jevgrep-demo.mp4">Watch the full-quality video (44 s)</a>. Every result shown comes from a real search on this repository.</sub>
+  <sub><a href="https://github.com/nassim-arifette/jevgrep/blob/main/docs/assets/jevgrep-demo.mp4">Full-quality video (44 s)</a>. The results in it come from a real search on this repository.</sub>
 </p>
 
 ## Why JevGrep
 
-`grep` and `rg` are perfect when you know the name to search for. Most of the time,
-you only know the behaviour:
+`grep` and `rg` work well when you know the name to search for. Often you only know
+what the code is supposed to do:
 
-- *“Where do we check that a user can access this project?”*
-- *“What happens when a payment webhook arrives twice?”*
-- *“Which code decides whether a file is too big to index?”*
+- *"Where do we check that a user can access this project?"*
+- *"What happens when a payment webhook arrives twice?"*
+- *"Which code decides whether a file is too big to index?"*
 
-JevGrep answers these questions directly:
+JevGrep is built for that kind of question. Results are verbatim excerpts with
+`path:start-end`, so you or your agent can open the file and carry on from there. For
+an agent, one tool call stands in for a long walk through the repository, and the
+answer stays within a token budget you set. Every eligible UTF-8 text file is scored,
+configuration and tests included. Nothing is sent until you have authorized the
+repository and had the chance to check what would leave your computer.
 
-- **Original code, never a summary.** Results are verbatim excerpts with `path:start-end`, so you or your agent can open the file and keep going.
-- **Less context for agents.** One tool call replaces a long exploration of the repository; the answer fits a token budget you choose.
-- **Whole repository, any language.** Every eligible UTF-8 text file is scored, including configuration and tests, not just a pre-filtered shortlist.
-- **You stay in control.** Nothing is sent anywhere until you authorize a repository and review what would leave your computer.
+## Getting started
 
-## Get started in 2 minutes
-
-You need **Node.js 24** and an API key from one of the supported providers:
+You need Node.js 24 and an API key from one of the supported providers:
 [TypeSafe AI](https://typesafe.ai), [Vercel AI Gateway](https://vercel.com/ai-gateway)
 or [OpenRouter](https://openrouter.ai/settings/keys).
 
-**1. Install**
+### 1. Install
 
 ```bash
 npm install -g @nassim-arifette/jevgrep
 ```
 
-> The unscoped `jevgrep` package on npm is a different project. Install the scoped name above; the command is still `jevgrep`.
+> The unscoped `jevgrep` package on npm belongs to a different project. Install the scoped name above; the command is still `jevgrep`.
 
-**2. Add your provider key** (once per computer)
+### 2. Add your provider key (once per computer)
 
 ```bash
 jevgrep init --global                       # TypeSafe AI (default)
@@ -58,32 +57,33 @@ jevgrep init --global --provider vercel     # or Vercel AI Gateway
 jevgrep init --global --provider openrouter # or OpenRouter
 ```
 
-The key is stored in your user configuration directory, never in a repository.
+The key goes in your user configuration directory, never in a repository.
 
-**3. Authorize a project** (once per repository)
+### 3. Authorize a project (once per repository)
 
 ```bash
 cd path/to/my-project
 jevgrep init
 ```
 
-JevGrep asks before anything leaves your computer:
+JevGrep asks before it sends anything:
 
 ```text
 Allow sending eligible source excerpts from this repository to Vercel AI Gateway? [y/N]
 ```
 
-Answer `y` to search right away. Not sure yet? Press Enter, then run `jevgrep inspect`
-to see exactly which files would be sent (see [Privacy](#privacy-what-leaves-your-computer)).
+Answer `y` to start searching. If you would rather check first, press Enter and run
+`jevgrep inspect` to see which files would be sent (more in
+[Privacy](#privacy-what-leaves-your-computer)).
 
-**4. Ask a question**
+### 4. Ask a question
 
 ```bash
 jevgrep search --query "Where is session expiry handled?"
 ```
 
-JevGrep prints every matching excerpt with its location and a relevance score.
-A real run on this repository:
+Each matching excerpt is printed with its location and a relevance score. Here is a
+real run on this repository:
 
 ```text
 $ jevgrep search --scope src --query "Where is filesystem access controlled, and what prevents path escapes?"
@@ -127,21 +127,20 @@ jevgrep doctor
 jevgrep inspect
 ```
 
-Run JevGrep from anywhere inside an authorized project, including subfolders.
-Repeat searches are faster and cheaper: scores and file preparation are cached outside
-the repository (`jevgrep cache clear` resets them).
+You can run JevGrep from any folder inside an authorized project. Scores and file
+preparation are cached outside the repository, so repeated searches cost less and
+finish sooner; `jevgrep cache clear` resets the cache.
 
-**Tip:** if you already know the exact function name or string, `rg` is faster.
-Use JevGrep when you know *what the code does* but not *where it is*.
+If you already know the function name or the exact string, `rg` will be quicker.
 
 ## Connect your coding agent
 
-JevGrep ships a local [MCP](https://modelcontextprotocol.io/) server with a single tool,
-`semantic_search_code`. Your agent calls it with a question and gets back the same
-excerpts as the CLI.
+JevGrep includes a local [MCP](https://modelcontextprotocol.io/) server with one tool,
+`semantic_search_code`. The agent sends a question and gets the same excerpts the CLI
+would print.
 
-First authorize the repository with `jevgrep init`. It prints the absolute path of the
-project profile; use that path below. One server serves one repository.
+Authorize the repository with `jevgrep init` first. It prints the absolute path of the
+project profile, which goes in the commands below. Each server handles one repository.
 
 <details open>
 <summary><b>Claude Code</b></summary>
@@ -190,28 +189,28 @@ On Windows, if the client cannot start the `jevgrep` command, use the absolute p
 ([how](docs/install-guide.md#connect-an-mcp-client)).
 </details>
 
-A search can take up to 5 minutes on a large repository, so give the tool call a
-client timeout of about 6 minutes. Never put API keys in MCP configuration files:
-the client reuses the key saved by `jevgrep init --global` when it runs as the same user.
+On a large repository a search can take up to 5 minutes, so set the client's tool
+timeout to about 6 minutes. Keep API keys out of MCP configuration files. When the
+client runs as the same user, it picks up the key saved by `jevgrep init --global`.
 
 ## Privacy: what leaves your computer
 
-JevGrep reads your files locally. Scoring is done by the provider you chose, so a search
-sends it:
+JevGrep reads your files locally. The provider you chose does the scoring, so each
+search sends it:
 
 - the eligible source fragments of the authorized repository;
 - your question;
 - repository-relative paths and line ranges.
 
-Before that, JevGrep:
+JevGrep leaves out `.env` files, common credential files, dependencies, build output,
+generated and minified files, and files that look like they contain secrets. It
+follows `.gitignore`, plus a `.jevgrepignore` file it creates for your own
+exclusions. It does not follow links, and your API key never appears in a request
+body, a result or the cache.
 
-- skips `.env` files, common credential files, dependencies, build output, generated and minified files, and files that look like they contain secrets;
-- respects `.gitignore` and a `.jevgrepignore` file it creates for your own exclusions;
-- never follows links, and never puts your API key in a request body, result or cache.
-
-Secret detection cannot be perfect: run `jevgrep inspect` before your first search and
-add anything sensitive to `.jevgrepignore`. The provider's own privacy and retention
-policies apply to what it receives.
+Secret detection will miss things sometimes. Run `jevgrep inspect` before your first
+search and add anything sensitive to `.jevgrepignore`. Whatever the provider receives
+is covered by its own privacy and retention policies.
 
 ## Providers
 
@@ -221,11 +220,12 @@ policies apply to what it receives.
 | Vercel AI Gateway | `jevgrep init --global --provider vercel`     | `typesafe-ai/jev`     |
 | OpenRouter        | `jevgrep init --global --provider openrouter` | `typesafe/jev-1.13`   |
 
-Environment variables `TYPESAFE_API_KEY`, `AI_GATEWAY_API_KEY` and `OPENROUTER_API_KEY`
-take priority over saved keys, which is handy in CI. To switch an existing project to
-another provider, run the global setup for it, then `jevgrep init --provider <name>` in
-the project. Validation status and API details for each provider are in the
-[reference](docs/reference.md#providers).
+The environment variables `TYPESAFE_API_KEY`, `AI_GATEWAY_API_KEY` and
+`OPENROUTER_API_KEY` override saved keys, which is useful in CI. To move a project to
+another provider, run the global setup for that provider, then
+`jevgrep init --provider <name>` inside the project. The
+[reference](docs/reference.md#providers) lists each provider's validation status and
+API details.
 
 ## Troubleshooting
 
@@ -238,15 +238,15 @@ the project. Validation status and API details for each provider are in the
 | No result, `no_score_above_threshold` | rephrase the question or widen `--scope`; it does not prove the code is absent |
 | MCP tool times out | raise the client timeout to about 6 minutes |
 
-More cases are covered in the [installation guide](docs/install-guide.md#troubleshooting).
+The [installation guide](docs/install-guide.md#troubleshooting) covers more cases.
 Exit codes: `0` complete, `2` invalid request or configuration, `3` partial result,
 `4` failure, `130` interrupted.
 
 ## Learn more
 
-- [Installation and configuration guide](docs/install-guide.md): manual profiles, limits, cost caps, retries, Windows notes
-- [Reference](docs/reference.md): providers, JSON output, cache policy, request batching, development
-- [Benchmarks](benchmarks/README.md): retrieval quality and performance measurements
+- [Installation and configuration guide](docs/install-guide.md): manual profiles, limits, cost caps, retries and Windows notes
+- [Reference](docs/reference.md): providers, JSON output, cache policy, request batching and development
+- [Benchmarks](benchmarks/README.md): retrieval quality and performance
 - [Report an issue](https://github.com/nassim-arifette/jevgrep/issues)
 
 ## Contributing
