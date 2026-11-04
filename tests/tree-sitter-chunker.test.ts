@@ -136,6 +136,26 @@ test('oversized Go and Rust functions are split inside their own ranges under th
   }
 });
 
+test('windows cut from one oversized unit remember that unit as their declaration', () => {
+  const literal = Array.from({ length: 80 }, (_, n) => `\t\t${String(n)},`).join('\n');
+  const limits = { ...DEFAULT_WINDOW_LIMITS, targetTokens: 90, maxTokens: 150, maxBytes: 900 };
+  const snapshot = snapshotOf('pkg/literal.go', `package large\n\nfunc large() {\n\tvalues := []int{\n${literal}\n\t}\n\tuse(values)\n}\n`);
+  const fragments = syntaxFragments(chunkSnapshot(snapshot, limits));
+  const windows = fragments.filter((fragment) => fragment.declaration != null);
+  assert.ok(windows.length > 1, 'the literal is cut into several windows');
+  const declaration = windows[0]!.declaration!;
+  assert.equal(declaration.startLine, windows[0]!.startLine);
+  assert.equal(declaration.endLine, windows.at(-1)!.endLine);
+  for (const window of windows) {
+    assert.deepEqual(window.declaration, declaration);
+    assert.ok(window.startLine >= declaration.startLine && window.endLine <= declaration.endLine);
+  }
+  for (const fragment of fragments) {
+    if (fragment.declaration == null) assert.ok(fragment.endLine < declaration.startLine || fragment.startLine > declaration.endLine);
+  }
+  assertExact(snapshot, fragments);
+});
+
 test('BOM, CRLF and non-ASCII text keep exact offsets in Go and Rust', () => {
   for (const [path, text, label] of [
     ['pkg/café.go', '\uFEFFpackage café\r\n\r\n// état\r\nfunc Émoji() string {\r\n\treturn "😀"\r\n}\r\n', 'function:Émoji'],
