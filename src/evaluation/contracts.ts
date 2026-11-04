@@ -22,7 +22,10 @@ export type JudgmentCriterion = { readonly version: string; readonly text: strin
  * the criterion in every question; the compact layouts state it once in shared state,
  * either with no per-question criteria or with a short pointer to it.
  */
-export type RequestLayout = 'layout-a-1' | 'layout-compact-state-1' | 'layout-compact-ref-1';
+export type RequestLayout =
+  | 'layout-a-1' | 'layout-compact-state-1' | 'layout-compact-ref-1'
+  /** Location-independent layouts: no `Lines:` header, or no `File:` and `Lines:` headers. */
+  | 'layout-a-nolines-1' | 'layout-a-noloc-1';
 
 export type EvaluationBatch = {
   readonly query: string;

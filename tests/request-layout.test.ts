@@ -3,7 +3,7 @@ import { createHash } from 'node:crypto';
 import { test } from 'node:test';
 
 import type { EvaluationBatch } from '../src/evaluation/contracts.ts';
-import { CRITERION_REFERENCE, RELEVANCE_CRITERION, buildRequestPayload } from '../src/evaluation/jev.ts';
+import { CRITERION_REFERENCE, RELEVANCE_CRITERION, buildRequestPayload, questionInstructions } from '../src/evaluation/jev.ts';
 import { serializeOpenRouterBatch } from '../src/evaluation/openrouter.ts';
 import { serializeGatewayBatch } from '../src/evaluation/vercel-gateway.ts';
 import { planChunks } from '../scripts/bench/layouts.ts';
@@ -68,4 +68,21 @@ test('every layout is judged on the same deterministic chunks, packed with the l
   assert.deepEqual(planChunks(BATCH.query, items, (batch) => JSON.stringify(batch), (body) => body.length < 400), chunks);
   assert.deepEqual(planChunks(BATCH.query, [items[0]!], () => 'x'.repeat(1_000), () => false), [[items[0]]]);
   assert.ok(sizes.length > 0);
+});
+
+test('location-independent layouts drop the line range, or the path and line range, and nothing else', () => {
+  const item = BATCH.items[0]!;
+  const header = (layout: 'layout-a-nolines-1' | 'layout-a-noloc-1') => questionInstructions(item, layout);
+  assert.ok(!header('layout-a-nolines-1').includes('Lines:'));
+  assert.ok(header('layout-a-nolines-1').startsWith(`File: ${item.path}\n`));
+  assert.ok(!header('layout-a-noloc-1').includes('File:'));
+  assert.ok(!header('layout-a-noloc-1').includes('Lines:'));
+  for (const layout of ['layout-a-nolines-1', 'layout-a-noloc-1'] as const) {
+    assert.ok(header(layout).endsWith(item.text));
+    for (const [name, serialize] of Object.entries(serializers)) {
+      const body = serialize({ ...BATCH, layout });
+      assert.ok(!body.includes('Lines:'), `${name} ${layout}`);
+      assert.equal((JSON.parse(body) as { state: Record<string, string> }).state['layout'], layout, `${name} ${layout}`);
+    }
+  }
 });

@@ -38,7 +38,9 @@ export const CRITERION_VERSION = 'criterion-1';
 /** Shared question in state, one excerpt per question (layout A). Part of cache identity. */
 export const LAYOUT_VERSION = 'layout-a-1' satisfies RequestLayout;
 
-export const REQUEST_LAYOUTS: readonly RequestLayout[] = ['layout-a-1', 'layout-compact-state-1', 'layout-compact-ref-1'];
+export const REQUEST_LAYOUTS: readonly RequestLayout[] = [
+  'layout-a-1', 'layout-compact-state-1', 'layout-compact-ref-1', 'layout-a-nolines-1', 'layout-a-noloc-1',
+];
 
 /** Per-question criteria of `layout-compact-ref-1`; the full criterion stays in state. */
 export const CRITERION_REFERENCE = Object.freeze({
@@ -81,11 +83,17 @@ type RequestPayload = {
   questions: Record<string, QuestionPayload>;
 };
 
-/** Question text for one excerpt. Model-visible metadata is explicit and versioned. */
-export function questionInstructions(item: BatchItem): string {
-  const header = `File: ${item.path}\nLines: ${String(item.startLine)}-${String(item.endLine)}`
-    + (item.label == null ? '' : `\nStructure: ${item.label}`);
-  return `${header}\n\n${item.text}`;
+/**
+ * Question text for one excerpt. Model-visible metadata is explicit and versioned:
+ * the location-independent layouts drop the line range, or the path and line range.
+ */
+export function questionInstructions(item: BatchItem, layout: RequestLayout = LAYOUT_VERSION): string {
+  const lines = [
+    ...(layout === 'layout-a-noloc-1' ? [] : [`File: ${item.path}`]),
+    ...(layout === 'layout-a-nolines-1' || layout === 'layout-a-noloc-1' ? [] : [`Lines: ${String(item.startLine)}-${String(item.endLine)}`]),
+    ...(item.label == null ? [] : [`Structure: ${item.label}`]),
+  ];
+  return lines.length === 0 ? item.text : `${lines.join('\n')}\n\n${item.text}`;
 }
 
 /** Exact request payload for a batch; also the object cache identity hashes (JG-018). */
@@ -95,8 +103,8 @@ export function buildRequestPayload(batch: EvaluationBatch, model: string): Requ
   const criteria = layoutCriteria(batch);
   for (const item of batch.items) {
     questions[item.id] = criteria === undefined
-      ? { type: 'noul', instructions: questionInstructions(item) }
-      : { type: 'noul', instructions: questionInstructions(item), criteria };
+      ? { type: 'noul', instructions: questionInstructions(item, batch.layout) }
+      : { type: 'noul', instructions: questionInstructions(item, batch.layout), criteria };
   }
   return {
     model,

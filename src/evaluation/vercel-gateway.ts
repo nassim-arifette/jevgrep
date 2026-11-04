@@ -98,8 +98,8 @@ function buildGatewayInput(batch: EvaluationBatch): {
   const criteria = layoutCriteria(batch);
   for (const item of batch.items) {
     questions[item.id] = criteria === undefined
-      ? { type: 'boolean', instructions: questionInstructions(item) }
-      : { type: 'boolean', instructions: questionInstructions(item), criteria };
+      ? { type: 'boolean', instructions: questionInstructions(item, batch.layout) }
+      : { type: 'boolean', instructions: questionInstructions(item, batch.layout), criteria };
   }
   return {
     state: {

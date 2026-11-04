@@ -29,7 +29,7 @@ const { values, positionals } = parseArgs({ allowPositionals: true, options: {
 } });
 
 const usage = [
-  'npm run bench:layouts -- judge --config <trusted-config> --layout layout-a-1|layout-compact-state-1|layout-compact-ref-1 [--output file.json]',
+  'npm run bench:layouts -- judge --config <trusted-config> --layout <one of LAYOUT_ARMS> [--output file.json]',
   'npm run bench:layouts -- analyze --judgments a.json,b.json[,...] [--output benchmark-results/layouts.json]',
 ].join('\n');
 

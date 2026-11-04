@@ -13,7 +13,7 @@ import { localizationRangeMetrics } from './retrieval.ts';
 import type { Evidence } from './dataset.ts';
 import type { Range } from './retrieval.ts';
 
-export const LAYOUT_ARMS: readonly RequestLayout[] = ['layout-a-1', 'layout-compact-state-1', 'layout-compact-ref-1'];
+export { REQUEST_LAYOUTS as LAYOUT_ARMS } from '../../src/evaluation/jev.ts';
 
 /**
  * Greedy, order-preserving chunks that fit under the layout-A envelope (the largest),
