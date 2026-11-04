@@ -50,6 +50,8 @@ export type SelectionOptions = {
   readonly policy?: SelectionPolicy;
   /** Experimental knobs of the non-default policies; never changes `relevance`. */
   readonly tuning?: Partial<SelectionTuning>;
+  /** Under `relevance`, a qualifying window of a split declaration returns the whole declaration when it fits, itself otherwise. */
+  readonly wholeDeclarations?: boolean;
 };
 
 /**
@@ -137,17 +139,18 @@ class RangeSet {
   }
 
   /** null when the file can no longer be sliced; the caller records it as unavailable. */
-  plan(candidate: RankedCandidate): Admission | null {
+  plan(candidate: RankedCandidate, wholeDeclaration = false): Admission | null {
     const { fragment } = candidate;
+    const span = wholeDeclaration && fragment.declaration != null ? fragment.declaration : fragment;
     const neighbours: number[] = [];
     this.selected.forEach((range, index) => {
-      if (range.path === fragment.path && range.sha256 === fragment.sha256 && touches(range, fragment)) neighbours.push(index);
+      if (range.path === fragment.path && range.sha256 === fragment.sha256 && touches(range, span)) neighbours.push(index);
     });
     const ranges = neighbours.map((index) => this.selected[index]!);
     // Merge with every range it touches, so two selected ranges never end up
     // describing overlapping lines of the same snapshot.
-    const startLine = Math.min(fragment.startLine, ...ranges.map((range) => range.startLine));
-    const endLine = Math.max(fragment.endLine, ...ranges.map((range) => range.endLine));
+    const startLine = Math.min(span.startLine, ...ranges.map((range) => range.startLine));
+    const endLine = Math.max(span.endLine, ...ranges.map((range) => range.endLine));
     const text = this.#options.sliceLines(fragment.path, startLine, endLine);
     if (text === null) {
       return null;
@@ -219,8 +222,12 @@ export function selectRanges(candidates: readonly Candidate[], options: Selectio
   const set = new RangeSet(options);
   const policy = options.policy ?? 'relevance';
   if (policy === 'relevance') {
+    const wholeDeclarations = options.wholeDeclarations === true;
     for (const candidate of ranked) {
-      const admission = set.plan(candidate);
+      // A window cut from a long declaration offers the whole declaration first and
+      // falls back to itself when the declaration does not fit.
+      const whole = wholeDeclarations && candidate.fragment.declaration != null ? set.plan(candidate, true) : null;
+      const admission = whole !== null && set.fits(whole) ? whole : set.plan(candidate);
       if (admission === null) {
         set.unsliceable.add(candidate.fragment.path);
       } else if (set.fits(admission)) {

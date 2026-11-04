@@ -272,3 +272,22 @@ test('an empty selection states why, following the documented precedence', () =>
   }), [], () => 0);
   assert.equal(belowThreshold.result.report.selection.outcome, 'no_score_above_threshold');
 });
+
+test('a qualifying window of a split declaration brings the whole declaration when asked to', () => {
+  const declaration = { startLine: 1, endLine: 30 };
+  const head: PreparedFragment = { ...fragment('src/cache.ts', 1, 12), declaration };
+  const tail: PreparedFragment = { ...fragment('src/cache.ts', 13, 30), declaration };
+  const candidates: Candidate[] = [{ fragment: head, score: 0.95 }, { fragment: tail, score: 0.1 }];
+
+  const whole = selectRanges(candidates, { threshold: 0.5, availableTokens: 10_000, measure: excerptCost, sliceLines, wholeDeclarations: true });
+  assert.deepEqual(whole.ranges.map((range) => [range.startLine, range.endLine, range.score]), [[1, 30, 0.95]]);
+  assert.equal(whole.ranges[0]!.text, sliceLines('src/cache.ts', 1, 30));
+
+  const windows = select(candidates);
+  assert.deepEqual(windows.ranges.map((range) => [range.startLine, range.endLine]), [[1, 12]]);
+
+  // When the declaration does not fit, the window itself is still offered to the budget.
+  const headOnly = excerptCost({ path: 'src/cache.ts', sha256: digestFor('src/cache.ts'), startLine: 1, endLine: 12, score: 0.95, text: sliceLines('src/cache.ts', 1, 12)! });
+  const tight = selectRanges(candidates, { threshold: 0.5, availableTokens: headOnly, measure: excerptCost, sliceLines, wholeDeclarations: true });
+  assert.deepEqual(tight.ranges.map((range) => [range.startLine, range.endLine]), [[1, 12]]);
+});

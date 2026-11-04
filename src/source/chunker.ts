@@ -53,6 +53,8 @@ export const SYNTAX_CHUNKER_VERSION = SYNTAX_CHUNKER_VERSIONS.javascript;
 export type PreparedFragment = Omit<FragmentWindow, 'classification'> & {
   readonly classification: 'line-window' | 'syntax-range';
   readonly label?: string | null;
+  /** The declaration this window was cut from, when one declaration became several windows. */
+  readonly declaration?: { readonly startLine: number; readonly endLine: number } | null;
 };
 
 export type ChunkFallback = 'parse_failure';
@@ -187,9 +189,13 @@ function windowsOfRange(
       end += 1;
     }
     if (!isBlankRange(snapshot, cursor, end)) {
-      fragments.push(fragmentOf(snapshot, {
-        startLine: cursor, endLine: end, label: labelEveryWindow || cursor === range.startLine ? range.label : null,
-      }, chunker));
+      const split = cursor > range.startLine || end < range.endLine;
+      fragments.push({
+        ...fragmentOf(snapshot, {
+          startLine: cursor, endLine: end, label: labelEveryWindow || cursor === range.startLine ? range.label : null,
+        }, chunker),
+        ...(split ? { declaration: { startLine: range.startLine, endLine: range.endLine } } : {}),
+      });
     }
     if (end >= range.endLine) {
       break;

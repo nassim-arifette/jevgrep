@@ -352,6 +352,12 @@ The default response budget moved from 4000 to 8000 tokens after replaying the
 captured pools at several budgets; method, numbers and limits are in
 [`baselines/2026-11-04-response-budget.md`](baselines/2026-11-04-response-budget.md).
 
+## Whole declarations
+
+Windows cut from one long declaration now bring the whole declaration when one of
+them qualifies; the replay behind it is in
+[`baselines/2026-11-04-whole-declarations.md`](baselines/2026-11-04-whole-declarations.md).
+
 ## Verification
 
 `npm run verify` includes tests for profile isolation and outcome equivalence, the

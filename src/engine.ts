@@ -496,6 +496,7 @@ export class SearchEngine {
       sliceLines,
       unavailablePaths: freshness.unavailablePaths,
       policy: config.search.selection_policy ?? 'relevance',
+      wholeDeclarations: true,
     }));
     const selection = selectFresh(select, { freshness, snapshots, rounds: prepared.files.length + 1, context });
 
