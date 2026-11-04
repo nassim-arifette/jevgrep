@@ -128,7 +128,7 @@ apply to disclosed content; JevGrep does not promise zero retention.
 | `scan_caps.*` | `null` | optional caps disabled; `0` is a real zero allowance |
 | `search.deadline_ms` | `300000` | five minutes, including preparation and queue wait |
 | `search.concurrency` | `4` | concurrent provider work |
-| `search.default_response_tokens` | `4000` | default response budget |
+| `search.default_response_tokens` | `8000` | default response budget; 4000 returned about three excerpts and left well-scored evidence out (see [benchmarks](../benchmarks/baselines/2026-11-04-codegraph-comparison.md)) |
 | `search.max_response_tokens` | `16000` | maximum response budget |
 | `search.threshold` | `0.5` | score threshold for selection |
 | `search.selection_policy` | `relevance` when omitted | order in which qualifying excerpts fill the budget; `mmr` and `marginal` are experimental diversity orders that did not beat `relevance` in the [selection replay](../benchmarks/baselines/2026-11-03-selection-replay.md) |
