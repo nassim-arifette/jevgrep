@@ -346,6 +346,12 @@ npm run bench:compare -- --arms ripgrep,bm25,codegraph-query,codegraph-context -
 See the [CodeGraph comparison](baselines/2026-11-04-codegraph-comparison.md) and the
 [models-alone comparison](baselines/2026-11-04-models-alone.md).
 
+## Response budget
+
+The default response budget moved from 4000 to 8000 tokens after replaying the
+captured pools at several budgets; method, numbers and limits are in
+[`baselines/2026-11-04-response-budget.md`](baselines/2026-11-04-response-budget.md).
+
 ## Verification
 
 `npm run verify` includes tests for profile isolation and outcome equivalence, the
