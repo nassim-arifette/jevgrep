@@ -1,0 +1,285 @@
+{
+  "version": "hand-go-rust-reliability-1",
+  "source": {
+    "dataset": "hand-written on SWE-bench Multilingual snapshots",
+    "split": "n/a",
+    "license": "code from the upstream repositories",
+    "revision": null
+  },
+  "selection": {
+    "seed": "manual",
+    "perRepository": {
+      "caddyserver/caddy": 4,
+      "gin-gonic/gin": 5,
+      "sharkdp/bat": 3,
+      "tokio-rs/axum": 4
+    },
+    "maxEditFiles": 0,
+    "maxQueryBytes": 7000
+  },
+  "tasks": [
+    {
+      "id": "hand__caddy-reliability-1",
+      "repository": "caddyserver/caddy",
+      "split": "dev",
+      "baseCommit": "d129ae6aec6af2182217ee8a235f4df8cd2bbfde",
+      "snapshotHash": "d7b8d7057177371f2ff9c8cae9b364b638b1a0e99637c505a33aa85edd52b78b",
+      "createdAt": "2026-11-04T00:00:00Z",
+      "queries": [
+        {
+          "id": "hand-caddy-fp-01",
+          "category": "false-premise",
+          "query": "Why does the Caddy admin API accept requests from any Origin without checking it against the allowed origins?",
+          "evidence": [
+            {
+              "path": "admin.go",
+              "startLine": 900,
+              "endLine": 915
+            },
+            {
+              "path": "admin.go",
+              "startLine": 934,
+              "endLine": 948
+            }
+          ],
+          "complementary": [
+            {
+              "path": "admin.go",
+              "startLine": 879,
+              "endLine": 894
+            }
+          ],
+          "label": "audit"
+        },
+        {
+          "id": "hand-caddy-fp-02",
+          "category": "false-premise",
+          "query": "Why does Replacer.ReplaceAll leave unknown placeholders untouched in the output instead of substituting the empty value?",
+          "evidence": [
+            {
+              "path": "replacer.go",
+              "startLine": 146,
+              "endLine": 153
+            }
+          ],
+          "complementary": [
+            {
+              "path": "replacer.go",
+              "startLine": 138,
+              "endLine": 144
+            }
+          ],
+          "label": "audit"
+        },
+        {
+          "id": "hand-caddy-na-01",
+          "category": "no-answer",
+          "query": "Where does Caddy parse YAML configuration files natively, without an external config adapter?",
+          "evidence": [],
+          "complementary": [],
+          "label": "audit"
+        },
+        {
+          "id": "hand-caddy-na-02",
+          "category": "no-answer",
+          "query": "Where does the Caddy admin API authenticate requests with a bearer token or a password?",
+          "evidence": [],
+          "complementary": [],
+          "label": "audit"
+        }
+      ]
+    },
+    {
+      "id": "hand__gin-reliability-1",
+      "repository": "gin-gonic/gin",
+      "split": "heldout",
+      "baseCommit": "f2bbdfe9f26d84cb994f381050692a9e4553bf75",
+      "snapshotHash": "9c403cdb2d7740be3c71ae903641b9e5348a3906484b719130aa0a4f99f342d7",
+      "createdAt": "2026-11-04T00:00:00Z",
+      "queries": [
+        {
+          "id": "hand-gin-fp-01",
+          "category": "false-premise",
+          "query": "Why does gin BasicAuth compare the Authorization header with plain string equality, which leaks timing information?",
+          "evidence": [
+            {
+              "path": "auth.go",
+              "startLine": 29,
+              "endLine": 39
+            }
+          ],
+          "complementary": [],
+          "label": "audit"
+        },
+        {
+          "id": "hand-gin-fp-02",
+          "category": "false-premise",
+          "query": "Why does gin BasicAuth answer 403 Forbidden instead of 401 with a WWW-Authenticate header when credentials are wrong?",
+          "evidence": [
+            {
+              "path": "auth.go",
+              "startLine": 51,
+              "endLine": 65
+            }
+          ],
+          "complementary": [],
+          "label": "audit"
+        },
+        {
+          "id": "hand-gin-fp-03",
+          "category": "false-premise",
+          "query": "Why does Context.ClientIP trust X-Forwarded-For from any remote address, even when the peer is not a trusted proxy?",
+          "evidence": [
+            {
+              "path": "context.go",
+              "startLine": 755,
+              "endLine": 769
+            }
+          ],
+          "complementary": [
+            {
+              "path": "context.go",
+              "startLine": 775,
+              "endLine": 795
+            }
+          ],
+          "label": "audit"
+        },
+        {
+          "id": "hand-gin-na-01",
+          "category": "no-answer",
+          "query": "Where does gin validate JWT bearer tokens in a built-in authentication middleware?",
+          "evidence": [],
+          "complementary": [],
+          "label": "audit"
+        },
+        {
+          "id": "hand-gin-na-02",
+          "category": "no-answer",
+          "query": "Where does gin implement a built-in request rate-limiting middleware?",
+          "evidence": [],
+          "complementary": [],
+          "label": "audit"
+        }
+      ]
+    },
+    {
+      "id": "hand__bat-reliability-1",
+      "repository": "sharkdp/bat",
+      "split": "dev",
+      "baseCommit": "2b9d25df052e50c60531b1000703b79bf9b6065a",
+      "snapshotHash": "6003952710e0872293213b3efca0726bff303fadced811cd4cb50d5e59cbe0f1",
+      "createdAt": "2026-11-04T00:00:00Z",
+      "queries": [
+        {
+          "id": "hand-bat-fp-01",
+          "category": "false-premise",
+          "query": "Why does bat run the pager from the PAGER variable as-is, so \"less\" without -R prints raw ANSI escape codes?",
+          "evidence": [
+            {
+              "path": "src/output.rs",
+              "startLine": 31,
+              "endLine": 44
+            }
+          ],
+          "complementary": [
+            {
+              "path": "src/output.rs",
+              "startLine": 67,
+              "endLine": 76
+            }
+          ],
+          "label": "audit"
+        },
+        {
+          "id": "hand-bat-fp-02",
+          "category": "false-premise",
+          "query": "Why does an open-ended line range like --line-range 40: fail to parse?",
+          "evidence": [
+            {
+              "path": "src/line_range.rs",
+              "startLine": 21,
+              "endLine": 40
+            }
+          ],
+          "complementary": [],
+          "label": "audit"
+        },
+        {
+          "id": "hand-bat-na-01",
+          "category": "no-answer",
+          "query": "Where does bat render git blame author annotations in the gutter?",
+          "evidence": [],
+          "complementary": [],
+          "label": "audit"
+        }
+      ]
+    },
+    {
+      "id": "hand__axum-reliability-1",
+      "repository": "tokio-rs/axum",
+      "split": "heldout",
+      "baseCommit": "b4204e223dc96df3d51fc8893f32d37b66be7005",
+      "snapshotHash": "ef08d590157f8e91f6bffc01dddf1540f778c50434feeab73d8dbb90ff8f7001",
+      "createdAt": "2026-11-04T00:00:00Z",
+      "queries": [
+        {
+          "id": "hand-axum-fp-01",
+          "category": "false-premise",
+          "query": "Why does the Bytes extractor accept request bodies of unbounded size by default?",
+          "evidence": [
+            {
+              "path": "axum-core/src/ext_traits/request.rs",
+              "startLine": 327,
+              "endLine": 339
+            }
+          ],
+          "complementary": [
+            {
+              "path": "axum-core/src/extract/default_body_limit.rs",
+              "startLine": 1,
+              "endLine": 15
+            }
+          ],
+          "label": "audit"
+        },
+        {
+          "id": "hand-axum-fp-02",
+          "category": "false-premise",
+          "query": "Why does CookieJar never emit Set-Cookie headers for cookies removed with CookieJar::remove?",
+          "evidence": [
+            {
+              "path": "axum-extra/src/extract/cookie/mod.rs",
+              "startLine": 205,
+              "endLine": 225
+            }
+          ],
+          "complementary": [
+            {
+              "path": "axum-extra/src/extract/cookie/mod.rs",
+              "startLine": 160,
+              "endLine": 195
+            }
+          ],
+          "label": "audit"
+        },
+        {
+          "id": "hand-axum-na-01",
+          "category": "no-answer",
+          "query": "Where does axum implement a built-in per-client rate limiter?",
+          "evidence": [],
+          "complementary": [],
+          "label": "audit"
+        },
+        {
+          "id": "hand-axum-na-02",
+          "category": "no-answer",
+          "query": "Where does axum implement CSRF token generation and verification?",
+          "evidence": [],
+          "complementary": [],
+          "label": "audit"
+        }
+      ]
+    }
+  ]
+}

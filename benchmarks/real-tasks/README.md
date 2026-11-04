@@ -63,12 +63,61 @@ function name drops it.
 
 Go and Rust hunks are classified with C-style comment rules and `import`/`use` lists.
 
+### Large-repository tasks (hard set)
+
+`swe-bench-multilingual-hard-1.json` is imported from the same dataset with seed
+`jevgrep-hard-1` (`npm run bench:real -- --hard`). It exists to measure what the
+smaller sets cannot: repositories above one million tokens of eligible sources, a
+third language family (Java) and the scan budget itself. Import rules are the Go/Rust
+ones (`maxEditFiles` 3, non-test sources only, edits to other files dropped), plus
+Java with the same C-style comment classification. Repositories with fewer eligible
+tasks than requested keep what they have instead of failing the import.
+
+| Repository | Language | Split | Tasks | Queries | Exported paths | Eligible tokens |
+| --- | --- | --- | ---: | ---: | --- | ---: |
+| `prometheus/prometheus` | Go | dev | 7 | 10 | `*.go` outside `web/ui/`, `docs/`, `documentation/`, `vendor/`, `scripts/` | ~1.1M |
+| `nushell/nushell` | Rust | dev | 5 | 7 | `crates/`, `src/` without `tests/`, `benches/` | ~1.8M |
+| `projectlombok/lombok` | Java | dev | 8 | 8 | `src/` | ~0.7M |
+| `gohugoio/hugo` | Go | heldout | 6 | 7 | `*.go` outside `docs/`, `testscripts/`, `examples/`, `vendor/` | ~1.2M |
+| `astral-sh/ruff` | Rust | heldout | 7 | 10 | `crates/` without `tests/`, `resources/`, `snapshots/`, `benches/` | ~2.9M |
+| `apache/lucene` | Java | heldout | 8 | 8 | `lucene/` without `src/test/`, `test-framework/`, `benchmark/` | ~6.7M |
+
+Eligible tokens are Jev input tokens of one full scan at the pinned commit (the
+per-query inventory varies with the exported paths). A full scan of one query costs
+0.03–0.30 USD at the `jev-1.13.0` price, so this set is run once per split, with the
+scan deadline raised to 20 minutes and the 8,000-token response budget.
+
+### Go and Rust reliability set
+
+`hand-go-rust-reliability-1.json` is hand-written on the four Go/Rust repositories
+above, at the same pinned commits, to test the two behaviours an agent depends on
+and that SWE-bench tasks never exercise:
+
+| Category | Query | Required evidence | Correct outcome |
+| --- | --- | --- | --- |
+| `no-answer` | A plausible feature or behaviour that does not exist in the repository | none | No excerpt returned (`negativeCorrect`) |
+| `false-premise` | A question asserting something the code contradicts | The code that contradicts the premise | The counter-evidence is returned |
+
+| Repository | Split | `no-answer` | `false-premise` |
+| --- | --- | ---: | ---: |
+| `caddyserver/caddy` | dev | 2 | 2 |
+| `sharkdp/bat` | dev | 1 | 2 |
+| `gin-gonic/gin` | heldout | 2 | 3 |
+| `tokio-rs/axum` | heldout | 2 | 2 |
+
+Every `no-answer` query was checked against the pinned tree with grep and reading
+before being kept; evidence ranges of `false-premise` queries are line-exact at the
+pinned commit. Run it with `npm run bench:real -- --manifest
+benchmarks/real-tasks/hand-go-rust-reliability-1.json`.
+
 ## Query categories and labels
 
 | Category | Query | Required evidence | Complementary evidence |
 | --- | --- | --- | --- |
 | `change-localization` | Issue text | Pre-change lines of edit hunks | Placement of new definitions, test-patch ranges |
 | `code-understanding` | First docstring sentence of an edited function | That function | — |
+| `no-answer` | Hand-written question with no answer in the repository | none (an empty result is correct) | — |
+| `false-premise` | Hand-written question whose premise the code contradicts | The contradicting code | Related definitions |
 
 Automated labels ignore whitespace-only, import-only and documentation-only hunks.
 A patch is one valid fix, so changed lines are neither exhaustive nor the only useful

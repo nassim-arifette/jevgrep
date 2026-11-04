@@ -358,6 +358,12 @@ Windows cut from one long declaration now bring the whole declaration when one o
 them qualifies; the replay behind it is in
 [`baselines/2026-11-04-whole-declarations.md`](baselines/2026-11-04-whole-declarations.md).
 
+## Hard set
+
+Large repositories (1–7M tokens), Java, and a hand-written Go/Rust reliability set
+(no-answer and false-premise questions); method, numbers and limits are in
+[`baselines/2026-11-04-hard-set.md`](baselines/2026-11-04-hard-set.md).
+
 ## Verification
 
 `npm run verify` includes tests for profile isolation and outcome equivalence, the

@@ -7,7 +7,7 @@ import { projectRoot, treeHash } from './common.ts';
 import type { Evidence } from './dataset.ts';
 
 export type RealSplit = 'dev' | 'heldout';
-export type RealCategory = 'change-localization' | 'code-understanding';
+export type RealCategory = 'change-localization' | 'code-understanding' | 'no-answer' | 'false-premise';
 export type LabelSource = 'patch' | 'docstring' | 'test-patch' | 'audit';
 
 export type RealQuery = {
@@ -70,6 +70,32 @@ export const realRepositories = {
     url: 'https://github.com/tokio-rs/axum.git', split: 'heldout', exclude: [], include: ['axum/src/', 'axum-extra/src/', 'axum-core/src/'],
     excludeFiles: /\.(?!rs$)[^./]+$|^[^.]+$/, patchFiles: /\.rs$/,
   },
+  // Large repositories (> 1 M tokens of sources) and a Java set for the hard benchmark.
+  // Only non-test sources of the main language are kept.
+  'prometheus/prometheus': {
+    url: 'https://github.com/prometheus/prometheus.git', split: 'dev', exclude: ['web/ui/', 'docs/', 'documentation/', 'vendor/', 'scripts/'],
+    excludeFiles: /_test\.go$|(^|\/)testdata\/|\.(?!go$)[^./]+$|^[^.]+$/, patchFiles: /\.go$/,
+  },
+  'gohugoio/hugo': {
+    url: 'https://github.com/gohugoio/hugo.git', split: 'heldout', exclude: ['docs/', 'testscripts/', 'examples/', 'vendor/'],
+    excludeFiles: /_test\.go$|(^|\/)testdata\/|\.(?!go$)[^./]+$|^[^.]+$/, patchFiles: /\.go$/,
+  },
+  'nushell/nushell': {
+    url: 'https://github.com/nushell/nushell.git', split: 'dev', exclude: [], include: ['crates/', 'src/'],
+    excludeFiles: /(^|\/)tests?\/|(^|\/)benches\/|\.(?!rs$)[^./]+$|^[^.]+$/, patchFiles: /\.rs$/,
+  },
+  'astral-sh/ruff': {
+    url: 'https://github.com/astral-sh/ruff.git', split: 'heldout', exclude: [], include: ['crates/'],
+    excludeFiles: /(^|\/)tests?\/|(^|\/)resources\/|(^|\/)snapshots\/|(^|\/)benches\/|\.(?!rs$)[^./]+$|^[^.]+$/, patchFiles: /\.rs$/,
+  },
+  'projectlombok/lombok': {
+    url: 'https://github.com/projectlombok/lombok.git', split: 'dev', exclude: [], include: ['src/'],
+    excludeFiles: /\.(?!java$)[^./]+$|^[^.]+$/, patchFiles: /\.java$/,
+  },
+  'apache/lucene': {
+    url: 'https://github.com/apache/lucene.git', split: 'heldout', exclude: [], include: ['lucene/'],
+    excludeFiles: /\/src\/test\/|(^|\/)test-framework\/|(^|\/)benchmark\/|\.(?!java$)[^./]+$|^[^.]+$/, patchFiles: /\.java$/,
+  },
 } as const satisfies Record<string, {
   url: string; split: RealSplit; exclude: readonly string[]; include?: readonly string[];
   /** Paths dropped from the export even under an included prefix. */
@@ -83,6 +109,8 @@ export const manifestPath = join(projectRoot, 'benchmarks/real-tasks/swe-bench-s
 export const auditPath = join(projectRoot, 'benchmarks/real-tasks/audit.json');
 export const javascriptManifestPath = join(projectRoot, 'benchmarks/real-tasks/swe-bench-multilingual-js-1.json');
 export const systemsManifestPath = join(projectRoot, 'benchmarks/real-tasks/swe-bench-multilingual-go-rust-1.json');
+export const reliabilityManifestPath = join(projectRoot, 'benchmarks/real-tasks/hand-go-rust-reliability-1.json');
+export const hardManifestPath = join(projectRoot, 'benchmarks/real-tasks/swe-bench-multilingual-hard-1.json');
 
 const isTestPath = (path: string): boolean =>
   /(^|\/)(tests?|testing|__tests__)(\/|$)|(^|\/)test_[^/]*\.py$|_test\.(py|go)$|\.(test|spec)\.[cm]?[jt]sx?$/.test(path);

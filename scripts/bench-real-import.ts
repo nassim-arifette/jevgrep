@@ -33,7 +33,7 @@ if (values.help || values.instances === undefined) {
     const built = await mapLimit(candidates, availableParallelism(), async (instance) =>
       buildTask(instance, await exportSnapshot(mirrors.get(repository)!, repository, instance.base_commit), selection.maxEditFiles, selection.maxQueryBytes));
     const chosen = built.filter((task) => task !== null).slice(0, perRepository[repository]);
-    if (chosen.length < perRepository[repository]) throw new Error(`${repository}: only ${chosen.length} eligible tasks`);
+    if (chosen.length < perRepository[repository]) console.error(`${repository}: only ${String(chosen.length)} eligible tasks of ${String(perRepository[repository])} requested`);
     tasks.push(...chosen);
   }
   const manifest: RealManifest = {

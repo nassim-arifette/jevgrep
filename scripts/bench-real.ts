@@ -1,4 +1,4 @@
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 import { createSearchEngine } from '../src/engine.ts';
 import { SearchProfiler } from '../src/profiling.ts';
@@ -6,7 +6,7 @@ import { environment, positiveInteger, projectRoot, workspace, writeReport } fro
 import { assertFrozen, digest, writeFreeze } from './bench/freeze.ts';
 import { liveProvider } from './bench/live-provider.ts';
 import { chunkingArm } from './bench/chunking-arms.ts';
-import { javascriptManifestPath, loadManifest, mapLimit, systemsManifestPath, type RealSplit } from './bench/real-tasks.ts';
+import { hardManifestPath, javascriptManifestPath, loadManifest, mapLimit, systemsManifestPath, type RealSplit } from './bench/real-tasks.ts';
 import { loadSnapshots } from './bench/snapshots.ts';
 import { groupBy, mean, plannedSummary } from './bench/report.ts';
 import { localizationMetrics } from './bench/retrieval.ts';
@@ -17,7 +17,7 @@ const { values } = parseArgs({ options: {
   config: { type: 'string' }, split: { type: 'string' }, output: { type: 'string' }, mirrors: { type: 'string' },
   frozen: { type: 'string' }, freeze: { type: 'string' }, jobs: { type: 'string' }, only: { type: 'string' },
   'max-requests': { type: 'string' }, 'max-input-tokens': { type: 'string' }, 'response-tokens': { type: 'string' },
-  capture: { type: 'string' }, 'validate-only': { type: 'boolean' }, help: { type: 'boolean' }, javascript: { type: 'boolean' }, 'go-rust': { type: 'boolean' }, chunker: { type: 'string' },
+  capture: { type: 'string' }, 'validate-only': { type: 'boolean' }, help: { type: 'boolean' }, javascript: { type: 'boolean' }, 'go-rust': { type: 'boolean' }, hard: { type: 'boolean' }, manifest: { type: 'string' }, chunker: { type: 'string' },
 } });
 
 type Planned = { id: string; category: string; repository: string };
@@ -50,7 +50,9 @@ if (values.help) {
 } else {
   // The JS/TS (E1) and Go/Rust manifests have no audit file; their labels come from the patches alone.
   const manifest = values.javascript ? loadManifest(javascriptManifestPath, {})
-    : values['go-rust'] ? loadManifest(systemsManifestPath, {}) : loadManifest();
+    : values['go-rust'] ? loadManifest(systemsManifestPath, {})
+    : values.hard ? loadManifest(hardManifestPath, {})
+    : values.manifest !== undefined ? loadManifest(resolve(values.manifest), {}) : loadManifest();
   const chunkerArm = values.chunker ?? 'recursive';
   const chunker = chunkingArm(chunkerArm);
   const split = (values.split ?? 'dev') as RealSplit;
