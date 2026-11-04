@@ -55,6 +55,7 @@
     "bench:criteria": "node scripts/bench-criteria.ts",
     "bench:layouts": "node scripts/bench-layouts.ts",
     "bench:judges": "node scripts/bench-openai-judges.ts",
+    "bench:claude-agent": "node scripts/bench-claude-agent.ts",
     "bench:replay": "node scripts/bench-replay.ts",
     "verify": "npm run format:check && npm run lint && npm run typecheck && npm test && npm run build && npm run smoke",
     "prepublishOnly": "npm run verify",

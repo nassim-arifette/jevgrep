@@ -346,6 +346,23 @@ npm run bench:compare -- --arms ripgrep,bm25,codegraph-query,codegraph-context -
 See the [CodeGraph comparison](baselines/2026-11-04-codegraph-comparison.md) and the
 [models-alone comparison](baselines/2026-11-04-models-alone.md).
 
+## Real agents (Claude Code)
+
+`bench:claude-agent` asks a real agent the same questions twice: Claude Code with
+its own file tools only (`baseline`) and Claude Code with JevGrep attached as an MCP
+server (`jevgrep`). It records R@1/R@5, turns, tool calls (how many went to JevGrep),
+tokens, cost and time per question. The prompt of the `jevgrep` arm tells the agent to
+start with `semantic_search_code`; without that sentence Claude Code ignores the MCP
+tool and uses grep.
+
+```sh
+npm run bench:claude-agent -- --config <trusted-config> [--go-rust] [--only id,id] [--model claude-opus-5-5] [--effort medium]
+```
+
+Status: the harness works end to end (smoke run on `psf__requests-1657`), but the
+full 55-question run was not completed because the Claude Code account hit its spend
+limit. No agent numbers are published yet.
+
 ## Verification
 
 `npm run verify` includes tests for profile isolation and outcome equivalence, the
