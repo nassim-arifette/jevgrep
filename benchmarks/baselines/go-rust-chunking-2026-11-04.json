@@ -1,0 +1,656 @@
+{
+  "experiment": "go-rust-chunking",
+  "date": "2026-11-04",
+  "provider": {
+    "adapter": "typesafe-direct",
+    "model": "jev-1.13.0"
+  },
+  "manifest": "benchmarks/real-tasks/swe-bench-multilingual-go-rust-1.json",
+  "scoreCache": "disabled",
+  "arms": {
+    "go-rust-line-windows": {
+      "dev": {
+        "runs": [
+          {
+            "overall": {
+              "complete": 21,
+              "recallAt1": 0.6731859410430839,
+              "recallAt5": 0.7609410430839002,
+              "mrr": 0.8095238095238095,
+              "evidenceCoverage": 0.7609410430839002,
+              "fileRecall": 0.9047619047619048
+            },
+            "reportedInputTokens": 2993660,
+            "attempts": 84,
+            "medianLatencyMs": 6666
+          },
+          {
+            "overall": {
+              "complete": 21,
+              "recallAt1": 0.6255668934240364,
+              "recallAt5": 0.7609410430839002,
+              "mrr": 0.7777777777777779,
+              "evidenceCoverage": 0.7609410430839002,
+              "fileRecall": 0.9047619047619048
+            },
+            "reportedInputTokens": 2993660,
+            "attempts": 84,
+            "medianLatencyMs": 6717
+          },
+          {
+            "overall": {
+              "complete": 21,
+              "recallAt1": 0.6731859410430839,
+              "recallAt5": 0.7609410430839002,
+              "mrr": 0.8015873015873017,
+              "evidenceCoverage": 0.7609410430839002,
+              "fileRecall": 0.9047619047619048
+            },
+            "reportedInputTokens": 2993660,
+            "attempts": 84,
+            "medianLatencyMs": 6638
+          },
+          {
+            "overall": {
+              "complete": 21,
+              "recallAt1": 0.6255668934240364,
+              "recallAt5": 0.7133219954648526,
+              "mrr": 0.7619047619047619,
+              "evidenceCoverage": 0.7133219954648526,
+              "fileRecall": 0.9047619047619048
+            },
+            "reportedInputTokens": 2993660,
+            "attempts": 84,
+            "medianLatencyMs": 7002
+          }
+        ],
+        "perQueryMean": {
+          "caddyserver__caddy-6288:change": {
+            "recallAt1": 0,
+            "recallAt5": 0,
+            "reciprocalRank": 0,
+            "fileRecall": 1
+          },
+          "caddyserver__caddy-6051:change": {
+            "recallAt1": 1,
+            "recallAt5": 1,
+            "reciprocalRank": 1,
+            "fileRecall": 1
+          },
+          "caddyserver__caddy-6051:understand": {
+            "recallAt1": 1,
+            "recallAt5": 1,
+            "reciprocalRank": 1,
+            "fileRecall": 1
+          },
+          "caddyserver__caddy-4774:change": {
+            "recallAt1": 0.4286,
+            "recallAt5": 0.5714,
+            "reciprocalRank": 1,
+            "fileRecall": 1
+          },
+          "caddyserver__caddy-4774:understand": {
+            "recallAt1": 1,
+            "recallAt5": 1,
+            "reciprocalRank": 1,
+            "fileRecall": 1
+          },
+          "caddyserver__caddy-5761:change": {
+            "recallAt1": 1,
+            "recallAt5": 1,
+            "reciprocalRank": 1,
+            "fileRecall": 1
+          },
+          "caddyserver__caddy-5761:understand": {
+            "recallAt1": 0.25,
+            "recallAt5": 0.25,
+            "reciprocalRank": 0.25,
+            "fileRecall": 1
+          },
+          "caddyserver__caddy-5404:change": {
+            "recallAt1": 1,
+            "recallAt5": 1,
+            "reciprocalRank": 1,
+            "fileRecall": 1
+          },
+          "caddyserver__caddy-5404:understand": {
+            "recallAt1": 1,
+            "recallAt5": 1,
+            "reciprocalRank": 1,
+            "fileRecall": 1
+          },
+          "caddyserver__caddy-5870:change": {
+            "recallAt1": 1,
+            "recallAt5": 1,
+            "reciprocalRank": 1,
+            "fileRecall": 1
+          },
+          "caddyserver__caddy-5870:understand": {
+            "recallAt1": 0.5,
+            "recallAt5": 0.5,
+            "reciprocalRank": 0.5,
+            "fileRecall": 1
+          },
+          "caddyserver__caddy-5626:change": {
+            "recallAt1": 0,
+            "recallAt5": 0.2,
+            "reciprocalRank": 0.5,
+            "fileRecall": 0.5
+          },
+          "caddyserver__caddy-5626:understand": {
+            "recallAt1": 1,
+            "recallAt5": 1,
+            "reciprocalRank": 1,
+            "fileRecall": 1
+          },
+          "caddyserver__caddy-5995:change": {
+            "recallAt1": 0,
+            "recallAt5": 0,
+            "reciprocalRank": 0,
+            "fileRecall": 0
+          },
+          "caddyserver__caddy-6411:change": {
+            "recallAt1": 1,
+            "recallAt5": 1,
+            "reciprocalRank": 1,
+            "fileRecall": 1
+          },
+          "sharkdp__bat-562:change": {
+            "recallAt1": 1,
+            "recallAt5": 1,
+            "reciprocalRank": 1,
+            "fileRecall": 1
+          },
+          "sharkdp__bat-2650:change": {
+            "recallAt1": 1,
+            "recallAt5": 1,
+            "reciprocalRank": 1,
+            "fileRecall": 1
+          },
+          "sharkdp__bat-2201:change": {
+            "recallAt1": 0,
+            "recallAt5": 1,
+            "reciprocalRank": 0.4167,
+            "fileRecall": 1
+          },
+          "sharkdp__bat-2393:change": {
+            "recallAt1": 0.2083,
+            "recallAt5": 0.7083,
+            "reciprocalRank": 1,
+            "fileRecall": 1
+          },
+          "sharkdp__bat-3108:change": {
+            "recallAt1": 0.5,
+            "recallAt5": 0.5,
+            "reciprocalRank": 1,
+            "fileRecall": 0.5
+          },
+          "sharkdp__bat-2835:change": {
+            "recallAt1": 0.75,
+            "recallAt5": 1,
+            "reciprocalRank": 0.875,
+            "fileRecall": 1
+          }
+        }
+      },
+      "heldout": {
+        "runs": [
+          {
+            "overall": {
+              "complete": 13,
+              "recallAt1": 0.46153846153846156,
+              "recallAt5": 0.5384615384615384,
+              "mrr": 0.5,
+              "evidenceCoverage": 0.5384615384615384,
+              "fileRecall": 0.7692307692307693
+            },
+            "reportedInputTokens": 1573805,
+            "attempts": 43,
+            "medianLatencyMs": 3386
+          },
+          {
+            "overall": {
+              "complete": 13,
+              "recallAt1": 0.46153846153846156,
+              "recallAt5": 0.5384615384615384,
+              "mrr": 0.5,
+              "evidenceCoverage": 0.5384615384615384,
+              "fileRecall": 0.8076923076923077
+            },
+            "reportedInputTokens": 1573805,
+            "attempts": 43,
+            "medianLatencyMs": 2975
+          },
+          {
+            "overall": {
+              "complete": 13,
+              "recallAt1": 0.46153846153846156,
+              "recallAt5": 0.5384615384615384,
+              "mrr": 0.5,
+              "evidenceCoverage": 0.5384615384615384,
+              "fileRecall": 0.8076923076923077
+            },
+            "reportedInputTokens": 1573805,
+            "attempts": 43,
+            "medianLatencyMs": 2880
+          },
+          {
+            "overall": {
+              "complete": 13,
+              "recallAt1": 0.46153846153846156,
+              "recallAt5": 0.5384615384615384,
+              "mrr": 0.5,
+              "evidenceCoverage": 0.5384615384615384,
+              "fileRecall": 0.7692307692307693
+            },
+            "reportedInputTokens": 1573805,
+            "attempts": 43,
+            "medianLatencyMs": 2896
+          }
+        ],
+        "perQueryMean": {
+          "gin-gonic__gin-2755:change": {
+            "recallAt1": 1,
+            "recallAt5": 1,
+            "reciprocalRank": 1,
+            "fileRecall": 1
+          },
+          "gin-gonic__gin-2755:understand": {
+            "recallAt1": 0,
+            "recallAt5": 0,
+            "reciprocalRank": 0,
+            "fileRecall": 1
+          },
+          "gin-gonic__gin-4003:change": {
+            "recallAt1": 1,
+            "recallAt5": 1,
+            "reciprocalRank": 1,
+            "fileRecall": 1
+          },
+          "gin-gonic__gin-3741:change": {
+            "recallAt1": 1,
+            "recallAt5": 1,
+            "reciprocalRank": 1,
+            "fileRecall": 1
+          },
+          "gin-gonic__gin-3741:understand": {
+            "recallAt1": 1,
+            "recallAt5": 1,
+            "reciprocalRank": 1,
+            "fileRecall": 1
+          },
+          "gin-gonic__gin-2121:change": {
+            "recallAt1": 1,
+            "recallAt5": 1,
+            "reciprocalRank": 1,
+            "fileRecall": 1
+          },
+          "gin-gonic__gin-2121:understand": {
+            "recallAt1": 1,
+            "recallAt5": 1,
+            "reciprocalRank": 1,
+            "fileRecall": 1
+          },
+          "gin-gonic__gin-3820:change": {
+            "recallAt1": 0,
+            "recallAt5": 0,
+            "reciprocalRank": 0,
+            "fileRecall": 1
+          },
+          "gin-gonic__gin-3227:change": {
+            "recallAt1": 0,
+            "recallAt5": 0,
+            "reciprocalRank": 0,
+            "fileRecall": 1
+          },
+          "tokio-rs__axum-1730:change": {
+            "recallAt1": 0,
+            "recallAt5": 0,
+            "reciprocalRank": 0,
+            "fileRecall": 0
+          },
+          "tokio-rs__axum-1119:change": {
+            "recallAt1": 0,
+            "recallAt5": 0,
+            "reciprocalRank": 0,
+            "fileRecall": 0
+          },
+          "tokio-rs__axum-1934:change": {
+            "recallAt1": 0,
+            "recallAt5": 0,
+            "reciprocalRank": 0,
+            "fileRecall": 0.25
+          },
+          "tokio-rs__axum-2096:change": {
+            "recallAt1": 0,
+            "recallAt5": 1,
+            "reciprocalRank": 0.5,
+            "fileRecall": 1
+          }
+        }
+      }
+    },
+    "recursive": {
+      "dev": {
+        "runs": [
+          {
+            "overall": {
+              "complete": 21,
+              "recallAt1": 0.5779478458049887,
+              "recallAt5": 0.7609410430839003,
+              "mrr": 0.75,
+              "evidenceCoverage": 0.7609410430839003,
+              "fileRecall": 0.9523809523809523
+            },
+            "reportedInputTokens": 2818102,
+            "attempts": 78,
+            "medianLatencyMs": 3857
+          },
+          {
+            "overall": {
+              "complete": 21,
+              "recallAt1": 0.5874716553287983,
+              "recallAt5": 0.7609410430839003,
+              "mrr": 0.765873015873016,
+              "evidenceCoverage": 0.7609410430839003,
+              "fileRecall": 0.9523809523809523
+            },
+            "reportedInputTokens": 2818102,
+            "attempts": 78,
+            "medianLatencyMs": 3744
+          },
+          {
+            "overall": {
+              "complete": 21,
+              "recallAt1": 0.5874716553287983,
+              "recallAt5": 0.7609410430839003,
+              "mrr": 0.7777777777777779,
+              "evidenceCoverage": 0.7609410430839003,
+              "fileRecall": 0.9523809523809523
+            },
+            "reportedInputTokens": 2818102,
+            "attempts": 78,
+            "medianLatencyMs": 3835
+          },
+          {
+            "overall": {
+              "complete": 21,
+              "recallAt1": 0.5398526077097506,
+              "recallAt5": 0.7609410430839003,
+              "mrr": 0.746031746031746,
+              "evidenceCoverage": 0.7609410430839003,
+              "fileRecall": 0.9523809523809523
+            },
+            "reportedInputTokens": 2818102,
+            "attempts": 78,
+            "medianLatencyMs": 3885
+          }
+        ],
+        "perQueryMean": {
+          "caddyserver__caddy-6288:change": {
+            "recallAt1": 0,
+            "recallAt5": 0,
+            "reciprocalRank": 0,
+            "fileRecall": 1
+          },
+          "caddyserver__caddy-6051:change": {
+            "recallAt1": 1,
+            "recallAt5": 1,
+            "reciprocalRank": 1,
+            "fileRecall": 1
+          },
+          "caddyserver__caddy-6051:understand": {
+            "recallAt1": 1,
+            "recallAt5": 1,
+            "reciprocalRank": 1,
+            "fileRecall": 1
+          },
+          "caddyserver__caddy-4774:change": {
+            "recallAt1": 0.4286,
+            "recallAt5": 0.5714,
+            "reciprocalRank": 1,
+            "fileRecall": 1
+          },
+          "caddyserver__caddy-4774:understand": {
+            "recallAt1": 1,
+            "recallAt5": 1,
+            "reciprocalRank": 1,
+            "fileRecall": 1
+          },
+          "caddyserver__caddy-5761:change": {
+            "recallAt1": 1,
+            "recallAt5": 1,
+            "reciprocalRank": 1,
+            "fileRecall": 1
+          },
+          "caddyserver__caddy-5761:understand": {
+            "recallAt1": 0,
+            "recallAt5": 0,
+            "reciprocalRank": 0,
+            "fileRecall": 1
+          },
+          "caddyserver__caddy-5404:change": {
+            "recallAt1": 1,
+            "recallAt5": 1,
+            "reciprocalRank": 1,
+            "fileRecall": 1
+          },
+          "caddyserver__caddy-5404:understand": {
+            "recallAt1": 1,
+            "recallAt5": 1,
+            "reciprocalRank": 1,
+            "fileRecall": 1
+          },
+          "caddyserver__caddy-5870:change": {
+            "recallAt1": 0.75,
+            "recallAt5": 1,
+            "reciprocalRank": 0.875,
+            "fileRecall": 1
+          },
+          "caddyserver__caddy-5870:understand": {
+            "recallAt1": 0,
+            "recallAt5": 0,
+            "reciprocalRank": 0,
+            "fileRecall": 1
+          },
+          "caddyserver__caddy-5626:change": {
+            "recallAt1": 0.15,
+            "recallAt5": 0.2,
+            "reciprocalRank": 0.875,
+            "fileRecall": 0.5
+          },
+          "caddyserver__caddy-5626:understand": {
+            "recallAt1": 1,
+            "recallAt5": 1,
+            "reciprocalRank": 1,
+            "fileRecall": 1
+          },
+          "caddyserver__caddy-5995:change": {
+            "recallAt1": 0,
+            "recallAt5": 1,
+            "reciprocalRank": 0.3333,
+            "fileRecall": 1
+          },
+          "caddyserver__caddy-6411:change": {
+            "recallAt1": 1,
+            "recallAt5": 1,
+            "reciprocalRank": 1,
+            "fileRecall": 1
+          },
+          "sharkdp__bat-562:change": {
+            "recallAt1": 0,
+            "recallAt5": 1,
+            "reciprocalRank": 0.375,
+            "fileRecall": 1
+          },
+          "sharkdp__bat-2650:change": {
+            "recallAt1": 1,
+            "recallAt5": 1,
+            "reciprocalRank": 1,
+            "fileRecall": 1
+          },
+          "sharkdp__bat-2201:change": {
+            "recallAt1": 0,
+            "recallAt5": 1,
+            "reciprocalRank": 0.5,
+            "fileRecall": 1
+          },
+          "sharkdp__bat-2393:change": {
+            "recallAt1": 0.2083,
+            "recallAt5": 0.7083,
+            "reciprocalRank": 1,
+            "fileRecall": 1
+          },
+          "sharkdp__bat-3108:change": {
+            "recallAt1": 0.5,
+            "recallAt5": 0.5,
+            "reciprocalRank": 1,
+            "fileRecall": 0.5
+          },
+          "sharkdp__bat-2835:change": {
+            "recallAt1": 1,
+            "recallAt5": 1,
+            "reciprocalRank": 1,
+            "fileRecall": 1
+          }
+        }
+      },
+      "heldout": {
+        "runs": [
+          {
+            "overall": {
+              "complete": 13,
+              "recallAt1": 0.46153846153846156,
+              "recallAt5": 0.6153846153846154,
+              "mrr": 0.5192307692307693,
+              "evidenceCoverage": 0.6153846153846154,
+              "fileRecall": 0.8076923076923077
+            },
+            "reportedInputTokens": 1450260,
+            "attempts": 41,
+            "medianLatencyMs": 3544
+          },
+          {
+            "overall": {
+              "complete": 13,
+              "recallAt1": 0.46153846153846156,
+              "recallAt5": 0.6461538461538462,
+              "mrr": 0.5256410256410257,
+              "evidenceCoverage": 0.6461538461538462,
+              "fileRecall": 0.8461538461538461
+            },
+            "reportedInputTokens": 1450260,
+            "attempts": 41,
+            "medianLatencyMs": 1773
+          },
+          {
+            "overall": {
+              "complete": 13,
+              "recallAt1": 0.46153846153846156,
+              "recallAt5": 0.6153846153846154,
+              "mrr": 0.5256410256410257,
+              "evidenceCoverage": 0.6153846153846154,
+              "fileRecall": 0.8076923076923077
+            },
+            "reportedInputTokens": 1450260,
+            "attempts": 41,
+            "medianLatencyMs": 1778
+          },
+          {
+            "overall": {
+              "complete": 13,
+              "recallAt1": 0.46153846153846156,
+              "recallAt5": 0.6153846153846154,
+              "mrr": 0.5064102564102564,
+              "evidenceCoverage": 0.6153846153846154,
+              "fileRecall": 0.8076923076923077
+            },
+            "reportedInputTokens": 1450260,
+            "attempts": 41,
+            "medianLatencyMs": 1765
+          }
+        ],
+        "perQueryMean": {
+          "gin-gonic__gin-2755:change": {
+            "recallAt1": 1,
+            "recallAt5": 1,
+            "reciprocalRank": 1,
+            "fileRecall": 1
+          },
+          "gin-gonic__gin-2755:understand": {
+            "recallAt1": 0,
+            "recallAt5": 0,
+            "reciprocalRank": 0,
+            "fileRecall": 1
+          },
+          "gin-gonic__gin-4003:change": {
+            "recallAt1": 1,
+            "recallAt5": 1,
+            "reciprocalRank": 1,
+            "fileRecall": 1
+          },
+          "gin-gonic__gin-3741:change": {
+            "recallAt1": 1,
+            "recallAt5": 1,
+            "reciprocalRank": 1,
+            "fileRecall": 1
+          },
+          "gin-gonic__gin-3741:understand": {
+            "recallAt1": 1,
+            "recallAt5": 1,
+            "reciprocalRank": 1,
+            "fileRecall": 1
+          },
+          "gin-gonic__gin-2121:change": {
+            "recallAt1": 1,
+            "recallAt5": 1,
+            "reciprocalRank": 1,
+            "fileRecall": 1
+          },
+          "gin-gonic__gin-2121:understand": {
+            "recallAt1": 1,
+            "recallAt5": 1,
+            "reciprocalRank": 1,
+            "fileRecall": 1
+          },
+          "gin-gonic__gin-3820:change": {
+            "recallAt1": 0,
+            "recallAt5": 1,
+            "reciprocalRank": 0.4167,
+            "fileRecall": 1
+          },
+          "gin-gonic__gin-3227:change": {
+            "recallAt1": 0,
+            "recallAt5": 0,
+            "reciprocalRank": 0,
+            "fileRecall": 1
+          },
+          "tokio-rs__axum-1730:change": {
+            "recallAt1": 0,
+            "recallAt5": 0,
+            "reciprocalRank": 0,
+            "fileRecall": 0
+          },
+          "tokio-rs__axum-1119:change": {
+            "recallAt1": 0,
+            "recallAt5": 0,
+            "reciprocalRank": 0,
+            "fileRecall": 0
+          },
+          "tokio-rs__axum-1934:change": {
+            "recallAt1": 0,
+            "recallAt5": 0.1,
+            "reciprocalRank": 0.0625,
+            "fileRecall": 0.625
+          },
+          "tokio-rs__axum-2096:change": {
+            "recallAt1": 0,
+            "recallAt5": 1,
+            "reciprocalRank": 0.2708,
+            "fileRecall": 1
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,30 +1,35 @@
 import { join } from 'node:path';
 import { parseArgs } from 'node:util';
 import { countReferenceTokens } from '../src/response/token-counter.ts';
-import { DEFAULT_WINDOW_LIMITS, syntaxLanguageOf, type PreparedFragment } from '../src/source/chunker.ts';
+import { DEFAULT_WINDOW_LIMITS, syntaxLanguageOf, type PreparedFragment, type SyntaxLanguage } from '../src/source/chunker.ts';
 import { createSnapshot } from '../src/source/snapshot.ts';
 import { CHUNKING_ARMS, chunkingArm } from './bench/chunking-arms.ts';
 import { projectRoot, writeReport } from './bench/common.ts';
-import { javascriptManifestPath, loadManifest } from './bench/real-tasks.ts';
+import { javascriptManifestPath, loadManifest, systemsManifestPath } from './bench/real-tasks.ts';
 import { mean } from './bench/report.ts';
 import { loadSnapshots } from './bench/snapshots.ts';
 
 /**
- * Offline structural comparison of the E1 chunking arms on the pinned JS/TS tasks.
+ * Offline structural comparison of the chunking arms: the E1 arms on the pinned JS/TS
+ * tasks, or with `--go-rust` line windows against Tree-sitter on the Go/Rust tasks.
  * No provider call: it measures fragment shape and how required evidence lands in
  * fragments, which explains (but never replaces) the live retrieval comparison.
  */
-const { values } = parseArgs({ options: { mirrors: { type: 'string' }, output: { type: 'string' }, help: { type: 'boolean' } } });
+const { values } = parseArgs({ options: { mirrors: { type: 'string' }, output: { type: 'string' }, 'go-rust': { type: 'boolean' }, help: { type: 'boolean' } } });
 
 const percentile = (sorted: readonly number[], p: number): number | null =>
   sorted.length === 0 ? null : sorted[Math.min(sorted.length - 1, Math.floor(p * sorted.length))]!;
 
 if (values.help) {
-  console.log('npm run bench:chunking -- [--mirrors benchmark-results/mirrors] [--output benchmark-results/chunking.json]');
+  console.log('npm run bench:chunking -- [--go-rust] [--mirrors benchmark-results/mirrors] [--output benchmark-results/chunking.json]');
 } else {
-  const manifest = loadManifest(javascriptManifestPath, {});
+  const goRust = values['go-rust'] === true;
+  const manifest = loadManifest(goRust ? systemsManifestPath : javascriptManifestPath, {});
+  const languages: readonly (SyntaxLanguage | null)[] = goRust ? ['go', 'rust'] : ['javascript'];
+  const measured = (path: string): boolean => languages.includes(syntaxLanguageOf(path));
+  const armsUnderTest = goRust ? (['go-rust-line-windows', 'recursive'] as const) : CHUNKING_ARMS.filter((arm) => arm !== 'go-rust-line-windows');
   const snapshots = await loadSnapshots(manifest.tasks, values.mirrors ?? join(projectRoot, 'benchmark-results/mirrors'));
-  const arms = Object.fromEntries(CHUNKING_ARMS.map((arm) => {
+  const arms = Object.fromEntries(armsUnderTest.map((arm) => {
     const chunker = chunkingArm(arm);
     const seen = new Map<string, readonly PreparedFragment[]>();
     let parseFallbacks = 0;
@@ -47,11 +52,11 @@ if (values.help) {
     for (const task of manifest.tasks) {
       const files = snapshots.get(task.id)!;
       for (const [path, text] of Object.entries(files)) {
-        if (syntaxLanguageOf(path) === 'javascript') fragmentsOf(task.repository, path, text);
+        if (measured(path)) fragmentsOf(task.repository, path, text);
       }
       for (const query of task.queries) {
         for (const unit of query.evidence) {
-          if (syntaxLanguageOf(unit.path) !== 'javascript') continue;
+          if (!measured(unit.path)) continue;
           const fragments = fragmentsOf(task.repository, unit.path, files[unit.path]!);
           const overlapping = fragments.filter((fragment) => fragment.startLine <= unit.endLine && fragment.endLine >= unit.startLine);
           const whole = overlapping.find((fragment) => fragment.startLine <= unit.startLine && fragment.endLine >= unit.endLine);

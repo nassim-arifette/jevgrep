@@ -6,7 +6,7 @@ import { environment, positiveInteger, projectRoot, workspace, writeReport } fro
 import { assertFrozen, digest, writeFreeze } from './bench/freeze.ts';
 import { liveProvider } from './bench/live-provider.ts';
 import { chunkingArm } from './bench/chunking-arms.ts';
-import { javascriptManifestPath, loadManifest, mapLimit, type RealSplit } from './bench/real-tasks.ts';
+import { javascriptManifestPath, loadManifest, mapLimit, systemsManifestPath, type RealSplit } from './bench/real-tasks.ts';
 import { loadSnapshots } from './bench/snapshots.ts';
 import { groupBy, mean, plannedSummary } from './bench/report.ts';
 import { localizationMetrics } from './bench/retrieval.ts';
@@ -17,7 +17,7 @@ const { values } = parseArgs({ options: {
   config: { type: 'string' }, split: { type: 'string' }, output: { type: 'string' }, mirrors: { type: 'string' },
   frozen: { type: 'string' }, freeze: { type: 'string' }, jobs: { type: 'string' }, only: { type: 'string' },
   'max-requests': { type: 'string' }, 'max-input-tokens': { type: 'string' }, 'response-tokens': { type: 'string' },
-  capture: { type: 'string' }, 'validate-only': { type: 'boolean' }, help: { type: 'boolean' }, javascript: { type: 'boolean' }, chunker: { type: 'string' },
+  capture: { type: 'string' }, 'validate-only': { type: 'boolean' }, help: { type: 'boolean' }, javascript: { type: 'boolean' }, 'go-rust': { type: 'boolean' }, chunker: { type: 'string' },
 } });
 
 type Planned = { id: string; category: string; repository: string };
@@ -44,11 +44,13 @@ if (values.help) {
     'npm run bench:real -- --config <trusted-config> --split dev [--jobs 1] [--max-requests 400] [--output benchmark-results/real-dev.json]',
     'npm run bench:real -- --config <trusted-config> --split heldout --freeze benchmark-results/real-heldout.freeze.json',
     'npm run bench:real -- --javascript --chunker line-windows|typescript-v2|recursive|recursive-compact|recursive-enclosing --config <trusted-config> --split dev   (E1)',
+    'npm run bench:real -- --go-rust --chunker go-rust-line-windows|recursive --config <trusted-config> --split dev   (Go/Rust syntax chunking)',
     'npm run bench:real -- --config <trusted-config> --split heldout --frozen benchmark-results/real-heldout.freeze.json',
   ].join('\n'));
 } else {
-  // The JS/TS manifest (E1) has no audit file; its labels come from the patches alone.
-  const manifest = values.javascript ? loadManifest(javascriptManifestPath, {}) : loadManifest();
+  // The JS/TS (E1) and Go/Rust manifests have no audit file; their labels come from the patches alone.
+  const manifest = values.javascript ? loadManifest(javascriptManifestPath, {})
+    : values['go-rust'] ? loadManifest(systemsManifestPath, {}) : loadManifest();
   const chunkerArm = values.chunker ?? 'recursive';
   const chunker = chunkingArm(chunkerArm);
   const split = (values.split ?? 'dev') as RealSplit;

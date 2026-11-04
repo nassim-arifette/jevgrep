@@ -3,7 +3,10 @@ import { test } from 'node:test';
 import { analyzePairedRuns, bootstrapMeanDifference, scoreSubmission, type AgentRun } from '../scripts/bench/agent.ts';
 import { runAgent, type ChatModel } from '../scripts/bench/agent-loop.ts';
 import { freezeMismatches, type Freeze } from '../scripts/bench/freeze.ts';
-import { classifyHunk, loadManifest, parsePatch, tarFiles, unitsFromLines } from '../scripts/bench/real-tasks.ts';
+import { chunkingArm } from '../scripts/bench/chunking-arms.ts';
+import {
+  classifyHunk, enclosingBraceFunction, excluded, loadManifest, parsePatch, systemsManifestPath, tarFiles, unitsFromLines,
+} from '../scripts/bench/real-tasks.ts';
 import { latencySummary, plannedSummary } from '../scripts/bench/report.ts';
 import { localizationMetrics } from '../scripts/bench/retrieval.ts';
 
@@ -33,6 +36,57 @@ test('patch parsing maps hunks to pre-change lines and classifies non-edits', ()
   assert.equal(classifyHunk({ removed: [], added: ['def added():', '    pass'], lines: [1] }, 'x = 1\n'), 'placement');
   assert.equal(classifyHunk({ removed: ['    return a'], added: ['    return b'], lines: [2] }, 'def f():\n    return a\n'), 'edit');
   assert.deepEqual(unitsFromLines('m.py', [5, 1, 2, 9]), [{ path: 'm.py', startLine: 1, endLine: 5 }, { path: 'm.py', startLine: 9, endLine: 9 }]);
+});
+
+test('Go and Rust hunks treat import lists and comments as non-edits and new definitions as placement', () => {
+  const go = 'package x\n\n// F adds one.\nfunc F(a int) int {\n\treturn a + 1\n}\n';
+  assert.equal(classifyHunk({ removed: [], added: ['\t"strings"'], lines: [2] }, 'import (\n\t"fmt"\n)\n', 'a.go'), 'ignored');
+  assert.equal(classifyHunk({ removed: ['// F adds one.'], added: ['// F adds 1.'], lines: [3] }, go, 'a.go'), 'ignored');
+  assert.equal(classifyHunk({ removed: [], added: ['func G() {}'], lines: [6] }, go, 'a.go'), 'placement');
+  assert.equal(classifyHunk({ removed: ['\treturn a + 1'], added: ['\treturn a + 2'], lines: [5] }, go, 'a.go'), 'edit');
+  assert.equal(classifyHunk({ removed: [], added: ['use std::fmt;'], lines: [1] }, 'use std::io;\n', 'a.rs'), 'ignored');
+  assert.equal(classifyHunk({ removed: [], added: ['pub fn g() {}'], lines: [1] }, 'fn f() {}\n', 'a.rs'), 'placement');
+  assert.equal(classifyHunk({ removed: ['    1'], added: ['    2'], lines: [2] }, 'fn f() -> i32 {\n    1\n}\n', 'a.rs'), 'edit');
+});
+
+test('doc-comment questions come from the innermost enclosing Go or Rust function', () => {
+  const go = [
+    'package x', '', '// Next loads the next token into the lexer and reports success.', 'func (l *lexer) Next() bool {',
+    '\tif l.done { // a } brace in a comment', '\t\treturn "}" == ""', '\t}', '\treturn true', '}',
+  ].join('\n');
+  assert.deepEqual(enclosingBraceFunction(go, 6, 'go'), {
+    startLine: 4, endLine: 9, name: 'Next', summary: 'loads the next token into the lexer and reports success.',
+  });
+  assert.equal(enclosingBraceFunction(go, 2, 'go'), null);
+  const rust = [
+    'impl Router {', '    /// Adds a route that matches every HTTP method here.', '    #[track_caller]',
+    '    pub fn route(self, path: &str) -> Self {', "        let c = '{';", '        self', '    }', '}',
+  ].join('\n');
+  assert.deepEqual(enclosingBraceFunction(rust, 6, 'rust'), {
+    startLine: 4, endLine: 7, name: 'route', summary: 'Adds a route that matches every HTTP method here.',
+  });
+});
+
+test('the Go/Rust manifest keeps repository-held-out splits and only non-test sources', () => {
+  const manifest = loadManifest(systemsManifestPath, {});
+  assert.deepEqual(new Set(manifest.tasks.map((task) => `${task.repository}:${task.split}`)), new Set([
+    'caddyserver/caddy:dev', 'sharkdp/bat:dev', 'gin-gonic/gin:heldout', 'tokio-rs/axum:heldout',
+  ]));
+  for (const unit of manifest.tasks.flatMap((task) => task.queries.flatMap((query) => query.evidence))) assert.match(unit.path, /\.(go|rs)$/);
+  assert.equal(excluded('gin-gonic/gin', 'tree_test.go'), true);
+  assert.equal(excluded('gin-gonic/gin', 'go.mod'), true);
+  assert.equal(excluded('gin-gonic/gin', 'tree.go'), false);
+  assert.equal(excluded('sharkdp/bat', 'src/printer.rs'), false);
+  assert.equal(excluded('sharkdp/bat', 'tests/integration_tests.rs'), true);
+});
+
+test('the go-rust-line-windows arm changes only Go and Rust fragment identities', () => {
+  const arm = chunkingArm('go-rust-line-windows');
+  const production = chunkingArm('recursive');
+  assert.notEqual(arm.identity('a.go'), production.identity('a.go'));
+  assert.notEqual(arm.identity('a.rs'), production.identity('a.rs'));
+  assert.equal(arm.identity('a.ts'), production.identity('a.ts'));
+  assert.equal(arm.identity('a.py'), production.identity('a.py'));
 });
 
 test('snapshot export reads regular files from a git tar stream without an external tar', () => {

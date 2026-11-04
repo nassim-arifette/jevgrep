@@ -55,19 +55,48 @@ export const realRepositories = {
     include: ['src/', 'hooks/src/', 'compat/src/', 'debug/src/', 'devtools/src/', 'jsx-runtime/src/', 'test-utils/src/'],
   },
   'axios/axios': { url: 'https://github.com/axios/axios.git', split: 'heldout', exclude: [], include: ['lib/', 'index.d.ts', 'index.js'] },
-} as const satisfies Record<string, { url: string; split: RealSplit; exclude: readonly string[]; include?: readonly string[] }>;
+  // Go and Rust tasks (SWE-bench Multilingual) for Tree-sitter chunking experiments. Only
+  // non-test sources are kept, and patch edits outside them (changelogs, lockfiles) are dropped.
+  'caddyserver/caddy': {
+    url: 'https://github.com/caddyserver/caddy.git', split: 'dev', exclude: ['caddytest/', 'cmd/', 'internal/', 'modules/', 'notify/'],
+    excludeFiles: /_test\.go$|(^|\/)testdata\/|\.(?!go$)[^./]+$|^[^.]+$/, patchFiles: /\.go$/,
+  },
+  'gin-gonic/gin': {
+    url: 'https://github.com/gin-gonic/gin.git', split: 'heldout', exclude: ['examples/', 'docs/', 'testdata/'],
+    excludeFiles: /_test\.go$|(^|\/)testdata\/|\.(?!go$)[^./]+$|^[^.]+$/, patchFiles: /\.go$/,
+  },
+  'sharkdp/bat': { url: 'https://github.com/sharkdp/bat.git', split: 'dev', exclude: [], include: ['src/'], excludeFiles: /\.(?!rs$)[^./]+$|^[^.]+$/, patchFiles: /\.rs$/ },
+  'tokio-rs/axum': {
+    url: 'https://github.com/tokio-rs/axum.git', split: 'heldout', exclude: [], include: ['axum/src/', 'axum-extra/src/', 'axum-core/src/'],
+    excludeFiles: /\.(?!rs$)[^./]+$|^[^.]+$/, patchFiles: /\.rs$/,
+  },
+} as const satisfies Record<string, {
+  url: string; split: RealSplit; exclude: readonly string[]; include?: readonly string[];
+  /** Paths dropped from the export even under an included prefix. */
+  excludeFiles?: RegExp;
+  /** Patch files outside this pattern carry no evidence and are ignored instead of disqualifying the task. */
+  patchFiles?: RegExp;
+}>;
 export type RealRepository = keyof typeof realRepositories;
 
 export const manifestPath = join(projectRoot, 'benchmarks/real-tasks/swe-bench-sample-1.json');
 export const auditPath = join(projectRoot, 'benchmarks/real-tasks/audit.json');
 export const javascriptManifestPath = join(projectRoot, 'benchmarks/real-tasks/swe-bench-multilingual-js-1.json');
+export const systemsManifestPath = join(projectRoot, 'benchmarks/real-tasks/swe-bench-multilingual-go-rust-1.json');
 
 const isTestPath = (path: string): boolean =>
-  /(^|\/)(tests?|testing|__tests__)(\/|$)|(^|\/)test_[^/]*\.py$|_test\.py$|\.(test|spec)\.[cm]?[jt]sx?$/.test(path);
+  /(^|\/)(tests?|testing|__tests__)(\/|$)|(^|\/)test_[^/]*\.py$|_test\.(py|go)$|\.(test|spec)\.[cm]?[jt]sx?$/.test(path);
 const isJavaScript = (path: string): boolean => /\.[cm]?[jt]sx?$/.test(path);
+type BraceLanguage = 'go' | 'rust';
+const braceLanguageOf = (path: string): BraceLanguage | null => path.endsWith('.go') ? 'go' : path.endsWith('.rs') ? 'rust' : null;
+type RepositoryEntry = {
+  readonly exclude: readonly string[]; readonly include?: readonly string[]; readonly excludeFiles?: RegExp; readonly patchFiles?: RegExp;
+};
+const entryOf = (repository: RealRepository): RepositoryEntry => realRepositories[repository];
 export const excluded = (repository: RealRepository, path: string): boolean => {
-  const entry: { readonly exclude: readonly string[]; readonly include?: readonly string[] } = realRepositories[repository];
-  return entry.exclude.some((prefix) => path.startsWith(prefix)) || (entry.include !== undefined && !entry.include.some((prefix) => path.startsWith(prefix)));
+  const entry = entryOf(repository);
+  return entry.exclude.some((prefix) => path.startsWith(prefix)) || (entry.include !== undefined && !entry.include.some((prefix) => path.startsWith(prefix)))
+    || (entry.excludeFiles?.test(path) ?? false);
 };
 
 export type Hunk = { readonly removed: readonly string[]; readonly added: readonly string[]; readonly lines: readonly number[] };
@@ -162,6 +191,8 @@ export function classifyHunk(hunk: Hunk, preChangeText: string, path = ''): Hunk
   if (squash(hunk.removed) === squash(hunk.added)) return 'ignored';
   const changed = [...hunk.removed, ...hunk.added].filter((line) => line.trim() !== '');
   if (isJavaScript(path)) return classifyJavaScriptHunk(hunk, changed, preChangeText);
+  const brace = braceLanguageOf(path);
+  if (brace !== null) return classifyBraceHunk(hunk, changed, preChangeText, brace);
   if (changed.every((line) => importLine.test(line)) && changed.some((line) => /\bimport\b/.test(line))) return 'ignored';
   const documentation = documentationLines(preChangeText);
   const inside = (line: number): boolean => documentation.has(line) && (hunk.removed.length > 0 || documentation.has(line + 1));
@@ -179,6 +210,28 @@ function classifyJavaScriptHunk(hunk: Hunk, changed: readonly string[], preChang
   if (hunk.lines.every(inside)) return 'ignored';
   const first = hunk.added.find((line) => line.trim() !== '') ?? '';
   if (hunk.removed.length === 0 && /^\s*(@|\/\*\*|(export\s+)?(default\s+)?(async\s+)?(function|class)\b)/.test(first)) return 'placement';
+  return 'edit';
+}
+
+const braceImport: Readonly<Record<BraceLanguage, { line: RegExp; keyword: RegExp; definition: RegExp }>> = {
+  go: {
+    line: /^\s*(?:import\b.*|\(|\)|(?:[\w.]+\s+)?"[^"]*")\s*$/, keyword: /^\s*import\b|^\s*(?:[\w.]+\s+)?"[^"]*"\s*$/,
+    definition: /^\s*(?:\/\/|func\s|type\s)/,
+  },
+  rust: {
+    line: /^\s*(?:(?:pub(?:\([^)]*\))?\s+)?(?:use|extern\s+crate)\s.*|[\w:{}*, ]+,?|\};?)\s*$/, keyword: /\b(?:use|extern\s+crate)\s/,
+    definition: /^\s*(?:\/\/[/!]|#\[|(?:pub(?:\([^)]*\))?\s+)?(?:async\s+)?(?:const\s+)?(?:unsafe\s+)?(?:fn|struct|enum|trait|impl|mod|type)\b)/,
+  },
+};
+
+/** Go and Rust hunks: C-style comments are documentation, `import`/`use` lists are imports. */
+function classifyBraceHunk(hunk: Hunk, changed: readonly string[], preChangeText: string, language: BraceLanguage): HunkRole {
+  const rules = braceImport[language];
+  if (changed.every((line) => rules.line.test(line)) && changed.some((line) => rules.keyword.test(line))) return 'ignored';
+  const documentation = javascriptDocumentationLines(preChangeText);
+  const inside = (line: number): boolean => documentation.has(line) && (hunk.removed.length > 0 || documentation.has(line + 1));
+  if (hunk.lines.every(inside)) return 'ignored';
+  if (hunk.removed.length === 0 && rules.definition.test(hunk.added.find((line) => line.trim() !== '') ?? '')) return 'placement';
   return 'edit';
 }
 
@@ -242,6 +295,60 @@ function docstringSummary(lines: readonly string[], from: number): string | null
     rest = lines[index]!;
   }
   const text = parts.join(' ').replace(/:\w+:`~?([^`]*)`/g, '$1').replace(/[`*]/g, '').replace(/\s+/g, ' ').trim();
+  const sentence = text.split(/(?<=\.)\s/)[0]!.trim();
+  return sentence.split(' ').length >= 5 ? sentence : null;
+}
+
+const braceFunction: Readonly<Record<BraceLanguage, RegExp>> = {
+  go: /^func\s+(?:\([^)]*\)\s*)?(\w+)/,
+  rust: /^\s*(?:pub(?:\([^)]*\))?\s+)?(?:const\s+)?(?:async\s+)?(?:unsafe\s+)?(?:extern\s+"[^"]*"\s+)?fn\s+(\w+)/,
+};
+
+/** Braces of one line, ignoring line comments, string and rune/char literals. */
+function braceDelta(line: string): { readonly opens: number; readonly closes: number } {
+  const code = line.replace(/"(?:[^"\\]|\\.)*"|`[^`]*`|'(?:[^'\\]|\\.)'/g, '""').replace(/\/\/.*$/, '');
+  return { opens: code.split('{').length - 1, closes: code.split('}').length - 1 };
+}
+
+/**
+ * The innermost Go or Rust function enclosing `line` and the first sentence of its doc
+ * comment. A Go doc comment that starts with the function name drops it, so the question
+ * does not quote the identifier it asks for.
+ */
+export function enclosingBraceFunction(text: string, line: number, language: BraceLanguage): { startLine: number; endLine: number; name: string; summary: string | null } | null {
+  const lines = text.split(/\r?\n/);
+  for (let index = Math.min(line, lines.length) - 1; index >= 0; index -= 1) {
+    const match = braceFunction[language].exec(lines[index]!);
+    if (!match) continue;
+    let depth = 0;
+    let opened = false;
+    let end = -1;
+    for (let next = index; next < lines.length && end === -1; next += 1) {
+      const { opens, closes } = braceDelta(lines[next]!);
+      if (!opened && opens === 0 && /;\s*$/.test(lines[next]!)) break;
+      if (opens > 0) opened = true;
+      depth += opens - closes;
+      if (opened && depth <= 0) end = next;
+    }
+    if (end === -1 || end + 1 < line) continue;
+    return { startLine: index + 1, endLine: end + 1, name: match[1]!, summary: docCommentSummary(lines, index, match[1]!, language) };
+  }
+  return null;
+}
+
+function docCommentSummary(lines: readonly string[], header: number, name: string, language: BraceLanguage): string | null {
+  const marker = language === 'go' ? /^\s*\/\/(?!\/)\s?(.*)$/ : /^\s*\/\/\/(?!\/)\s?(.*)$/;
+  let index = header - 1;
+  while (language === 'rust' && index >= 0 && /^\s*#\[/.test(lines[index]!)) index -= 1;
+  const parts: string[] = [];
+  for (; index >= 0; index -= 1) {
+    const comment = marker.exec(lines[index]!);
+    if (!comment) break;
+    parts.unshift(comment[1]!);
+  }
+  const paragraph = parts.join('\n').split(/\n\s*\n/)[0]!;
+  let text = paragraph.replace(/\[`?([^\]`]*)`?\]\([^)]*\)/g, '$1').replace(/[`*]/g, '').replace(/\s+/g, ' ').trim();
+  if (language === 'go' && text.startsWith(`${name} `)) text = text.slice(name.length + 1);
   const sentence = text.split(/(?<=\.)\s/)[0]!.trim();
   return sentence.split(' ').length >= 5 ? sentence : null;
 }
@@ -320,7 +427,8 @@ export function buildTask(instance: SweInstance, files: Readonly<Record<string, 
   const repository = instance.repo as RealRepository;
   const query = changeQuery(instance.problem_statement);
   if (Buffer.byteLength(query, 'utf8') > maxQueryBytes) return null;
-  const diffs = parsePatch(instance.patch);
+  const patchFiles = entryOf(repository).patchFiles;
+  const diffs = parsePatch(instance.patch).filter((file) => patchFiles === undefined || patchFiles.test(file.path));
   if (diffs.some((file) => file.isNew || isTestPath(file.path) || excluded(repository, file.path) || files[file.path] === undefined)) return null;
   const roles = diffs.map((file) => ({ file, roles: file.hunks.map((hunk) => classifyHunk(hunk, files[file.path]!, file.path)) }));
   const touched = (role: HunkRole): Evidence[] => roles.flatMap(({ file, roles: kinds }) =>
@@ -336,8 +444,10 @@ export function buildTask(instance: SweInstance, files: Readonly<Record<string, 
   const complementary = [...(edit.length > 0 ? placement : []), ...tests];
   const queries: RealQuery[] = [{ id: `${instance.instance_id}:change`, category: 'change-localization', query, evidence, complementary, label: 'patch' }];
   const first = evidence[0]!;
-  // Docstring-derived questions are Python-only.
-  const enclosing = first.path.endsWith('.py') ? enclosingFunction(files[first.path]!, first.startLine) : null;
+  // Docstring and doc-comment questions exist for Python, Go and Rust only.
+  const brace = braceLanguageOf(first.path);
+  const enclosing = first.path.endsWith('.py') ? enclosingFunction(files[first.path]!, first.startLine)
+    : brace !== null ? enclosingBraceFunction(files[first.path]!, first.startLine, brace) : null;
   if (enclosing?.summary) {
     queries.push({
       id: `${instance.instance_id}:understand`, category: 'code-understanding', query: understandingQuery(enclosing.summary),
