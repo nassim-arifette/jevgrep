@@ -73,3 +73,21 @@ test('a file edited between questions is reported as changed rather than served 
     assert.equal(second?.excerpts.length, 0);
   } finally { space.cleanup(); }
 });
+
+test('a function that only moved in its file keeps its cached score', async () => {
+  const fn = (name: string): string => `export function ${name}(input) {\n${Array.from({ length: 60 },
+    (_, i) => `  const v${String(i)} = input.${name}${String(i)} ?? compute${String(i)}(input);`).join('\n')}\n  return v0;\n}\n`;
+  const body = `${fn('alpha')}\n${fn('beta')}`;
+  const space = createWorkspace({ files: { 'a.ts': body } });
+  try {
+    const client = provider();
+    const first = asResult((await createSearchEngine({ configuration: space.loaded, provider: client }).search({ query: 'where?' })).outcome);
+    assert.equal(first.report.fragments.cache_reused, 0);
+    space.write('a.ts', `${fn('added')}\n${body}`);
+    const second = asResult((await createSearchEngine({ configuration: space.loaded, provider: client }).search({ query: 'where?' })).outcome);
+    assert.equal(second.report.fragments.cache_reused, 2, 'the two moved functions are not judged again');
+    // Adjacent selected units are delivered as one range; it must end at the real, shifted last line.
+    assert.deepEqual(second.excerpts.map((excerpt) => [excerpt.start_line, excerpt.end_line]), [[1, 191]],
+      'returned provenance keeps the real line numbers');
+  } finally { space.cleanup(); }
+});

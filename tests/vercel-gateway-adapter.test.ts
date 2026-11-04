@@ -11,6 +11,7 @@ import {
 
 const BATCH: EvaluationBatch = {
   query: 'Where is authorization enforced?',
+  layout: 'layout-a-1',
   items: [
     { id: 'first', path: 'src/auth.ts', startLine: 3, endLine: 8, text: 'if (!allowed) throw denied;\n' },
     { id: 'second', path: 'src/routes.ts', startLine: 10, endLine: 14, text: 'router.use(authorize);\n' },

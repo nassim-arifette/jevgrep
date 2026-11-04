@@ -17,7 +17,7 @@ import {
 
 import { ProviderError, type BatchEvaluation, type EvaluationBatch, type InvalidAnswer, type ProviderClient } from './contracts.ts';
 import {
-  CRITERION_VERSION, LAYOUT_VERSION, RELEVANCE_CRITERION, inspectResponseKeys, layoutCriteria, parseRetryAfter, questionInstructions,
+  CRITERION_VERSION, LAYOUT_VERSION, RELEVANCE_CRITERION, inspectResponseKeys, layoutCriteria, parseRetryAfter, questionInstructions, questionKeys,
 } from './jev.ts';
 import { boundedFetch } from './http.ts';
 
@@ -96,10 +96,11 @@ function buildGatewayInput(batch: EvaluationBatch): {
   const criterion = batch.criterion?.text ?? RELEVANCE_CRITERION;
   const questions: Record<string, GatewayBooleanQuestion> = {};
   const criteria = layoutCriteria(batch);
-  for (const item of batch.items) {
-    questions[item.id] = criteria === undefined
-      ? { type: 'boolean', instructions: questionInstructions(item) }
-      : { type: 'boolean', instructions: questionInstructions(item), criteria };
+  const keys = questionKeys(batch);
+  for (const [index, item] of batch.items.entries()) {
+    questions[keys[index]!] = criteria === undefined
+      ? { type: 'boolean', instructions: questionInstructions(item, batch.layout) }
+      : { type: 'boolean', instructions: questionInstructions(item, batch.layout), criteria };
   }
   return {
     state: {
@@ -197,14 +198,16 @@ function normalizeGatewayResult(
 ): BatchEvaluation {
   const scores = new Map<string, number>();
   const invalid: InvalidAnswer[] = [];
-  const requested = new Set(batch.items.map((item) => item.id));
+  const keys = questionKeys(batch);
+  const requested = new Set(keys);
 
-  for (const item of batch.items) {
-    if (!Object.hasOwn(result.answers, item.id)) {
+  for (const [index, item] of batch.items.entries()) {
+    const key = keys[index]!;
+    if (!Object.hasOwn(result.answers, key)) {
       invalid.push({ id: item.id, reason: 'missing' });
       continue;
     }
-    const answer = errorRecord(result.answers[item.id]);
+    const answer = errorRecord(result.answers[key]);
     if (answer?.['type'] !== 'boolean') {
       invalid.push({ id: item.id, reason: 'wrong_type' });
       continue;

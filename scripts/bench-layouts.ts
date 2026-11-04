@@ -9,6 +9,7 @@ import { join } from 'node:path';
 import { performance } from 'node:perf_hooks';
 import { parseArgs } from 'node:util';
 import { ProviderError } from '../src/evaluation/contracts.ts';
+import { LAYOUT_VERSION } from '../src/evaluation/jev.ts';
 import type { RequestLayout } from '../src/evaluation/contracts.ts';
 import { batchLimits, fitsSerializedBatch } from '../src/evaluation/policy.ts';
 import { serializeConfiguredBatch } from '../src/evaluation/provider.ts';
@@ -29,7 +30,7 @@ const { values, positionals } = parseArgs({ allowPositionals: true, options: {
 } });
 
 const usage = [
-  'npm run bench:layouts -- judge --config <trusted-config> --layout layout-a-1|layout-compact-state-1|layout-compact-ref-1 [--output file.json]',
+  'npm run bench:layouts -- judge --config <trusted-config> --layout <one of LAYOUT_ARMS> [--output file.json]',
   'npm run bench:layouts -- analyze --judgments a.json,b.json[,...] [--output benchmark-results/layouts.json]',
 ].join('\n');
 
@@ -55,8 +56,8 @@ async function judge(): Promise<void> {
     const scores: Record<string, number> = {};
     const requests: LayoutRequest[] = [];
     for (const chunk of chunks) {
-      // Layout A is sent without the field, exactly as production sends it.
-      const batch = { query: entry.pool.query, items: chunk, ...(layout === 'layout-a-1' ? {} : { layout }) };
+      // The production layout is sent without the field, exactly as production sends it.
+      const batch = { query: entry.pool.query, items: chunk, ...(layout === LAYOUT_VERSION ? {} : { layout }) };
       const bytes = Buffer.byteLength(serializeConfiguredBatch(config, batch), 'utf8');
       for (let attempt = 0; ; attempt += 1) {
         const started = performance.now();

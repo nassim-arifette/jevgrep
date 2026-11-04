@@ -108,8 +108,9 @@ outside the repository, set its absolute `repository_root`, and pass its path us
 
 ## What leaves your machine
 
-Search sends eligible fragment text, your question, relative paths, line ranges and
-the relevance criterion to the configured provider. The evaluation runs remotely.
+Search sends eligible fragment text, your question, relative paths, structure labels
+and the relevance criterion to the configured provider. Line numbers stay local, so
+an unchanged function that moved in its file keeps its cached score. The evaluation runs remotely.
 
 The source policy excludes common credential files, the `.env` family, dependencies,
 build output, generated and minified artifacts, and files containing detected credential

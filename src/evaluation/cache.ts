@@ -24,6 +24,7 @@ import { join } from 'node:path';
 import { LocalDirectory, isMissing } from '../local-directory.ts';
 import { isPinnedModelRevision, isRollingModel, MAX_ROLLING_TTL_SECONDS } from './policy.ts';
 export { isPinnedModelRevision } from './policy.ts';
+import { LINE_FREE_LAYOUTS } from './contracts.ts';
 
 export const CACHE_SCHEMA_VERSION = 3;
 
@@ -52,12 +53,14 @@ export type EvaluationIdentityInput = {
 
 /** Stable hash of one evaluation's inputs. */
 export function evaluationIdentity(input: EvaluationIdentityInput): string {
+  const lineFree = (LINE_FREE_LAYOUTS as ReadonlySet<string>).has(input.layoutVersion);
   const canonical = JSON.stringify([
     CACHE_SCHEMA_VERSION,
     input.query,
     input.path,
-    input.startLine,
-    input.endLine,
+    // A layout that hides the line range must let an unchanged excerpt keep its score when it moves.
+    lineFree ? null : input.startLine,
+    lineFree ? null : input.endLine,
     input.text,
     input.label,
     input.criterionVersion,

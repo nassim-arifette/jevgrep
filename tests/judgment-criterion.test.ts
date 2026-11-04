@@ -8,6 +8,7 @@ import { serializeGatewayBatch } from '../src/evaluation/vercel-gateway.ts';
 
 const BATCH: EvaluationBatch = {
   query: 'Where is a cached user invalidated?',
+  layout: 'layout-a-1',
   items: [{ id: 'f-1', path: 'src/cache.ts', startLine: 7, endLine: 9, text: 'export function invalidateUser() {}\n', label: null }],
 };
 const FOCUSED = { version: 'focused-test-1', text: 'Judge only whether this excerpt is about caching.' };

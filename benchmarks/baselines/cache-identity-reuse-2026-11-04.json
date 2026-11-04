@@ -1,0 +1,65 @@
+{
+  "environment": {
+    "node": "v24.19.0",
+    "platform": "linux",
+    "architecture": "x64",
+    "cpu": "Intel(R) Xeon(R) Processor",
+    "logicalCpus": 8,
+    "totalMemoryBytes": 33654874112,
+    "revision": "6e9660da3dddad74c060e03e90b13b7518230073",
+    "workingTree": "M scripts/bench-layouts.ts\n M scripts/bench/layouts.ts\n M src/evaluation/contracts.ts\n M src/evaluation/jev.ts\n M src/evaluation/vercel-gateway.ts\n?? node_modules\n?? scripts/bench-cache-identity.ts",
+    "sourceHash": "d33fb0dd1ab52abe826d8611ab3c8a877b4d7c2993a4cd6905b775b274c1044e",
+    "harnessHash": "4a93ad6c987b562b2d4129edee18bd532459c1e54b5a433ad436db56005c6c36",
+    "packageLockHash": "37aedfa15a94c84ec716c28109e43f59223658b03775581380cc0fdcd4899db7"
+  },
+  "results": [
+    {
+      "repository": "cobra",
+      "commits": 110,
+      "touchedFiles": 286,
+      "fragments": 3810,
+      "reusable": {
+        "location": 2163,
+        "path": 3158,
+        "content": 3159
+      },
+      "reuse": {
+        "location": 0.568,
+        "path": 0.829,
+        "content": 0.829
+      }
+    },
+    {
+      "repository": "walkdir",
+      "commits": 96,
+      "touchedFiles": 154,
+      "fragments": 2016,
+      "reusable": {
+        "location": 803,
+        "path": 1147,
+        "content": 1159
+      },
+      "reuse": {
+        "location": 0.398,
+        "path": 0.569,
+        "content": 0.575
+      }
+    },
+    {
+      "repository": "clap",
+      "commits": 60,
+      "touchedFiles": 82,
+      "fragments": 519,
+      "reusable": {
+        "location": 268,
+        "path": 416,
+        "content": 416
+      },
+      "reuse": {
+        "location": 0.516,
+        "path": 0.802,
+        "content": 0.802
+      }
+    }
+  ]
+}

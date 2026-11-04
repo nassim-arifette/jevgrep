@@ -8,7 +8,7 @@ import { VercelGatewayAdapter, VERCEL_JEV_MODEL } from '../src/evaluation/vercel
 import { createSearchEngine } from '../src/engine.ts';
 import { createWorkspace } from './helpers/search-workspace.ts';
 
-const batch: EvaluationBatch = { query: 'q "é"', items: [{ id: 'first', path: 'a.ts', startLine: 1, endLine: 1, text: 'a();\n' }] };
+const batch: EvaluationBatch = { query: 'q "é"', layout: 'layout-a-1', items: [{ id: 'first', path: 'a.ts', startLine: 1, endLine: 1, text: 'a();\n' }] };
 
 test('direct and OpenRouter transports send the prepared body without serializing again', async (t) => {
   for (const kind of ['direct', 'openrouter'] as const) {
