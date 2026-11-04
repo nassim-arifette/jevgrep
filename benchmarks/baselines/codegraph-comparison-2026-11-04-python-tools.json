@@ -1,0 +1,6715 @@
+{
+  "schemaVersion": 1,
+  "kind": "retriever-comparison",
+  "createdAt": "2026-11-04T12:36:34.604Z",
+  "environment": {
+    "node": "v24.19.0",
+    "platform": "linux",
+    "architecture": "x64",
+    "cpu": "Intel(R) Xeon(R) Processor",
+    "logicalCpus": 8,
+    "totalMemoryBytes": 33654874112,
+    "revision": "562e7e5fa0e9ab2e1107fc011c46804c690a68db",
+    "workingTree": "M scripts/bench-compare.ts\n?? node_modules\n?? scripts/bench-openai-judges.ts",
+    "sourceHash": "67ec62d1fc8fabd0d4f4795d88c6aac939f8a199733c03445cb14efcd56acd89",
+    "harnessHash": "cc326d0c8b93fc60876bc1530d3cec0686d0488001d1f9ffd29401252f6efe48",
+    "packageLockHash": "37aedfa15a94c84ec716c28109e43f59223658b03775581380cc0fdcd4899db7"
+  },
+  "dataset": {
+    "version": "swe-bench-sample-1",
+    "source": {
+      "dataset": "princeton-nlp/SWE-bench",
+      "split": "test",
+      "license": "MIT (dataset); issue text and code from the upstream repositories",
+      "revision": "e48e2bd1e9fecd5bbd641e9414ac59da9f2e69f6"
+    },
+    "tasks": 12,
+    "queries": 21
+  },
+  "settings": {
+    "arms": [
+      "ripgrep",
+      "bm25",
+      "codegraph-query",
+      "codegraph-context"
+    ],
+    "top": 10,
+    "responseTokens": 4000,
+    "codegraph": "/home/ubuntu/.npm-global/bin/codegraph",
+    "layaUrl": "http://127.0.0.1:8765",
+    "jevgrep": null,
+    "replay": null
+  },
+  "semantics": {
+    "ranking": "each arm returns ranked line ranges; the same localization metrics score every arm",
+    "recallAt5OverPlanned": "incomplete or failed queries count as zero",
+    "returned": "context size delivered to the caller: lines in the top 5 ranges and characters of all returned ranges",
+    "labels": "patch sites and quoted-docstring functions; not exhaustive relevance",
+    "replay": "captured Jev scores per fragment; candidate arms mask every other fragment, so Jev work is the candidate set only",
+    "candidateRecall": "share of required evidence units fully inside the evaluated candidate fragments (an upper bound on what Jev can return)",
+    "jevInputTokens": "reference-token estimate for evaluating the candidate set alone, batched like the engine"
+  },
+  "usage": null,
+  "graphIndexes": {
+    "psf__requests-1657": {
+      "coldMs": 4895.815087000001,
+      "syncMs": 529.2062800000022,
+      "dbBytes": 1470464,
+      "stats": null
+    },
+    "psf__requests-2821": {
+      "coldMs": 5600.147705,
+      "syncMs": 1077.9966859999986,
+      "dbBytes": 1859584,
+      "stats": null
+    },
+    "psf__requests-774": {
+      "coldMs": 5204.666647999999,
+      "syncMs": 824.8645060000017,
+      "dbBytes": 1548288,
+      "stats": null
+    },
+    "psf__requests-4718": {
+      "coldMs": 6097.135345000001,
+      "syncMs": 1913.8421189999972,
+      "dbBytes": 2809856,
+      "stats": null
+    },
+    "psf__requests-3718": {
+      "coldMs": 6439.87472,
+      "syncMs": 1734.3339589999996,
+      "dbBytes": 2478080,
+      "stats": null
+    },
+    "psf__requests-1962": {
+      "coldMs": 5209.809403,
+      "syncMs": 758.6213099999986,
+      "dbBytes": 1605632,
+      "stats": null
+    },
+    "psf__requests-1768": {
+      "coldMs": 4228.577716,
+      "syncMs": 577.0236559999976,
+      "dbBytes": 1433600,
+      "stats": null
+    },
+    "psf__requests-2617": {
+      "coldMs": 5530.37546,
+      "syncMs": 701.1211169999988,
+      "dbBytes": 1830912,
+      "stats": null
+    },
+    "pallets__flask-4074": {
+      "coldMs": 5218.407426,
+      "syncMs": 905.5622930000027,
+      "dbBytes": 5029888,
+      "stats": null
+    },
+    "pallets__flask-4544": {
+      "coldMs": 5531.899621,
+      "syncMs": 726.5889289999977,
+      "dbBytes": 5115904,
+      "stats": null
+    },
+    "pallets__flask-4992": {
+      "coldMs": 7068.395188,
+      "syncMs": 571.1460999999981,
+      "dbBytes": 5357568,
+      "stats": null
+    },
+    "pallets__flask-4045": {
+      "coldMs": 6860.660921,
+      "syncMs": 767.3947989999979,
+      "dbBytes": 5038080,
+      "stats": null
+    }
+  },
+  "summary": {
+    "ripgrep": {
+      "overall": {
+        "planned": 21,
+        "complete": 21,
+        "completionRate": 1,
+        "recallAt1": 0.15873015873015875,
+        "recallAt5": 0.3253968253968254,
+        "mrr": 0.271031746031746,
+        "fileRecall": 0.6746031746031745,
+        "complementaryCoverage": 0.15277777777777776,
+        "recallAt5OverPlanned": 0.3253968253968254,
+        "returnedLinesTop5": 193.61904761904762,
+        "returnedChars": 13888.333333333334,
+        "latencyMs": {
+          "n": 21,
+          "median": 313.9535199999991,
+          "p95": 3113.9895149999993,
+          "p95Note": null
+        }
+      },
+      "indexMs": {
+        "n": 0,
+        "median": null,
+        "p95": null,
+        "p95Note": "insufficient samples (0 < 20)"
+      },
+      "byCategory": {
+        "change-localization": {
+          "planned": 12,
+          "complete": 12,
+          "completionRate": 1,
+          "recallAt1": 0.1111111111111111,
+          "recallAt5": 0.23611111111111113,
+          "mrr": 0.22430555555555556,
+          "fileRecall": 0.5972222222222222,
+          "complementaryCoverage": 0.15277777777777776,
+          "recallAt5OverPlanned": 0.23611111111111113,
+          "returnedLinesTop5": 202.5,
+          "returnedChars": 14254,
+          "latencyMs": {
+            "n": 12,
+            "median": 303.1783594999997,
+            "p95": null,
+            "p95Note": "insufficient samples (12 < 20)"
+          }
+        },
+        "code-understanding": {
+          "planned": 9,
+          "complete": 9,
+          "completionRate": 1,
+          "recallAt1": 0.2222222222222222,
+          "recallAt5": 0.4444444444444444,
+          "mrr": 0.3333333333333333,
+          "fileRecall": 0.7777777777777778,
+          "complementaryCoverage": null,
+          "recallAt5OverPlanned": 0.4444444444444444,
+          "returnedLinesTop5": 181.77777777777777,
+          "returnedChars": 13400.777777777777,
+          "latencyMs": {
+            "n": 9,
+            "median": 477.529324000001,
+            "p95": null,
+            "p95Note": "insufficient samples (9 < 20)"
+          }
+        }
+      },
+      "byRepository": {
+        "pallets/flask": {
+          "planned": 6,
+          "complete": 6,
+          "completionRate": 1,
+          "recallAt1": 0.2222222222222222,
+          "recallAt5": 0.3055555555555555,
+          "mrr": 0.3875,
+          "fileRecall": 0.7777777777777777,
+          "complementaryCoverage": 0.125,
+          "recallAt5OverPlanned": 0.3055555555555555,
+          "returnedLinesTop5": 205,
+          "returnedChars": 16535.333333333332,
+          "latencyMs": {
+            "n": 6,
+            "median": 158.52601850000065,
+            "p95": null,
+            "p95Note": "insufficient samples (6 < 20)"
+          }
+        },
+        "psf/requests": {
+          "planned": 15,
+          "complete": 15,
+          "completionRate": 1,
+          "recallAt1": 0.13333333333333333,
+          "recallAt5": 0.3333333333333333,
+          "mrr": 0.22444444444444442,
+          "fileRecall": 0.6333333333333333,
+          "complementaryCoverage": 0.16666666666666666,
+          "recallAt5OverPlanned": 0.3333333333333333,
+          "returnedLinesTop5": 189.06666666666666,
+          "returnedChars": 12829.533333333333,
+          "latencyMs": {
+            "n": 15,
+            "median": 1021.719357,
+            "p95": null,
+            "p95Note": "insufficient samples (15 < 20)"
+          }
+        }
+      },
+      "byEvidenceSpread": {
+        "multi-file": {
+          "planned": 3,
+          "complete": 3,
+          "completionRate": 1,
+          "recallAt1": 0,
+          "recallAt5": 0,
+          "mrr": 0.041666666666666664,
+          "fileRecall": 0.38888888888888884,
+          "complementaryCoverage": 0.1111111111111111,
+          "recallAt5OverPlanned": 0,
+          "returnedLinesTop5": 200,
+          "returnedChars": 13418.666666666666,
+          "latencyMs": {
+            "n": 3,
+            "median": 313.9535199999991,
+            "p95": null,
+            "p95Note": "insufficient samples (3 < 20)"
+          }
+        },
+        "single-file": {
+          "planned": 18,
+          "complete": 18,
+          "completionRate": 1,
+          "recallAt1": 0.1851851851851852,
+          "recallAt5": 0.3796296296296296,
+          "mrr": 0.30925925925925923,
+          "fileRecall": 0.7222222222222222,
+          "complementaryCoverage": 0.16666666666666666,
+          "recallAt5OverPlanned": 0.3796296296296296,
+          "returnedLinesTop5": 192.55555555555554,
+          "returnedChars": 13966.611111111111,
+          "latencyMs": {
+            "n": 18,
+            "median": 384.96626150000066,
+            "p95": null,
+            "p95Note": "insufficient samples (18 < 20)"
+          }
+        }
+      }
+    },
+    "bm25": {
+      "overall": {
+        "planned": 21,
+        "complete": 21,
+        "completionRate": 1,
+        "recallAt1": 0.2698412698412699,
+        "recallAt5": 0.42857142857142855,
+        "mrr": 0.3412698412698412,
+        "fileRecall": 0.8095238095238095,
+        "complementaryCoverage": 0.2638888888888889,
+        "recallAt5OverPlanned": 0.42857142857142855,
+        "returnedLinesTop5": 196.47619047619048,
+        "returnedChars": 13528.333333333334,
+        "latencyMs": {
+          "n": 21,
+          "median": 82.23570199999995,
+          "p95": 289.18483299999934,
+          "p95Note": null
+        }
+      },
+      "indexMs": {
+        "n": 12,
+        "median": 107.95538750000105,
+        "p95": null,
+        "p95Note": "insufficient samples (12 < 20)"
+      },
+      "byCategory": {
+        "change-localization": {
+          "planned": 12,
+          "complete": 12,
+          "completionRate": 1,
+          "recallAt1": 0.05555555555555555,
+          "recallAt5": 0.3333333333333333,
+          "mrr": 0.18055555555555555,
+          "fileRecall": 0.6666666666666666,
+          "complementaryCoverage": 0.2638888888888889,
+          "recallAt5OverPlanned": 0.3333333333333333,
+          "returnedLinesTop5": 195,
+          "returnedChars": 13536.5,
+          "latencyMs": {
+            "n": 12,
+            "median": 145.81591800000024,
+            "p95": null,
+            "p95Note": "insufficient samples (12 < 20)"
+          }
+        },
+        "code-understanding": {
+          "planned": 9,
+          "complete": 9,
+          "completionRate": 1,
+          "recallAt1": 0.5555555555555556,
+          "recallAt5": 0.5555555555555556,
+          "mrr": 0.5555555555555556,
+          "fileRecall": 1,
+          "complementaryCoverage": null,
+          "recallAt5OverPlanned": 0.5555555555555556,
+          "returnedLinesTop5": 198.44444444444446,
+          "returnedChars": 13517.444444444445,
+          "latencyMs": {
+            "n": 9,
+            "median": 20.976658000001407,
+            "p95": null,
+            "p95Note": "insufficient samples (9 < 20)"
+          }
+        }
+      },
+      "byRepository": {
+        "pallets/flask": {
+          "planned": 6,
+          "complete": 6,
+          "completionRate": 1,
+          "recallAt1": 0.27777777777777773,
+          "recallAt5": 0.5,
+          "mrr": 0.4166666666666667,
+          "fileRecall": 0.8333333333333334,
+          "complementaryCoverage": 0.20833333333333331,
+          "recallAt5OverPlanned": 0.5,
+          "returnedLinesTop5": 197.66666666666666,
+          "returnedChars": 14444.833333333334,
+          "latencyMs": {
+            "n": 6,
+            "median": 180.59401550000075,
+            "p95": null,
+            "p95Note": "insufficient samples (6 < 20)"
+          }
+        },
+        "psf/requests": {
+          "planned": 15,
+          "complete": 15,
+          "completionRate": 1,
+          "recallAt1": 0.26666666666666666,
+          "recallAt5": 0.4,
+          "mrr": 0.31111111111111106,
+          "fileRecall": 0.8,
+          "complementaryCoverage": 0.2916666666666667,
+          "recallAt5OverPlanned": 0.4,
+          "returnedLinesTop5": 196,
+          "returnedChars": 13161.733333333334,
+          "latencyMs": {
+            "n": 15,
+            "median": 61.75954400000046,
+            "p95": null,
+            "p95Note": "insufficient samples (15 < 20)"
+          }
+        }
+      },
+      "byEvidenceSpread": {
+        "multi-file": {
+          "planned": 3,
+          "complete": 3,
+          "completionRate": 1,
+          "recallAt1": 0,
+          "recallAt5": 0,
+          "mrr": 0,
+          "fileRecall": 0,
+          "complementaryCoverage": 0.5555555555555555,
+          "recallAt5OverPlanned": 0,
+          "returnedLinesTop5": 193.33333333333334,
+          "returnedChars": 12272.666666666666,
+          "latencyMs": {
+            "n": 3,
+            "median": 166.2598539999999,
+            "p95": null,
+            "p95Note": "insufficient samples (3 < 20)"
+          }
+        },
+        "single-file": {
+          "planned": 18,
+          "complete": 18,
+          "completionRate": 1,
+          "recallAt1": 0.3148148148148148,
+          "recallAt5": 0.5,
+          "mrr": 0.39814814814814814,
+          "fileRecall": 0.9444444444444444,
+          "complementaryCoverage": 0.16666666666666666,
+          "recallAt5OverPlanned": 0.5,
+          "returnedLinesTop5": 197,
+          "returnedChars": 13737.611111111111,
+          "latencyMs": {
+            "n": 18,
+            "median": 66.30506950000017,
+            "p95": null,
+            "p95Note": "insufficient samples (18 < 20)"
+          }
+        }
+      }
+    },
+    "codegraph-query": {
+      "overall": {
+        "planned": 21,
+        "complete": 21,
+        "completionRate": 1,
+        "recallAt1": 0.11027568922305765,
+        "recallAt5": 0.4912280701754386,
+        "mrr": 0.28537414965986396,
+        "fileRecall": 0.8253968253968255,
+        "complementaryCoverage": 0,
+        "recallAt5OverPlanned": 0.4912280701754386,
+        "returnedLinesTop5": 201.76190476190476,
+        "returnedChars": 13465,
+        "latencyMs": {
+          "n": 21,
+          "median": 1129.0701139999983,
+          "p95": 2008.5548750000016,
+          "p95Note": null
+        }
+      },
+      "indexMs": {
+        "n": 12,
+        "median": 5531.1375405,
+        "p95": null,
+        "p95Note": "insufficient samples (12 < 20)"
+      },
+      "byCategory": {
+        "change-localization": {
+          "planned": 12,
+          "complete": 12,
+          "completionRate": 1,
+          "recallAt1": 0.10964912280701755,
+          "recallAt5": 0.27631578947368424,
+          "mrr": 0.2494047619047619,
+          "fileRecall": 0.6944444444444443,
+          "complementaryCoverage": 0,
+          "recallAt5OverPlanned": 0.27631578947368424,
+          "returnedLinesTop5": 231.33333333333334,
+          "returnedChars": 14380.166666666666,
+          "latencyMs": {
+            "n": 12,
+            "median": 1310.1919964999997,
+            "p95": null,
+            "p95Note": "insufficient samples (12 < 20)"
+          }
+        },
+        "code-understanding": {
+          "planned": 9,
+          "complete": 9,
+          "completionRate": 1,
+          "recallAt1": 0.1111111111111111,
+          "recallAt5": 0.7777777777777778,
+          "mrr": 0.3333333333333333,
+          "fileRecall": 1,
+          "complementaryCoverage": null,
+          "recallAt5OverPlanned": 0.7777777777777778,
+          "returnedLinesTop5": 162.33333333333334,
+          "returnedChars": 12244.777777777777,
+          "latencyMs": {
+            "n": 9,
+            "median": 1129.0701139999983,
+            "p95": null,
+            "p95Note": "insufficient samples (9 < 20)"
+          }
+        }
+      },
+      "byRepository": {
+        "pallets/flask": {
+          "planned": 6,
+          "complete": 6,
+          "completionRate": 1,
+          "recallAt1": 0.3859649122807018,
+          "recallAt5": 0.7192982456140351,
+          "mrr": 0.6666666666666666,
+          "fileRecall": 0.8888888888888888,
+          "complementaryCoverage": 0,
+          "recallAt5OverPlanned": 0.7192982456140351,
+          "returnedLinesTop5": 343.6666666666667,
+          "returnedChars": 18528.166666666668,
+          "latencyMs": {
+            "n": 6,
+            "median": 797.7872289999996,
+            "p95": null,
+            "p95Note": "insufficient samples (6 < 20)"
+          }
+        },
+        "psf/requests": {
+          "planned": 15,
+          "complete": 15,
+          "completionRate": 1,
+          "recallAt1": 0,
+          "recallAt5": 0.4,
+          "mrr": 0.13285714285714287,
+          "fileRecall": 0.8,
+          "complementaryCoverage": 0,
+          "recallAt5OverPlanned": 0.4,
+          "returnedLinesTop5": 145,
+          "returnedChars": 11439.733333333334,
+          "latencyMs": {
+            "n": 15,
+            "median": 1852.3929910000006,
+            "p95": null,
+            "p95Note": "insufficient samples (15 < 20)"
+          }
+        }
+      },
+      "byEvidenceSpread": {
+        "multi-file": {
+          "planned": 3,
+          "complete": 3,
+          "completionRate": 1,
+          "recallAt1": 0.10526315789473684,
+          "recallAt5": 0.10526315789473684,
+          "mrr": 0.3333333333333333,
+          "fileRecall": 0.4444444444444444,
+          "complementaryCoverage": 0,
+          "recallAt5OverPlanned": 0.10526315789473684,
+          "returnedLinesTop5": 232.33333333333334,
+          "returnedChars": 15956.333333333334,
+          "latencyMs": {
+            "n": 3,
+            "median": 1503.5026319999997,
+            "p95": null,
+            "p95Note": "insufficient samples (3 < 20)"
+          }
+        },
+        "single-file": {
+          "planned": 18,
+          "complete": 18,
+          "completionRate": 1,
+          "recallAt1": 0.1111111111111111,
+          "recallAt5": 0.5555555555555556,
+          "mrr": 0.2773809523809524,
+          "fileRecall": 0.8888888888888888,
+          "complementaryCoverage": 0,
+          "recallAt5OverPlanned": 0.5555555555555556,
+          "returnedLinesTop5": 196.66666666666666,
+          "returnedChars": 13049.777777777777,
+          "latencyMs": {
+            "n": 18,
+            "median": 1124.0839394999985,
+            "p95": null,
+            "p95Note": "insufficient samples (18 < 20)"
+          }
+        }
+      }
+    },
+    "codegraph-context": {
+      "overall": {
+        "planned": 21,
+        "complete": 21,
+        "completionRate": 1,
+        "recallAt1": 0.2857142857142857,
+        "recallAt5": 0.4548872180451128,
+        "mrr": 0.38888888888888884,
+        "fileRecall": 0.7063492063492064,
+        "complementaryCoverage": 0.08333333333333333,
+        "recallAt5OverPlanned": 0.4548872180451128,
+        "returnedLinesTop5": 297.6666666666667,
+        "returnedChars": 11115.714285714286,
+        "latencyMs": {
+          "n": 21,
+          "median": 1271.8167639999992,
+          "p95": 2265.6660549999997,
+          "p95Note": null
+        }
+      },
+      "indexMs": {
+        "n": 12,
+        "median": 5531.1375405,
+        "p95": null,
+        "p95Note": "insufficient samples (12 < 20)"
+      },
+      "byCategory": {
+        "change-localization": {
+          "planned": 12,
+          "complete": 12,
+          "completionRate": 1,
+          "recallAt1": 0.25,
+          "recallAt5": 0.46271929824561403,
+          "mrr": 0.3888888888888889,
+          "fileRecall": 0.5694444444444445,
+          "complementaryCoverage": 0.08333333333333333,
+          "recallAt5OverPlanned": 0.46271929824561403,
+          "returnedLinesTop5": 332.4166666666667,
+          "returnedChars": 12330.083333333334,
+          "latencyMs": {
+            "n": 12,
+            "median": 1277.8735724999988,
+            "p95": null,
+            "p95Note": "insufficient samples (12 < 20)"
+          }
+        },
+        "code-understanding": {
+          "planned": 9,
+          "complete": 9,
+          "completionRate": 1,
+          "recallAt1": 0.3333333333333333,
+          "recallAt5": 0.4444444444444444,
+          "mrr": 0.3888888888888889,
+          "fileRecall": 0.8888888888888888,
+          "complementaryCoverage": null,
+          "recallAt5OverPlanned": 0.4444444444444444,
+          "returnedLinesTop5": 251.33333333333334,
+          "returnedChars": 9496.555555555555,
+          "latencyMs": {
+            "n": 9,
+            "median": 1203.06963,
+            "p95": null,
+            "p95Note": "insufficient samples (9 < 20)"
+          }
+        }
+      },
+      "byRepository": {
+        "pallets/flask": {
+          "planned": 6,
+          "complete": 6,
+          "completionRate": 1,
+          "recallAt1": 0.3333333333333333,
+          "recallAt5": 0.6754385964912281,
+          "mrr": 0.5277777777777778,
+          "fileRecall": 0.8888888888888888,
+          "complementaryCoverage": 0.08333333333333333,
+          "recallAt5OverPlanned": 0.6754385964912281,
+          "returnedLinesTop5": 243.33333333333334,
+          "returnedChars": 9529.166666666666,
+          "latencyMs": {
+            "n": 6,
+            "median": 1027.2617685000005,
+            "p95": null,
+            "p95Note": "insufficient samples (6 < 20)"
+          }
+        },
+        "psf/requests": {
+          "planned": 15,
+          "complete": 15,
+          "completionRate": 1,
+          "recallAt1": 0.26666666666666666,
+          "recallAt5": 0.36666666666666664,
+          "mrr": 0.3333333333333333,
+          "fileRecall": 0.6333333333333333,
+          "complementaryCoverage": 0.08333333333333333,
+          "recallAt5OverPlanned": 0.36666666666666664,
+          "returnedLinesTop5": 319.4,
+          "returnedChars": 11750.333333333334,
+          "latencyMs": {
+            "n": 15,
+            "median": 1761.9865989999998,
+            "p95": null,
+            "p95Note": "insufficient samples (15 < 20)"
+          }
+        }
+      },
+      "byEvidenceSpread": {
+        "multi-file": {
+          "planned": 3,
+          "complete": 3,
+          "completionRate": 1,
+          "recallAt1": 0,
+          "recallAt5": 0.18421052631578946,
+          "mrr": 0.27777777777777773,
+          "fileRecall": 0.27777777777777773,
+          "complementaryCoverage": 0.2222222222222222,
+          "recallAt5OverPlanned": 0.18421052631578946,
+          "returnedLinesTop5": 549.3333333333334,
+          "returnedChars": 19691.666666666668,
+          "latencyMs": {
+            "n": 3,
+            "median": 1161.3096060000025,
+            "p95": null,
+            "p95Note": "insufficient samples (3 < 20)"
+          }
+        },
+        "single-file": {
+          "planned": 18,
+          "complete": 18,
+          "completionRate": 1,
+          "recallAt1": 0.3333333333333333,
+          "recallAt5": 0.5,
+          "mrr": 0.4074074074074074,
+          "fileRecall": 0.7777777777777778,
+          "complementaryCoverage": 0.037037037037037035,
+          "recallAt5OverPlanned": 0.5,
+          "returnedLinesTop5": 255.72222222222223,
+          "returnedChars": 9686.388888888889,
+          "latencyMs": {
+            "n": 18,
+            "median": 1277.8735724999988,
+            "p95": null,
+            "p95Note": "insufficient samples (18 < 20)"
+          }
+        }
+      }
+    }
+  },
+  "paired": null,
+  "rows": [
+    {
+      "arm": "ripgrep",
+      "id": "psf__requests-1657:change",
+      "task": "psf__requests-1657",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 3138.0887729999995,
+      "complete": true,
+      "returnedChars": 12326,
+      "ranges": [
+        {
+          "path": "test_requests.py",
+          "start_line": 206,
+          "end_line": 246
+        },
+        {
+          "path": "test_requests.py",
+          "start_line": 44,
+          "end_line": 84
+        },
+        {
+          "path": "setup.py",
+          "start_line": 1,
+          "end_line": 40
+        },
+        {
+          "path": "README.rst",
+          "start_line": 1,
+          "end_line": 36
+        },
+        {
+          "path": "test_requests.py",
+          "start_line": 461,
+          "end_line": 501
+        },
+        {
+          "path": "tasks.py",
+          "start_line": 1,
+          "end_line": 34
+        },
+        {
+          "path": "README.rst",
+          "start_line": 61,
+          "end_line": 101
+        },
+        {
+          "path": "test_requests.py",
+          "start_line": 164,
+          "end_line": 204
+        },
+        {
+          "path": "requests/__init__.py",
+          "start_line": 24,
+          "end_line": 64
+        },
+        {
+          "path": "requests/adapters.py",
+          "start_line": 31,
+          "end_line": 71
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 0,
+        "reciprocalRank": 0,
+        "evidenceCoverage": 0,
+        "negativeCorrect": null,
+        "fileRecall": 0,
+        "firstOverlapRank": null,
+        "complementaryCoverage": 0
+      },
+      "error": null,
+      "detail": {
+        "terms": [
+          "kennethreitz",
+          "requests",
+          "sessions",
+          "L264",
+          "overwrites"
+        ]
+      }
+    },
+    {
+      "arm": "ripgrep",
+      "id": "psf__requests-1657:understand",
+      "task": "psf__requests-1657",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "code-understanding",
+      "latencyMs": 3099.1567510000004,
+      "complete": true,
+      "returnedChars": 14854,
+      "ranges": [
+        {
+          "path": "requests/models.py",
+          "start_line": 227,
+          "end_line": 267
+        },
+        {
+          "path": "requests/sessions.py",
+          "start_line": 210,
+          "end_line": 250
+        },
+        {
+          "path": "HISTORY.rst",
+          "start_line": 1,
+          "end_line": 37
+        },
+        {
+          "path": "requests/adapters.py",
+          "start_line": 266,
+          "end_line": 306
+        },
+        {
+          "path": "requests/sessions.py",
+          "start_line": 415,
+          "end_line": 455
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 156,
+          "end_line": 196
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 275,
+          "end_line": 315
+        },
+        {
+          "path": "requests/__init__.py",
+          "start_line": 39,
+          "end_line": 79
+        },
+        {
+          "path": "requests/api.py",
+          "start_line": 1,
+          "end_line": 38
+        },
+        {
+          "path": "requests/adapters.py",
+          "start_line": 137,
+          "end_line": 177
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 0,
+        "reciprocalRank": 0,
+        "evidenceCoverage": 0,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 2,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "terms": [
+          "Constructs",
+          "PreparedRequest",
+          "transmission"
+        ]
+      }
+    },
+    {
+      "arm": "ripgrep",
+      "id": "psf__requests-2821:change",
+      "task": "psf__requests-2821",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 3055.8455030000005,
+      "complete": true,
+      "returnedChars": 13566,
+      "ranges": [
+        {
+          "path": "requests/__init__.py",
+          "start_line": 24,
+          "end_line": 64
+        },
+        {
+          "path": "requests/adapters.py",
+          "start_line": 1,
+          "end_line": 33
+        },
+        {
+          "path": "HISTORY.rst",
+          "start_line": 159,
+          "end_line": 199
+        },
+        {
+          "path": "requests/adapters.py",
+          "start_line": 40,
+          "end_line": 80
+        },
+        {
+          "path": "HISTORY.rst",
+          "start_line": 429,
+          "end_line": 469
+        },
+        {
+          "path": "setup.py",
+          "start_line": 32,
+          "end_line": 72
+        },
+        {
+          "path": "requests/adapters.py",
+          "start_line": 199,
+          "end_line": 239
+        },
+        {
+          "path": "requests/exceptions.py",
+          "start_line": 1,
+          "end_line": 27
+        },
+        {
+          "path": "README.rst",
+          "start_line": 33,
+          "end_line": 73
+        },
+        {
+          "path": "HISTORY.rst",
+          "start_line": 329,
+          "end_line": 369
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 0,
+        "reciprocalRank": 0,
+        "evidenceCoverage": 0,
+        "negativeCorrect": null,
+        "fileRecall": 0,
+        "firstOverlapRank": null,
+        "complementaryCoverage": 0
+      },
+      "error": null,
+      "detail": {
+        "terms": [
+          "TypeError",
+          "traceback",
+          "upgrading",
+          "response",
+          "virtualenv",
+          "python2",
+          "packages",
+          "requests",
+          "sessions",
+          "adapters",
+          "urllib3",
+          "connectionpool",
+          "_make_request",
+          "httplib_request_kw",
+          "_send_request",
+          "endheaders",
+          "_send_output",
+          "message_body",
+          "pyopenssl",
+          "memoryview",
+          "interface",
+          "downgrading",
+          "gmusicapi",
+          "versions",
+          "relevant",
+          "httplib2",
+          "httpsclient",
+          "pyasn1",
+          "MechanicalSoup",
+          "beautifulsoup4",
+          "cryptography",
+          "decorator",
+          "enum34",
+          "dev0",
+          "gpsoauth",
+          "ipaddress",
+          "oauth2client",
+          "proboscis",
+          "protobuf",
+          "pycparser",
+          "pycrypto",
+          "dateutil",
+          "validictory"
+        ]
+      }
+    },
+    {
+      "arm": "ripgrep",
+      "id": "psf__requests-2821:understand",
+      "task": "psf__requests-2821",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "code-understanding",
+      "latencyMs": 2963.370436000001,
+      "complete": true,
+      "returnedChars": 16369,
+      "ranges": [
+        {
+          "path": "requests/models.py",
+          "start_line": 254,
+          "end_line": 294
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 316,
+          "end_line": 356
+        },
+        {
+          "path": "requests/sessions.py",
+          "start_line": 387,
+          "end_line": 427
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 463,
+          "end_line": 503
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 507,
+          "end_line": 547
+        },
+        {
+          "path": "HISTORY.rst",
+          "start_line": 360,
+          "end_line": 400
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 379,
+          "end_line": 419
+        },
+        {
+          "path": "test_requests.py",
+          "start_line": 884,
+          "end_line": 924
+        },
+        {
+          "path": "test_requests.py",
+          "start_line": 1323,
+          "end_line": 1363
+        },
+        {
+          "path": "test_requests.py",
+          "start_line": 109,
+          "end_line": 149
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 1,
+        "reciprocalRank": 0.5,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 2,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "terms": [
+          "Prepares",
+          "HTTP"
+        ]
+      }
+    },
+    {
+      "arm": "ripgrep",
+      "id": "psf__requests-774:change",
+      "task": "psf__requests-774",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 2925.799008,
+      "complete": true,
+      "returnedChars": 12397,
+      "ranges": [
+        {
+          "path": "requests/safe_mode.py",
+          "start_line": 1,
+          "end_line": 39
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 24,
+          "end_line": 64
+        },
+        {
+          "path": "tests/test_requests.py",
+          "start_line": 872,
+          "end_line": 912
+        },
+        {
+          "path": "tests/test_requests.py",
+          "start_line": 796,
+          "end_line": 836
+        },
+        {
+          "path": "HISTORY.rst",
+          "start_line": 207,
+          "end_line": 247
+        },
+        {
+          "path": "requests/api.py",
+          "start_line": 1,
+          "end_line": 24
+        },
+        {
+          "path": "setup.py",
+          "start_line": 13,
+          "end_line": 53
+        },
+        {
+          "path": "tests/test_requests.py",
+          "start_line": 52,
+          "end_line": 92
+        },
+        {
+          "path": "tests/test_requests.py",
+          "start_line": 924,
+          "end_line": 964
+        },
+        {
+          "path": "Makefile",
+          "start_line": 44,
+          "end_line": 84
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 0,
+        "reciprocalRank": 0,
+        "evidenceCoverage": 0,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": null,
+        "complementaryCoverage": 0
+      },
+      "error": null,
+      "detail": {
+        "terms": [
+          "UnicodeError",
+          "encodings",
+          "Requests",
+          "traceback",
+          "python2",
+          "packages",
+          "requests",
+          "safe_mode",
+          "function",
+          "sessions",
+          "prefetch",
+          "_build_response",
+          "full_url",
+          "ToASCII"
+        ]
+      }
+    },
+    {
+      "arm": "ripgrep",
+      "id": "psf__requests-774:understand",
+      "task": "psf__requests-774",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "code-understanding",
+      "latencyMs": 990.9142939999983,
+      "complete": true,
+      "returnedChars": 0,
+      "ranges": [],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 0,
+        "reciprocalRank": 0,
+        "evidenceCoverage": 0,
+        "negativeCorrect": null,
+        "fileRecall": 0,
+        "firstOverlapRank": null,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "terms": []
+      }
+    },
+    {
+      "arm": "ripgrep",
+      "id": "psf__requests-4718:change",
+      "task": "psf__requests-4718",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 3113.9895149999993,
+      "complete": true,
+      "returnedChars": 15318,
+      "ranges": [
+        {
+          "path": "requests/help.py",
+          "start_line": 75,
+          "end_line": 115
+        },
+        {
+          "path": "tests/test_lowlevel.py",
+          "start_line": 26,
+          "end_line": 66
+        },
+        {
+          "path": "HISTORY.rst",
+          "start_line": 811,
+          "end_line": 851
+        },
+        {
+          "path": "HISTORY.rst",
+          "start_line": 576,
+          "end_line": 616
+        },
+        {
+          "path": "HISTORY.rst",
+          "start_line": 227,
+          "end_line": 267
+        },
+        {
+          "path": "requests/sessions.py",
+          "start_line": 226,
+          "end_line": 266
+        },
+        {
+          "path": "requests/sessions.py",
+          "start_line": 292,
+          "end_line": 332
+        },
+        {
+          "path": "setup.py",
+          "start_line": 67,
+          "end_line": 107
+        },
+        {
+          "path": "HISTORY.rst",
+          "start_line": 674,
+          "end_line": 714
+        },
+        {
+          "path": "tests/test_requests.py",
+          "start_line": 2191,
+          "end_line": 2231
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 0,
+        "reciprocalRank": 0.16666666666666666,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 6,
+        "complementaryCoverage": 0
+      },
+      "error": null,
+      "detail": {
+        "terms": [
+          "Authorization",
+          "redirect",
+          "considered",
+          "intentional",
+          "behaviour",
+          "endpoint",
+          "authorization",
+          "redirects",
+          "stripped",
+          "Expected",
+          "rebuild_auth",
+          "credentials",
+          "intended",
+          "transmitted",
+          "plaintext",
+          "redirected",
+          "Reproduction",
+          "HTTPS",
+          "localhost",
+          "HTTP",
+          "requests",
+          "BaseHTTPServer",
+          "BaseHTTPRequestHandler",
+          "do_GET",
+          "send_response",
+          "send_header",
+          "Location",
+          "end_headers",
+          "HTTPServer",
+          "wrap_socket",
+          "server_side",
+          "certfile",
+          "yourpemfile",
+          "serve_forever",
+          "Information",
+          "cryptography",
+          "implementation",
+          "CPython",
+          "platform",
+          "pyOpenSSL",
+          "openssl_version",
+          "system_ssl",
+          "urllib3",
+          "using_pyopenssl"
+        ]
+      }
+    },
+    {
+      "arm": "ripgrep",
+      "id": "psf__requests-4718:understand",
+      "task": "psf__requests-4718",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "code-understanding",
+      "latencyMs": 2847.722425,
+      "complete": true,
+      "returnedChars": 12499,
+      "ranges": [
+        {
+          "path": "requests/sessions.py",
+          "start_line": 220,
+          "end_line": 260
+        },
+        {
+          "path": "HISTORY.rst",
+          "start_line": 341,
+          "end_line": 381
+        },
+        {
+          "path": "HISTORY.rst",
+          "start_line": 808,
+          "end_line": 848
+        },
+        {
+          "path": "HISTORY.rst",
+          "start_line": 566,
+          "end_line": 606
+        },
+        {
+          "path": "HISTORY.rst",
+          "start_line": 1501,
+          "end_line": 1541
+        },
+        {
+          "path": "requests/auth.py",
+          "start_line": 81,
+          "end_line": 121
+        },
+        {
+          "path": "HISTORY.rst",
+          "start_line": 929,
+          "end_line": 969
+        },
+        {
+          "path": "HISTORY.rst",
+          "start_line": 1033,
+          "end_line": 1073
+        },
+        {
+          "path": "HISTORY.rst",
+          "start_line": 1430,
+          "end_line": 1470
+        },
+        {
+          "path": "requests/auth.py",
+          "start_line": 1,
+          "end_line": 27
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "terms": [
+          "redirected",
+          "authentication",
+          "credentials"
+        ]
+      }
+    },
+    {
+      "arm": "ripgrep",
+      "id": "psf__requests-3718:change",
+      "task": "psf__requests-3718",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 1021.719357,
+      "complete": true,
+      "returnedChars": 13951,
+      "ranges": [
+        {
+          "path": "requests/models.py",
+          "start_line": 673,
+          "end_line": 713
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 1,
+          "end_line": 34
+        },
+        {
+          "path": "requests/adapters.py",
+          "start_line": 4,
+          "end_line": 44
+        },
+        {
+          "path": "HISTORY.rst",
+          "start_line": 61,
+          "end_line": 101
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 746,
+          "end_line": 786
+        },
+        {
+          "path": "tests/test_requests.py",
+          "start_line": 11,
+          "end_line": 51
+        },
+        {
+          "path": "HISTORY.rst",
+          "start_line": 410,
+          "end_line": 450
+        },
+        {
+          "path": "tests/test_requests.py",
+          "start_line": 1130,
+          "end_line": 1170
+        },
+        {
+          "path": "requests/__init__.py",
+          "start_line": 30,
+          "end_line": 70
+        },
+        {
+          "path": "requests/sessions.py",
+          "start_line": 1,
+          "end_line": 24
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 1,
+        "reciprocalRank": 0.2,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 5,
+        "complementaryCoverage": 0
+      },
+      "error": null,
+      "detail": {
+        "terms": [
+          "AttributeError",
+          "NoneType",
+          "attribute",
+          "requests",
+          "encounter",
+          "exception",
+          "appveyor",
+          "wm7b4u9yhgkxkgn",
+          "Relevant",
+          "FAILURES",
+          "_________________",
+          "InvalidLinkBearTest",
+          "test_redirect_threshold",
+          "testMethod",
+          "long_url_redirect",
+          "bitbucket",
+          "splitlines",
+          "short_url_redirect",
+          "assertResult",
+          "valid_file",
+          "invalid_file",
+          "settings",
+          "follow_redirects",
+          "InvalidLinkBear",
+          "link_ignore_regex",
+          "find_links_in_file",
+          "get_status_code",
+          "status_code",
+          "Python34",
+          "packages",
+          "sessions",
+          "send_kwargs",
+          "requests_mock",
+          "_fake_send",
+          "_real_send",
+          "_content",
+          "iter_content",
+          "CONTENT_CHUNK_SIZE",
+          "generate",
+          "urllib3",
+          "chunk_size",
+          "decode_content",
+          "ProtocolError",
+          "ChunkedEncodingError",
+          "DecodeError",
+          "ContentDecodingError",
+          "ReadTimeoutError",
+          "ConnectionError",
+          "Standard"
+        ]
+      }
+    },
+    {
+      "arm": "ripgrep",
+      "id": "psf__requests-3718:understand",
+      "task": "psf__requests-3718",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "code-understanding",
+      "latencyMs": 477.529324000001,
+      "complete": true,
+      "returnedChars": 14251,
+      "ranges": [
+        {
+          "path": "requests/adapters.py",
+          "start_line": 236,
+          "end_line": 276
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 558,
+          "end_line": 598
+        },
+        {
+          "path": "tests/test_requests.py",
+          "start_line": 849,
+          "end_line": 889
+        },
+        {
+          "path": "requests/sessions.py",
+          "start_line": 488,
+          "end_line": 528
+        },
+        {
+          "path": "requests/sessions.py",
+          "start_line": 529,
+          "end_line": 569
+        },
+        {
+          "path": "requests/cookies.py",
+          "start_line": 101,
+          "end_line": 141
+        },
+        {
+          "path": "HISTORY.rst",
+          "start_line": 896,
+          "end_line": 936
+        },
+        {
+          "path": "requests/exceptions.py",
+          "start_line": 1,
+          "end_line": 38
+        },
+        {
+          "path": "requests/api.py",
+          "start_line": 29,
+          "end_line": 69
+        },
+        {
+          "path": "requests/api.py",
+          "start_line": 71,
+          "end_line": 111
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 0,
+        "reciprocalRank": 0,
+        "evidenceCoverage": 0,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": null,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "terms": [
+          "response"
+        ]
+      }
+    },
+    {
+      "arm": "ripgrep",
+      "id": "psf__requests-1962:change",
+      "task": "psf__requests-1962",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 292.4031990000003,
+      "complete": true,
+      "returnedChars": 12181,
+      "ranges": [
+        {
+          "path": "test_requests.py",
+          "start_line": 230,
+          "end_line": 270
+        },
+        {
+          "path": "test_requests.py",
+          "start_line": 47,
+          "end_line": 87
+        },
+        {
+          "path": "setup.py",
+          "start_line": 4,
+          "end_line": 44
+        },
+        {
+          "path": "test_requests.py",
+          "start_line": 516,
+          "end_line": 556
+        },
+        {
+          "path": "README.rst",
+          "start_line": 59,
+          "end_line": 99
+        },
+        {
+          "path": "test_requests.py",
+          "start_line": 189,
+          "end_line": 229
+        },
+        {
+          "path": "Makefile",
+          "start_line": 1,
+          "end_line": 30
+        },
+        {
+          "path": "requests/adapters.py",
+          "start_line": 31,
+          "end_line": 71
+        },
+        {
+          "path": "README.rst",
+          "start_line": 12,
+          "end_line": 52
+        },
+        {
+          "path": "requests/__init__.py",
+          "start_line": 24,
+          "end_line": 64
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 0,
+        "reciprocalRank": 0,
+        "evidenceCoverage": 0,
+        "negativeCorrect": null,
+        "fileRecall": 0,
+        "firstOverlapRank": null,
+        "complementaryCoverage": 1
+      },
+      "error": null,
+      "detail": {
+        "terms": [
+          "IMHO",
+          "surprise",
+          "_some_",
+          "returned",
+          "kennethreitz",
+          "requests",
+          "sessions",
+          "L530"
+        ]
+      }
+    },
+    {
+      "arm": "ripgrep",
+      "id": "psf__requests-1768:change",
+      "task": "psf__requests-1768",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 241.49699699999837,
+      "complete": true,
+      "returnedChars": 13148,
+      "ranges": [
+        {
+          "path": "requests/models.py",
+          "start_line": 249,
+          "end_line": 289
+        },
+        {
+          "path": "requests/auth.py",
+          "start_line": 7,
+          "end_line": 47
+        },
+        {
+          "path": "setup.py",
+          "start_line": 17,
+          "end_line": 57
+        },
+        {
+          "path": "requests/adapters.py",
+          "start_line": 250,
+          "end_line": 290
+        },
+        {
+          "path": "HISTORY.rst",
+          "start_line": 669,
+          "end_line": 709
+        },
+        {
+          "path": "README.rst",
+          "start_line": 12,
+          "end_line": 52
+        },
+        {
+          "path": "HISTORY.rst",
+          "start_line": 20,
+          "end_line": 60
+        },
+        {
+          "path": "requests/sessions.py",
+          "start_line": 144,
+          "end_line": 184
+        },
+        {
+          "path": "HISTORY.rst",
+          "start_line": 512,
+          "end_line": 552
+        },
+        {
+          "path": "test_requests.py",
+          "start_line": 605,
+          "end_line": 645
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 0,
+        "reciprocalRank": 0,
+        "evidenceCoverage": 0,
+        "negativeCorrect": null,
+        "fileRecall": 0,
+        "firstOverlapRank": null,
+        "complementaryCoverage": 0
+      },
+      "error": null,
+      "detail": {
+        "terms": [
+          "HTTP",
+          "credentials",
+          "extracted",
+          "credential",
+          "extraction",
+          "hostname",
+          "Unauthorized",
+          "password",
+          "substituted",
+          "Manually",
+          "extracting",
+          "urlsplit",
+          "parameter",
+          "requests",
+          "authentication",
+          "paragraph"
+        ]
+      }
+    },
+    {
+      "arm": "ripgrep",
+      "id": "psf__requests-1768:understand",
+      "task": "psf__requests-1768",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "code-understanding",
+      "latencyMs": 210.1100230000011,
+      "complete": true,
+      "returnedChars": 13419,
+      "ranges": [
+        {
+          "path": "requests/utils.py",
+          "start_line": 538,
+          "end_line": 578
+        },
+        {
+          "path": "requests/auth.py",
+          "start_line": 22,
+          "end_line": 62
+        },
+        {
+          "path": "requests/adapters.py",
+          "start_line": 256,
+          "end_line": 296
+        },
+        {
+          "path": "requests/auth.py",
+          "start_line": 86,
+          "end_line": 126
+        },
+        {
+          "path": "requests/cacert.pem",
+          "start_line": 4293,
+          "end_line": 4333
+        },
+        {
+          "path": "HISTORY.rst",
+          "start_line": 648,
+          "end_line": 688
+        },
+        {
+          "path": "HISTORY.rst",
+          "start_line": 76,
+          "end_line": 116
+        },
+        {
+          "path": "HISTORY.rst",
+          "start_line": 180,
+          "end_line": 220
+        },
+        {
+          "path": "HISTORY.rst",
+          "start_line": 577,
+          "end_line": 617
+        },
+        {
+          "path": "requests/utils.py",
+          "start_line": 70,
+          "end_line": 110
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "terms": [
+          "authentication",
+          "components",
+          "username",
+          "password"
+        ]
+      }
+    },
+    {
+      "arm": "ripgrep",
+      "id": "psf__requests-2617:change",
+      "task": "psf__requests-2617",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 313.9535199999991,
+      "complete": true,
+      "returnedChars": 12471,
+      "ranges": [
+        {
+          "path": "test_requests.py",
+          "start_line": 4,
+          "end_line": 44
+        },
+        {
+          "path": "requests/adapters.py",
+          "start_line": 1,
+          "end_line": 34
+        },
+        {
+          "path": "test_requests.py",
+          "start_line": 1601,
+          "end_line": 1641
+        },
+        {
+          "path": "requests/__init__.py",
+          "start_line": 41,
+          "end_line": 81
+        },
+        {
+          "path": "HISTORY.rst",
+          "start_line": 409,
+          "end_line": 449
+        },
+        {
+          "path": "HISTORY.rst",
+          "start_line": 121,
+          "end_line": 161
+        },
+        {
+          "path": "requests/adapters.py",
+          "start_line": 36,
+          "end_line": 76
+        },
+        {
+          "path": "HISTORY.rst",
+          "start_line": 311,
+          "end_line": 351
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 1,
+          "end_line": 24
+        },
+        {
+          "path": "requests/adapters.py",
+          "start_line": 161,
+          "end_line": 201
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 0,
+        "reciprocalRank": 0,
+        "evidenceCoverage": 0,
+        "negativeCorrect": null,
+        "fileRecall": 0.5,
+        "firstOverlapRank": null,
+        "complementaryCoverage": 0.3333333333333333
+      },
+      "error": null,
+      "detail": {
+        "terms": [
+          "Prepared",
+          "requests",
+          "containing",
+          "unicode_literals",
+          "imported",
+          "__future__",
+          "prepared",
+          "__name__",
+          "__main__",
+          "perfectly",
+          "python3",
+          "python2",
+          "unfortunately",
+          "exception",
+          "Traceback",
+          "packages",
+          "sessions",
+          "adapters",
+          "urllib3",
+          "connectionpool",
+          "_make_request",
+          "httplib_request_kw",
+          "Frameworks",
+          "framework",
+          "Versions",
+          "_send_request",
+          "endheaders",
+          "_send_output",
+          "message_body",
+          "UnicodeDecodeError",
+          "position"
+        ]
+      }
+    },
+    {
+      "arm": "ripgrep",
+      "id": "psf__requests-2617:understand",
+      "task": "psf__requests-2617",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "code-understanding",
+      "latencyMs": 275.3390039999995,
+      "complete": true,
+      "returnedChars": 15693,
+      "ranges": [
+        {
+          "path": "requests/models.py",
+          "start_line": 264,
+          "end_line": 304
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 326,
+          "end_line": 366
+        },
+        {
+          "path": "requests/sessions.py",
+          "start_line": 381,
+          "end_line": 421
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 472,
+          "end_line": 512
+        },
+        {
+          "path": "HISTORY.rst",
+          "start_line": 322,
+          "end_line": 362
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 388,
+          "end_line": 428
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 516,
+          "end_line": 556
+        },
+        {
+          "path": "test_requests.py",
+          "start_line": 854,
+          "end_line": 894
+        },
+        {
+          "path": "test_requests.py",
+          "start_line": 1264,
+          "end_line": 1304
+        },
+        {
+          "path": "test_requests.py",
+          "start_line": 95,
+          "end_line": 135
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 1,
+        "reciprocalRank": 0.5,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 2,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "terms": [
+          "Prepares",
+          "HTTP"
+        ]
+      }
+    },
+    {
+      "arm": "ripgrep",
+      "id": "pallets__flask-4074:change",
+      "task": "pallets__flask-4074",
+      "repository": "pallets/flask",
+      "split": "heldout",
+      "category": "change-localization",
+      "latencyMs": 261.6998109999986,
+      "complete": true,
+      "returnedChars": 14219,
+      "ranges": [
+        {
+          "path": "CHANGES.rst",
+          "start_line": 271,
+          "end_line": 311
+        },
+        {
+          "path": "tests/test_user_error_handler.py",
+          "start_line": 111,
+          "end_line": 151
+        },
+        {
+          "path": "tests/test_blueprints.py",
+          "start_line": 144,
+          "end_line": 184
+        },
+        {
+          "path": "src/flask/blueprints.py",
+          "start_line": 108,
+          "end_line": 148
+        },
+        {
+          "path": "tests/test_basic.py",
+          "start_line": 1613,
+          "end_line": 1653
+        },
+        {
+          "path": "tests/test_async.py",
+          "start_line": 34,
+          "end_line": 74
+        },
+        {
+          "path": "tests/test_async.py",
+          "start_line": 98,
+          "end_line": 138
+        },
+        {
+          "path": "src/flask/blueprints.py",
+          "start_line": 37,
+          "end_line": 77
+        },
+        {
+          "path": "src/flask/app.py",
+          "start_line": 987,
+          "end_line": 1027
+        },
+        {
+          "path": "src/flask/blueprints.py",
+          "start_line": 338,
+          "end_line": 378
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 0,
+        "reciprocalRank": 0.125,
+        "evidenceCoverage": 0.15789473684210525,
+        "negativeCorrect": null,
+        "fileRecall": 0.6666666666666666,
+        "firstOverlapRank": 8,
+        "complementaryCoverage": 0
+      },
+      "error": null,
+      "detail": {
+        "terms": [
+          "url_for",
+          "distinguish",
+          "blueprint",
+          "expected",
+          "relative",
+          "Blueprint",
+          "__name__",
+          "register_blueprint",
+          "url_prefix",
+          "test_client",
+          "registered",
+          "possible",
+          "behaviour"
+        ]
+      }
+    },
+    {
+      "arm": "ripgrep",
+      "id": "pallets__flask-4074:understand",
+      "task": "pallets__flask-4074",
+      "repository": "pallets/flask",
+      "split": "heldout",
+      "category": "code-understanding",
+      "latencyMs": 185.5159079999994,
+      "complete": true,
+      "returnedChars": 16456,
+      "ranges": [
+        {
+          "path": "src/flask/app.py",
+          "start_line": 717,
+          "end_line": 757
+        },
+        {
+          "path": "src/flask/templating.py",
+          "start_line": 122,
+          "end_line": 162
+        },
+        {
+          "path": "src/flask/templating.py",
+          "start_line": 52,
+          "end_line": 92
+        },
+        {
+          "path": "tests/test_signals.py",
+          "start_line": 9,
+          "end_line": 49
+        },
+        {
+          "path": "CHANGES.rst",
+          "start_line": 765,
+          "end_line": 805
+        },
+        {
+          "path": "src/flask/debughelpers.py",
+          "start_line": 124,
+          "end_line": 164
+        },
+        {
+          "path": "src/flask/helpers.py",
+          "start_line": 338,
+          "end_line": 378
+        },
+        {
+          "path": "src/flask/blueprints.py",
+          "start_line": 389,
+          "end_line": 429
+        },
+        {
+          "path": "src/flask/blueprints.py",
+          "start_line": 441,
+          "end_line": 481
+        },
+        {
+          "path": "src/flask/app.py",
+          "start_line": 831,
+          "end_line": 871
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 0,
+        "reciprocalRank": 0,
+        "evidenceCoverage": 0,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "terms": [
+          "template",
+          "commonly",
+          "variables"
+        ]
+      }
+    },
+    {
+      "arm": "ripgrep",
+      "id": "pallets__flask-4544:change",
+      "task": "pallets__flask-4544",
+      "repository": "pallets/flask",
+      "split": "heldout",
+      "category": "change-localization",
+      "latencyMs": 171.96080800000163,
+      "complete": true,
+      "returnedChars": 16037,
+      "ranges": [
+        {
+          "path": "src/flask/cli.py",
+          "start_line": 742,
+          "end_line": 782
+        },
+        {
+          "path": "CHANGES.rst",
+          "start_line": 544,
+          "end_line": 584
+        },
+        {
+          "path": "CHANGES.rst",
+          "start_line": 328,
+          "end_line": 368
+        },
+        {
+          "path": "src/flask/app.py",
+          "start_line": 755,
+          "end_line": 795
+        },
+        {
+          "path": "src/flask/app.py",
+          "start_line": 1965,
+          "end_line": 2005
+        },
+        {
+          "path": "src/flask/config.py",
+          "start_line": 74,
+          "end_line": 114
+        },
+        {
+          "path": "src/flask/helpers.py",
+          "start_line": 8,
+          "end_line": 48
+        },
+        {
+          "path": "setup.cfg",
+          "start_line": 2,
+          "end_line": 42
+        },
+        {
+          "path": "src/flask/cli.py",
+          "start_line": 155,
+          "end_line": 195
+        },
+        {
+          "path": "src/flask/cli.py",
+          "start_line": 699,
+          "end_line": 739
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": 0.5
+      },
+      "error": null,
+      "detail": {
+        "terms": [
+          "development",
+          "specified",
+          "somewhat",
+          "counterintuitive",
+          "_validate_key",
+          "a518014931a82c77a353e1e9c2248529b856",
+          "L711",
+          "function",
+          "certificate",
+          "restrictive",
+          "familiar",
+          "contribute",
+          "Environment"
+        ]
+      }
+    },
+    {
+      "arm": "ripgrep",
+      "id": "pallets__flask-4992:change",
+      "task": "pallets__flask-4992",
+      "repository": "pallets/flask",
+      "split": "heldout",
+      "category": "change-localization",
+      "latencyMs": 145.09122899999966,
+      "complete": true,
+      "returnedChars": 16211,
+      "ranges": [
+        {
+          "path": "src/flask/config.py",
+          "start_line": 212,
+          "end_line": 252
+        },
+        {
+          "path": "src/flask/cli.py",
+          "start_line": 83,
+          "end_line": 123
+        },
+        {
+          "path": "src/flask/cli.py",
+          "start_line": 131,
+          "end_line": 171
+        },
+        {
+          "path": "src/flask/config.py",
+          "start_line": 146,
+          "end_line": 186
+        },
+        {
+          "path": "CHANGES.rst",
+          "start_line": 206,
+          "end_line": 246
+        },
+        {
+          "path": "CHANGES.rst",
+          "start_line": 361,
+          "end_line": 401
+        },
+        {
+          "path": "CHANGES.rst",
+          "start_line": 1235,
+          "end_line": 1275
+        },
+        {
+          "path": "src/flask/scaffold.py",
+          "start_line": 458,
+          "end_line": 498
+        },
+        {
+          "path": "src/flask/scaffold.py",
+          "start_line": 72,
+          "end_line": 112
+        },
+        {
+          "path": "tests/test_config.py",
+          "start_line": 84,
+          "end_line": 124
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0.3333333333333333,
+        "recallAt5": 0.3333333333333333,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 0.3333333333333333,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": 0
+      },
+      "error": null,
+      "detail": {
+        "terms": [
+          "parameter",
+          "from_file",
+          "introduced",
+          "TOML",
+          "readable",
+          "resulting",
+          "TypeError",
+          "expression",
+          "function",
+          "from_mapping",
+          "root_path"
+        ]
+      }
+    },
+    {
+      "arm": "ripgrep",
+      "id": "pallets__flask-4992:understand",
+      "task": "pallets__flask-4992",
+      "repository": "pallets/flask",
+      "split": "heldout",
+      "category": "code-understanding",
+      "latencyMs": 111.50390800000241,
+      "complete": true,
+      "returnedChars": 17066,
+      "ranges": [
+        {
+          "path": "src/flask/app.py",
+          "start_line": 93,
+          "end_line": 133
+        },
+        {
+          "path": "src/flask/helpers.py",
+          "start_line": 425,
+          "end_line": 465
+        },
+        {
+          "path": "src/flask/scaffold.py",
+          "start_line": 452,
+          "end_line": 492
+        },
+        {
+          "path": "CHANGES.rst",
+          "start_line": 207,
+          "end_line": 247
+        },
+        {
+          "path": "CHANGES.rst",
+          "start_line": 306,
+          "end_line": 346
+        },
+        {
+          "path": "CHANGES.rst",
+          "start_line": 665,
+          "end_line": 705
+        },
+        {
+          "path": "src/flask/app.py",
+          "start_line": 141,
+          "end_line": 181
+        },
+        {
+          "path": "src/flask/helpers.py",
+          "start_line": 338,
+          "end_line": 378
+        },
+        {
+          "path": "src/flask/json/__init__.py",
+          "start_line": 99,
+          "end_line": 139
+        },
+        {
+          "path": "src/flask/scaffold.py",
+          "start_line": 402,
+          "end_line": 442
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 0,
+        "reciprocalRank": 0,
+        "evidenceCoverage": 0,
+        "negativeCorrect": null,
+        "fileRecall": 0,
+        "firstOverlapRank": null,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "terms": [
+          "parameter"
+        ]
+      }
+    },
+    {
+      "arm": "ripgrep",
+      "id": "pallets__flask-4045:change",
+      "task": "pallets__flask-4045",
+      "repository": "pallets/flask",
+      "split": "heldout",
+      "category": "change-localization",
+      "latencyMs": 127.31645500000013,
+      "complete": true,
+      "returnedChars": 19223,
+      "ranges": [
+        {
+          "path": "src/flask/blueprints.py",
+          "start_line": 108,
+          "end_line": 148
+        },
+        {
+          "path": "src/flask/app.py",
+          "start_line": 1003,
+          "end_line": 1043
+        },
+        {
+          "path": "src/flask/blueprints.py",
+          "start_line": 252,
+          "end_line": 292
+        },
+        {
+          "path": "src/flask/blueprints.py",
+          "start_line": 47,
+          "end_line": 87
+        },
+        {
+          "path": "src/flask/blueprints.py",
+          "start_line": 336,
+          "end_line": 376
+        },
+        {
+          "path": "src/flask/helpers.py",
+          "start_line": 192,
+          "end_line": 232
+        },
+        {
+          "path": "CHANGES.rst",
+          "start_line": 738,
+          "end_line": 778
+        },
+        {
+          "path": "CHANGES.rst",
+          "start_line": 310,
+          "end_line": 350
+        },
+        {
+          "path": "src/flask/scaffold.py",
+          "start_line": 112,
+          "end_line": 152
+        },
+        {
+          "path": "src/flask/debughelpers.py",
+          "start_line": 130,
+          "end_line": 170
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 0.5,
+        "reciprocalRank": 0.2,
+        "evidenceCoverage": 0.5,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 5,
+        "complementaryCoverage": 0
+      },
+      "error": null,
+      "detail": {
+        "terms": [
+          "blueprint",
+          "contains",
+          "required",
+          "significant",
+          "blueprints",
+          "endpoint"
+        ]
+      }
+    },
+    {
+      "arm": "bm25",
+      "id": "psf__requests-1657:change",
+      "task": "psf__requests-1657",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 289.18483299999934,
+      "complete": true,
+      "returnedChars": 13180,
+      "ranges": [
+        {
+          "path": "README.rst",
+          "start_line": 61,
+          "end_line": 96
+        },
+        {
+          "path": "README.rst",
+          "start_line": 1,
+          "end_line": 40
+        },
+        {
+          "path": "tasks.py",
+          "start_line": 1,
+          "end_line": 33
+        },
+        {
+          "path": "test_requests.py",
+          "start_line": 621,
+          "end_line": 660
+        },
+        {
+          "path": "test_requests.py",
+          "start_line": 461,
+          "end_line": 500
+        },
+        {
+          "path": "test_requests.py",
+          "start_line": 581,
+          "end_line": 620
+        },
+        {
+          "path": "HISTORY.rst",
+          "start_line": 221,
+          "end_line": 260
+        },
+        {
+          "path": "requests/sessions.py",
+          "start_line": 121,
+          "end_line": 160
+        },
+        {
+          "path": "test_requests.py",
+          "start_line": 501,
+          "end_line": 540
+        },
+        {
+          "path": "test_requests.py",
+          "start_line": 61,
+          "end_line": 100
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 0,
+        "reciprocalRank": 0,
+        "evidenceCoverage": 0,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": null,
+        "complementaryCoverage": 0
+      },
+      "error": null
+    },
+    {
+      "arm": "bm25",
+      "id": "psf__requests-1657:understand",
+      "task": "psf__requests-1657",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "code-understanding",
+      "latencyMs": 6.775789999999688,
+      "complete": true,
+      "returnedChars": 13992,
+      "ranges": [
+        {
+          "path": "requests/models.py",
+          "start_line": 221,
+          "end_line": 260
+        },
+        {
+          "path": "requests/sessions.py",
+          "start_line": 221,
+          "end_line": 260
+        },
+        {
+          "path": "requests/adapters.py",
+          "start_line": 221,
+          "end_line": 260
+        },
+        {
+          "path": "requests/adapters.py",
+          "start_line": 281,
+          "end_line": 320
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 161,
+          "end_line": 200
+        },
+        {
+          "path": "requests/sessions.py",
+          "start_line": 421,
+          "end_line": 460
+        },
+        {
+          "path": "HISTORY.rst",
+          "start_line": 1,
+          "end_line": 40
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 261,
+          "end_line": 300
+        },
+        {
+          "path": "requests/adapters.py",
+          "start_line": 141,
+          "end_line": 180
+        },
+        {
+          "path": "requests/__init__.py",
+          "start_line": 21,
+          "end_line": 60
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 0,
+        "reciprocalRank": 0,
+        "evidenceCoverage": 0,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 2,
+        "complementaryCoverage": null
+      },
+      "error": null
+    },
+    {
+      "arm": "bm25",
+      "id": "psf__requests-2821:change",
+      "task": "psf__requests-2821",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 166.2598539999999,
+      "complete": true,
+      "returnedChars": 14569,
+      "ranges": [
+        {
+          "path": "setup.py",
+          "start_line": 41,
+          "end_line": 75
+        },
+        {
+          "path": "requests/adapters.py",
+          "start_line": 361,
+          "end_line": 400
+        },
+        {
+          "path": "requests/__init__.py",
+          "start_line": 21,
+          "end_line": 60
+        },
+        {
+          "path": "requests/api.py",
+          "start_line": 21,
+          "end_line": 60
+        },
+        {
+          "path": "README.rst",
+          "start_line": 1,
+          "end_line": 40
+        },
+        {
+          "path": "HISTORY.rst",
+          "start_line": 341,
+          "end_line": 380
+        },
+        {
+          "path": "setup.py",
+          "start_line": 1,
+          "end_line": 40
+        },
+        {
+          "path": "requests/adapters.py",
+          "start_line": 41,
+          "end_line": 80
+        },
+        {
+          "path": "test_requests.py",
+          "start_line": 561,
+          "end_line": 600
+        },
+        {
+          "path": "requests/adapters.py",
+          "start_line": 321,
+          "end_line": 360
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 0,
+        "reciprocalRank": 0,
+        "evidenceCoverage": 0,
+        "negativeCorrect": null,
+        "fileRecall": 0,
+        "firstOverlapRank": null,
+        "complementaryCoverage": 1
+      },
+      "error": null
+    },
+    {
+      "arm": "bm25",
+      "id": "psf__requests-2821:understand",
+      "task": "psf__requests-2821",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "code-understanding",
+      "latencyMs": 32.219623999999385,
+      "complete": true,
+      "returnedChars": 14415,
+      "ranges": [
+        {
+          "path": "requests/models.py",
+          "start_line": 301,
+          "end_line": 340
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 481,
+          "end_line": 520
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 261,
+          "end_line": 300
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 381,
+          "end_line": 420
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 441,
+          "end_line": 480
+        },
+        {
+          "path": "HISTORY.rst",
+          "start_line": 361,
+          "end_line": 400
+        },
+        {
+          "path": "requests/sessions.py",
+          "start_line": 381,
+          "end_line": 420
+        },
+        {
+          "path": "requests/auth.py",
+          "start_line": 41,
+          "end_line": 80
+        },
+        {
+          "path": "test_requests.py",
+          "start_line": 321,
+          "end_line": 360
+        },
+        {
+          "path": "test_requests.py",
+          "start_line": 1641,
+          "end_line": 1680
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null
+    },
+    {
+      "arm": "bm25",
+      "id": "psf__requests-774:change",
+      "task": "psf__requests-774",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 106.86674400000084,
+      "complete": true,
+      "returnedChars": 12611,
+      "ranges": [
+        {
+          "path": "requests/safe_mode.py",
+          "start_line": 1,
+          "end_line": 40
+        },
+        {
+          "path": "requests/api.py",
+          "start_line": 1,
+          "end_line": 40
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 381,
+          "end_line": 420
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 621,
+          "end_line": 660
+        },
+        {
+          "path": "requests/__init__.py",
+          "start_line": 1,
+          "end_line": 34
+        },
+        {
+          "path": "HISTORY.rst",
+          "start_line": 221,
+          "end_line": 260
+        },
+        {
+          "path": "requests/utils.py",
+          "start_line": 341,
+          "end_line": 380
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 201,
+          "end_line": 240
+        },
+        {
+          "path": "tests/test_requests.py",
+          "start_line": 921,
+          "end_line": 960
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 421,
+          "end_line": 460
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 1,
+        "reciprocalRank": 0.3333333333333333,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 3,
+        "complementaryCoverage": 0
+      },
+      "error": null
+    },
+    {
+      "arm": "bm25",
+      "id": "psf__requests-774:understand",
+      "task": "psf__requests-774",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "code-understanding",
+      "latencyMs": 4.65668899999946,
+      "complete": true,
+      "returnedChars": 11368,
+      "ranges": [
+        {
+          "path": "requests/models.py",
+          "start_line": 381,
+          "end_line": 420
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 621,
+          "end_line": 660
+        },
+        {
+          "path": "HISTORY.rst",
+          "start_line": 441,
+          "end_line": 480
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 441,
+          "end_line": 480
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 161,
+          "end_line": 200
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 221,
+          "end_line": 260
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 481,
+          "end_line": 520
+        },
+        {
+          "path": "tests/test_requests_ext.py",
+          "start_line": 41,
+          "end_line": 80
+        },
+        {
+          "path": "requests/__init__.py",
+          "start_line": 1,
+          "end_line": 34
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 341,
+          "end_line": 380
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 0,
+        "reciprocalRank": 0,
+        "evidenceCoverage": 0,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null
+    },
+    {
+      "arm": "bm25",
+      "id": "psf__requests-4718:change",
+      "task": "psf__requests-4718",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 135.47048899999936,
+      "complete": true,
+      "returnedChars": 11036,
+      "ranges": [
+        {
+          "path": "requests/help.py",
+          "start_line": 81,
+          "end_line": 120
+        },
+        {
+          "path": "requests/help.py",
+          "start_line": 1,
+          "end_line": 40
+        },
+        {
+          "path": "requests/help.py",
+          "start_line": 41,
+          "end_line": 80
+        },
+        {
+          "path": ".github/ISSUE_TEMPLATE/Bug_report.md",
+          "start_line": 1,
+          "end_line": 35
+        },
+        {
+          "path": ".github/ISSUE_TEMPLATE.md",
+          "start_line": 1,
+          "end_line": 28
+        },
+        {
+          "path": "requests/sessions.py",
+          "start_line": 201,
+          "end_line": 240
+        },
+        {
+          "path": "setup.py",
+          "start_line": 21,
+          "end_line": 60
+        },
+        {
+          "path": "tests/test_help.py",
+          "start_line": 1,
+          "end_line": 40
+        },
+        {
+          "path": "tests/test_lowlevel.py",
+          "start_line": 41,
+          "end_line": 80
+        },
+        {
+          "path": "setup.py",
+          "start_line": 81,
+          "end_line": 109
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 0,
+        "reciprocalRank": 0,
+        "evidenceCoverage": 0,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 6,
+        "complementaryCoverage": 0
+      },
+      "error": null
+    },
+    {
+      "arm": "bm25",
+      "id": "psf__requests-4718:understand",
+      "task": "psf__requests-4718",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "code-understanding",
+      "latencyMs": 13.059343999999328,
+      "complete": true,
+      "returnedChars": 14076,
+      "ranges": [
+        {
+          "path": "requests/sessions.py",
+          "start_line": 201,
+          "end_line": 240
+        },
+        {
+          "path": "HISTORY.rst",
+          "start_line": 801,
+          "end_line": 840
+        },
+        {
+          "path": "HISTORY.rst",
+          "start_line": 361,
+          "end_line": 400
+        },
+        {
+          "path": "requests/auth.py",
+          "start_line": 41,
+          "end_line": 80
+        },
+        {
+          "path": "requests/sessions.py",
+          "start_line": 281,
+          "end_line": 320
+        },
+        {
+          "path": "requests/sessions.py",
+          "start_line": 241,
+          "end_line": 280
+        },
+        {
+          "path": "HISTORY.rst",
+          "start_line": 581,
+          "end_line": 620
+        },
+        {
+          "path": "HISTORY.rst",
+          "start_line": 1041,
+          "end_line": 1080
+        },
+        {
+          "path": "requests/sessions.py",
+          "start_line": 361,
+          "end_line": 400
+        },
+        {
+          "path": "HISTORY.rst",
+          "start_line": 501,
+          "end_line": 540
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 0,
+        "reciprocalRank": 0,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null
+    },
+    {
+      "arm": "bm25",
+      "id": "psf__requests-3718:change",
+      "task": "psf__requests-3718",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 82.23570199999995,
+      "complete": true,
+      "returnedChars": 14107,
+      "ranges": [
+        {
+          "path": "requests/models.py",
+          "start_line": 681,
+          "end_line": 720
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 21,
+          "end_line": 60
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 741,
+          "end_line": 780
+        },
+        {
+          "path": "requests/sessions.py",
+          "start_line": 81,
+          "end_line": 120
+        },
+        {
+          "path": "tests/test_requests.py",
+          "start_line": 1961,
+          "end_line": 2000
+        },
+        {
+          "path": "tests/test_requests.py",
+          "start_line": 1101,
+          "end_line": 1140
+        },
+        {
+          "path": "tests/test_requests.py",
+          "start_line": 1921,
+          "end_line": 1960
+        },
+        {
+          "path": "tests/test_requests.py",
+          "start_line": 241,
+          "end_line": 280
+        },
+        {
+          "path": "tests/test_requests.py",
+          "start_line": 1141,
+          "end_line": 1180
+        },
+        {
+          "path": "tests/test_requests.py",
+          "start_line": 901,
+          "end_line": 940
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 1,
+        "reciprocalRank": 0.3333333333333333,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 3,
+        "complementaryCoverage": 0
+      },
+      "error": null
+    },
+    {
+      "arm": "bm25",
+      "id": "psf__requests-3718:understand",
+      "task": "psf__requests-3718",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "code-understanding",
+      "latencyMs": 34.768732000000455,
+      "complete": true,
+      "returnedChars": 14289,
+      "ranges": [
+        {
+          "path": "requests/models.py",
+          "start_line": 761,
+          "end_line": 800
+        },
+        {
+          "path": "tests/test_requests.py",
+          "start_line": 1121,
+          "end_line": 1160
+        },
+        {
+          "path": "tests/test_requests.py",
+          "start_line": 1441,
+          "end_line": 1480
+        },
+        {
+          "path": "HISTORY.rst",
+          "start_line": 1141,
+          "end_line": 1180
+        },
+        {
+          "path": "requests/api.py",
+          "start_line": 21,
+          "end_line": 60
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 641,
+          "end_line": 680
+        },
+        {
+          "path": "requests/utils.py",
+          "start_line": 421,
+          "end_line": 460
+        },
+        {
+          "path": "HISTORY.rst",
+          "start_line": 881,
+          "end_line": 920
+        },
+        {
+          "path": "tests/test_requests.py",
+          "start_line": 1161,
+          "end_line": 1200
+        },
+        {
+          "path": "tests/test_requests.py",
+          "start_line": 261,
+          "end_line": 300
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null
+    },
+    {
+      "arm": "bm25",
+      "id": "psf__requests-1962:change",
+      "task": "psf__requests-1962",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 61.75954400000046,
+      "complete": true,
+      "returnedChars": 13394,
+      "ranges": [
+        {
+          "path": "README.rst",
+          "start_line": 61,
+          "end_line": 94
+        },
+        {
+          "path": "test_requests.py",
+          "start_line": 521,
+          "end_line": 560
+        },
+        {
+          "path": "test_requests.py",
+          "start_line": 201,
+          "end_line": 240
+        },
+        {
+          "path": "test_requests.py",
+          "start_line": 781,
+          "end_line": 820
+        },
+        {
+          "path": "README.rst",
+          "start_line": 1,
+          "end_line": 40
+        },
+        {
+          "path": "test_requests.py",
+          "start_line": 741,
+          "end_line": 780
+        },
+        {
+          "path": "test_requests.py",
+          "start_line": 81,
+          "end_line": 120
+        },
+        {
+          "path": "setup.py",
+          "start_line": 1,
+          "end_line": 40
+        },
+        {
+          "path": "requests/utils.py",
+          "start_line": 61,
+          "end_line": 100
+        },
+        {
+          "path": "HISTORY.rst",
+          "start_line": 121,
+          "end_line": 160
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 0,
+        "reciprocalRank": 0,
+        "evidenceCoverage": 0,
+        "negativeCorrect": null,
+        "fileRecall": 0,
+        "firstOverlapRank": null,
+        "complementaryCoverage": 1
+      },
+      "error": null
+    },
+    {
+      "arm": "bm25",
+      "id": "psf__requests-1768:change",
+      "task": "psf__requests-1768",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 70.85059499999988,
+      "complete": true,
+      "returnedChars": 11663,
+      "ranges": [
+        {
+          "path": "HISTORY.rst",
+          "start_line": 641,
+          "end_line": 680
+        },
+        {
+          "path": "test_requests.py",
+          "start_line": 221,
+          "end_line": 260
+        },
+        {
+          "path": "README.rst",
+          "start_line": 41,
+          "end_line": 80
+        },
+        {
+          "path": "HISTORY.rst",
+          "start_line": 61,
+          "end_line": 100
+        },
+        {
+          "path": "requests/auth.py",
+          "start_line": 21,
+          "end_line": 60
+        },
+        {
+          "path": "requests/adapters.py",
+          "start_line": 261,
+          "end_line": 300
+        },
+        {
+          "path": "HISTORY.rst",
+          "start_line": 561,
+          "end_line": 600
+        },
+        {
+          "path": "requests/sessions.py",
+          "start_line": 161,
+          "end_line": 200
+        },
+        {
+          "path": "requests/utils.py",
+          "start_line": 61,
+          "end_line": 100
+        },
+        {
+          "path": "setup.py",
+          "start_line": 21,
+          "end_line": 60
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 0,
+        "reciprocalRank": 0,
+        "evidenceCoverage": 0,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": null,
+        "complementaryCoverage": 0
+      },
+      "error": null
+    },
+    {
+      "arm": "bm25",
+      "id": "psf__requests-1768:understand",
+      "task": "psf__requests-1768",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "code-understanding",
+      "latencyMs": 20.976658000001407,
+      "complete": true,
+      "returnedChars": 12209,
+      "ranges": [
+        {
+          "path": "requests/utils.py",
+          "start_line": 541,
+          "end_line": 580
+        },
+        {
+          "path": "requests/auth.py",
+          "start_line": 41,
+          "end_line": 80
+        },
+        {
+          "path": "requests/auth.py",
+          "start_line": 1,
+          "end_line": 40
+        },
+        {
+          "path": "requests/adapters.py",
+          "start_line": 261,
+          "end_line": 300
+        },
+        {
+          "path": "requests/sessions.py",
+          "start_line": 481,
+          "end_line": 520
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 441,
+          "end_line": 480
+        },
+        {
+          "path": "requests/auth.py",
+          "start_line": 101,
+          "end_line": 140
+        },
+        {
+          "path": "requests/utils.py",
+          "start_line": 61,
+          "end_line": 100
+        },
+        {
+          "path": "HISTORY.rst",
+          "start_line": 481,
+          "end_line": 520
+        },
+        {
+          "path": "test_requests.py",
+          "start_line": 221,
+          "end_line": 260
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null
+    },
+    {
+      "arm": "bm25",
+      "id": "psf__requests-2617:change",
+      "task": "psf__requests-2617",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 117.76400399999875,
+      "complete": true,
+      "returnedChars": 12570,
+      "ranges": [
+        {
+          "path": "setup.py",
+          "start_line": 1,
+          "end_line": 40
+        },
+        {
+          "path": "requests/certs.py",
+          "start_line": 1,
+          "end_line": 26
+        },
+        {
+          "path": "test_requests.py",
+          "start_line": 521,
+          "end_line": 560
+        },
+        {
+          "path": "test_requests.py",
+          "start_line": 1601,
+          "end_line": 1639
+        },
+        {
+          "path": "test_requests.py",
+          "start_line": 481,
+          "end_line": 520
+        },
+        {
+          "path": "test_requests.py",
+          "start_line": 1,
+          "end_line": 40
+        },
+        {
+          "path": "HISTORY.rst",
+          "start_line": 301,
+          "end_line": 340
+        },
+        {
+          "path": "HISTORY.rst",
+          "start_line": 21,
+          "end_line": 60
+        },
+        {
+          "path": "requests/__init__.py",
+          "start_line": 41,
+          "end_line": 78
+        },
+        {
+          "path": "requests/adapters.py",
+          "start_line": 381,
+          "end_line": 420
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 0,
+        "reciprocalRank": 0,
+        "evidenceCoverage": 0,
+        "negativeCorrect": null,
+        "fileRecall": 0,
+        "firstOverlapRank": null,
+        "complementaryCoverage": 0.3333333333333333
+      },
+      "error": null
+    },
+    {
+      "arm": "bm25",
+      "id": "psf__requests-2617:understand",
+      "task": "psf__requests-2617",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "code-understanding",
+      "latencyMs": 19.756180000000313,
+      "complete": true,
+      "returnedChars": 13947,
+      "ranges": [
+        {
+          "path": "requests/models.py",
+          "start_line": 301,
+          "end_line": 340
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 501,
+          "end_line": 540
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 401,
+          "end_line": 440
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 461,
+          "end_line": 500
+        },
+        {
+          "path": "requests/sessions.py",
+          "start_line": 381,
+          "end_line": 420
+        },
+        {
+          "path": "HISTORY.rst",
+          "start_line": 321,
+          "end_line": 360
+        },
+        {
+          "path": "requests/auth.py",
+          "start_line": 41,
+          "end_line": 80
+        },
+        {
+          "path": "test_requests.py",
+          "start_line": 1581,
+          "end_line": 1620
+        },
+        {
+          "path": "requests/sessions.py",
+          "start_line": 121,
+          "end_line": 160
+        },
+        {
+          "path": "requests/utils.py",
+          "start_line": 281,
+          "end_line": 320
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null
+    },
+    {
+      "arm": "bm25",
+      "id": "pallets__flask-4074:change",
+      "task": "pallets__flask-4074",
+      "repository": "pallets/flask",
+      "split": "heldout",
+      "category": "change-localization",
+      "latencyMs": 281.17136199999914,
+      "complete": true,
+      "returnedChars": 9679,
+      "ranges": [
+        {
+          "path": "tests/test_blueprints.py",
+          "start_line": 141,
+          "end_line": 180
+        },
+        {
+          "path": "tests/test_blueprints.py",
+          "start_line": 101,
+          "end_line": 140
+        },
+        {
+          "path": "tests/test_blueprints.py",
+          "start_line": 321,
+          "end_line": 360
+        },
+        {
+          "path": "tests/test_blueprints.py",
+          "start_line": 281,
+          "end_line": 320
+        },
+        {
+          "path": "tests/test_basic.py",
+          "start_line": 1621,
+          "end_line": 1660
+        },
+        {
+          "path": "tests/test_user_error_handler.py",
+          "start_line": 121,
+          "end_line": 160
+        },
+        {
+          "path": "tests/test_blueprints.py",
+          "start_line": 581,
+          "end_line": 620
+        },
+        {
+          "path": "tests/test_blueprints.py",
+          "start_line": 461,
+          "end_line": 500
+        },
+        {
+          "path": "tests/test_blueprints.py",
+          "start_line": 401,
+          "end_line": 440
+        },
+        {
+          "path": "tests/test_async.py",
+          "start_line": 121,
+          "end_line": 141
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 0,
+        "reciprocalRank": 0,
+        "evidenceCoverage": 0,
+        "negativeCorrect": null,
+        "fileRecall": 0,
+        "firstOverlapRank": null,
+        "complementaryCoverage": 0.3333333333333333
+      },
+      "error": null
+    },
+    {
+      "arm": "bm25",
+      "id": "pallets__flask-4074:understand",
+      "task": "pallets__flask-4074",
+      "repository": "pallets/flask",
+      "split": "heldout",
+      "category": "code-understanding",
+      "latencyMs": 93.60385999999926,
+      "complete": true,
+      "returnedChars": 13429,
+      "ranges": [
+        {
+          "path": "src/flask/app.py",
+          "start_line": 721,
+          "end_line": 760
+        },
+        {
+          "path": "src/flask/templating.py",
+          "start_line": 141,
+          "end_line": 166
+        },
+        {
+          "path": "src/flask/templating.py",
+          "start_line": 101,
+          "end_line": 140
+        },
+        {
+          "path": "src/flask/scaffold.py",
+          "start_line": 601,
+          "end_line": 640
+        },
+        {
+          "path": "src/flask/blueprints.py",
+          "start_line": 1,
+          "end_line": 40
+        },
+        {
+          "path": "tests/test_reqctx.py",
+          "start_line": 61,
+          "end_line": 100
+        },
+        {
+          "path": "tests/test_signals.py",
+          "start_line": 21,
+          "end_line": 60
+        },
+        {
+          "path": "src/flask/blueprints.py",
+          "start_line": 301,
+          "end_line": 340
+        },
+        {
+          "path": "src/flask/scaffold.py",
+          "start_line": 1,
+          "end_line": 40
+        },
+        {
+          "path": "src/flask/testing.py",
+          "start_line": 101,
+          "end_line": 140
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null
+    },
+    {
+      "arm": "bm25",
+      "id": "pallets__flask-4544:change",
+      "task": "pallets__flask-4544",
+      "repository": "pallets/flask",
+      "split": "heldout",
+      "category": "change-localization",
+      "latencyMs": 425.7227869999988,
+      "complete": true,
+      "returnedChars": 15033,
+      "ranges": [
+        {
+          "path": "setup.cfg",
+          "start_line": 1,
+          "end_line": 40
+        },
+        {
+          "path": "src/flask/cli.py",
+          "start_line": 741,
+          "end_line": 780
+        },
+        {
+          "path": "README.rst",
+          "start_line": 41,
+          "end_line": 80
+        },
+        {
+          "path": "CONTRIBUTING.rst",
+          "start_line": 101,
+          "end_line": 140
+        },
+        {
+          "path": "CHANGES.rst",
+          "start_line": 561,
+          "end_line": 600
+        },
+        {
+          "path": "src/flask/cli.py",
+          "start_line": 701,
+          "end_line": 740
+        },
+        {
+          "path": "CHANGES.rst",
+          "start_line": 341,
+          "end_line": 380
+        },
+        {
+          "path": "requirements/tests-pallets-dev.txt",
+          "start_line": 1,
+          "end_line": 20
+        },
+        {
+          "path": "CHANGES.rst",
+          "start_line": 721,
+          "end_line": 760
+        },
+        {
+          "path": "CHANGES.rst",
+          "start_line": 661,
+          "end_line": 700
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 1,
+        "reciprocalRank": 0.5,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 2,
+        "complementaryCoverage": 0.5
+      },
+      "error": null
+    },
+    {
+      "arm": "bm25",
+      "id": "pallets__flask-4992:change",
+      "task": "pallets__flask-4992",
+      "repository": "pallets/flask",
+      "split": "heldout",
+      "category": "change-localization",
+      "latencyMs": 205.0266840000004,
+      "complete": true,
+      "returnedChars": 16543,
+      "ranges": [
+        {
+          "path": "src/flask/config.py",
+          "start_line": 241,
+          "end_line": 280
+        },
+        {
+          "path": "src/flask/scaffold.py",
+          "start_line": 321,
+          "end_line": 360
+        },
+        {
+          "path": "src/flask/app.py",
+          "start_line": 621,
+          "end_line": 660
+        },
+        {
+          "path": "src/flask/config.py",
+          "start_line": 161,
+          "end_line": 200
+        },
+        {
+          "path": "src/flask/config.py",
+          "start_line": 201,
+          "end_line": 240
+        },
+        {
+          "path": "CHANGES.rst",
+          "start_line": 361,
+          "end_line": 400
+        },
+        {
+          "path": "src/flask/helpers.py",
+          "start_line": 381,
+          "end_line": 420
+        },
+        {
+          "path": "src/flask/config.py",
+          "start_line": 41,
+          "end_line": 80
+        },
+        {
+          "path": "tests/test_config.py",
+          "start_line": 101,
+          "end_line": 140
+        },
+        {
+          "path": "src/flask/helpers.py",
+          "start_line": 421,
+          "end_line": 460
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0.6666666666666666,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": 0
+      },
+      "error": null
+    },
+    {
+      "arm": "bm25",
+      "id": "pallets__flask-4992:understand",
+      "task": "pallets__flask-4992",
+      "repository": "pallets/flask",
+      "split": "heldout",
+      "category": "code-understanding",
+      "latencyMs": 49.95072699999946,
+      "complete": true,
+      "returnedChars": 13932,
+      "ranges": [
+        {
+          "path": "src/flask/config.py",
+          "start_line": 221,
+          "end_line": 260
+        },
+        {
+          "path": "src/flask/config.py",
+          "start_line": 161,
+          "end_line": 200
+        },
+        {
+          "path": "src/flask/cli.py",
+          "start_line": 321,
+          "end_line": 360
+        },
+        {
+          "path": "src/flask/config.py",
+          "start_line": 81,
+          "end_line": 120
+        },
+        {
+          "path": "src/flask/config.py",
+          "start_line": 21,
+          "end_line": 60
+        },
+        {
+          "path": "CHANGES.rst",
+          "start_line": 201,
+          "end_line": 240
+        },
+        {
+          "path": "src/flask/cli.py",
+          "start_line": 561,
+          "end_line": 600
+        },
+        {
+          "path": "src/flask/cli.py",
+          "start_line": 441,
+          "end_line": 480
+        },
+        {
+          "path": "src/flask/cli.py",
+          "start_line": 661,
+          "end_line": 700
+        },
+        {
+          "path": "src/flask/config.py",
+          "start_line": 261,
+          "end_line": 300
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 0,
+        "reciprocalRank": 0,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null
+    },
+    {
+      "arm": "bm25",
+      "id": "pallets__flask-4045:change",
+      "task": "pallets__flask-4045",
+      "repository": "pallets/flask",
+      "split": "heldout",
+      "category": "change-localization",
+      "latencyMs": 156.16134700000111,
+      "complete": true,
+      "returnedChars": 18053,
+      "ranges": [
+        {
+          "path": "CHANGES.rst",
+          "start_line": 661,
+          "end_line": 700
+        },
+        {
+          "path": "src/flask/app.py",
+          "start_line": 1021,
+          "end_line": 1060
+        },
+        {
+          "path": "src/flask/blueprints.py",
+          "start_line": 41,
+          "end_line": 80
+        },
+        {
+          "path": "CHANGES.rst",
+          "start_line": 861,
+          "end_line": 900
+        },
+        {
+          "path": "CHANGES.rst",
+          "start_line": 741,
+          "end_line": 780
+        },
+        {
+          "path": "src/flask/helpers.py",
+          "start_line": 181,
+          "end_line": 220
+        },
+        {
+          "path": "src/flask/scaffold.py",
+          "start_line": 461,
+          "end_line": 500
+        },
+        {
+          "path": "src/flask/app.py",
+          "start_line": 1061,
+          "end_line": 1100
+        },
+        {
+          "path": "CHANGES.rst",
+          "start_line": 561,
+          "end_line": 600
+        },
+        {
+          "path": "src/flask/app.py",
+          "start_line": 421,
+          "end_line": 460
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 0,
+        "reciprocalRank": 0,
+        "evidenceCoverage": 0,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": null,
+        "complementaryCoverage": 0
+      },
+      "error": null
+    },
+    {
+      "arm": "codegraph-query",
+      "id": "psf__requests-1657:change",
+      "task": "psf__requests-1657",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 2032.9679290000004,
+      "complete": true,
+      "returnedChars": 22845,
+      "ranges": [
+        {
+          "path": "requests/hooks.py",
+          "start_line": 17,
+          "end_line": 17
+        },
+        {
+          "path": "requests/sessions.py",
+          "start_line": 269,
+          "end_line": 363
+        },
+        {
+          "path": "requests/sessions.py",
+          "start_line": 528,
+          "end_line": 531
+        },
+        {
+          "path": "requests/sessions.py",
+          "start_line": 154,
+          "end_line": 525
+        },
+        {
+          "path": "requests/api.py",
+          "start_line": 17,
+          "end_line": 44
+        },
+        {
+          "path": "requests/hooks.py",
+          "start_line": 20,
+          "end_line": 24
+        },
+        {
+          "path": "requests/hooks.py",
+          "start_line": 29,
+          "end_line": 45
+        },
+        {
+          "path": "requests/hooks.py",
+          "start_line": 1,
+          "end_line": 46
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 173,
+          "end_line": 244
+        },
+        {
+          "path": "test_requests.py",
+          "start_line": 452,
+          "end_line": 454
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 1,
+        "reciprocalRank": 0.25,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 4,
+        "complementaryCoverage": 0
+      },
+      "error": null
+    },
+    {
+      "arm": "codegraph-query",
+      "id": "psf__requests-1657:understand",
+      "task": "psf__requests-1657",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "code-understanding",
+      "latencyMs": 2008.5548750000016,
+      "complete": true,
+      "returnedChars": 13864,
+      "ranges": [
+        {
+          "path": "requests/models.py",
+          "start_line": 247,
+          "end_line": 483
+        },
+        {
+          "path": "requests/certs.py",
+          "start_line": 18,
+          "end_line": 21
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 230,
+          "end_line": 244
+        },
+        {
+          "path": "requests/sessions.py",
+          "start_line": 229,
+          "end_line": 267
+        },
+        {
+          "path": "requests/adapters.py",
+          "start_line": 245,
+          "end_line": 257
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 445,
+          "end_line": 465
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 480,
+          "end_line": 483
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 306,
+          "end_line": 310
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 372,
+          "end_line": 378
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 312,
+          "end_line": 370
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 1,
+        "reciprocalRank": 0.25,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 4,
+        "complementaryCoverage": null
+      },
+      "error": null
+    },
+    {
+      "arm": "codegraph-query",
+      "id": "psf__requests-2821:change",
+      "task": "psf__requests-2821",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 1984.2967680000002,
+      "complete": true,
+      "returnedChars": 15390,
+      "ranges": [
+        {
+          "path": "test_requests.py",
+          "start_line": 1570,
+          "end_line": 1572
+        },
+        {
+          "path": "requests/adapters.py",
+          "start_line": 50,
+          "end_line": 51
+        },
+        {
+          "path": "requests/sessions.py",
+          "start_line": 545,
+          "end_line": 613
+        },
+        {
+          "path": "test_requests.py",
+          "start_line": 1092,
+          "end_line": 1098
+        },
+        {
+          "path": "test_requests.py",
+          "start_line": 1110,
+          "end_line": 1116
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 525,
+          "end_line": 848
+        },
+        {
+          "path": "test_requests.py",
+          "start_line": 1370,
+          "end_line": 1373
+        },
+        {
+          "path": "test_requests.py",
+          "start_line": 1366,
+          "end_line": 1368
+        },
+        {
+          "path": "test_requests.py",
+          "start_line": 981,
+          "end_line": 987
+        },
+        {
+          "path": "test_requests.py",
+          "start_line": 960,
+          "end_line": 966
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 0,
+        "reciprocalRank": 0,
+        "evidenceCoverage": 0,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": null,
+        "complementaryCoverage": 0
+      },
+      "error": null
+    },
+    {
+      "arm": "codegraph-query",
+      "id": "psf__requests-2821:understand",
+      "task": "psf__requests-2821",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "code-understanding",
+      "latencyMs": 1965.6985980000009,
+      "complete": true,
+      "returnedChars": 8134,
+      "ranges": [
+        {
+          "path": "requests/certs.py",
+          "start_line": 19,
+          "end_line": 22
+        },
+        {
+          "path": "requests/compat.py",
+          "start_line": 53,
+          "end_line": 53
+        },
+        {
+          "path": "requests/adapters.py",
+          "start_line": 288,
+          "end_line": 300
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 318,
+          "end_line": 322
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 398,
+          "end_line": 404
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 324,
+          "end_line": 396
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 473,
+          "end_line": 493
+        },
+        {
+          "path": "requests/adapters.py",
+          "start_line": 236,
+          "end_line": 256
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 406,
+          "end_line": 459
+        },
+        {
+          "path": "requests/adapters.py",
+          "start_line": 302,
+          "end_line": 321
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 1,
+        "reciprocalRank": 0.25,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 4,
+        "complementaryCoverage": null
+      },
+      "error": null
+    },
+    {
+      "arm": "codegraph-query",
+      "id": "psf__requests-774:change",
+      "task": "psf__requests-774",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 1930.688048,
+      "complete": true,
+      "returnedChars": 23476,
+      "ranges": [
+        {
+          "path": "tests/test_requests.py",
+          "start_line": 1015,
+          "end_line": 1025
+        },
+        {
+          "path": "tests/test_requests.py",
+          "start_line": 16,
+          "end_line": 16
+        },
+        {
+          "path": "tests/test_requests.py",
+          "start_line": 19,
+          "end_line": 19
+        },
+        {
+          "path": "tests/test_requests.py",
+          "start_line": 20,
+          "end_line": 20
+        },
+        {
+          "path": "tests/test_requests_ext.py",
+          "start_line": 10,
+          "end_line": 10
+        },
+        {
+          "path": "tests/test_requests_https.py",
+          "start_line": 10,
+          "end_line": 10
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 42,
+          "end_line": 673
+        },
+        {
+          "path": "tests/test_requests.py",
+          "start_line": 854,
+          "end_line": 882
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 767,
+          "end_line": 792
+        },
+        {
+          "path": "tests/test_requests.py",
+          "start_line": 978,
+          "end_line": 987
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 0,
+        "reciprocalRank": 0.14285714285714285,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 7,
+        "complementaryCoverage": 0
+      },
+      "error": null
+    },
+    {
+      "arm": "codegraph-query",
+      "id": "psf__requests-774:understand",
+      "task": "psf__requests-774",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "code-understanding",
+      "latencyMs": 1914.4512190000005,
+      "complete": true,
+      "returnedChars": 7358,
+      "ranges": [
+        {
+          "path": "requests/certs.py",
+          "start_line": 18,
+          "end_line": 24
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 182,
+          "end_line": 221
+        },
+        {
+          "path": "tests/test_requests.py",
+          "start_line": 1015,
+          "end_line": 1025
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 399,
+          "end_line": 447
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 450,
+          "end_line": 472
+        },
+        {
+          "path": "requests/utils.py",
+          "start_line": 181,
+          "end_line": 202
+        },
+        {
+          "path": "requests/cookies.py",
+          "start_line": 236,
+          "end_line": 240
+        },
+        {
+          "path": "requests/utils.py",
+          "start_line": 437,
+          "end_line": 446
+        },
+        {
+          "path": "requests/cookies.py",
+          "start_line": 230,
+          "end_line": 234
+        },
+        {
+          "path": "requests/utils.py",
+          "start_line": 465,
+          "end_line": 490
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 0,
+        "reciprocalRank": 0,
+        "evidenceCoverage": 0,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 4,
+        "complementaryCoverage": null
+      },
+      "error": null
+    },
+    {
+      "arm": "codegraph-query",
+      "id": "psf__requests-4718:change",
+      "task": "psf__requests-4718",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 1867.0642960000005,
+      "complete": true,
+      "returnedChars": 5173,
+      "ranges": [
+        {
+          "path": "tests/testserver/server.py",
+          "start_line": 63,
+          "end_line": 76
+        },
+        {
+          "path": "tests/testserver/server.py",
+          "start_line": 26,
+          "end_line": 127
+        },
+        {
+          "path": "tests/test_testserver.py",
+          "start_line": 8,
+          "end_line": 8
+        },
+        {
+          "path": "tests/test_requests.py",
+          "start_line": 14,
+          "end_line": 14
+        },
+        {
+          "path": "tests/test_requests.py",
+          "start_line": 43,
+          "end_line": 43
+        },
+        {
+          "path": "requests/adapters.py",
+          "start_line": 77,
+          "end_line": 79
+        },
+        {
+          "path": "requests/sessions.py",
+          "start_line": 712,
+          "end_line": 715
+        },
+        {
+          "path": "requests/compat.py",
+          "start_line": 60,
+          "end_line": 60
+        },
+        {
+          "path": "requests/help.py",
+          "start_line": 7,
+          "end_line": 7
+        },
+        {
+          "path": "requests/sessions.py",
+          "start_line": 231,
+          "end_line": 253
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 0,
+        "reciprocalRank": 0.1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 10,
+        "complementaryCoverage": 0
+      },
+      "error": null
+    },
+    {
+      "arm": "codegraph-query",
+      "id": "psf__requests-4718:understand",
+      "task": "psf__requests-4718",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "code-understanding",
+      "latencyMs": 1852.3929910000006,
+      "complete": true,
+      "returnedChars": 23806,
+      "ranges": [
+        {
+          "path": "requests/models.py",
+          "start_line": 198,
+          "end_line": 269
+        },
+        {
+          "path": "requests/api.py",
+          "start_line": 16,
+          "end_line": 60
+        },
+        {
+          "path": "requests/sessions.py",
+          "start_line": 445,
+          "end_line": 514
+        },
+        {
+          "path": "requests/sessions.py",
+          "start_line": 231,
+          "end_line": 253
+        },
+        {
+          "path": "requests/sessions.py",
+          "start_line": 296,
+          "end_line": 316
+        },
+        {
+          "path": "requests/sessions.py",
+          "start_line": 255,
+          "end_line": 294
+        },
+        {
+          "path": "requests/adapters.py",
+          "start_line": 328,
+          "end_line": 355
+        },
+        {
+          "path": "requests/adapters.py",
+          "start_line": 371,
+          "end_line": 391
+        },
+        {
+          "path": "requests/adapters.py",
+          "start_line": 357,
+          "end_line": 369
+        },
+        {
+          "path": "requests/cookies.py",
+          "start_line": 171,
+          "end_line": 423
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 1,
+        "reciprocalRank": 0.25,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 4,
+        "complementaryCoverage": null
+      },
+      "error": null
+    },
+    {
+      "arm": "codegraph-query",
+      "id": "psf__requests-3718:change",
+      "task": "psf__requests-3718",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 1501.2862280000008,
+      "complete": true,
+      "returnedChars": 2494,
+      "ranges": [
+        {
+          "path": "tests/test_requests.py",
+          "start_line": 24,
+          "end_line": 27
+        },
+        {
+          "path": "tests/test_requests.py",
+          "start_line": 1900,
+          "end_line": 1903
+        },
+        {
+          "path": "tests/test_requests.py",
+          "start_line": 410,
+          "end_line": 414
+        },
+        {
+          "path": "tests/test_requests.py",
+          "start_line": 1905,
+          "end_line": 1915
+        },
+        {
+          "path": "tests/test_requests.py",
+          "start_line": 695,
+          "end_line": 696
+        },
+        {
+          "path": "tests/test_requests.py",
+          "start_line": 76,
+          "end_line": 78
+        },
+        {
+          "path": "tests/test_requests.py",
+          "start_line": 1850,
+          "end_line": 1855
+        },
+        {
+          "path": "tests/test_requests.py",
+          "start_line": 636,
+          "end_line": 639
+        },
+        {
+          "path": "tests/test_requests.py",
+          "start_line": 1320,
+          "end_line": 1327
+        },
+        {
+          "path": "tests/test_requests.py",
+          "start_line": 1307,
+          "end_line": 1312
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 0,
+        "reciprocalRank": 0,
+        "evidenceCoverage": 0,
+        "negativeCorrect": null,
+        "fileRecall": 0,
+        "firstOverlapRank": null,
+        "complementaryCoverage": 0
+      },
+      "error": null
+    },
+    {
+      "arm": "codegraph-query",
+      "id": "psf__requests-3718:understand",
+      "task": "psf__requests-3718",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "code-understanding",
+      "latencyMs": 1105.2524599999997,
+      "complete": true,
+      "returnedChars": 8234,
+      "ranges": [
+        {
+          "path": "requests/models.py",
+          "start_line": 763,
+          "end_line": 780
+        },
+        {
+          "path": "requests/certs.py",
+          "start_line": 19,
+          "end_line": 22
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 676,
+          "end_line": 729
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 667,
+          "end_line": 669
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 783,
+          "end_line": 818
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 820,
+          "end_line": 844
+        },
+        {
+          "path": "requests/cookies.py",
+          "start_line": 331,
+          "end_line": 336
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 731,
+          "end_line": 760
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 660,
+          "end_line": 664
+        },
+        {
+          "path": "requests/adapters.py",
+          "start_line": 353,
+          "end_line": 373
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 0,
+        "reciprocalRank": 0,
+        "evidenceCoverage": 0,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null
+    },
+    {
+      "arm": "codegraph-query",
+      "id": "psf__requests-1962:change",
+      "task": "psf__requests-1962",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 1119.0977649999986,
+      "complete": true,
+      "returnedChars": 15432,
+      "ranges": [
+        {
+          "path": "requests/utils.py",
+          "start_line": 144,
+          "end_line": 166
+        },
+        {
+          "path": "requests/utils.py",
+          "start_line": 121,
+          "end_line": 141
+        },
+        {
+          "path": "requests/sessions.py",
+          "start_line": 84,
+          "end_line": 184
+        },
+        {
+          "path": "requests/sessions.py",
+          "start_line": 301,
+          "end_line": 395
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 98,
+          "end_line": 154
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 71,
+          "end_line": 95
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 615,
+          "end_line": 651
+        },
+        {
+          "path": "requests/cookies.py",
+          "start_line": 229,
+          "end_line": 233
+        },
+        {
+          "path": "requests/utils.py",
+          "start_line": 170,
+          "end_line": 197
+        },
+        {
+          "path": "requests/sessions.py",
+          "start_line": 34,
+          "end_line": 64
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 0,
+        "reciprocalRank": 0,
+        "evidenceCoverage": 0,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": null,
+        "complementaryCoverage": 0
+      },
+      "error": null
+    },
+    {
+      "arm": "codegraph-query",
+      "id": "psf__requests-1768:change",
+      "task": "psf__requests-1768",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 1068.5646799999995,
+      "complete": true,
+      "returnedChars": 7309,
+      "ranges": [
+        {
+          "path": "requests/auth.py",
+          "start_line": 27,
+          "end_line": 30
+        },
+        {
+          "path": "requests/auth.py",
+          "start_line": 40,
+          "end_line": 48
+        },
+        {
+          "path": "requests/auth.py",
+          "start_line": 151,
+          "end_line": 183
+        },
+        {
+          "path": "requests/compat.py",
+          "start_line": 105,
+          "end_line": 105
+        },
+        {
+          "path": "requests/auth.py",
+          "start_line": 58,
+          "end_line": 194
+        },
+        {
+          "path": "requests/auth.py",
+          "start_line": 51,
+          "end_line": 55
+        },
+        {
+          "path": "requests/auth.py",
+          "start_line": 33,
+          "end_line": 37
+        },
+        {
+          "path": "requests/auth.py",
+          "start_line": 42,
+          "end_line": 44
+        },
+        {
+          "path": "requests/auth.py",
+          "start_line": 60,
+          "end_line": 66
+        },
+        {
+          "path": "requests/auth.py",
+          "start_line": 36,
+          "end_line": 37
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 0,
+        "reciprocalRank": 0,
+        "evidenceCoverage": 0,
+        "negativeCorrect": null,
+        "fileRecall": 0,
+        "firstOverlapRank": null,
+        "complementaryCoverage": 0
+      },
+      "error": null
+    },
+    {
+      "arm": "codegraph-query",
+      "id": "psf__requests-1768:understand",
+      "task": "psf__requests-1768",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "code-understanding",
+      "latencyMs": 979.574998,
+      "complete": true,
+      "returnedChars": 7211,
+      "ranges": [
+        {
+          "path": "requests/certs.py",
+          "start_line": 18,
+          "end_line": 21
+        },
+        {
+          "path": "requests/utils.py",
+          "start_line": 557,
+          "end_line": 564
+        },
+        {
+          "path": "requests/cookies.py",
+          "start_line": 114,
+          "end_line": 128
+        },
+        {
+          "path": "requests/utils.py",
+          "start_line": 567,
+          "end_line": 583
+        },
+        {
+          "path": "requests/utils.py",
+          "start_line": 65,
+          "end_line": 100
+        },
+        {
+          "path": "requests/adapters.py",
+          "start_line": 187,
+          "end_line": 214
+        },
+        {
+          "path": "requests/adapters.py",
+          "start_line": 262,
+          "end_line": 286
+        },
+        {
+          "path": "requests/cookies.py",
+          "start_line": 269,
+          "end_line": 274
+        },
+        {
+          "path": "requests/adapters.py",
+          "start_line": 248,
+          "end_line": 260
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 596,
+          "end_line": 631
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 1,
+        "reciprocalRank": 0.5,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 2,
+        "complementaryCoverage": null
+      },
+      "error": null
+    },
+    {
+      "arm": "codegraph-query",
+      "id": "psf__requests-2617:change",
+      "task": "psf__requests-2617",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 988.6537879999996,
+      "complete": true,
+      "returnedChars": 2699,
+      "ranges": [
+        {
+          "path": "test_requests.py",
+          "start_line": 1504,
+          "end_line": 1506
+        },
+        {
+          "path": "test_requests.py",
+          "start_line": 14,
+          "end_line": 14
+        },
+        {
+          "path": "test_requests.py",
+          "start_line": 1304,
+          "end_line": 1307
+        },
+        {
+          "path": "test_requests.py",
+          "start_line": 1064,
+          "end_line": 1070
+        },
+        {
+          "path": "test_requests.py",
+          "start_line": 1055,
+          "end_line": 1061
+        },
+        {
+          "path": "test_requests.py",
+          "start_line": 1300,
+          "end_line": 1302
+        },
+        {
+          "path": "test_requests.py",
+          "start_line": 930,
+          "end_line": 936
+        },
+        {
+          "path": "test_requests.py",
+          "start_line": 938,
+          "end_line": 949
+        },
+        {
+          "path": "test_requests.py",
+          "start_line": 951,
+          "end_line": 957
+        },
+        {
+          "path": "test_requests.py",
+          "start_line": 432,
+          "end_line": 449
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 0,
+        "reciprocalRank": 0,
+        "evidenceCoverage": 0,
+        "negativeCorrect": null,
+        "fileRecall": 0,
+        "firstOverlapRank": null,
+        "complementaryCoverage": 0
+      },
+      "error": null
+    },
+    {
+      "arm": "codegraph-query",
+      "id": "psf__requests-2617:understand",
+      "task": "psf__requests-2617",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "code-understanding",
+      "latencyMs": 1129.0701139999983,
+      "complete": true,
+      "returnedChars": 8171,
+      "ranges": [
+        {
+          "path": "requests/certs.py",
+          "start_line": 19,
+          "end_line": 22
+        },
+        {
+          "path": "requests/compat.py",
+          "start_line": 53,
+          "end_line": 53
+        },
+        {
+          "path": "requests/adapters.py",
+          "start_line": 287,
+          "end_line": 299
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 328,
+          "end_line": 332
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 407,
+          "end_line": 413
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 334,
+          "end_line": 405
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 482,
+          "end_line": 502
+        },
+        {
+          "path": "requests/adapters.py",
+          "start_line": 232,
+          "end_line": 253
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 415,
+          "end_line": 468
+        },
+        {
+          "path": "requests/utils.py",
+          "start_line": 417,
+          "end_line": 434
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 1,
+        "reciprocalRank": 0.25,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 4,
+        "complementaryCoverage": null
+      },
+      "error": null
+    },
+    {
+      "arm": "codegraph-query",
+      "id": "pallets__flask-4074:change",
+      "task": "pallets__flask-4074",
+      "repository": "pallets/flask",
+      "split": "heldout",
+      "category": "change-localization",
+      "latencyMs": 1503.5026319999997,
+      "complete": true,
+      "returnedChars": 29780,
+      "ranges": [
+        {
+          "path": "src/flask/blueprints.py",
+          "start_line": 108,
+          "end_line": 567
+        },
+        {
+          "path": "src/flask/blueprints.py",
+          "start_line": 241,
+          "end_line": 248
+        },
+        {
+          "path": "src/flask/blueprints.py",
+          "start_line": 259,
+          "end_line": 361
+        },
+        {
+          "path": "src/flask/blueprints.py",
+          "start_line": 250,
+          "end_line": 257
+        },
+        {
+          "path": "src/flask/blueprints.py",
+          "start_line": 503,
+          "end_line": 510
+        },
+        {
+          "path": "src/flask/blueprints.py",
+          "start_line": 363,
+          "end_line": 388
+        },
+        {
+          "path": "src/flask/blueprints.py",
+          "start_line": 25,
+          "end_line": 105
+        },
+        {
+          "path": "src/flask/blueprints.py",
+          "start_line": 210,
+          "end_line": 226
+        },
+        {
+          "path": "src/flask/blueprints.py",
+          "start_line": 228,
+          "end_line": 239
+        },
+        {
+          "path": "src/flask/blueprints.py",
+          "start_line": 77,
+          "end_line": 105
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0.3157894736842105,
+        "recallAt5": 0.3157894736842105,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 0.42105263157894735,
+        "negativeCorrect": null,
+        "fileRecall": 0.3333333333333333,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": 0
+      },
+      "error": null
+    },
+    {
+      "arm": "codegraph-query",
+      "id": "pallets__flask-4074:understand",
+      "task": "pallets__flask-4074",
+      "repository": "pallets/flask",
+      "split": "heldout",
+      "category": "code-understanding",
+      "latencyMs": 795.2671240000018,
+      "complete": true,
+      "returnedChars": 11745,
+      "ranges": [
+        {
+          "path": "src/flask/app.py",
+          "start_line": 734,
+          "end_line": 759
+        },
+        {
+          "path": "src/flask/templating.py",
+          "start_line": 154,
+          "end_line": 165
+        },
+        {
+          "path": "src/flask/templating.py",
+          "start_line": 133,
+          "end_line": 151
+        },
+        {
+          "path": "src/flask/ctx.py",
+          "start_line": 137,
+          "end_line": 174
+        },
+        {
+          "path": "src/flask/testing.py",
+          "start_line": 120,
+          "end_line": 172
+        },
+        {
+          "path": "src/flask/helpers.py",
+          "start_line": 65,
+          "end_line": 139
+        },
+        {
+          "path": "src/flask/app.py",
+          "start_line": 597,
+          "end_line": 604
+        },
+        {
+          "path": "src/flask/ctx.py",
+          "start_line": 342,
+          "end_line": 360
+        },
+        {
+          "path": "src/flask/app.py",
+          "start_line": 1092,
+          "end_line": 1111
+        },
+        {
+          "path": "src/flask/helpers.py",
+          "start_line": 342,
+          "end_line": 361
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null
+    },
+    {
+      "arm": "codegraph-query",
+      "id": "pallets__flask-4544:change",
+      "task": "pallets__flask-4544",
+      "repository": "pallets/flask",
+      "split": "heldout",
+      "category": "change-localization",
+      "latencyMs": 915.3794400000006,
+      "complete": true,
+      "returnedChars": 260,
+      "ranges": [
+        {
+          "path": "tests/test_apps/cliapp/inner1/inner2/flask.py",
+          "start_line": 1,
+          "end_line": 1
+        },
+        {
+          "path": "src/flask/cli.py",
+          "start_line": 13,
+          "end_line": 13
+        },
+        {
+          "path": "tests/test_cli.py",
+          "start_line": 11,
+          "end_line": 11
+        },
+        {
+          "path": "tests/test_apps/cliapp/importerrorapp.py",
+          "start_line": 1,
+          "end_line": 1
+        },
+        {
+          "path": "tests/test_apps/cliapp/app.py",
+          "start_line": 1,
+          "end_line": 1
+        },
+        {
+          "path": "tests/test_apps/cliapp/factory.py",
+          "start_line": 1,
+          "end_line": 1
+        },
+        {
+          "path": "tests/test_apps/cliapp/inner1/__init__.py",
+          "start_line": 1,
+          "end_line": 1
+        },
+        {
+          "path": "tests/test_apps/cliapp/multiapp.py",
+          "start_line": 1,
+          "end_line": 1
+        },
+        {
+          "path": "tests/test_basic.py",
+          "start_line": 820,
+          "end_line": 821
+        },
+        {
+          "path": "tests/conftest.py",
+          "start_line": 46,
+          "end_line": 48
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 0,
+        "reciprocalRank": 0,
+        "evidenceCoverage": 0,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": null,
+        "complementaryCoverage": 0
+      },
+      "error": null
+    },
+    {
+      "arm": "codegraph-query",
+      "id": "pallets__flask-4992:change",
+      "task": "pallets__flask-4992",
+      "repository": "pallets/flask",
+      "split": "heldout",
+      "category": "change-localization",
+      "latencyMs": 800.3073339999974,
+      "complete": true,
+      "returnedChars": 20788,
+      "ranges": [
+        {
+          "path": "tests/test_config.py",
+          "start_line": 191,
+          "end_line": 192
+        },
+        {
+          "path": "src/flask/config.py",
+          "start_line": 29,
+          "end_line": 338
+        },
+        {
+          "path": "src/flask/config.py",
+          "start_line": 232,
+          "end_line": 273
+        },
+        {
+          "path": "src/flask/config.py",
+          "start_line": 165,
+          "end_line": 192
+        },
+        {
+          "path": "src/flask/config.py",
+          "start_line": 101,
+          "end_line": 163
+        },
+        {
+          "path": "src/flask/config.py",
+          "start_line": 194,
+          "end_line": 230
+        },
+        {
+          "path": "src/flask/config.py",
+          "start_line": 77,
+          "end_line": 99
+        },
+        {
+          "path": "src/flask/app.py",
+          "start_line": 648,
+          "end_line": 658
+        },
+        {
+          "path": "src/flask/ctx.py",
+          "start_line": 63,
+          "end_line": 72
+        },
+        {
+          "path": "src/flask/scaffold.py",
+          "start_line": 368,
+          "end_line": 373
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 1,
+        "reciprocalRank": 0.5,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 2,
+        "complementaryCoverage": 0
+      },
+      "error": null
+    },
+    {
+      "arm": "codegraph-query",
+      "id": "pallets__flask-4992:understand",
+      "task": "pallets__flask-4992",
+      "repository": "pallets/flask",
+      "split": "heldout",
+      "category": "code-understanding",
+      "latencyMs": 670.7742130000006,
+      "complete": true,
+      "returnedChars": 21680,
+      "ranges": [
+        {
+          "path": "src/flask/json/provider.py",
+          "start_line": 66,
+          "end_line": 72
+        },
+        {
+          "path": "src/flask/config.py",
+          "start_line": 29,
+          "end_line": 338
+        },
+        {
+          "path": "tests/test_config.py",
+          "start_line": 191,
+          "end_line": 192
+        },
+        {
+          "path": "src/flask/json/__init__.py",
+          "start_line": 108,
+          "end_line": 135
+        },
+        {
+          "path": "src/flask/config.py",
+          "start_line": 232,
+          "end_line": 273
+        },
+        {
+          "path": "src/flask/config.py",
+          "start_line": 165,
+          "end_line": 192
+        },
+        {
+          "path": "src/flask/config.py",
+          "start_line": 101,
+          "end_line": 163
+        },
+        {
+          "path": "src/flask/config.py",
+          "start_line": 194,
+          "end_line": 230
+        },
+        {
+          "path": "src/flask/config.py",
+          "start_line": 77,
+          "end_line": 99
+        },
+        {
+          "path": "src/flask/scaffold.py",
+          "start_line": 781,
+          "end_line": 803
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 1,
+        "reciprocalRank": 0.5,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 2,
+        "complementaryCoverage": null
+      },
+      "error": null
+    },
+    {
+      "arm": "codegraph-query",
+      "id": "pallets__flask-4045:change",
+      "task": "pallets__flask-4045",
+      "repository": "pallets/flask",
+      "split": "heldout",
+      "category": "change-localization",
+      "latencyMs": 746.5289690000027,
+      "complete": true,
+      "returnedChars": 26916,
+      "ranges": [
+        {
+          "path": "src/flask/blueprints.py",
+          "start_line": 108,
+          "end_line": 542
+        },
+        {
+          "path": "src/flask/wrappers.py",
+          "start_line": 73,
+          "end_line": 78
+        },
+        {
+          "path": "src/flask/app.py",
+          "start_line": 528,
+          "end_line": 542
+        },
+        {
+          "path": "src/flask/wrappers.py",
+          "start_line": 61,
+          "end_line": 70
+        },
+        {
+          "path": "src/flask/scaffold.py",
+          "start_line": 506,
+          "end_line": 527
+        },
+        {
+          "path": "tests/test_async.py",
+          "start_line": 36,
+          "end_line": 37
+        },
+        {
+          "path": "tests/test_basic.py",
+          "start_line": 886,
+          "end_line": 887
+        },
+        {
+          "path": "src/flask/blueprints.py",
+          "start_line": 517,
+          "end_line": 526
+        },
+        {
+          "path": "src/flask/blueprints.py",
+          "start_line": 25,
+          "end_line": 105
+        },
+        {
+          "path": "src/flask/blueprints.py",
+          "start_line": 255,
+          "end_line": 351
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": 0
+      },
+      "error": null
+    },
+    {
+      "arm": "codegraph-context",
+      "id": "psf__requests-1657:change",
+      "task": "psf__requests-1657",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 1819.3504080000002,
+      "complete": true,
+      "returnedChars": 14496,
+      "ranges": [
+        {
+          "path": "requests/sessions.py",
+          "start_line": 528,
+          "end_line": 531
+        },
+        {
+          "path": "requests/sessions.py",
+          "start_line": 154,
+          "end_line": 525
+        },
+        {
+          "path": "requests/hooks.py",
+          "start_line": 17,
+          "end_line": 17
+        },
+        {
+          "path": "test_requests.py",
+          "start_line": 173,
+          "end_line": 179
+        },
+        {
+          "path": "test_requests.py",
+          "start_line": 149,
+          "end_line": 160
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 1,
+        "reciprocalRank": 0.5,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 2,
+        "complementaryCoverage": 0
+      },
+      "error": null
+    },
+    {
+      "arm": "codegraph-context",
+      "id": "psf__requests-1657:understand",
+      "task": "psf__requests-1657",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "code-understanding",
+      "latencyMs": 1808.5627790000017,
+      "complete": true,
+      "returnedChars": 14266,
+      "ranges": [
+        {
+          "path": "requests/models.py",
+          "start_line": 247,
+          "end_line": 483
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 230,
+          "end_line": 244
+        },
+        {
+          "path": "requests/api.py",
+          "start_line": 17,
+          "end_line": 44
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 40,
+          "end_line": 146
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 149,
+          "end_line": 170
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 0,
+        "reciprocalRank": 0,
+        "evidenceCoverage": 0,
+        "negativeCorrect": null,
+        "fileRecall": 0,
+        "firstOverlapRank": null,
+        "complementaryCoverage": null
+      },
+      "error": null
+    },
+    {
+      "arm": "codegraph-context",
+      "id": "psf__requests-2821:change",
+      "task": "psf__requests-2821",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 2265.6660549999997,
+      "complete": true,
+      "returnedChars": 15713,
+      "ranges": [
+        {
+          "path": "requests/exceptions.py",
+          "start_line": 46,
+          "end_line": 52
+        },
+        {
+          "path": "requests/sessions.py",
+          "start_line": 266,
+          "end_line": 677
+        },
+        {
+          "path": "requests/sessions.py",
+          "start_line": 680,
+          "end_line": 683
+        },
+        {
+          "path": "requests/sessions.py",
+          "start_line": 475,
+          "end_line": 483
+        },
+        {
+          "path": "requests/sessions.py",
+          "start_line": 349,
+          "end_line": 350
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 0.5,
+        "reciprocalRank": 0.5,
+        "evidenceCoverage": 0.5,
+        "negativeCorrect": null,
+        "fileRecall": 0.5,
+        "firstOverlapRank": 2,
+        "complementaryCoverage": 0
+      },
+      "error": null
+    },
+    {
+      "arm": "codegraph-context",
+      "id": "psf__requests-2821:understand",
+      "task": "psf__requests-2821",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "code-understanding",
+      "latencyMs": 1786.7365009999994,
+      "complete": true,
+      "returnedChars": 5082,
+      "ranges": [
+        {
+          "path": "requests/models.py",
+          "start_line": 324,
+          "end_line": 396
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 236,
+          "end_line": 251
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 288,
+          "end_line": 303
+        },
+        {
+          "path": "requests/utils.py",
+          "start_line": 418,
+          "end_line": 435
+        },
+        {
+          "path": "requests/utils.py",
+          "start_line": 665,
+          "end_line": 681
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 0,
+        "reciprocalRank": 0,
+        "evidenceCoverage": 0,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": null,
+        "complementaryCoverage": null
+      },
+      "error": null
+    },
+    {
+      "arm": "codegraph-context",
+      "id": "psf__requests-774:change",
+      "task": "psf__requests-774",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 2273.454925,
+      "complete": true,
+      "returnedChars": 11926,
+      "ranges": [
+        {
+          "path": "requests/safe_mode.py",
+          "start_line": 25,
+          "end_line": 38
+        },
+        {
+          "path": "requests/sessions.py",
+          "start_line": 52,
+          "end_line": 326
+        },
+        {
+          "path": "requests/sessions.py",
+          "start_line": 329,
+          "end_line": 332
+        },
+        {
+          "path": "requests/safe_mode.py",
+          "start_line": 19,
+          "end_line": 39
+        },
+        {
+          "path": "requests/sessions.py",
+          "start_line": 244,
+          "end_line": 252
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 0,
+        "reciprocalRank": 0,
+        "evidenceCoverage": 0,
+        "negativeCorrect": null,
+        "fileRecall": 0,
+        "firstOverlapRank": null,
+        "complementaryCoverage": 0
+      },
+      "error": null
+    },
+    {
+      "arm": "codegraph-context",
+      "id": "psf__requests-774:understand",
+      "task": "psf__requests-774",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "code-understanding",
+      "latencyMs": 1761.9865989999998,
+      "complete": true,
+      "returnedChars": 8297,
+      "ranges": [
+        {
+          "path": "requests/models.py",
+          "start_line": 182,
+          "end_line": 221
+        },
+        {
+          "path": "requests/exceptions.py",
+          "start_line": 40,
+          "end_line": 41
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 399,
+          "end_line": 447
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 177,
+          "end_line": 313
+        },
+        {
+          "path": "requests/utils.py",
+          "start_line": 297,
+          "end_line": 314
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 0,
+        "reciprocalRank": 0,
+        "evidenceCoverage": 0,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 3,
+        "complementaryCoverage": null
+      },
+      "error": null
+    },
+    {
+      "arm": "codegraph-context",
+      "id": "psf__requests-4718:change",
+      "task": "psf__requests-4718",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 2254.5518389999997,
+      "complete": true,
+      "returnedChars": 10095,
+      "ranges": [
+        {
+          "path": "requests/sessions.py",
+          "start_line": 231,
+          "end_line": 253
+        },
+        {
+          "path": "requests/adapters.py",
+          "start_line": 59,
+          "end_line": 75
+        },
+        {
+          "path": "requests/adapters.py",
+          "start_line": 393,
+          "end_line": 530
+        },
+        {
+          "path": "requests/utils.py",
+          "start_line": 166,
+          "end_line": 214
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 534,
+          "end_line": 554
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": 0
+      },
+      "error": null
+    },
+    {
+      "arm": "codegraph-context",
+      "id": "psf__requests-4718:understand",
+      "task": "psf__requests-4718",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "code-understanding",
+      "latencyMs": 1744.132608,
+      "complete": true,
+      "returnedChars": 11203,
+      "ranges": [
+        {
+          "path": "requests/sessions.py",
+          "start_line": 445,
+          "end_line": 514
+        },
+        {
+          "path": "requests/api.py",
+          "start_line": 16,
+          "end_line": 60
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 198,
+          "end_line": 269
+        },
+        {
+          "path": "requests/sessions.py",
+          "start_line": 669,
+          "end_line": 696
+        },
+        {
+          "path": "requests/sessions.py",
+          "start_line": 405,
+          "end_line": 443
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 0,
+        "reciprocalRank": 0,
+        "evidenceCoverage": 0,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": null,
+        "complementaryCoverage": null
+      },
+      "error": null
+    },
+    {
+      "arm": "codegraph-context",
+      "id": "psf__requests-3718:change",
+      "task": "psf__requests-3718",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 2066.254311999999,
+      "complete": true,
+      "returnedChars": 815,
+      "ranges": [
+        {
+          "path": "tests/test_requests.py",
+          "start_line": 1505,
+          "end_line": 1513
+        },
+        {
+          "path": "tests/test_requests.py",
+          "start_line": 1526,
+          "end_line": 1537
+        },
+        {
+          "path": "tests/test_requests.py",
+          "start_line": 1550,
+          "end_line": 1558
+        },
+        {
+          "path": "tests/test_requests.py",
+          "start_line": 1506,
+          "end_line": 1507
+        },
+        {
+          "path": "tests/test_requests.py",
+          "start_line": 1512,
+          "end_line": 1513
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 0,
+        "reciprocalRank": 0,
+        "evidenceCoverage": 0,
+        "negativeCorrect": null,
+        "fileRecall": 0,
+        "firstOverlapRank": null,
+        "complementaryCoverage": 0
+      },
+      "error": null
+    },
+    {
+      "arm": "codegraph-context",
+      "id": "psf__requests-3718:understand",
+      "task": "psf__requests-3718",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "code-understanding",
+      "latencyMs": 1203.06963,
+      "complete": true,
+      "returnedChars": 13417,
+      "ranges": [
+        {
+          "path": "requests/models.py",
+          "start_line": 559,
+          "end_line": 900
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 763,
+          "end_line": 780
+        },
+        {
+          "path": "requests/compat.py",
+          "start_line": 65,
+          "end_line": 65
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 628,
+          "end_line": 634
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 643,
+          "end_line": 645
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null
+    },
+    {
+      "arm": "codegraph-context",
+      "id": "psf__requests-1962:change",
+      "task": "psf__requests-1962",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 887.5740170000008,
+      "complete": true,
+      "returnedChars": 18136,
+      "ranges": [
+        {
+          "path": "requests/sessions.py",
+          "start_line": 187,
+          "end_line": 565
+        },
+        {
+          "path": "requests/sessions.py",
+          "start_line": 568,
+          "end_line": 571
+        },
+        {
+          "path": "requests/sessions.py",
+          "start_line": 83,
+          "end_line": 184
+        },
+        {
+          "path": "requests/sessions.py",
+          "start_line": 457,
+          "end_line": 464
+        },
+        {
+          "path": "requests/sessions.py",
+          "start_line": 549,
+          "end_line": 558
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": 0
+      },
+      "error": null
+    },
+    {
+      "arm": "codegraph-context",
+      "id": "psf__requests-1768:change",
+      "task": "psf__requests-1768",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 1271.8167639999992,
+      "complete": true,
+      "returnedChars": 3577,
+      "ranges": [
+        {
+          "path": "requests/cookies.py",
+          "start_line": 176,
+          "end_line": 183
+        },
+        {
+          "path": "requests/structures.py",
+          "start_line": 127,
+          "end_line": 128
+        },
+        {
+          "path": "requests/api.py",
+          "start_line": 47,
+          "end_line": 55
+        },
+        {
+          "path": "requests/cookies.py",
+          "start_line": 306,
+          "end_line": 322
+        },
+        {
+          "path": "requests/api.py",
+          "start_line": 17,
+          "end_line": 44
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 0,
+        "reciprocalRank": 0,
+        "evidenceCoverage": 0,
+        "negativeCorrect": null,
+        "fileRecall": 0,
+        "firstOverlapRank": null,
+        "complementaryCoverage": 0
+      },
+      "error": null
+    },
+    {
+      "arm": "codegraph-context",
+      "id": "psf__requests-1768:understand",
+      "task": "psf__requests-1768",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "code-understanding",
+      "latencyMs": 1137.6550050000005,
+      "complete": true,
+      "returnedChars": 2292,
+      "ranges": [
+        {
+          "path": "requests/utils.py",
+          "start_line": 557,
+          "end_line": 564
+        },
+        {
+          "path": "requests/exceptions.py",
+          "start_line": 58,
+          "end_line": 59
+        },
+        {
+          "path": "requests/cookies.py",
+          "start_line": 114,
+          "end_line": 128
+        },
+        {
+          "path": "test_requests.py",
+          "start_line": 562,
+          "end_line": 564
+        },
+        {
+          "path": "requests/adapters.py",
+          "start_line": 262,
+          "end_line": 286
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null
+    },
+    {
+      "arm": "codegraph-context",
+      "id": "psf__requests-2617:change",
+      "task": "psf__requests-2617",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 1030.5803960000012,
+      "complete": true,
+      "returnedChars": 41818,
+      "ranges": [
+        {
+          "path": "test_requests.py",
+          "start_line": 1496,
+          "end_line": 1525
+        },
+        {
+          "path": "test_requests.py",
+          "start_line": 1255,
+          "end_line": 1376
+        },
+        {
+          "path": "test_requests.py",
+          "start_line": 56,
+          "end_line": 1070
+        },
+        {
+          "path": "test_requests.py",
+          "start_line": 1522,
+          "end_line": 1525
+        },
+        {
+          "path": "test_requests.py",
+          "start_line": 1497,
+          "end_line": 1502
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 0,
+        "reciprocalRank": 0,
+        "evidenceCoverage": 0,
+        "negativeCorrect": null,
+        "fileRecall": 0,
+        "firstOverlapRank": null,
+        "complementaryCoverage": 0.6666666666666666
+      },
+      "error": null
+    },
+    {
+      "arm": "codegraph-context",
+      "id": "psf__requests-2617:understand",
+      "task": "psf__requests-2617",
+      "repository": "psf/requests",
+      "split": "dev",
+      "category": "code-understanding",
+      "latencyMs": 941.0664159999978,
+      "complete": true,
+      "returnedChars": 5122,
+      "ranges": [
+        {
+          "path": "requests/models.py",
+          "start_line": 334,
+          "end_line": 405
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 246,
+          "end_line": 261
+        },
+        {
+          "path": "requests/models.py",
+          "start_line": 298,
+          "end_line": 313
+        },
+        {
+          "path": "requests/utils.py",
+          "start_line": 676,
+          "end_line": 692
+        },
+        {
+          "path": "requests/utils.py",
+          "start_line": 417,
+          "end_line": 434
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 0,
+        "reciprocalRank": 0,
+        "evidenceCoverage": 0,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": null,
+        "complementaryCoverage": null
+      },
+      "error": null
+    },
+    {
+      "arm": "codegraph-context",
+      "id": "pallets__flask-4074:change",
+      "task": "pallets__flask-4074",
+      "repository": "pallets/flask",
+      "split": "heldout",
+      "category": "change-localization",
+      "latencyMs": 1161.3096060000025,
+      "complete": true,
+      "returnedChars": 1544,
+      "ranges": [
+        {
+          "path": "tests/test_blueprints.py",
+          "start_line": 224,
+          "end_line": 226
+        },
+        {
+          "path": "tests/test_blueprints.py",
+          "start_line": 50,
+          "end_line": 51
+        },
+        {
+          "path": "src/flask/blueprints.py",
+          "start_line": 250,
+          "end_line": 257
+        },
+        {
+          "path": "tests/test_blueprints.py",
+          "start_line": 225,
+          "end_line": 226
+        },
+        {
+          "path": "tests/test_blueprints.py",
+          "start_line": 223,
+          "end_line": 244
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 0.05263157894736842,
+        "reciprocalRank": 0.3333333333333333,
+        "evidenceCoverage": 0.05263157894736842,
+        "negativeCorrect": null,
+        "fileRecall": 0.3333333333333333,
+        "firstOverlapRank": 3,
+        "complementaryCoverage": 0
+      },
+      "error": null
+    },
+    {
+      "arm": "codegraph-context",
+      "id": "pallets__flask-4074:understand",
+      "task": "pallets__flask-4074",
+      "repository": "pallets/flask",
+      "split": "heldout",
+      "category": "code-understanding",
+      "latencyMs": 1030.5488189999996,
+      "complete": true,
+      "returnedChars": 12245,
+      "ranges": [
+        {
+          "path": "src/flask/app.py",
+          "start_line": 734,
+          "end_line": 759
+        },
+        {
+          "path": "src/flask/ctx.py",
+          "start_line": 219,
+          "end_line": 263
+        },
+        {
+          "path": "src/flask/ctx.py",
+          "start_line": 266,
+          "end_line": 480
+        },
+        {
+          "path": "src/flask/app.py",
+          "start_line": 2078,
+          "end_line": 2082
+        },
+        {
+          "path": "src/flask/ctx.py",
+          "start_line": 256,
+          "end_line": 258
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null
+    },
+    {
+      "arm": "codegraph-context",
+      "id": "pallets__flask-4544:change",
+      "task": "pallets__flask-4544",
+      "repository": "pallets/flask",
+      "split": "heldout",
+      "category": "change-localization",
+      "latencyMs": 1023.9747180000013,
+      "complete": true,
+      "returnedChars": 6658,
+      "ranges": [
+        {
+          "path": "src/flask/app.py",
+          "start_line": 805,
+          "end_line": 925
+        },
+        {
+          "path": "src/flask/templating.py",
+          "start_line": 33,
+          "end_line": 43
+        },
+        {
+          "path": "src/flask/cli.py",
+          "start_line": 964,
+          "end_line": 981
+        },
+        {
+          "path": "src/flask/helpers.py",
+          "start_line": 35,
+          "end_line": 46
+        },
+        {
+          "path": "src/flask/helpers.py",
+          "start_line": 27,
+          "end_line": 32
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 0,
+        "reciprocalRank": 0,
+        "evidenceCoverage": 0,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": null,
+        "complementaryCoverage": 0
+      },
+      "error": null
+    },
+    {
+      "arm": "codegraph-context",
+      "id": "pallets__flask-4992:change",
+      "task": "pallets__flask-4992",
+      "repository": "pallets/flask",
+      "split": "heldout",
+      "category": "change-localization",
+      "latencyMs": 1283.9303809999983,
+      "complete": true,
+      "returnedChars": 3922,
+      "ranges": [
+        {
+          "path": "src/flask/config.py",
+          "start_line": 232,
+          "end_line": 273
+        },
+        {
+          "path": "src/flask/config.py",
+          "start_line": 275,
+          "end_line": 292
+        },
+        {
+          "path": "src/flask/json/__init__.py",
+          "start_line": 108,
+          "end_line": 135
+        },
+        {
+          "path": "tests/test_config.py",
+          "start_line": 33,
+          "end_line": 37
+        },
+        {
+          "path": "tests/test_config.py",
+          "start_line": 102,
+          "end_line": 121
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": 0.3333333333333333
+      },
+      "error": null
+    },
+    {
+      "arm": "codegraph-context",
+      "id": "pallets__flask-4992:understand",
+      "task": "pallets__flask-4992",
+      "repository": "pallets/flask",
+      "split": "heldout",
+      "category": "code-understanding",
+      "latencyMs": 716.8388999999988,
+      "complete": true,
+      "returnedChars": 13545,
+      "ranges": [
+        {
+          "path": "src/flask/json/__init__.py",
+          "start_line": 108,
+          "end_line": 135
+        },
+        {
+          "path": "src/flask/config.py",
+          "start_line": 29,
+          "end_line": 338
+        },
+        {
+          "path": "src/flask/json/tag.py",
+          "start_line": 310,
+          "end_line": 312
+        },
+        {
+          "path": "src/flask/json/provider.py",
+          "start_line": 66,
+          "end_line": 72
+        },
+        {
+          "path": "tests/test_json.py",
+          "start_line": 57,
+          "end_line": 64
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 1,
+        "reciprocalRank": 0.5,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 2,
+        "complementaryCoverage": null
+      },
+      "error": null
+    },
+    {
+      "arm": "codegraph-context",
+      "id": "pallets__flask-4045:change",
+      "task": "pallets__flask-4045",
+      "repository": "pallets/flask",
+      "split": "heldout",
+      "category": "change-localization",
+      "latencyMs": 806.5851930000026,
+      "complete": true,
+      "returnedChars": 19261,
+      "ranges": [
+        {
+          "path": "src/flask/scaffold.py",
+          "start_line": 506,
+          "end_line": 527
+        },
+        {
+          "path": "src/flask/app.py",
+          "start_line": 528,
+          "end_line": 542
+        },
+        {
+          "path": "src/flask/blueprints.py",
+          "start_line": 108,
+          "end_line": 542
+        },
+        {
+          "path": "src/flask/scaffold.py",
+          "start_line": 523,
+          "end_line": 525
+        },
+        {
+          "path": "tests/test_basic.py",
+          "start_line": 214,
+          "end_line": 230
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 1,
+        "reciprocalRank": 0.3333333333333333,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 3,
+        "complementaryCoverage": 0
+      },
+      "error": null
+    }
+  ]
+}

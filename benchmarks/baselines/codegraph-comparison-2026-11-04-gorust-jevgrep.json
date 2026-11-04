@@ -1,0 +1,2076 @@
+{
+  "schemaVersion": 1,
+  "kind": "retriever-comparison",
+  "createdAt": "2026-11-04T12:38:29.069Z",
+  "environment": {
+    "node": "v24.19.0",
+    "platform": "linux",
+    "architecture": "x64",
+    "cpu": "Intel(R) Xeon(R) Processor",
+    "logicalCpus": 8,
+    "totalMemoryBytes": 33654874112,
+    "revision": "562e7e5fa0e9ab2e1107fc011c46804c690a68db",
+    "workingTree": "M scripts/bench-compare.ts\n?? node_modules\n?? scripts/bench-openai-judges.ts",
+    "sourceHash": "67ec62d1fc8fabd0d4f4795d88c6aac939f8a199733c03445cb14efcd56acd89",
+    "harnessHash": "cc326d0c8b93fc60876bc1530d3cec0686d0488001d1f9ffd29401252f6efe48",
+    "packageLockHash": "37aedfa15a94c84ec716c28109e43f59223658b03775581380cc0fdcd4899db7"
+  },
+  "dataset": {
+    "version": "swe-bench-multilingual-go-rust-1",
+    "source": {
+      "dataset": "SWE-bench/SWE-bench_Multilingual",
+      "split": "test",
+      "license": "MIT (dataset); issue text and code from the upstream repositories",
+      "revision": null
+    },
+    "tasks": 25,
+    "queries": 34
+  },
+  "settings": {
+    "arms": [
+      "jevgrep"
+    ],
+    "top": 10,
+    "responseTokens": 4000,
+    "codegraph": "codegraph",
+    "layaUrl": "http://127.0.0.1:8765",
+    "jevgrep": {
+      "adapter": "typesafe-direct",
+      "model": "jev-1.13.0",
+      "baseUrl": "https://api.typesafe.ai",
+      "pricing": {
+        "model": "jev-1.13.0",
+        "verified_at": "2026-09-20",
+        "input_usd_per_million_tokens": 0.042,
+        "output_usd_per_million_tokens": 0
+      }
+    },
+    "replay": null
+  },
+  "semantics": {
+    "ranking": "each arm returns ranked line ranges; the same localization metrics score every arm",
+    "recallAt5OverPlanned": "incomplete or failed queries count as zero",
+    "returned": "context size delivered to the caller: lines in the top 5 ranges and characters of all returned ranges",
+    "labels": "patch sites and quoted-docstring functions; not exhaustive relevance",
+    "replay": "captured Jev scores per fragment; candidate arms mask every other fragment, so Jev work is the candidate set only",
+    "candidateRecall": "share of required evidence units fully inside the evaluated candidate fragments (an upper bound on what Jev can return)",
+    "jevInputTokens": "reference-token estimate for evaluating the candidate set alone, batched like the engine"
+  },
+  "usage": {
+    "attempts": 102,
+    "reservedInputTokens": 3973236,
+    "reportedInputTokens": 3728365,
+    "unknownUsageAttempts": 0,
+    "blocked": false
+  },
+  "graphIndexes": {},
+  "summary": {
+    "jevgrep": {
+      "overall": {
+        "planned": 34,
+        "complete": 32,
+        "completionRate": 0.9411764705882353,
+        "recallAt1": 0.5730282738095238,
+        "recallAt5": 0.6868675595238095,
+        "mrr": 0.6901041666666666,
+        "fileRecall": 0.90625,
+        "complementaryCoverage": 0.12,
+        "recallAt5OverPlanned": 0.6464635854341737,
+        "returnedLinesTop5": 268.84375,
+        "returnedChars": 8478.46875,
+        "latencyMs": {
+          "n": 34,
+          "median": 3603.3781004999983,
+          "p95": 10612.688156799983,
+          "p95Note": null
+        }
+      },
+      "indexMs": {
+        "n": 0,
+        "median": null,
+        "p95": null,
+        "p95Note": "insufficient samples (0 < 20)"
+      },
+      "byCategory": {
+        "change-localization": {
+          "planned": 25,
+          "complete": 23,
+          "completionRate": 0.92,
+          "recallAt1": 0.5363871635610767,
+          "recallAt5": 0.6947722567287785,
+          "mrr": 0.6992753623188407,
+          "fileRecall": 0.8695652173913043,
+          "complementaryCoverage": 0.12,
+          "recallAt5OverPlanned": 0.6391904761904762,
+          "returnedLinesTop5": 278.9130434782609,
+          "returnedChars": 8933.217391304348,
+          "latencyMs": {
+            "n": 25,
+            "median": 3443.024271000002,
+            "p95": 13888.941978399975,
+            "p95Note": null
+          }
+        },
+        "code-understanding": {
+          "planned": 9,
+          "complete": 9,
+          "completionRate": 1,
+          "recallAt1": 0.6666666666666666,
+          "recallAt5": 0.6666666666666666,
+          "mrr": 0.6666666666666666,
+          "fileRecall": 1,
+          "complementaryCoverage": null,
+          "recallAt5OverPlanned": 0.6666666666666666,
+          "returnedLinesTop5": 243.11111111111111,
+          "returnedChars": 7316.333333333333,
+          "latencyMs": {
+            "n": 9,
+            "median": 3916.606842000001,
+            "p95": null,
+            "p95Note": "insufficient samples (9 < 20)"
+          }
+        }
+      },
+      "byRepository": {
+        "caddyserver/caddy": {
+          "planned": 15,
+          "complete": 15,
+          "completionRate": 1,
+          "recallAt1": 0.641904761904762,
+          "recallAt5": 0.7180952380952381,
+          "mrr": 0.75,
+          "fileRecall": 0.9666666666666667,
+          "complementaryCoverage": 0,
+          "recallAt5OverPlanned": 0.7180952380952381,
+          "returnedLinesTop5": 258,
+          "returnedChars": 7761.333333333333,
+          "latencyMs": {
+            "n": 15,
+            "median": 4199.883277000001,
+            "p95": null,
+            "p95Note": "insufficient samples (15 < 20)"
+          }
+        },
+        "gin-gonic/gin": {
+          "planned": 9,
+          "complete": 9,
+          "completionRate": 1,
+          "recallAt1": 0.6666666666666666,
+          "recallAt5": 0.6666666666666666,
+          "mrr": 0.6666666666666666,
+          "fileRecall": 1,
+          "complementaryCoverage": null,
+          "recallAt5OverPlanned": 0.6666666666666666,
+          "returnedLinesTop5": 265.22222222222223,
+          "returnedChars": 7548.888888888889,
+          "latencyMs": {
+            "n": 9,
+            "median": 1716.283819999997,
+            "p95": null,
+            "p95Note": "insufficient samples (9 < 20)"
+          }
+        },
+        "sharkdp/bat": {
+          "planned": 6,
+          "complete": 6,
+          "completionRate": 1,
+          "recallAt1": 0.45138888888888884,
+          "recallAt5": 0.8680555555555557,
+          "mrr": 0.8055555555555555,
+          "fileRecall": 0.9166666666666666,
+          "complementaryCoverage": 0,
+          "recallAt5OverPlanned": 0.8680555555555557,
+          "returnedLinesTop5": 296.1666666666667,
+          "returnedChars": 11398.5,
+          "latencyMs": {
+            "n": 6,
+            "median": 2351.135301999995,
+            "p95": null,
+            "p95Note": "insufficient samples (6 < 20)"
+          }
+        },
+        "tokio-rs/axum": {
+          "planned": 4,
+          "complete": 2,
+          "completionRate": 0.5,
+          "recallAt1": 0,
+          "recallAt5": 0,
+          "mrr": 0,
+          "fileRecall": 0,
+          "complementaryCoverage": 0.3,
+          "recallAt5OverPlanned": 0,
+          "returnedLinesTop5": 284.5,
+          "returnedChars": 9280,
+          "latencyMs": {
+            "n": 4,
+            "median": 7821.1116865,
+            "p95": null,
+            "p95Note": "insufficient samples (4 < 20)"
+          }
+        }
+      },
+      "byEvidenceSpread": {
+        "multi-file": {
+          "planned": 5,
+          "complete": 4,
+          "completionRate": 0.8,
+          "recallAt1": 0.3342261904761905,
+          "recallAt5": 0.4949404761904762,
+          "mrr": 1,
+          "fileRecall": 0.75,
+          "complementaryCoverage": 0,
+          "recallAt5OverPlanned": 0.39595238095238094,
+          "returnedLinesTop5": 284,
+          "returnedChars": 9913.25,
+          "latencyMs": {
+            "n": 5,
+            "median": 3443.024271000002,
+            "p95": null,
+            "p95Note": "insufficient samples (5 < 20)"
+          }
+        },
+        "single-file": {
+          "planned": 29,
+          "complete": 28,
+          "completionRate": 0.9655172413793104,
+          "recallAt1": 0.6071428571428571,
+          "recallAt5": 0.7142857142857143,
+          "mrr": 0.6458333333333334,
+          "fileRecall": 0.9285714285714286,
+          "complementaryCoverage": 0.19999999999999998,
+          "recallAt5OverPlanned": 0.6896551724137931,
+          "returnedLinesTop5": 266.67857142857144,
+          "returnedChars": 8273.5,
+          "latencyMs": {
+            "n": 29,
+            "median": 3916.4891940000016,
+            "p95": 12432.82916879998,
+            "p95Note": null
+          }
+        }
+      }
+    }
+  },
+  "paired": null,
+  "rows": [
+    {
+      "arm": "jevgrep",
+      "id": "caddyserver__caddy-6288:change",
+      "task": "caddyserver__caddy-6288",
+      "repository": "caddyserver/caddy",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 16205.774867999999,
+      "complete": true,
+      "returnedChars": 8075,
+      "ranges": [
+        {
+          "path": "caddyconfig/httpcaddyfile/httptype.go",
+          "start_line": 1386,
+          "end_line": 1466
+        },
+        {
+          "path": "caddyconfig/caddyfile/dispenser.go",
+          "start_line": 310,
+          "end_line": 402
+        },
+        {
+          "path": "caddyconfig/caddyfile/lexer.go",
+          "start_line": 119,
+          "end_line": 198
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 0,
+        "reciprocalRank": 0,
+        "evidenceCoverage": 0,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": null,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "status": "complete",
+        "stop": [],
+        "usage": {
+          "provider_request_attempts": 5,
+          "provider_input_tokens_reported": 168257,
+          "provider_input_tokens_known_subtotal": 168257,
+          "provider_input_tokens_estimated": 168257,
+          "estimated_cost_usd": 0.007066794,
+          "reported_cost_usd": null,
+          "attempts_with_unknown_usage": 0,
+          "transmitted_bytes": 649547,
+          "elapsed_ms": 16183
+        },
+        "measuredTokens": 3267
+      }
+    },
+    {
+      "arm": "jevgrep",
+      "id": "caddyserver__caddy-6051:change",
+      "task": "caddyserver__caddy-6051",
+      "repository": "caddyserver/caddy",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 8064.490740000001,
+      "complete": true,
+      "returnedChars": 8180,
+      "ranges": [
+        {
+          "path": "caddyconfig/caddyfile/lexer.go",
+          "start_line": 297,
+          "end_line": 355
+        },
+        {
+          "path": "caddyconfig/caddyfile/lexer.go",
+          "start_line": 97,
+          "end_line": 198
+        },
+        {
+          "path": "caddyconfig/caddyfile/formatter.go",
+          "start_line": 23,
+          "end_line": 148
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "status": "complete",
+        "stop": [],
+        "usage": {
+          "provider_request_attempts": 4,
+          "provider_input_tokens_reported": 165387,
+          "provider_input_tokens_known_subtotal": 165387,
+          "provider_input_tokens_estimated": 165387,
+          "estimated_cost_usd": 0.006946254,
+          "reported_cost_usd": null,
+          "attempts_with_unknown_usage": 0,
+          "transmitted_bytes": 641729,
+          "elapsed_ms": 8055
+        },
+        "measuredTokens": 3404
+      }
+    },
+    {
+      "arm": "jevgrep",
+      "id": "caddyserver__caddy-6051:understand",
+      "task": "caddyserver__caddy-6051",
+      "repository": "caddyserver/caddy",
+      "split": "dev",
+      "category": "code-understanding",
+      "latencyMs": 4407.794619,
+      "complete": true,
+      "returnedChars": 7033,
+      "ranges": [
+        {
+          "path": "caddyconfig/caddyfile/lexer.go",
+          "start_line": 297,
+          "end_line": 355
+        },
+        {
+          "path": "caddyconfig/caddyfile/lexer.go",
+          "start_line": 97,
+          "end_line": 270
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "status": "complete",
+        "stop": [],
+        "usage": {
+          "provider_request_attempts": 4,
+          "provider_input_tokens_reported": 164923,
+          "provider_input_tokens_known_subtotal": 164923,
+          "provider_input_tokens_estimated": 164923,
+          "estimated_cost_usd": 0.006926766,
+          "reported_cost_usd": null,
+          "attempts_with_unknown_usage": 0,
+          "transmitted_bytes": 639925,
+          "elapsed_ms": 4400
+        },
+        "measuredTokens": 3017
+      }
+    },
+    {
+      "arm": "jevgrep",
+      "id": "caddyserver__caddy-4774:change",
+      "task": "caddyserver__caddy-4774",
+      "repository": "caddyserver/caddy",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 3443.024271000002,
+      "complete": true,
+      "returnedChars": 9101,
+      "ranges": [
+        {
+          "path": "caddyconfig/httpcaddyfile/addresses.go",
+          "start_line": 177,
+          "end_line": 253
+        },
+        {
+          "path": "caddyconfig/httpcaddyfile/options.go",
+          "start_line": 1,
+          "end_line": 74
+        },
+        {
+          "path": "caddyconfig/httpcaddyfile/httptype.go",
+          "start_line": 320,
+          "end_line": 396
+        },
+        {
+          "path": "caddyconfig/httpcaddyfile/directives.go",
+          "start_line": 549,
+          "end_line": 575
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0.42857142857142855,
+        "recallAt5": 0.5714285714285714,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 0.5714285714285714,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": 0
+      },
+      "error": null,
+      "detail": {
+        "status": "complete",
+        "stop": [],
+        "usage": {
+          "provider_request_attempts": 4,
+          "provider_input_tokens_reported": 136181,
+          "provider_input_tokens_known_subtotal": 136181,
+          "provider_input_tokens_estimated": 136181,
+          "estimated_cost_usd": 0.005719602,
+          "reported_cost_usd": null,
+          "attempts_with_unknown_usage": 0,
+          "transmitted_bytes": 528437,
+          "elapsed_ms": 3439
+        },
+        "measuredTokens": 3364
+      }
+    },
+    {
+      "arm": "jevgrep",
+      "id": "caddyserver__caddy-4774:understand",
+      "task": "caddyserver__caddy-4774",
+      "repository": "caddyserver/caddy",
+      "split": "dev",
+      "category": "code-understanding",
+      "latencyMs": 3271.8760110000003,
+      "complete": true,
+      "returnedChars": 9575,
+      "ranges": [
+        {
+          "path": "caddyconfig/httpcaddyfile/addresses.go",
+          "start_line": 32,
+          "end_line": 176
+        },
+        {
+          "path": "caddyconfig/httpcaddyfile/httptype.go",
+          "start_line": 112,
+          "end_line": 208
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "status": "complete",
+        "stop": [],
+        "usage": {
+          "provider_request_attempts": 4,
+          "provider_input_tokens_reported": 134249,
+          "provider_input_tokens_known_subtotal": 134249,
+          "provider_input_tokens_estimated": 134249,
+          "estimated_cost_usd": 0.005638458,
+          "reported_cost_usd": null,
+          "attempts_with_unknown_usage": 0,
+          "transmitted_bytes": 522137,
+          "elapsed_ms": 3267
+        },
+        "measuredTokens": 3393
+      }
+    },
+    {
+      "arm": "jevgrep",
+      "id": "caddyserver__caddy-5761:change",
+      "task": "caddyserver__caddy-5761",
+      "repository": "caddyserver/caddy",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 3916.4891940000016,
+      "complete": true,
+      "returnedChars": 6982,
+      "ranges": [
+        {
+          "path": "caddyconfig/caddyfile/lexer.go",
+          "start_line": 97,
+          "end_line": 341
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "status": "complete",
+        "stop": [],
+        "usage": {
+          "provider_request_attempts": 4,
+          "provider_input_tokens_reported": 159066,
+          "provider_input_tokens_known_subtotal": 159066,
+          "provider_input_tokens_estimated": 159066,
+          "estimated_cost_usd": 0.006680772,
+          "reported_cost_usd": null,
+          "attempts_with_unknown_usage": 0,
+          "transmitted_bytes": 617008,
+          "elapsed_ms": 3911
+        },
+        "measuredTokens": 2959
+      }
+    },
+    {
+      "arm": "jevgrep",
+      "id": "caddyserver__caddy-5761:understand",
+      "task": "caddyserver__caddy-5761",
+      "repository": "caddyserver/caddy",
+      "split": "dev",
+      "category": "code-understanding",
+      "latencyMs": 3916.606842000001,
+      "complete": true,
+      "returnedChars": 8620,
+      "ranges": [
+        {
+          "path": "caddyconfig/caddyfile/lexer.go",
+          "start_line": 97,
+          "end_line": 198
+        },
+        {
+          "path": "caddyconfig/caddyfile/dispenser.go",
+          "start_line": 1,
+          "end_line": 204
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 0,
+        "reciprocalRank": 0,
+        "evidenceCoverage": 0,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "status": "complete",
+        "stop": [],
+        "usage": {
+          "provider_request_attempts": 4,
+          "provider_input_tokens_reported": 158774,
+          "provider_input_tokens_known_subtotal": 158774,
+          "provider_input_tokens_estimated": 158774,
+          "estimated_cost_usd": 0.006668508,
+          "reported_cost_usd": null,
+          "attempts_with_unknown_usage": 0,
+          "transmitted_bytes": 615844,
+          "elapsed_ms": 3912
+        },
+        "measuredTokens": 3321
+      }
+    },
+    {
+      "arm": "jevgrep",
+      "id": "caddyserver__caddy-5404:change",
+      "task": "caddyserver__caddy-5404",
+      "repository": "caddyserver/caddy",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 4585.537604999998,
+      "complete": true,
+      "returnedChars": 8025,
+      "ranges": [
+        {
+          "path": "caddyconfig/caddyfile/lexer.go",
+          "start_line": 97,
+          "end_line": 350
+        },
+        {
+          "path": "caddyconfig/caddyfile/lexer_fuzz.go",
+          "start_line": 1,
+          "end_line": 28
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "status": "complete",
+        "stop": [],
+        "usage": {
+          "provider_request_attempts": 4,
+          "provider_input_tokens_reported": 158764,
+          "provider_input_tokens_known_subtotal": 158764,
+          "provider_input_tokens_estimated": 158764,
+          "estimated_cost_usd": 0.006668088,
+          "reported_cost_usd": null,
+          "attempts_with_unknown_usage": 0,
+          "transmitted_bytes": 606238,
+          "elapsed_ms": 4581
+        },
+        "measuredTokens": 3329
+      }
+    },
+    {
+      "arm": "jevgrep",
+      "id": "caddyserver__caddy-5404:understand",
+      "task": "caddyserver__caddy-5404",
+      "repository": "caddyserver/caddy",
+      "split": "dev",
+      "category": "code-understanding",
+      "latencyMs": 4816.478666000003,
+      "complete": true,
+      "returnedChars": 5482,
+      "ranges": [
+        {
+          "path": "caddyconfig/caddyfile/lexer.go",
+          "start_line": 283,
+          "end_line": 350
+        },
+        {
+          "path": "caddyconfig/caddyfile/lexer.go",
+          "start_line": 97,
+          "end_line": 198
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "status": "complete",
+        "stop": [],
+        "usage": {
+          "provider_request_attempts": 4,
+          "provider_input_tokens_reported": 152540,
+          "provider_input_tokens_known_subtotal": 152540,
+          "provider_input_tokens_estimated": 152540,
+          "estimated_cost_usd": 0.00640668,
+          "reported_cost_usd": null,
+          "attempts_with_unknown_usage": 0,
+          "transmitted_bytes": 592546,
+          "elapsed_ms": 4812
+        },
+        "measuredTokens": 2345
+      }
+    },
+    {
+      "arm": "jevgrep",
+      "id": "caddyserver__caddy-5870:change",
+      "task": "caddyserver__caddy-5870",
+      "repository": "caddyserver/caddy",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 4184.226453000003,
+      "complete": true,
+      "returnedChars": 6969,
+      "ranges": [
+        {
+          "path": "admin.go",
+          "start_line": 1073,
+          "end_line": 1238
+        },
+        {
+          "path": "admin.go",
+          "start_line": 951,
+          "end_line": 1024
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "status": "complete",
+        "stop": [],
+        "usage": {
+          "provider_request_attempts": 4,
+          "provider_input_tokens_reported": 162145,
+          "provider_input_tokens_known_subtotal": 162145,
+          "provider_input_tokens_estimated": 162145,
+          "estimated_cost_usd": 0.00681009,
+          "reported_cost_usd": null,
+          "attempts_with_unknown_usage": 0,
+          "transmitted_bytes": 628568,
+          "elapsed_ms": 4180
+        },
+        "measuredTokens": 3139
+      }
+    },
+    {
+      "arm": "jevgrep",
+      "id": "caddyserver__caddy-5870:understand",
+      "task": "caddyserver__caddy-5870",
+      "repository": "caddyserver/caddy",
+      "split": "dev",
+      "category": "code-understanding",
+      "latencyMs": 3939.1393979999993,
+      "complete": true,
+      "returnedChars": 7882,
+      "ranges": [
+        {
+          "path": "admin.go",
+          "start_line": 1073,
+          "end_line": 1238
+        },
+        {
+          "path": "caddy.go",
+          "start_line": 136,
+          "end_line": 226
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 0,
+        "reciprocalRank": 0,
+        "evidenceCoverage": 0,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "status": "complete",
+        "stop": [],
+        "usage": {
+          "provider_request_attempts": 4,
+          "provider_input_tokens_reported": 160013,
+          "provider_input_tokens_known_subtotal": 160013,
+          "provider_input_tokens_estimated": 160013,
+          "estimated_cost_usd": 0.006720546,
+          "reported_cost_usd": null,
+          "attempts_with_unknown_usage": 0,
+          "transmitted_bytes": 620912,
+          "elapsed_ms": 3934
+        },
+        "measuredTokens": 3387
+      }
+    },
+    {
+      "arm": "jevgrep",
+      "id": "caddyserver__caddy-5626:change",
+      "task": "caddyserver__caddy-5626",
+      "repository": "caddyserver/caddy",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 3763.7319299999945,
+      "complete": true,
+      "returnedChars": 8763,
+      "ranges": [
+        {
+          "path": "caddyconfig/caddyfile/parse.go",
+          "start_line": 303,
+          "end_line": 495
+        },
+        {
+          "path": "caddyconfig/caddyfile/parse.go",
+          "start_line": 561,
+          "end_line": 645
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0.2,
+        "recallAt5": 0.2,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 0.2,
+        "negativeCorrect": null,
+        "fileRecall": 0.5,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": 0
+      },
+      "error": null,
+      "detail": {
+        "status": "complete",
+        "stop": [],
+        "usage": {
+          "provider_request_attempts": 4,
+          "provider_input_tokens_reported": 158795,
+          "provider_input_tokens_known_subtotal": 158795,
+          "provider_input_tokens_estimated": 158795,
+          "estimated_cost_usd": 0.00666939,
+          "reported_cost_usd": null,
+          "attempts_with_unknown_usage": 0,
+          "transmitted_bytes": 615284,
+          "elapsed_ms": 3758
+        },
+        "measuredTokens": 3387
+      }
+    },
+    {
+      "arm": "jevgrep",
+      "id": "caddyserver__caddy-5626:understand",
+      "task": "caddyserver__caddy-5626",
+      "repository": "caddyserver/caddy",
+      "split": "dev",
+      "category": "code-understanding",
+      "latencyMs": 4322.6597480000055,
+      "complete": true,
+      "returnedChars": 6864,
+      "ranges": [
+        {
+          "path": "caddyconfig/caddyfile/dispenser.go",
+          "start_line": 1,
+          "end_line": 195
+        },
+        {
+          "path": "caddyconfig/caddyfile/dispenser.go",
+          "start_line": 454,
+          "end_line": 504
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "status": "complete",
+        "stop": [],
+        "usage": {
+          "provider_request_attempts": 4,
+          "provider_input_tokens_reported": 157867,
+          "provider_input_tokens_known_subtotal": 157867,
+          "provider_input_tokens_estimated": 157867,
+          "estimated_cost_usd": 0.006630414,
+          "reported_cost_usd": null,
+          "attempts_with_unknown_usage": 0,
+          "transmitted_bytes": 612264,
+          "elapsed_ms": 4318
+        },
+        "measuredTokens": 2586
+      }
+    },
+    {
+      "arm": "jevgrep",
+      "id": "caddyserver__caddy-5995:change",
+      "task": "caddyserver__caddy-5995",
+      "repository": "caddyserver/caddy",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 4359.298303000003,
+      "complete": true,
+      "returnedChars": 6717,
+      "ranges": [
+        {
+          "path": "replacer.go",
+          "start_line": 351,
+          "end_line": 354
+        },
+        {
+          "path": "caddyconfig/caddyfile/lexer.go",
+          "start_line": 97,
+          "end_line": 118
+        },
+        {
+          "path": "caddyconfig/caddyfile/lexer.go",
+          "start_line": 191,
+          "end_line": 296
+        },
+        {
+          "path": "replacer.go",
+          "start_line": 132,
+          "end_line": 245
+        },
+        {
+          "path": "caddyconfig/caddyfile/parse.go",
+          "start_line": 489,
+          "end_line": 517
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 1,
+        "reciprocalRank": 0.25,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 4,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "status": "complete",
+        "stop": [],
+        "usage": {
+          "provider_request_attempts": 4,
+          "provider_input_tokens_reported": 164945,
+          "provider_input_tokens_known_subtotal": 164945,
+          "provider_input_tokens_estimated": 164945,
+          "estimated_cost_usd": 0.00692769,
+          "reported_cost_usd": null,
+          "attempts_with_unknown_usage": 0,
+          "transmitted_bytes": 639748,
+          "elapsed_ms": 4354
+        },
+        "measuredTokens": 3160
+      }
+    },
+    {
+      "arm": "jevgrep",
+      "id": "caddyserver__caddy-6411:change",
+      "task": "caddyserver__caddy-6411",
+      "repository": "caddyserver/caddy",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 4199.883277000001,
+      "complete": true,
+      "returnedChars": 8152,
+      "ranges": [
+        {
+          "path": "replacer.go",
+          "start_line": 162,
+          "end_line": 442
+        },
+        {
+          "path": "caddyconfig/caddyfile/parse.go",
+          "start_line": 568,
+          "end_line": 586
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "status": "complete",
+        "stop": [],
+        "usage": {
+          "provider_request_attempts": 5,
+          "provider_input_tokens_reported": 169702,
+          "provider_input_tokens_known_subtotal": 169702,
+          "provider_input_tokens_estimated": 169702,
+          "estimated_cost_usd": 0.007127484,
+          "reported_cost_usd": null,
+          "attempts_with_unknown_usage": 0,
+          "transmitted_bytes": 655176,
+          "elapsed_ms": 4195
+        },
+        "measuredTokens": 3110
+      }
+    },
+    {
+      "arm": "jevgrep",
+      "id": "gin-gonic__gin-2755:change",
+      "task": "gin-gonic__gin-2755",
+      "repository": "gin-gonic/gin",
+      "split": "heldout",
+      "category": "change-localization",
+      "latencyMs": 1725.6249509999907,
+      "complete": true,
+      "returnedChars": 7276,
+      "ranges": [
+        {
+          "path": "tree.go",
+          "start_line": 402,
+          "end_line": 561
+        },
+        {
+          "path": "gin.go",
+          "start_line": 510,
+          "end_line": 613
+        },
+        {
+          "path": "test_helpers.go",
+          "start_line": 1,
+          "end_line": 16
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "status": "complete",
+        "stop": [],
+        "usage": {
+          "provider_request_attempts": 2,
+          "provider_input_tokens_reported": 62201,
+          "provider_input_tokens_known_subtotal": 62201,
+          "provider_input_tokens_estimated": 62201,
+          "estimated_cost_usd": 0.002612442,
+          "reported_cost_usd": null,
+          "attempts_with_unknown_usage": 0,
+          "transmitted_bytes": 244478,
+          "elapsed_ms": 1721
+        },
+        "measuredTokens": 3391
+      }
+    },
+    {
+      "arm": "jevgrep",
+      "id": "gin-gonic__gin-2755:understand",
+      "task": "gin-gonic__gin-2755",
+      "repository": "gin-gonic/gin",
+      "split": "heldout",
+      "category": "code-understanding",
+      "latencyMs": 1842.901589000001,
+      "complete": true,
+      "returnedChars": 5037,
+      "ranges": [
+        {
+          "path": "tree.go",
+          "start_line": 402,
+          "end_line": 409
+        },
+        {
+          "path": "tree.go",
+          "start_line": 482,
+          "end_line": 561
+        },
+        {
+          "path": "tree.go",
+          "start_line": 627,
+          "end_line": 706
+        },
+        {
+          "path": "tree.go",
+          "start_line": 771,
+          "end_line": 793
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 0,
+        "reciprocalRank": 0,
+        "evidenceCoverage": 0,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "status": "complete",
+        "stop": [],
+        "usage": {
+          "provider_request_attempts": 2,
+          "provider_input_tokens_reported": 60821,
+          "provider_input_tokens_known_subtotal": 60821,
+          "provider_input_tokens_estimated": 60821,
+          "estimated_cost_usd": 0.002554482,
+          "reported_cost_usd": null,
+          "attempts_with_unknown_usage": 0,
+          "transmitted_bytes": 240426,
+          "elapsed_ms": 1837
+        },
+        "measuredTokens": 2683
+      }
+    },
+    {
+      "arm": "jevgrep",
+      "id": "gin-gonic__gin-4003:change",
+      "task": "gin-gonic__gin-4003",
+      "repository": "gin-gonic/gin",
+      "split": "heldout",
+      "category": "change-localization",
+      "latencyMs": 2110.4707849999977,
+      "complete": true,
+      "returnedChars": 9933,
+      "ranges": [
+        {
+          "path": "gin.go",
+          "start_line": 623,
+          "end_line": 732
+        },
+        {
+          "path": "gin.go",
+          "start_line": 92,
+          "end_line": 182
+        },
+        {
+          "path": "gin.go",
+          "start_line": 276,
+          "end_line": 373
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "status": "complete",
+        "stop": [],
+        "usage": {
+          "provider_request_attempts": 2,
+          "provider_input_tokens_reported": 69554,
+          "provider_input_tokens_known_subtotal": 69554,
+          "provider_input_tokens_estimated": 69554,
+          "estimated_cost_usd": 0.002921268,
+          "reported_cost_usd": null,
+          "attempts_with_unknown_usage": 0,
+          "transmitted_bytes": 271429,
+          "elapsed_ms": 2104
+        },
+        "measuredTokens": 3400
+      }
+    },
+    {
+      "arm": "jevgrep",
+      "id": "gin-gonic__gin-3741:change",
+      "task": "gin-gonic__gin-3741",
+      "repository": "gin-gonic/gin",
+      "split": "heldout",
+      "category": "change-localization",
+      "latencyMs": 1705.716226000004,
+      "complete": true,
+      "returnedChars": 6785,
+      "ranges": [
+        {
+          "path": "logger.go",
+          "start_line": 1,
+          "end_line": 270
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "status": "complete",
+        "stop": [],
+        "usage": {
+          "provider_request_attempts": 2,
+          "provider_input_tokens_reported": 66060,
+          "provider_input_tokens_known_subtotal": 66060,
+          "provider_input_tokens_estimated": 66060,
+          "estimated_cost_usd": 0.00277452,
+          "reported_cost_usd": null,
+          "attempts_with_unknown_usage": 0,
+          "transmitted_bytes": 258497,
+          "elapsed_ms": 1702
+        },
+        "measuredTokens": 2476
+      }
+    },
+    {
+      "arm": "jevgrep",
+      "id": "gin-gonic__gin-3741:understand",
+      "task": "gin-gonic__gin-3741",
+      "repository": "gin-gonic/gin",
+      "split": "heldout",
+      "category": "code-understanding",
+      "latencyMs": 1664.5059980000078,
+      "complete": true,
+      "returnedChars": 6785,
+      "ranges": [
+        {
+          "path": "logger.go",
+          "start_line": 1,
+          "end_line": 270
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "status": "complete",
+        "stop": [],
+        "usage": {
+          "provider_request_attempts": 2,
+          "provider_input_tokens_reported": 65786,
+          "provider_input_tokens_known_subtotal": 65786,
+          "provider_input_tokens_estimated": 65786,
+          "estimated_cost_usd": 0.002763012,
+          "reported_cost_usd": null,
+          "attempts_with_unknown_usage": 0,
+          "transmitted_bytes": 257665,
+          "elapsed_ms": 1660
+        },
+        "measuredTokens": 2477
+      }
+    },
+    {
+      "arm": "jevgrep",
+      "id": "gin-gonic__gin-2121:change",
+      "task": "gin-gonic__gin-2121",
+      "repository": "gin-gonic/gin",
+      "split": "heldout",
+      "category": "change-localization",
+      "latencyMs": 1456.4844400000002,
+      "complete": true,
+      "returnedChars": 7184,
+      "ranges": [
+        {
+          "path": "render/reader.go",
+          "start_line": 1,
+          "end_line": 45
+        },
+        {
+          "path": "context.go",
+          "start_line": 770,
+          "end_line": 941
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "status": "complete",
+        "stop": [],
+        "usage": {
+          "provider_request_attempts": 2,
+          "provider_input_tokens_reported": 54872,
+          "provider_input_tokens_known_subtotal": 54872,
+          "provider_input_tokens_estimated": 54872,
+          "estimated_cost_usd": 0.002304624,
+          "reported_cost_usd": null,
+          "attempts_with_unknown_usage": 0,
+          "transmitted_bytes": 216909,
+          "elapsed_ms": 1453
+        },
+        "measuredTokens": 2520
+      }
+    },
+    {
+      "arm": "jevgrep",
+      "id": "gin-gonic__gin-2121:understand",
+      "task": "gin-gonic__gin-2121",
+      "repository": "gin-gonic/gin",
+      "split": "heldout",
+      "category": "code-understanding",
+      "latencyMs": 1478.148543999996,
+      "complete": true,
+      "returnedChars": 8569,
+      "ranges": [
+        {
+          "path": "render/reader.go",
+          "start_line": 1,
+          "end_line": 45
+        },
+        {
+          "path": "context.go",
+          "start_line": 862,
+          "end_line": 941
+        },
+        {
+          "path": "render/json.go",
+          "start_line": 115,
+          "end_line": 191
+        },
+        {
+          "path": "render/protobuf.go",
+          "start_line": 1,
+          "end_line": 36
+        },
+        {
+          "path": "render/msgpack.go",
+          "start_line": 1,
+          "end_line": 35
+        },
+        {
+          "path": "render/yaml.go",
+          "start_line": 1,
+          "end_line": 36
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "status": "complete",
+        "stop": [],
+        "usage": {
+          "provider_request_attempts": 2,
+          "provider_input_tokens_reported": 53512,
+          "provider_input_tokens_known_subtotal": 53512,
+          "provider_input_tokens_estimated": 53512,
+          "estimated_cost_usd": 0.002247504,
+          "reported_cost_usd": null,
+          "attempts_with_unknown_usage": 0,
+          "transmitted_bytes": 212137,
+          "elapsed_ms": 1473
+        },
+        "measuredTokens": 3197
+      }
+    },
+    {
+      "arm": "jevgrep",
+      "id": "gin-gonic__gin-3820:change",
+      "task": "gin-gonic__gin-3820",
+      "repository": "gin-gonic/gin",
+      "split": "heldout",
+      "category": "change-localization",
+      "latencyMs": 1881.6941649999935,
+      "complete": true,
+      "returnedChars": 8331,
+      "ranges": [
+        {
+          "path": "binding/multipart_form_mapping.go",
+          "start_line": 1,
+          "end_line": 74
+        },
+        {
+          "path": "binding/form_mapping.go",
+          "start_line": 1,
+          "end_line": 199
+        },
+        {
+          "path": "binding/form.go",
+          "start_line": 1,
+          "end_line": 62
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 0,
+        "reciprocalRank": 0,
+        "evidenceCoverage": 0,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": null,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "status": "complete",
+        "stop": [],
+        "usage": {
+          "provider_request_attempts": 2,
+          "provider_input_tokens_reported": 67867,
+          "provider_input_tokens_known_subtotal": 67867,
+          "provider_input_tokens_estimated": 67867,
+          "estimated_cost_usd": 0.002850414,
+          "reported_cost_usd": null,
+          "attempts_with_unknown_usage": 0,
+          "transmitted_bytes": 264974,
+          "elapsed_ms": 1877
+        },
+        "measuredTokens": 3288
+      }
+    },
+    {
+      "arm": "jevgrep",
+      "id": "gin-gonic__gin-3227:change",
+      "task": "gin-gonic__gin-3227",
+      "repository": "gin-gonic/gin",
+      "split": "heldout",
+      "category": "change-localization",
+      "latencyMs": 1716.283819999997,
+      "complete": true,
+      "returnedChars": 8040,
+      "ranges": [
+        {
+          "path": "gin.go",
+          "start_line": 588,
+          "end_line": 704
+        },
+        {
+          "path": "gin.go",
+          "start_line": 78,
+          "end_line": 168
+        },
+        {
+          "path": "tree.go",
+          "start_line": 836,
+          "end_line": 871
+        },
+        {
+          "path": "tree.go",
+          "start_line": 413,
+          "end_line": 420
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 0,
+        "reciprocalRank": 0,
+        "evidenceCoverage": 0,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": null,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "status": "complete",
+        "stop": [],
+        "usage": {
+          "provider_request_attempts": 2,
+          "provider_input_tokens_reported": 66470,
+          "provider_input_tokens_known_subtotal": 66470,
+          "provider_input_tokens_estimated": 66470,
+          "estimated_cost_usd": 0.00279174,
+          "reported_cost_usd": null,
+          "attempts_with_unknown_usage": 0,
+          "transmitted_bytes": 260476,
+          "elapsed_ms": 1712
+        },
+        "measuredTokens": 3050
+      }
+    },
+    {
+      "arm": "jevgrep",
+      "id": "sharkdp__bat-562:change",
+      "task": "sharkdp__bat-562",
+      "repository": "sharkdp/bat",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 849.9804139999906,
+      "complete": true,
+      "returnedChars": 11285,
+      "ranges": [
+        {
+          "path": "src/clap_app.rs",
+          "start_line": 303,
+          "end_line": 427
+        },
+        {
+          "path": "src/main.rs",
+          "start_line": 196,
+          "end_line": 259
+        },
+        {
+          "path": "src/clap_app.rs",
+          "start_line": 1,
+          "end_line": 94
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 1,
+        "reciprocalRank": 0.3333333333333333,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 3,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "status": "complete",
+        "stop": [],
+        "usage": {
+          "provider_request_attempts": 1,
+          "provider_input_tokens_reported": 27975,
+          "provider_input_tokens_known_subtotal": 27975,
+          "provider_input_tokens_estimated": 27975,
+          "estimated_cost_usd": 0.00117495,
+          "reported_cost_usd": null,
+          "attempts_with_unknown_usage": 0,
+          "transmitted_bytes": 129249,
+          "elapsed_ms": 846
+        },
+        "measuredTokens": 3198
+      }
+    },
+    {
+      "arm": "jevgrep",
+      "id": "sharkdp__bat-2650:change",
+      "task": "sharkdp__bat-2650",
+      "repository": "sharkdp/bat",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 2649.2729090000066,
+      "complete": true,
+      "returnedChars": 9474,
+      "ranges": [
+        {
+          "path": "src/syntax_mapping.rs",
+          "start_line": 212,
+          "end_line": 251
+        },
+        {
+          "path": "src/assets.rs",
+          "start_line": 169,
+          "end_line": 237
+        },
+        {
+          "path": "src/assets.rs",
+          "start_line": 325,
+          "end_line": 352
+        },
+        {
+          "path": "src/assets.rs",
+          "start_line": 616,
+          "end_line": 685
+        },
+        {
+          "path": "src/syntax_mapping.rs",
+          "start_line": 1,
+          "end_line": 35
+        },
+        {
+          "path": "src/input.rs",
+          "start_line": 113,
+          "end_line": 127
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "status": "complete",
+        "stop": [],
+        "usage": {
+          "provider_request_attempts": 2,
+          "provider_input_tokens_reported": 76634,
+          "provider_input_tokens_known_subtotal": 76634,
+          "provider_input_tokens_estimated": 76634,
+          "estimated_cost_usd": 0.003218628,
+          "reported_cost_usd": null,
+          "attempts_with_unknown_usage": 0,
+          "transmitted_bytes": 336344,
+          "elapsed_ms": 2645
+        },
+        "measuredTokens": 3290
+      }
+    },
+    {
+      "arm": "jevgrep",
+      "id": "sharkdp__bat-2201:change",
+      "task": "sharkdp__bat-2201",
+      "repository": "sharkdp/bat",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 2112.4490430000005,
+      "complete": true,
+      "returnedChars": 11094,
+      "ranges": [
+        {
+          "path": "src/bin/bat/app.rs",
+          "start_line": 39,
+          "end_line": 145
+        },
+        {
+          "path": "src/bin/bat/clap_app.rs",
+          "start_line": 238,
+          "end_line": 317
+        },
+        {
+          "path": "src/controller.rs",
+          "start_line": 24,
+          "end_line": 102
+        },
+        {
+          "path": "src/output.rs",
+          "start_line": 27,
+          "end_line": 45
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 1,
+        "reciprocalRank": 0.5,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 2,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "status": "complete",
+        "stop": [],
+        "usage": {
+          "provider_request_attempts": 2,
+          "provider_input_tokens_reported": 67799,
+          "provider_input_tokens_known_subtotal": 67799,
+          "provider_input_tokens_estimated": 67799,
+          "estimated_cost_usd": 0.002847558,
+          "reported_cost_usd": null,
+          "attempts_with_unknown_usage": 0,
+          "transmitted_bytes": 298429,
+          "elapsed_ms": 2107
+        },
+        "measuredTokens": 3290
+      }
+    },
+    {
+      "arm": "jevgrep",
+      "id": "sharkdp__bat-2393:change",
+      "task": "sharkdp__bat-2393",
+      "repository": "sharkdp/bat",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 2057.968455999988,
+      "complete": true,
+      "returnedChars": 10467,
+      "ranges": [
+        {
+          "path": "src/bin/bat/main.rs",
+          "start_line": 1,
+          "end_line": 88
+        },
+        {
+          "path": "src/bin/bat/assets.rs",
+          "start_line": 1,
+          "end_line": 65
+        },
+        {
+          "path": "src/bin/bat/clap_app.rs",
+          "start_line": 533,
+          "end_line": 605
+        },
+        {
+          "path": "src/bin/bat/main.rs",
+          "start_line": 289,
+          "end_line": 371
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0.20833333333333334,
+        "recallAt5": 0.7083333333333334,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 0.7083333333333334,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "status": "complete",
+        "stop": [],
+        "usage": {
+          "provider_request_attempts": 2,
+          "provider_input_tokens_reported": 67294,
+          "provider_input_tokens_known_subtotal": 67294,
+          "provider_input_tokens_estimated": 67294,
+          "estimated_cost_usd": 0.002826348,
+          "reported_cost_usd": null,
+          "attempts_with_unknown_usage": 0,
+          "transmitted_bytes": 296319,
+          "elapsed_ms": 2053
+        },
+        "measuredTokens": 3263
+      }
+    },
+    {
+      "arm": "jevgrep",
+      "id": "sharkdp__bat-3108:change",
+      "task": "sharkdp__bat-3108",
+      "repository": "sharkdp/bat",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 2645.693391000008,
+      "complete": true,
+      "returnedChars": 11322,
+      "ranges": [
+        {
+          "path": "src/bin/bat/app.rs",
+          "start_line": 98,
+          "end_line": 173
+        },
+        {
+          "path": "src/bin/bat/app.rs",
+          "start_line": 246,
+          "end_line": 325
+        },
+        {
+          "path": "src/controller.rs",
+          "start_line": 28,
+          "end_line": 126
+        },
+        {
+          "path": "src/output.rs",
+          "start_line": 27,
+          "end_line": 45
+        },
+        {
+          "path": "src/output.rs",
+          "start_line": 145,
+          "end_line": 164
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0.5,
+        "recallAt5": 0.5,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 0.5,
+        "negativeCorrect": null,
+        "fileRecall": 0.5,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "status": "complete",
+        "stop": [],
+        "usage": {
+          "provider_request_attempts": 3,
+          "provider_input_tokens_reported": 87776,
+          "provider_input_tokens_known_subtotal": 87776,
+          "provider_input_tokens_estimated": 87776,
+          "estimated_cost_usd": 0.003686592,
+          "reported_cost_usd": null,
+          "attempts_with_unknown_usage": 0,
+          "transmitted_bytes": 383434,
+          "elapsed_ms": 2640
+        },
+        "measuredTokens": 3329
+      }
+    },
+    {
+      "arm": "jevgrep",
+      "id": "sharkdp__bat-2835:change",
+      "task": "sharkdp__bat-2835",
+      "repository": "sharkdp/bat",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 2589.8215609999897,
+      "complete": true,
+      "returnedChars": 14749,
+      "ranges": [
+        {
+          "path": "src/printer.rs",
+          "start_line": 315,
+          "end_line": 416
+        },
+        {
+          "path": "src/printer.rs",
+          "start_line": 544,
+          "end_line": 695
+        },
+        {
+          "path": "src/controller.rs",
+          "start_line": 127,
+          "end_line": 236
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": 0
+      },
+      "error": null,
+      "detail": {
+        "status": "complete",
+        "stop": [],
+        "usage": {
+          "provider_request_attempts": 2,
+          "provider_input_tokens_reported": 75606,
+          "provider_input_tokens_known_subtotal": 75606,
+          "provider_input_tokens_estimated": 75606,
+          "estimated_cost_usd": 0.003175452,
+          "reported_cost_usd": null,
+          "attempts_with_unknown_usage": 0,
+          "transmitted_bytes": 331126,
+          "elapsed_ms": 2584
+        },
+        "measuredTokens": 3379
+      }
+    },
+    {
+      "arm": "jevgrep",
+      "id": "tokio-rs__axum-1730:change",
+      "task": "tokio-rs__axum-1730",
+      "repository": "tokio-rs/axum",
+      "split": "heldout",
+      "category": "change-localization",
+      "latencyMs": 7863.457089000003,
+      "complete": true,
+      "returnedChars": 10015,
+      "ranges": [
+        {
+          "path": "axum/src/routing/mod.rs",
+          "start_line": 384,
+          "end_line": 479
+        },
+        {
+          "path": "axum/src/routing/mod.rs",
+          "start_line": 613,
+          "end_line": 682
+        },
+        {
+          "path": "axum/src/routing/method_routing.rs",
+          "start_line": 708,
+          "end_line": 785
+        },
+        {
+          "path": "axum/src/routing/method_routing.rs",
+          "start_line": 905,
+          "end_line": 948
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 0,
+        "reciprocalRank": 0,
+        "evidenceCoverage": 0,
+        "negativeCorrect": null,
+        "fileRecall": 0,
+        "firstOverlapRank": null,
+        "complementaryCoverage": 0
+      },
+      "error": null,
+      "detail": {
+        "status": "complete",
+        "stop": [],
+        "usage": {
+          "provider_request_attempts": 6,
+          "provider_input_tokens_reported": 221124,
+          "provider_input_tokens_known_subtotal": 221124,
+          "provider_input_tokens_estimated": 221124,
+          "estimated_cost_usd": 0.009287208,
+          "reported_cost_usd": null,
+          "attempts_with_unknown_usage": 0,
+          "transmitted_bytes": 888181,
+          "elapsed_ms": 7855
+        },
+        "measuredTokens": 3328
+      }
+    },
+    {
+      "arm": "jevgrep",
+      "id": "tokio-rs__axum-1119:change",
+      "task": "tokio-rs__axum-1119",
+      "repository": "tokio-rs/axum",
+      "split": "heldout",
+      "category": "change-localization",
+      "latencyMs": 5688.28874399999,
+      "complete": true,
+      "returnedChars": 8545,
+      "ranges": [
+        {
+          "path": "axum/src/routing/mod.rs",
+          "start_line": 473,
+          "end_line": 588
+        },
+        {
+          "path": "axum/src/routing/tests/mod.rs",
+          "start_line": 297,
+          "end_line": 458
+        },
+        {
+          "path": "axum/src/routing/tests/nest.rs",
+          "start_line": 454,
+          "end_line": 456
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 0,
+        "reciprocalRank": 0,
+        "evidenceCoverage": 0,
+        "negativeCorrect": null,
+        "fileRecall": 0,
+        "firstOverlapRank": null,
+        "complementaryCoverage": 0.6
+      },
+      "error": null,
+      "detail": {
+        "status": "complete",
+        "stop": [],
+        "usage": {
+          "provider_request_attempts": 4,
+          "provider_input_tokens_reported": 165406,
+          "provider_input_tokens_known_subtotal": 165406,
+          "provider_input_tokens_estimated": 165406,
+          "estimated_cost_usd": 0.006947052,
+          "reported_cost_usd": null,
+          "attempts_with_unknown_usage": 0,
+          "transmitted_bytes": 674673,
+          "elapsed_ms": 5681
+        },
+        "measuredTokens": 3121
+      }
+    },
+    {
+      "arm": "jevgrep",
+      "id": "tokio-rs__axum-1934:change",
+      "task": "tokio-rs__axum-1934",
+      "repository": "tokio-rs/axum",
+      "split": "heldout",
+      "category": "change-localization",
+      "latencyMs": 7778.7662839999975,
+      "complete": false,
+      "returnedChars": 0,
+      "ranges": [],
+      "metrics": null,
+      "error": null,
+      "detail": {
+        "status": "rejected",
+        "stop": [
+          "SCOPE_EXCEEDS_SCAN_BUDGET"
+        ],
+        "usage": {
+          "provider_request_attempts": 0,
+          "provider_input_tokens_reported": 0,
+          "provider_input_tokens_known_subtotal": 0,
+          "provider_input_tokens_estimated": 0,
+          "estimated_cost_usd": 0,
+          "reported_cost_usd": null,
+          "attempts_with_unknown_usage": 0,
+          "transmitted_bytes": 0,
+          "elapsed_ms": 7771
+        },
+        "measuredTokens": 361
+      }
+    },
+    {
+      "arm": "jevgrep",
+      "id": "tokio-rs__axum-2096:change",
+      "task": "tokio-rs__axum-2096",
+      "repository": "tokio-rs/axum",
+      "split": "heldout",
+      "category": "change-localization",
+      "latencyMs": 15345.054787999994,
+      "complete": false,
+      "returnedChars": 0,
+      "ranges": [],
+      "metrics": null,
+      "error": null,
+      "detail": {
+        "status": "rejected",
+        "stop": [
+          "SCOPE_EXCEEDS_SCAN_BUDGET"
+        ],
+        "usage": {
+          "provider_request_attempts": 0,
+          "provider_input_tokens_reported": 0,
+          "provider_input_tokens_known_subtotal": 0,
+          "provider_input_tokens_estimated": 0,
+          "estimated_cost_usd": 0,
+          "reported_cost_usd": null,
+          "attempts_with_unknown_usage": 0,
+          "transmitted_bytes": 0,
+          "elapsed_ms": 15338
+        },
+        "measuredTokens": 361
+      }
+    }
+  ]
+}

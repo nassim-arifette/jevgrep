@@ -1,0 +1,1679 @@
+{
+  "rows": [
+    {
+      "arm": "openai-solo",
+      "id": "caddyserver__caddy-6288:change",
+      "task": "caddyserver__caddy-6288",
+      "repository": "caddyserver/caddy",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 2798.8257360000002,
+      "complete": true,
+      "returnedChars": 4000,
+      "ranges": [
+        {
+          "path": "caddyconfig/httpcaddyfile/httptype.go",
+          "start_line": 1386,
+          "end_line": 1465
+        },
+        {
+          "path": "caddyconfig/caddyfile/lexer.go",
+          "start_line": 213,
+          "end_line": 233
+        },
+        {
+          "path": "caddyconfig/caddyfile/lexer.go",
+          "start_line": 180,
+          "end_line": 203
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 0,
+        "reciprocalRank": 0,
+        "evidenceCoverage": 0,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": null,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6-luna",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 164583,
+          "cachedTokens": 0,
+          "outputTokens": 82,
+          "reasoningTokens": 0
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "caddyserver__caddy-6051:change",
+      "task": "caddyserver__caddy-6051",
+      "repository": "caddyserver/caddy",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 2339.385163,
+      "complete": true,
+      "returnedChars": 2030,
+      "ranges": [
+        {
+          "path": "caddyconfig/caddyfile/lexer.go",
+          "start_line": 297,
+          "end_line": 336
+        },
+        {
+          "path": "caddyconfig/caddyfile/formatter.go",
+          "start_line": 23,
+          "end_line": 28
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6-luna",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 161557,
+          "cachedTokens": 0,
+          "outputTokens": 56,
+          "reasoningTokens": 0
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "caddyserver__caddy-6051:understand",
+      "task": "caddyserver__caddy-6051",
+      "repository": "caddyserver/caddy",
+      "split": "dev",
+      "category": "code-understanding",
+      "latencyMs": 2317.895006,
+      "complete": true,
+      "returnedChars": 1659,
+      "ranges": [
+        {
+          "path": "caddyconfig/caddyfile/lexer.go",
+          "start_line": 297,
+          "end_line": 336
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6-luna",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 161454,
+          "cachedTokens": 0,
+          "outputTokens": 34,
+          "reasoningTokens": 0
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "caddyserver__caddy-4774:change",
+      "task": "caddyserver__caddy-4774",
+      "repository": "caddyserver/caddy",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 8311.521416,
+      "complete": true,
+      "returnedChars": 5064,
+      "ranges": [
+        {
+          "path": "caddyconfig/httpcaddyfile/options.go",
+          "start_line": 28,
+          "end_line": 55
+        },
+        {
+          "path": "caddyconfig/httpcaddyfile/options.go",
+          "start_line": 270,
+          "end_line": 316
+        },
+        {
+          "path": "caddyconfig/httpcaddyfile/addresses.go",
+          "start_line": 177,
+          "end_line": 241
+        },
+        {
+          "path": "caddyconfig/httpcaddyfile/httptype.go",
+          "start_line": 360,
+          "end_line": 376
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0.14285714285714285,
+        "recallAt5": 0.5714285714285714,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 0.5714285714285714,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": 1
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6-luna",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 132334,
+          "cachedTokens": 0,
+          "outputTokens": 103,
+          "reasoningTokens": 0
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "caddyserver__caddy-4774:understand",
+      "task": "caddyserver__caddy-4774",
+      "repository": "caddyserver/caddy",
+      "split": "dev",
+      "category": "code-understanding",
+      "latencyMs": 18680.628037,
+      "complete": true,
+      "returnedChars": 4865,
+      "ranges": [
+        {
+          "path": "caddyconfig/httpcaddyfile/addresses.go",
+          "start_line": 32,
+          "end_line": 132
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6-luna",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 131936,
+          "cachedTokens": 0,
+          "outputTokens": 35,
+          "reasoningTokens": 0
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "caddyserver__caddy-5761:change",
+      "task": "caddyserver__caddy-5761",
+      "repository": "caddyserver/caddy",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 54882.219544,
+      "complete": true,
+      "returnedChars": 2554,
+      "ranges": [
+        {
+          "path": "caddyconfig/caddyfile/lexer.go",
+          "start_line": 139,
+          "end_line": 163
+        },
+        {
+          "path": "caddyconfig/caddyfile/lexer.go",
+          "start_line": 283,
+          "end_line": 322
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6-luna",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 156042,
+          "cachedTokens": 0,
+          "outputTokens": 56,
+          "reasoningTokens": 0
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "caddyserver__caddy-5761:understand",
+      "task": "caddyserver__caddy-5761",
+      "repository": "caddyserver/caddy",
+      "split": "dev",
+      "category": "code-understanding",
+      "latencyMs": 3114.5244729999995,
+      "complete": true,
+      "returnedChars": 1370,
+      "ranges": [
+        {
+          "path": "caddyconfig/caddyfile/lexer.go",
+          "start_line": 97,
+          "end_line": 107
+        },
+        {
+          "path": "caddyconfig/caddyfile/lexer.go",
+          "start_line": 107,
+          "end_line": 138
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 0,
+        "reciprocalRank": 0,
+        "evidenceCoverage": 0,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6-luna",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 155979,
+          "cachedTokens": 0,
+          "outputTokens": 56,
+          "reasoningTokens": 0
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "caddyserver__caddy-5404:change",
+      "task": "caddyserver__caddy-5404",
+      "repository": "caddyserver/caddy",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 2481.300546000002,
+      "complete": true,
+      "returnedChars": 2262,
+      "ranges": [
+        {
+          "path": "caddyconfig/caddyfile/lexer.go",
+          "start_line": 283,
+          "end_line": 315
+        },
+        {
+          "path": "caddyconfig/caddyfile/lexer.go",
+          "start_line": 166,
+          "end_line": 186
+        },
+        {
+          "path": "caddyconfig/caddyfile/lexer_fuzz.go",
+          "start_line": 19,
+          "end_line": 28
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0.6666666666666666,
+        "recallAt5": 0.6666666666666666,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 0.6666666666666666,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6-luna",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 150812,
+          "cachedTokens": 0,
+          "outputTokens": 80,
+          "reasoningTokens": 0
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "caddyserver__caddy-5404:understand",
+      "task": "caddyserver__caddy-5404",
+      "repository": "caddyserver/caddy",
+      "split": "dev",
+      "category": "code-understanding",
+      "latencyMs": 18390.476294999997,
+      "complete": true,
+      "returnedChars": 1511,
+      "ranges": [
+        {
+          "path": "caddyconfig/caddyfile/lexer.go",
+          "start_line": 283,
+          "end_line": 315
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6-luna",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 149631,
+          "cachedTokens": 0,
+          "outputTokens": 34,
+          "reasoningTokens": 0
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "caddyserver__caddy-5870:change",
+      "task": "caddyserver__caddy-5870",
+      "repository": "caddyserver/caddy",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 8155.212394999999,
+      "complete": true,
+      "returnedChars": 10243,
+      "ranges": [
+        {
+          "path": "admin.go",
+          "start_line": 1079,
+          "end_line": 1240
+        },
+        {
+          "path": "admin.go",
+          "start_line": 957,
+          "end_line": 1023
+        },
+        {
+          "path": "caddy.go",
+          "start_line": 136,
+          "end_line": 256
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6-luna",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 157376,
+          "cachedTokens": 0,
+          "outputTokens": 61,
+          "reasoningTokens": 0
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "caddyserver__caddy-5870:understand",
+      "task": "caddyserver__caddy-5870",
+      "repository": "caddyserver/caddy",
+      "split": "dev",
+      "category": "code-understanding",
+      "latencyMs": 2228.929673999999,
+      "complete": true,
+      "returnedChars": 4956,
+      "ranges": [
+        {
+          "path": "admin.go",
+          "start_line": 1073,
+          "end_line": 1240
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6-luna",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 156916,
+          "cachedTokens": 0,
+          "outputTokens": 29,
+          "reasoningTokens": 0
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "caddyserver__caddy-5626:change",
+      "task": "caddyserver__caddy-5626",
+      "repository": "caddyserver/caddy",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 81019.570757,
+      "complete": true,
+      "returnedChars": 10871,
+      "ranges": [
+        {
+          "path": "caddyconfig/caddyfile/parse.go",
+          "start_line": 303,
+          "end_line": 335
+        },
+        {
+          "path": "caddyconfig/caddyfile/parse.go",
+          "start_line": 337,
+          "end_line": 515
+        },
+        {
+          "path": "caddyconfig/caddyfile/parse.go",
+          "start_line": 561,
+          "end_line": 613
+        },
+        {
+          "path": "caddyconfig/httpcaddyfile/directives.go",
+          "start_line": 285,
+          "end_line": 364
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 0.2,
+        "reciprocalRank": 0.5,
+        "evidenceCoverage": 0.2,
+        "negativeCorrect": null,
+        "fileRecall": 0.5,
+        "firstOverlapRank": 2,
+        "complementaryCoverage": 0
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6-luna",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 155079,
+          "cachedTokens": 0,
+          "outputTokens": 101,
+          "reasoningTokens": 0
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "caddyserver__caddy-5626:understand",
+      "task": "caddyserver__caddy-5626",
+      "repository": "caddyserver/caddy",
+      "split": "dev",
+      "category": "code-understanding",
+      "latencyMs": 19304.081564,
+      "complete": true,
+      "returnedChars": 421,
+      "ranges": [
+        {
+          "path": "caddyconfig/caddyfile/dispenser.go",
+          "start_line": 97,
+          "end_line": 114
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6-luna",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 154888,
+          "cachedTokens": 0,
+          "outputTokens": 34,
+          "reasoningTokens": 0
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "caddyserver__caddy-5995:change",
+      "task": "caddyserver__caddy-5995",
+      "repository": "caddyserver/caddy",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 8518.104296999998,
+      "complete": true,
+      "returnedChars": 2146,
+      "ranges": [
+        {
+          "path": "caddyconfig/caddyfile/lexer.go",
+          "start_line": 206,
+          "end_line": 211
+        },
+        {
+          "path": "replacer.go",
+          "start_line": 132,
+          "end_line": 187
+        },
+        {
+          "path": "caddyconfig/httpcaddyfile/shorthands.go",
+          "start_line": 81,
+          "end_line": 93
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 1,
+        "reciprocalRank": 0.5,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 2,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6-luna",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 160514,
+          "cachedTokens": 0,
+          "outputTokens": 74,
+          "reasoningTokens": 0
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "caddyserver__caddy-6411:change",
+      "task": "caddyserver__caddy-6411",
+      "repository": "caddyserver/caddy",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 19646.726666999995,
+      "complete": true,
+      "returnedChars": 2152,
+      "ranges": [
+        {
+          "path": "replacer.go",
+          "start_line": 337,
+          "end_line": 358
+        },
+        {
+          "path": "replacer.go",
+          "start_line": 407,
+          "end_line": 423
+        },
+        {
+          "path": "caddyconfig/httpcaddyfile/options.go",
+          "start_line": 204,
+          "end_line": 221
+        },
+        {
+          "path": "caddyconfig/httpcaddyfile/builtins.go",
+          "start_line": 290,
+          "end_line": 310
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6-luna",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 166502,
+          "cachedTokens": 0,
+          "outputTokens": 90,
+          "reasoningTokens": 0
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "gin-gonic__gin-2755:change",
+      "task": "gin-gonic__gin-2755",
+      "repository": "gin-gonic/gin",
+      "split": "heldout",
+      "category": "change-localization",
+      "latencyMs": 1719.111957000001,
+      "complete": true,
+      "returnedChars": 2759,
+      "ranges": [
+        {
+          "path": "gin.go",
+          "start_line": 499,
+          "end_line": 508
+        },
+        {
+          "path": "gin.go",
+          "start_line": 487,
+          "end_line": 497
+        },
+        {
+          "path": "tree.go",
+          "start_line": 407,
+          "end_line": 479
+        },
+        {
+          "path": "test_helpers.go",
+          "start_line": 9,
+          "end_line": 16
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 1,
+        "reciprocalRank": 0.3333333333333333,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 3,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6-luna",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 61479,
+          "cachedTokens": 0,
+          "outputTokens": 73,
+          "reasoningTokens": 0
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "gin-gonic__gin-2755:understand",
+      "task": "gin-gonic__gin-2755",
+      "repository": "gin-gonic/gin",
+      "split": "heldout",
+      "category": "code-understanding",
+      "latencyMs": 1481.8915239999988,
+      "complete": true,
+      "returnedChars": 4756,
+      "ranges": [
+        {
+          "path": "tree.go",
+          "start_line": 402,
+          "end_line": 408
+        },
+        {
+          "path": "tree.go",
+          "start_line": 410,
+          "end_line": 581
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 0,
+        "reciprocalRank": 0,
+        "evidenceCoverage": 0,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6-luna",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 60919,
+          "cachedTokens": 0,
+          "outputTokens": 42,
+          "reasoningTokens": 0
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "gin-gonic__gin-4003:change",
+      "task": "gin-gonic__gin-4003",
+      "repository": "gin-gonic/gin",
+      "split": "heldout",
+      "category": "change-localization",
+      "latencyMs": 1538.3430209999933,
+      "complete": true,
+      "returnedChars": 1852,
+      "ranges": [
+        {
+          "path": "gin.go",
+          "start_line": 646,
+          "end_line": 712
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6-luna",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 68768,
+          "cachedTokens": 0,
+          "outputTokens": 27,
+          "reasoningTokens": 0
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "gin-gonic__gin-3741:change",
+      "task": "gin-gonic__gin-3741",
+      "repository": "gin-gonic/gin",
+      "split": "heldout",
+      "category": "change-localization",
+      "latencyMs": 1484.7378920000046,
+      "complete": true,
+      "returnedChars": 475,
+      "ranges": [
+        {
+          "path": "logger.go",
+          "start_line": 81,
+          "end_line": 95
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6-luna",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 65687,
+          "cachedTokens": 0,
+          "outputTokens": 27,
+          "reasoningTokens": 0
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "gin-gonic__gin-3741:understand",
+      "task": "gin-gonic__gin-3741",
+      "repository": "gin-gonic/gin",
+      "split": "heldout",
+      "category": "code-understanding",
+      "latencyMs": 6604.733110000001,
+      "complete": true,
+      "returnedChars": 475,
+      "ranges": [
+        {
+          "path": "logger.go",
+          "start_line": 81,
+          "end_line": 95
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6-luna",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 65582,
+          "cachedTokens": 0,
+          "outputTokens": 27,
+          "reasoningTokens": 0
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "gin-gonic__gin-2121:change",
+      "task": "gin-gonic__gin-2121",
+      "repository": "gin-gonic/gin",
+      "split": "heldout",
+      "category": "change-localization",
+      "latencyMs": 7176.077377999987,
+      "complete": true,
+      "returnedChars": 1096,
+      "ranges": [
+        {
+          "path": "render/reader.go",
+          "start_line": 21,
+          "end_line": 45
+        },
+        {
+          "path": "context.go",
+          "start_line": 912,
+          "end_line": 920
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6-luna",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 54118,
+          "cachedTokens": 0,
+          "outputTokens": 44,
+          "reasoningTokens": 0
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "gin-gonic__gin-2121:understand",
+      "task": "gin-gonic__gin-2121",
+      "repository": "gin-gonic/gin",
+      "split": "heldout",
+      "category": "code-understanding",
+      "latencyMs": 1450.8837570000032,
+      "complete": true,
+      "returnedChars": 928,
+      "ranges": [
+        {
+          "path": "render/reader.go",
+          "start_line": 13,
+          "end_line": 45
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6-luna",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 53565,
+          "cachedTokens": 0,
+          "outputTokens": 29,
+          "reasoningTokens": 0
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "gin-gonic__gin-3820:change",
+      "task": "gin-gonic__gin-3820",
+      "repository": "gin-gonic/gin",
+      "split": "heldout",
+      "category": "change-localization",
+      "latencyMs": 2511.7580799999996,
+      "complete": true,
+      "returnedChars": 1519,
+      "ranges": [
+        {
+          "path": "binding/multipart_form_mapping.go",
+          "start_line": 26,
+          "end_line": 33
+        },
+        {
+          "path": "binding/multipart_form_mapping.go",
+          "start_line": 35,
+          "end_line": 61
+        },
+        {
+          "path": "binding/form_mapping.go",
+          "start_line": 88,
+          "end_line": 102
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 0,
+        "reciprocalRank": 0,
+        "evidenceCoverage": 0,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": null,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6-luna",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 66681,
+          "cachedTokens": 0,
+          "outputTokens": 67,
+          "reasoningTokens": 0
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "gin-gonic__gin-3227:change",
+      "task": "gin-gonic__gin-3227",
+      "repository": "gin-gonic/gin",
+      "split": "heldout",
+      "category": "change-localization",
+      "latencyMs": 2014.280838999999,
+      "complete": true,
+      "returnedChars": 2637,
+      "ranges": [
+        {
+          "path": "gin.go",
+          "start_line": 83,
+          "end_line": 99
+        },
+        {
+          "path": "gin.go",
+          "start_line": 620,
+          "end_line": 627
+        },
+        {
+          "path": "gin.go",
+          "start_line": 680,
+          "end_line": 690
+        },
+        {
+          "path": "tree.go",
+          "start_line": 652,
+          "end_line": 669
+        },
+        {
+          "path": "tree.go",
+          "start_line": 799,
+          "end_line": 803
+        },
+        {
+          "path": "tree.go",
+          "start_line": 860,
+          "end_line": 870
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 0,
+        "reciprocalRank": 0,
+        "evidenceCoverage": 0,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": null,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6-luna",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 65612,
+          "cachedTokens": 0,
+          "outputTokens": 102,
+          "reasoningTokens": 0
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "sharkdp__bat-562:change",
+      "task": "sharkdp__bat-562",
+      "repository": "sharkdp/bat",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 2139.9288490000035,
+      "complete": true,
+      "returnedChars": 4418,
+      "ranges": [
+        {
+          "path": "src/clap_app.rs",
+          "start_line": 21,
+          "end_line": 24
+        },
+        {
+          "path": "src/clap_app.rs",
+          "start_line": 378,
+          "end_line": 424
+        },
+        {
+          "path": "src/main.rs",
+          "start_line": 85,
+          "end_line": 99
+        },
+        {
+          "path": "src/main.rs",
+          "start_line": 198,
+          "end_line": 215
+        },
+        {
+          "path": "src/app.rs",
+          "start_line": 111,
+          "end_line": 135
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6-luna",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 27569,
+          "cachedTokens": 0,
+          "outputTokens": 96,
+          "reasoningTokens": 0
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "sharkdp__bat-2650:change",
+      "task": "sharkdp__bat-2650",
+      "repository": "sharkdp/bat",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 7730.695845000009,
+      "complete": true,
+      "returnedChars": 4964,
+      "ranges": [
+        {
+          "path": "src/assets.rs",
+          "start_line": 201,
+          "end_line": 235
+        },
+        {
+          "path": "src/assets.rs",
+          "start_line": 301,
+          "end_line": 339
+        },
+        {
+          "path": "src/syntax_mapping.rs",
+          "start_line": 212,
+          "end_line": 245
+        },
+        {
+          "path": "src/assets.rs",
+          "start_line": 651,
+          "end_line": 669
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 1,
+        "reciprocalRank": 0.3333333333333333,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 3,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6-luna",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 73741,
+          "cachedTokens": 0,
+          "outputTokens": 78,
+          "reasoningTokens": 0
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "sharkdp__bat-2201:change",
+      "task": "sharkdp__bat-2201",
+      "repository": "sharkdp/bat",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 2335.7638279999956,
+      "complete": true,
+      "returnedChars": 3932,
+      "ranges": [
+        {
+          "path": "src/bin/bat/clap_app.rs",
+          "start_line": 70,
+          "end_line": 81
+        },
+        {
+          "path": "src/bin/bat/clap_app.rs",
+          "start_line": 293,
+          "end_line": 318
+        },
+        {
+          "path": "src/bin/bat/app.rs",
+          "start_line": 52,
+          "end_line": 76
+        },
+        {
+          "path": "src/bin/bat/app.rs",
+          "start_line": 82,
+          "end_line": 105
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 1,
+        "reciprocalRank": 0.5,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 2,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6-luna",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 65690,
+          "cachedTokens": 0,
+          "outputTokens": 92,
+          "reasoningTokens": 0
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "sharkdp__bat-2393:change",
+      "task": "sharkdp__bat-2393",
+      "repository": "sharkdp/bat",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 2116.7030499999964,
+      "complete": true,
+      "returnedChars": 1718,
+      "ranges": [
+        {
+          "path": "src/bin/bat/main.rs",
+          "start_line": 63,
+          "end_line": 74
+        },
+        {
+          "path": "src/bin/bat/assets.rs",
+          "start_line": 21,
+          "end_line": 25
+        },
+        {
+          "path": "src/bin/bat/clap_app.rs",
+          "start_line": 554,
+          "end_line": 580
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0.08333333333333333,
+        "recallAt5": 0.08333333333333333,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 0.08333333333333333,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6-luna",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 66046,
+          "cachedTokens": 0,
+          "outputTokens": 71,
+          "reasoningTokens": 0
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "sharkdp__bat-3108:change",
+      "task": "sharkdp__bat-3108",
+      "repository": "sharkdp/bat",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 9279.727788999997,
+      "complete": true,
+      "returnedChars": 3333,
+      "ranges": [
+        {
+          "path": "src/bin/bat/app.rs",
+          "start_line": 101,
+          "end_line": 125
+        },
+        {
+          "path": "src/bin/bat/app.rs",
+          "start_line": 374,
+          "end_line": 399
+        },
+        {
+          "path": "src/bin/bat/clap_app.rs",
+          "start_line": 321,
+          "end_line": 348
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0.25,
+        "recallAt5": 0.5,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 0.5,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6-luna",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 85439,
+          "cachedTokens": 0,
+          "outputTokens": 71,
+          "reasoningTokens": 0
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "sharkdp__bat-2835:change",
+      "task": "sharkdp__bat-2835",
+      "repository": "sharkdp/bat",
+      "split": "dev",
+      "category": "change-localization",
+      "latencyMs": 1770.9268240000092,
+      "complete": true,
+      "returnedChars": 3446,
+      "ranges": [
+        {
+          "path": "src/printer.rs",
+          "start_line": 350,
+          "end_line": 414
+        },
+        {
+          "path": "src/printer.rs",
+          "start_line": 272,
+          "end_line": 303
+        }
+      ],
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": 0.5
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6-luna",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 73138,
+          "cachedTokens": 0,
+          "outputTokens": 46,
+          "reasoningTokens": 0
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "tokio-rs__axum-1730:change",
+      "task": "tokio-rs__axum-1730",
+      "repository": "tokio-rs/axum",
+      "split": "heldout",
+      "category": "change-localization",
+      "latencyMs": 36394.93783299999,
+      "complete": true,
+      "returnedChars": 8266,
+      "ranges": [
+        {
+          "path": "axum/src/routing/method_routing.rs",
+          "start_line": 622,
+          "end_line": 632
+        },
+        {
+          "path": "axum/src/routing/method_routing.rs",
+          "start_line": 734,
+          "end_line": 747
+        },
+        {
+          "path": "axum/src/routing/method_routing.rs",
+          "start_line": 907,
+          "end_line": 916
+        },
+        {
+          "path": "axum/src/routing/method_routing.rs",
+          "start_line": 1070,
+          "end_line": 1136
+        },
+        {
+          "path": "axum/src/routing/method_routing.rs",
+          "start_line": 1186,
+          "end_line": 1229
+        },
+        {
+          "path": "axum/src/routing/mod.rs",
+          "start_line": 374,
+          "end_line": 395
+        },
+        {
+          "path": "axum/src/routing/mod.rs",
+          "start_line": 397,
+          "end_line": 423
+        },
+        {
+          "path": "axum/src/routing/mod.rs",
+          "start_line": 613,
+          "end_line": 654
+        },
+        {
+          "path": "axum/src/routing/tests/mod.rs",
+          "start_line": 771,
+          "end_line": 782
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 0,
+        "reciprocalRank": 0,
+        "evidenceCoverage": 0,
+        "negativeCorrect": null,
+        "fileRecall": 0,
+        "firstOverlapRank": null,
+        "complementaryCoverage": 0
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6-luna",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 223094,
+          "cachedTokens": 0,
+          "outputTokens": 212,
+          "reasoningTokens": 0
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "tokio-rs__axum-1119:change",
+      "task": "tokio-rs__axum-1119",
+      "repository": "tokio-rs/axum",
+      "split": "heldout",
+      "category": "change-localization",
+      "latencyMs": 2758.7788480000017,
+      "complete": true,
+      "returnedChars": 3871,
+      "ranges": [
+        {
+          "path": "axum/src/routing/mod.rs",
+          "start_line": 487,
+          "end_line": 527
+        },
+        {
+          "path": "axum/src/routing/tests/mod.rs",
+          "start_line": 318,
+          "end_line": 388
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 0,
+        "reciprocalRank": 0,
+        "evidenceCoverage": 0,
+        "negativeCorrect": null,
+        "fileRecall": 0,
+        "firstOverlapRank": null,
+        "complementaryCoverage": 0.5
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6-luna",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 166869,
+          "cachedTokens": 0,
+          "outputTokens": 53,
+          "reasoningTokens": 0
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "tokio-rs__axum-1934:change",
+      "task": "tokio-rs__axum-1934",
+      "repository": "tokio-rs/axum",
+      "split": "heldout",
+      "category": "change-localization",
+      "latencyMs": 9216.828012999991,
+      "complete": true,
+      "returnedChars": 4627,
+      "ranges": [
+        {
+          "path": "axum/src/extract/matched_path.rs",
+          "start_line": 128,
+          "end_line": 169
+        },
+        {
+          "path": "axum/src/routing/path_router.rs",
+          "start_line": 275,
+          "end_line": 325
+        },
+        {
+          "path": "axum/src/routing/path_router.rs",
+          "start_line": 165,
+          "end_line": 194
+        },
+        {
+          "path": "axum/src/routing/tests/nest.rs",
+          "start_line": 203,
+          "end_line": 211
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 0,
+        "reciprocalRank": 0,
+        "evidenceCoverage": 0,
+        "negativeCorrect": null,
+        "fileRecall": 0.5,
+        "firstOverlapRank": null,
+        "complementaryCoverage": 0
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6-luna",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 235865,
+          "cachedTokens": 0,
+          "outputTokens": 98,
+          "reasoningTokens": 0
+        }
+      }
+    },
+    {
+      "arm": "openai-solo",
+      "id": "tokio-rs__axum-2096:change",
+      "task": "tokio-rs__axum-2096",
+      "repository": "tokio-rs/axum",
+      "split": "heldout",
+      "category": "change-localization",
+      "latencyMs": 36128.47625000001,
+      "complete": true,
+      "returnedChars": 4581,
+      "ranges": [
+        {
+          "path": "axum/src/routing/mod.rs",
+          "start_line": 148,
+          "end_line": 168
+        },
+        {
+          "path": "axum/src/routing/mod.rs",
+          "start_line": 182,
+          "end_line": 223
+        },
+        {
+          "path": "axum/src/routing/path_router.rs",
+          "start_line": 148,
+          "end_line": 180
+        },
+        {
+          "path": "axum/src/routing/tests/fallback.rs",
+          "start_line": 73,
+          "end_line": 98
+        },
+        {
+          "path": "axum/src/routing/tests/fallback.rs",
+          "start_line": 167,
+          "end_line": 183
+        }
+      ],
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 0,
+        "reciprocalRank": 0,
+        "evidenceCoverage": 0,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": null,
+        "complementaryCoverage": 0
+      },
+      "error": null,
+      "detail": {
+        "model": "gpt-6-luna",
+        "effort": "none",
+        "invalidLocations": 0,
+        "usage": {
+          "inputTokens": 239999,
+          "cachedTokens": 0,
+          "outputTokens": 117,
+          "reasoningTokens": 0
+        }
+      }
+    }
+  ]
+}

@@ -13,7 +13,7 @@ import { environment, positiveInteger, projectRoot, workspace, writeReport } fro
 import { adjacentCandidates, expandCandidates, fragmentsOf, loadCodeGraph, type Candidate, type CodeGraph } from './bench/graph.ts';
 import { bm25Scores, stop, terms } from './bench/lexical.ts';
 import { liveProvider } from './bench/live-provider.ts';
-import { ensureMirror, exportSnapshot, loadManifest, mapLimit, type RealQuery, type RealTask } from './bench/real-tasks.ts';
+import { ensureMirror, exportSnapshot, loadManifest, mapLimit, systemsManifestPath, type RealQuery, type RealTask } from './bench/real-tasks.ts';
 import { candidateCost, capturingProvider, emptyPool, itemKey, loadPool, replayProvider, sha256, type PoolItem, type ScorePool } from './bench/score-pool.ts';
 import { groupBy, latencySummary, mean } from './bench/report.ts';
 import { covered, localizationRangeMetrics, type Range } from './bench/retrieval.ts';
@@ -21,7 +21,7 @@ import { loadSnapshots } from './bench/snapshots.ts';
 
 const run = promisify(execFile);
 const replayArms = ['jevgrep-replay', 'e7-hop0', 'e7-adjacent', 'e7-hop1', 'e7-hop2', 'codegraph-jevgrep'] as const;
-const arms = ['ripgrep', 'bm25', 'codegraph-query', 'codegraph-context', 'laya', 'jevgrep', ...replayArms] as const;
+const arms = ['ripgrep', 'bm25', 'codegraph-query', 'codegraph-context', 'laya', 'jevgrep', 'openai-solo', ...replayArms] as const;
 type Arm = typeof arms[number];
 
 const { values } = parseArgs({ options: {
@@ -29,7 +29,8 @@ const { values } = parseArgs({ options: {
   codegraph: { type: 'string' }, 'laya-url': { type: 'string' }, jobs: { type: 'string' }, 'provider-jobs': { type: 'string' },
   'max-requests': { type: 'string' }, 'response-tokens': { type: 'string' }, top: { type: 'string' }, help: { type: 'boolean' },
   capture: { type: 'string' }, replay: { type: 'string' }, budget: { type: 'string' }, seeds: { type: 'string' },
-  fanout: { type: 'string' }, 'graph-behind': { type: 'string' }, 'usd-per-million': { type: 'string' },
+  fanout: { type: 'string' }, 'graph-behind': { type: 'string' }, 'usd-per-million': { type: 'string' }, 'go-rust': { type: 'boolean' },
+  'openai-model': { type: 'string' }, 'openai-effort': { type: 'string' }, queries: { type: 'string' }, only: { type: 'string' },
 } });
 
 if (values.help) {
@@ -37,6 +38,7 @@ if (values.help) {
     'npm run bench:compare -- --arms ripgrep,bm25,codegraph-query,codegraph-context,laya [--codegraph <bin>] [--laya-url http://127.0.0.1:8765]',
     'npm run bench:compare -- --arms jevgrep --config <trusted-config> [--provider-jobs 1] [--capture <score-pool.json>]',
     'npm run bench:compare -- --arms jevgrep-replay,e7-hop0,e7-adjacent,e7-hop1,e7-hop2,codegraph-jevgrep --replay <score-pool.json> [--budget 16] [--seeds 8] [--fanout 4] [--graph-behind <commits>]',
+    'npm run bench:compare -- --arms openai-solo --openai-model gpt-6-luna [--openai-effort none|medium]   (model alone, whole snapshot in context; needs OPENAI_API_KEY)',
     'Replay arms reuse captured Jev scores offline: candidate arms only let Jev "evaluate" the fragments they propose, under one fragment budget.',
     'Every arm answers the same pinned real-task queries; ranked ranges are scored with identical metrics.',
   ].join('\n'));
@@ -70,7 +72,7 @@ type Tree = { readonly root: string; readonly files: Readonly<Record<string, str
 function windows(files: Readonly<Record<string, string>>, size = 40, stride = 20) {
   const out: { path: string; start: number; end: number; tokens: string[] }[] = [];
   for (const [path, text] of Object.entries(files)) {
-    if (!/\.(py|pyi|js|ts|java|rst|txt|cfg|toml)$/.test(path)) continue;
+    if (!/\.(py|pyi|js|ts|java|go|rs|rst|txt|cfg|toml|md)$/.test(path)) continue;
     const lines = text.split('\n');
     for (let start = 0; start < lines.length; start += stride) {
       const end = Math.min(lines.length, start + size);
@@ -192,7 +194,64 @@ async function engineSearch(tree: Tree, query: RealQuery, provider: ProviderClie
   }
 }
 
-const manifest = loadManifest();
+/**
+ * A model alone, without JevGrep: the whole snapshot (every file the other arms see,
+ * with line numbers) goes into one OpenAI Responses request, and the model returns up
+ * to `top` locations, best first. Files come first so repeated questions on one
+ * snapshot can reuse the provider's prompt cache.
+ */
+async function openaiSolo(tree: Tree, task: RealTask, query: string): Promise<Answer> {
+  const model = values['openai-model'];
+  if (model === undefined || process.env['OPENAI_API_KEY'] === undefined) throw new Error('openai-solo needs --openai-model and OPENAI_API_KEY');
+  const corpus = Object.keys(tree.files).sort().map((path) => {
+    const numbered = (tree.files[path] ?? '').split('\n').map((line, index) => `${String(index + 1)}| ${line}`).join('\n');
+    return `<file path="${path}">\n${numbered}\n</file>`;
+  }).join('\n');
+  const body = JSON.stringify({
+    model, store: false, prompt_cache_key: `jevgrep-solo-${task.id}`,
+    ...(values['openai-effort'] === undefined ? {} : { reasoning: { effort: values['openai-effort'] } }),
+    instructions: 'You are a code search tool. You receive every file of a repository with 1-based line numbers, then a question. '
+      + `Return up to ${String(top)} source locations that best answer the question, best first. Each location is a file path exactly as `
+      + 'given and an inclusive line range of a function-sized region (at most about 60 lines). Prefer implementation, conditions, data '
+      + 'flow, configuration and tests relevant to the question. Return an empty list if nothing in the repository answers it.',
+    input: `${corpus}\n\nQuestion: ${query}`,
+    text: { format: { type: 'json_schema', name: 'locations', strict: true, schema: {
+      type: 'object', additionalProperties: false, required: ['locations'],
+      properties: { locations: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['path', 'start_line', 'end_line'],
+        properties: { path: { type: 'string' }, start_line: { type: 'integer' }, end_line: { type: 'integer' } } } } },
+    } } },
+  });
+  let raw: Record<string, unknown> = {};
+  for (let attempt = 0; ; attempt += 1) {
+    const response = await fetch('https://api.openai.com/v1/responses', { method: 'POST', body,
+      headers: { authorization: `Bearer ${process.env['OPENAI_API_KEY']}`, 'content-type': 'application/json' } });
+    raw = await response.json() as Record<string, unknown>;
+    if (response.status === 200) break;
+    // Whole-snapshot requests are large; a token-per-minute limit resets within about a minute.
+    if ((response.status === 429 || response.status >= 500) && attempt < 12) { await new Promise((resolve) => setTimeout(resolve, Math.min(60_000, 10_000 * (attempt + 1)))); continue; }
+    throw new Error(`HTTP ${String(response.status)}: ${JSON.stringify(raw['error'] ?? null).slice(0, 300)}`);
+  }
+  const text = ((raw['output'] as { type: string; content?: { type: string; text?: string }[] }[] | undefined) ?? [])
+    .flatMap((item) => item.type === 'message' ? item.content ?? [] : []).find((part) => part.type === 'output_text')?.text;
+  const located = (JSON.parse(text ?? '{"locations":[]}') as { locations: { path: string; start_line: number; end_line: number }[] }).locations;
+  const ranges: Range[] = [];
+  for (const location of located) {
+    const lines = tree.files[location.path]?.split('\n').length;
+    if (lines === undefined) continue;
+    const start = Math.max(1, Math.min(location.start_line, lines));
+    ranges.push({ path: location.path, start_line: start, end_line: Math.max(start, Math.min(location.end_line, lines)) });
+    if (ranges.length >= top) break;
+  }
+  const usage = raw['usage'] as { input_tokens?: number; output_tokens?: number; input_tokens_details?: { cached_tokens?: number };
+    output_tokens_details?: { reasoning_tokens?: number } } | undefined;
+  return { ranges, complete: true, returnedChars: charsOf(tree, ranges), detail: {
+    model, effort: values['openai-effort'] ?? null, invalidLocations: located.length - ranges.length,
+    usage: { inputTokens: usage?.input_tokens ?? null, cachedTokens: usage?.input_tokens_details?.cached_tokens ?? null,
+      outputTokens: usage?.output_tokens ?? null, reasoningTokens: usage?.output_tokens_details?.reasoning_tokens ?? null },
+  } };
+}
+
+const manifest = values['go-rust'] ? loadManifest(systemsManifestPath, {}) : loadManifest();
 const tasks = manifest.tasks;
 const snapshots = await loadSnapshots(tasks, values.mirrors ?? join(projectRoot, 'benchmark-results/mirrors'));
 const scratch = mkdtempSync(join(tmpdir(), 'jevgrep-compare-'));
@@ -336,7 +395,8 @@ const layaConfigure = (base: Configuration): Configuration => ({
   search: { ...base.search, concurrency: 2, deadline_ms: 900_000 }, cache: { ...base.cache, enabled: false },
 });
 
-const queries = tasks.flatMap((task) => task.queries.map((query) => ({ task, query })));
+const queries = tasks.flatMap((task) => task.queries.map((query) => ({ task, query }))).slice(0, positiveInteger(values.queries, Number.MAX_SAFE_INTEGER))
+  .filter(({ query }) => values.only === undefined || values.only.split(',').includes(query.id));
 type Row = {
   arm: Arm; id: string; task: string; repository: string; split: string; category: string;
   latencyMs: number; complete: boolean; returnedChars: number; ranges: readonly Range[];
@@ -353,6 +413,7 @@ async function answer(arm: Arm, task: RealTask, query: RealQuery): Promise<Row> 
       : arm === 'codegraph-query' ? await codegraph(tree, query.query, 'query')
       : arm === 'codegraph-context' ? await codegraph(tree, query.query, 'context')
       : arm === 'laya' ? await engineSearch(tree, query, laya, layaConfigure)
+      : arm === 'openai-solo' ? await openaiSolo(tree, task, query.query)
       : arm === 'jevgrep' ? await engineSearch(tree, query,
         capture === null ? live!.provider : capturingProvider(live!.provider, live!.template.config, capture, query.id), (b) => live!.configure(b))
       : await replayAnswer(arm, tree, query);
@@ -368,7 +429,7 @@ async function answer(arm: Arm, task: RealTask, query: RealQuery): Promise<Row> 
 }
 
 const perArm = await Promise.all(selected.map((arm) => mapLimit(queries,
-  arm === 'jevgrep' ? positiveInteger(values['provider-jobs'], 1) : arm === 'laya' ? 3 : jobs,
+  arm === 'jevgrep' ? positiveInteger(values['provider-jobs'], 1) : arm === 'laya' ? 3 : arm === 'openai-solo' ? positiveInteger(values['provider-jobs'], 3) : jobs,
   ({ task, query }) => answer(arm, task, query))));
 const rows = perArm.flat();
 

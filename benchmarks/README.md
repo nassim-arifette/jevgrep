@@ -314,6 +314,38 @@ Each row reports localization metrics on the delivered excerpts, candidate recal
 useful fragment, requests, tokens, evaluated share, complete searches and newly
 delivered excerpts. See the [2026-11-03 results](baselines/2026-11-03-progressive-search.md).
 
+## Judges inside JevGrep
+
+`bench:judges` keeps JevGrep's chunks and selection and swaps the judge: every
+captured candidate of the E2/E8 pools is scored by OpenAI Luna Decisions
+(`/v1/decisions`) or by a chat model through `/v1/responses` with a strict JSON
+schema, then `compare` replays the default selection with each judge's scores next
+to Jev runs from `bench:layouts`:
+
+```sh
+npm run bench:judges -- judge --arm decisions --model gpt-6-luna --output benchmark-results/luna-decisions.json
+npm run bench:judges -- judge --arm chat --model gpt-6.1-terra --effort medium --output benchmark-results/terra-medium.json
+npm run bench:judges -- compare --judgments jev.json,luna-decisions.json,terra-medium.json --labels jev,luna,terra \
+  --prices "0.042,0.042,0;0.10,0.01,0;1.00,0.05,5.00"
+```
+
+`judge` needs `OPENAI_API_KEY`; `--prices` is input, cached input and output USD per
+million tokens for each file. See the [2026-11-04 results](baselines/2026-11-04-judge-comparison.md).
+
+## Models and tools alone
+
+`bench:compare` also runs a model without JevGrep (`openai-solo`): the whole
+snapshot, with line numbers, goes into one request and the model returns up to ten
+locations. With `--go-rust` every arm uses the Go/Rust task set:
+
+```sh
+npm run bench:compare -- --arms openai-solo --openai-model gpt-6-luna --openai-effort none [--go-rust]
+npm run bench:compare -- --arms ripgrep,bm25,codegraph-query,codegraph-context --codegraph /path/to/codegraph [--go-rust]
+```
+
+See the [CodeGraph comparison](baselines/2026-11-04-codegraph-comparison.md) and the
+[models-alone comparison](baselines/2026-11-04-models-alone.md).
+
 ## Verification
 
 `npm run verify` includes tests for profile isolation and outcome equivalence, the
