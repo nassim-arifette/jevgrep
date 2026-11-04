@@ -136,6 +136,15 @@ test('the response budget is an integer and the operator maximum is checked afte
   }
 });
 
+test('--continuation passes the token through verbatim, once, on search only', () => {
+  const search = expectCommand(['search', '--config', 'config.json', '--query', 'q', '--continuation', 'jgc1.AAAAAAAAAAA']);
+  if (search.command.kind === 'search') {
+    assert.equal(search.command.request.continuation, 'jgc1.AAAAAAAAAAA');
+  }
+  assert.match(expectError(['search', '--query', 'q', '--continuation', 'a', '--continuation', 'b']), /twice/);
+  assert.match(expectError(['inspect', '--continuation', 'a']), /--continuation/);
+});
+
 test('--allow-partial is a search-only flag and needs no value', () => {
   const search = expectCommand(['search', '--config', 'config.json', '--query', 'q', '--allow-partial']);
   assert.equal(search.command.kind, 'search');

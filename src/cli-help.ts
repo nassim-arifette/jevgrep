@@ -26,6 +26,7 @@ const OPTION_TEXT: Record<string, string> = {
   '--scope': '--scope <relative path>    repeatable, default ".", never absolute and never traversing',
   '--max-context-tokens': '--max-context-tokens <n>   response budget in reference tokens (min 1024; configured default/max: initially 4000/16000)',
   '--allow-partial': '--allow-partial            allow a partial scan explicitly (default: refuse)',
+  '--continuation': '--continuation <token>     continue a partial search with the token it printed (same query and scope)',
   '--json': '--json                     canonical JSON on stdout instead of the human view',
 };
 
@@ -33,7 +34,7 @@ const OPTION_TEXT: Record<string, string> = {
 const COMMAND_USAGE: Record<string, string> = {
   init: 'jevgrep init [--global] [--root <path>] [--provider typesafe|vercel|openrouter]',
   search:
-    'jevgrep search [--config <path>] (--query <text> | --query-file <path>) [--scope <path>]... [--max-context-tokens <n>] [--json] [--allow-partial]',
+    'jevgrep search [--config <path>] (--query <text> | --query-file <path>) [--scope <path>]... [--max-context-tokens <n>] [--json] [--allow-partial] [--continuation <token>]',
   inspect: 'jevgrep inspect [--config <path>] [--scope <path>]... [--json]',
   doctor: 'jevgrep doctor [--config <path>]',
   mcp: 'jevgrep mcp [--config <path>]',

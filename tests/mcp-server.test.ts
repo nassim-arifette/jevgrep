@@ -147,7 +147,7 @@ test('the tool schema cannot change the root, credential, endpoint, model or cap
   const tools = (messages[0]!['result'] as { tools: { inputSchema: { properties: Record<string, unknown>; additionalProperties: boolean } }[] }).tools;
   const schema = tools[0]?.inputSchema;
   assert.ok(schema !== undefined);
-  assert.deepEqual(Object.keys(schema.properties).sort(), ['allow_partial_scan', 'max_context_tokens', 'query', 'scope']);
+  assert.deepEqual(Object.keys(schema.properties).sort(), ['allow_partial_scan', 'continuation', 'max_context_tokens', 'query', 'scope']);
   assert.equal(schema.additionalProperties, false);
 });
 

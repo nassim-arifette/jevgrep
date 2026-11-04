@@ -107,6 +107,12 @@ export function renderHumanOutcome(
     if (result.status === 'partial') {
       lines.push('note: coverage is incomplete; an empty or short selection does not establish absence');
     }
+    if (result.continuation?.next != null) {
+      lines.push(`continue: --continuation ${result.continuation.next}`);
+    }
+    if (result.continuation !== undefined && result.continuation.previously_delivered_omitted > 0) {
+      lines.push(`${plural(result.continuation.previously_delivered_omitted, 'fragment', 'fragments')} delivered earlier and not repeated`);
+    }
   }
 
   const excerpts = [...(result?.excerpts ?? [])];
