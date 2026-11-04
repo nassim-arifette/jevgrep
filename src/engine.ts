@@ -93,6 +93,11 @@ export type SearchInvocation = {
   readonly searchId?: string;
   /** Trusted local admission time; never taken from tool arguments. */
   readonly startedAtMs?: number;
+  /**
+   * Prepared scopes shared by the questions of one multiquestion call, keyed by scope.
+   * Preparation is local; every question still pays for its own remote evaluations.
+   */
+  readonly preparations?: Map<string, PreparedScope>;
   /** Local benchmark capture of the evaluated candidates; never part of the response. */
   readonly onCandidatePool?: (pool: CandidatePool) => void;
 };
@@ -154,6 +159,22 @@ export class SearchEngine {
     return withSearchProfile(invocation.profile, () => this.#search(request, invocation));
   }
 
+  /**
+   * Several questions over shared local preparation (roadmap section 13). Each question
+   * is a separate search with its own result, deadline and remote evaluations; only
+   * inventory and preparation of an identical scope are shared.
+   */
+  async searchMany(
+    requests: readonly unknown[], invocation: Pick<SearchInvocation, 'profile' | 'signal'> = {},
+  ): Promise<SearchOutcomeWithDiagnostics[]> {
+    const preparations = new Map<string, PreparedScope>();
+    const outcomes: SearchOutcomeWithDiagnostics[] = [];
+    for (const request of requests) {
+      outcomes.push(await this.search(request, { ...invocation, preparations }));
+    }
+    return outcomes;
+  }
+
   async #search(request: unknown, invocation: SearchInvocation): Promise<SearchOutcomeWithDiagnostics> {
     const { config } = this.#options.configuration;
     const context = new SearchContext({
@@ -166,7 +187,7 @@ export class SearchEngine {
     });
 
     try {
-      return await this.#run(request, context, invocation.onCandidatePool);
+      return await this.#run(request, context, invocation.onCandidatePool, invocation.preparations);
     } catch (cause) {
       const code = errorCodeOf(cause);
       if (code === null) {
@@ -178,7 +199,10 @@ export class SearchEngine {
     }
   }
 
-  async #run(rawRequest: unknown, context: SearchContext, capture?: (pool: CandidatePool) => void): Promise<SearchOutcomeWithDiagnostics> {
+  async #run(
+    rawRequest: unknown, context: SearchContext, capture?: (pool: CandidatePool) => void,
+    preparations?: Map<string, PreparedScope>,
+  ): Promise<SearchOutcomeWithDiagnostics> {
     const { config, sourceRoot } = this.#options.configuration;
     const request = parseCallerRequest(rawRequest, config);
 
@@ -193,8 +217,9 @@ export class SearchEngine {
     const root = sourceRoot;
     const order = this.#options.candidateOrder ?? PARTIAL_SCAN_ORDER;
     const partialOrder = request.allow_partial_scan && order.kind !== 'path' ? order : null;
-    const prepared = await this.#prepare(request.scope, context,
-      partialOrder === null ? undefined : (files) => prioritizeFiles(files, request.query, partialOrder));
+    const fileOrder: PrepareOptions['fileOrder'] = partialOrder === null ? undefined
+      : (files) => prioritizeFiles(files, request.query, partialOrder);
+    const prepared = await this.#preparedFor(request.scope, context, fileOrder, preparations);
 
     // Cache lookup precedes planning and scheduling (specification section 6.3).
     const model = provider.model;
@@ -383,6 +408,27 @@ export class SearchEngine {
     if (writes.length > 0) measureSync('cache_write', () => this.#cache.writeMany(writes));
   }
 
+  /**
+   * A complete preparation of the same scope is reused across the questions of one
+   * call. An incomplete one stopped at a prefix ordered for another question, so a
+   * question with its own priority order prepares again.
+   */
+  async #preparedFor(
+    scope: readonly string[], context: SearchContext, fileOrder: PrepareOptions['fileOrder'],
+    preparations: Map<string, PreparedScope> | undefined,
+  ): Promise<PreparedScope> {
+    const key = JSON.stringify(scope);
+    const shared = preparations?.get(key);
+    if (shared !== undefined && (shared.complete || fileOrder === undefined)) {
+      this.#options.configuration.sourceRoot.assertCurrent();
+      recordPreparation(shared, context);
+      return shared;
+    }
+    const prepared = await this.#prepare(scope, context, fileOrder);
+    if (preparations !== undefined && (prepared.complete || fileOrder === undefined)) preparations.set(key, prepared);
+    return prepared;
+  }
+
   /** Inventory and preparation, with their stop reasons and diagnostics recorded. */
   async #prepare(scope: readonly string[], context: SearchContext, fileOrder?: PrepareOptions['fileOrder']): Promise<PreparedScope> {
     const { config, sourceRoot: root } = this.#options.configuration;
@@ -407,19 +453,7 @@ export class SearchEngine {
     // A lost authorization cannot become permission to send an earlier partial
     // snapshot. The anchor is retained and invalidation lasts until config reload.
     root.assertCurrent();
-
-    if (!prepared.inventory.complete) {
-      context.addStopReason('INVENTORY_INCOMPLETE');
-    }
-    if (prepared.inventory.complete && !prepared.complete) {
-      context.addStopReason('PREPARATION_LIMIT');
-    }
-    for (const directory of prepared.inventory.excludedDirectories) {
-      context.diagnostics.recordExcludedDirectory(directory.reason);
-    }
-    if (prepared.parseFallbacks > 0) {
-      context.diagnostics.record('PARSE_FALLBACK', context.elapsedMs, { count: prepared.parseFallbacks });
-    }
+    recordPreparation(prepared, context);
     return prepared;
   }
 
@@ -523,6 +557,21 @@ type IdentityScope = {
   readonly adapter: string;
   readonly cacheMode: string;
 };
+
+function recordPreparation(prepared: PreparedScope, context: SearchContext): void {
+  if (!prepared.inventory.complete) {
+    context.addStopReason('INVENTORY_INCOMPLETE');
+  }
+  if (prepared.inventory.complete && !prepared.complete) {
+    context.addStopReason('PREPARATION_LIMIT');
+  }
+  for (const directory of prepared.inventory.excludedDirectories) {
+    context.diagnostics.recordExcludedDirectory(directory.reason);
+  }
+  if (prepared.parseFallbacks > 0) {
+    context.diagnostics.record('PARSE_FALLBACK', context.elapsedMs, { count: prepared.parseFallbacks });
+  }
+}
 
 type Continuation = { readonly binding: Buffer; readonly state: ContinuationState | null };
 

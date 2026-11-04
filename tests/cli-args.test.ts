@@ -142,6 +142,8 @@ test('--continuation passes the token through verbatim, once, on search only', (
     assert.equal(search.command.request.continuation, 'jgc1.AAAAAAAAAAA');
   }
   assert.match(expectError(['search', '--query', 'q', '--continuation', 'a', '--continuation', 'b']), /twice/);
+  assert.match(expectError(['search', '--query', 'q', '--query', 'r', '--continuation', 'a']), /single '--query'/);
+  assert.match(expectError(['search', ...Array.from({ length: 9 }, (_, i) => ['--query', `q${String(i)}`]).flat()]), /at most 8/);
   assert.match(expectError(['inspect', '--continuation', 'a']), /--continuation/);
 });
 
@@ -181,4 +183,12 @@ test('parsing has no side effect on the filesystem or the environment', () => {
   assert.equal(search.command.kind, 'search');
   const doctor = expectCommand(['doctor', '--config', 'C:/does/not/exist.json']);
   assert.equal(doctor.command.kind, 'doctor');
+});
+
+test('a repeated --query becomes several questions sharing scope and options', () => {
+  const result = parseCliArguments(['search', '--query', 'first?', '--scope', 'src', '--query', 'second?', '--allow-partial'], { readFile: () => '' });
+  assert.equal(result.kind, 'command');
+  if (result.kind !== 'command' || result.command.kind !== 'search') throw new Error('unreachable');
+  assert.equal(result.command.request.query, 'first?');
+  assert.deepEqual(result.command.moreRequests, [{ ...result.command.request, query: 'second?' }]);
 });

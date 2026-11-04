@@ -24,7 +24,7 @@ import { renderHumanOutcome } from './cli-render.ts';
 import type { CliIo } from './cli-io.ts';
 import { ConfigurationError, doctorReport, loadConfiguration, renderDoctorReport } from './config.ts';
 import type { LoadedConfiguration } from './config.ts';
-import { createSearchError } from './contracts.ts';
+import { createSearchError, type SearchRequest } from './contracts.ts';
 import { SearchEngine, createSearchEngine } from './engine.ts';
 import { ScoreCache } from './evaluation/cache.ts';
 import { PreparationCache, preparationCacheDirectory } from './source/preparation-cache.ts';
@@ -208,6 +208,9 @@ async function runSearch(
   }
 
   const engine = engineFor(loaded, deps);
+  if (command.moreRequests !== undefined) {
+    return runMultiSearch(engine, [command.request, ...command.moreRequests], command.json, io, deps);
+  }
   const { outcome, measuredTokens } = await engine.search(
     command.request,
     deps.signal === undefined ? {} : { signal: deps.signal },
@@ -245,6 +248,58 @@ async function runSearch(
     ? outcome.error.code === 'CANCELLED'
     : outcome.report.stop_reasons.includes('CANCELLED');
   return cancelled ? CLI_EXIT_CODES.interrupted : CLI_EXIT_CODES[outcome.status];
+}
+
+/**
+ * Several questions sharing one preparation. Each keeps its own result, budget and
+ * exit status; the totals line makes the per-question remote cost explicit.
+ */
+async function runMultiSearch(
+  engine: SearchEngine, requests: readonly SearchRequest[], json: boolean, io: CliIo, deps: CommandDependencies,
+): Promise<number> {
+  const outcomes = await engine.searchMany(requests, deps.signal === undefined ? {} : { signal: deps.signal });
+  let exitCode: number = CLI_EXIT_CODES.complete;
+  const texts: string[] = [];
+  const totals = { attempts: 0, tokens: 0, cost: 0, costKnown: true };
+  for (const [index, { outcome }] of outcomes.entries()) {
+    let response;
+    try {
+      response = toCliSearchResponse(outcome, referenceCounter);
+    } catch (cause) {
+      io.err(`jevgrep: the produced response failed contract validation: ${cause instanceof Error ? cause.message : 'unknown failure'}`);
+      return CLI_EXIT_CODES.error;
+    }
+    exitCode = Math.max(exitCode, response.exitCode);
+    if ('report' in outcome) {
+      totals.attempts += outcome.report.usage.provider_request_attempts;
+      totals.tokens += outcome.report.usage.provider_input_tokens_estimated;
+      if (outcome.report.usage.estimated_cost_usd === null) totals.costKnown = false;
+      else totals.cost += outcome.report.usage.estimated_cost_usd;
+    }
+    if (json) {
+      texts.push(response.stdout);
+      continue;
+    }
+    let human;
+    try {
+      human = renderHumanOutcome(outcome, referenceCounter).text;
+    } catch (cause) {
+      if (!(cause instanceof RangeError)) throw cause;
+      human = 'jevgrep: rejected\nerror: RESPONSE_BUDGET_TOO_SMALL\n';
+      exitCode = Math.max(exitCode, CLI_EXIT_CODES.rejected);
+    }
+    texts.push(`== question ${String(index + 1)} of ${String(outcomes.length)}: ${requests[index]?.query ?? ''}\n${human}`);
+  }
+  const summary = `jevgrep: ${String(outcomes.length)} questions, one shared preparation; remote evaluation is paid per question: `
+    + `${String(totals.attempts)} provider attempts, ${String(totals.tokens)} estimated input tokens`
+    + (totals.costKnown ? `, $${totals.cost.toFixed(6)} estimated` : ', cost unknown');
+  if (json) {
+    io.out(`{"results":[${texts.join(',')}]}`);
+    io.err(summary);
+  } else {
+    io.out(`${texts.join('\n')}\n${summary}`);
+  }
+  return exitCode;
 }
 
 function runCacheClear(

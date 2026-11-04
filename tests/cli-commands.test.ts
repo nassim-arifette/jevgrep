@@ -359,3 +359,23 @@ test('a search without remote evaluation is refused before any dispatch', async 
   const payload = JSON.parse(captured.out[0] ?? '') as { error: { code: string } };
   assert.equal(payload.error.code, 'REMOTE_DISABLED');
 });
+
+test('several --query options run as separate results with per-question cost totals', async () => {
+  const space = workspace();
+  const provider = new CountingProvider();
+  const json = capture();
+  const code = await executeCommand(parsed(['search', '--config', space.configPath, '--query', 'cache invalidation', '--query', 'version', '--json']),
+    json.io, dependencies(space, provider));
+  assert.equal(code, CLI_EXIT_CODES.complete);
+  const body = JSON.parse(json.out.join('')) as { results: { status: string; excerpts: { path: string }[] }[] };
+  assert.deepEqual(body.results.map((result) => result.status), ['complete', 'complete']);
+  assert.deepEqual(body.results[0]?.excerpts.map((excerpt) => excerpt.path), ['src/cache.ts']);
+  assert.equal(provider.calls, 2);
+  assert.match(json.err.join('\n'), /2 questions, one shared preparation; remote evaluation is paid per question: 2 provider attempts/);
+  const human = capture();
+  await executeCommand(parsed(['search', '--config', space.configPath, '--query', 'where?', '--query', 'what?']), human.io, dependencies(space, provider));
+  const text = human.out.join('\n');
+  assert.match(text, /== question 1 of 2: where\?/);
+  assert.match(text, /== question 2 of 2: what\?/);
+  assert.match(text, /2 questions, one shared preparation/);
+});

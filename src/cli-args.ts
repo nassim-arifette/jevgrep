@@ -14,7 +14,11 @@ import { CONTRACT_LIMITS, parseSearchRequest, type SearchRequest } from './contr
 /** Commands of the documented CLI surface (specification 4.5). */
 export type CliCommand =
   | { readonly kind: 'init'; readonly root: string; readonly provider?: 'typesafe' | 'vercel' | 'openrouter'; readonly global: boolean }
-  | { readonly kind: 'search'; readonly config?: string; readonly request: SearchRequest; readonly json: boolean }
+  | {
+    readonly kind: 'search'; readonly config?: string; readonly request: SearchRequest; readonly json: boolean;
+    /** Further questions over the same scope and options, from a repeated --query. */
+    readonly moreRequests?: readonly SearchRequest[];
+  }
   | { readonly kind: 'inspect'; readonly config?: string; readonly scope: readonly string[]; readonly json: boolean }
   | { readonly kind: 'doctor'; readonly config?: string }
   | { readonly kind: 'mcp'; readonly config?: string }
@@ -36,6 +40,7 @@ type OptionState = {
   readonly scope: readonly string[];
   readonly maxContextTokens: string | undefined;
   readonly continuation: string | undefined;
+  readonly moreQueries: readonly string[];
   readonly allowPartial: boolean;
   readonly json: boolean;
   readonly root: string | undefined;
@@ -112,7 +117,7 @@ function readOptions(
   argv: readonly string[],
   allowed: readonly string[],
 ): { readonly state: OptionState; readonly error: string | undefined } {
-  const mutable: MutableOptions = { config: undefined, query: undefined, queryFile: undefined, scope: [], maxContextTokens: undefined, continuation: undefined, allowPartial: false, json: false, root: undefined, provider: undefined, global: false };
+  const mutable: MutableOptions = { config: undefined, query: undefined, queryFile: undefined, scope: [], maxContextTokens: undefined, continuation: undefined, moreQueries: [], allowPartial: false, json: false, root: undefined, provider: undefined, global: false };
   const state = mutable;
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -159,12 +164,16 @@ type MutableOptions = {
   scope: string[];
   maxContextTokens: string | undefined;
   continuation: string | undefined;
+  moreQueries: string[];
   allowPartial: boolean;
   json: boolean;
   root: string | undefined;
   provider: string | undefined;
   global: boolean;
 };
+
+/** Questions one search command accepts through repeated --query options. */
+export const MAX_QUESTIONS = 8;
 
 /** Store one option that takes a value, or explain why it is refused. */
 function applyValueOption(state: MutableOptions, option: string, value: string): string | undefined {
@@ -193,7 +202,9 @@ function applyValueOption(state: MutableOptions, option: string, value: string):
       return undefined;
     case '--query':
       if (state.query !== undefined) {
-        return "option '--query' was given twice; use --query-file for a long query";
+        if (state.moreQueries.length + 1 >= MAX_QUESTIONS) return `at most ${String(MAX_QUESTIONS)} '--query' options are accepted`;
+        state.moreQueries.push(value);
+        return undefined;
       }
       state.query = value;
       return undefined;
@@ -263,7 +274,16 @@ function searchCommand(
       default_response_tokens: CONTRACT_LIMITS.default_response_tokens, max_response_tokens: Number.MAX_SAFE_INTEGER,
     });
     const request: SearchRequest = { ...normalized, ...(state.maxContextTokens === undefined ? {} : { max_context_tokens }) };
-    return { kind: 'command', command: { kind: 'search', ...(config === undefined ? {} : { config }), request, json: state.json } };
+    if (state.moreQueries.length > 0 && state.continuation !== undefined) {
+      return refuse("'--continuation' continues one question; give a single '--query'");
+    }
+    const moreRequests = state.moreQueries.map((more) => ({ ...request, query: parseSearchRequest({ ...raw, query: more }, {
+      default_response_tokens: CONTRACT_LIMITS.default_response_tokens, max_response_tokens: Number.MAX_SAFE_INTEGER,
+    }).query }));
+    return { kind: 'command', command: {
+      kind: 'search', ...(config === undefined ? {} : { config }), request, json: state.json,
+      ...(moreRequests.length === 0 ? {} : { moreRequests }),
+    } };
   } catch (validationError) {
     return refuse(messageOf(validationError));
   }

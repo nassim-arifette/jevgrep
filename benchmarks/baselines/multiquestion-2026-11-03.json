@@ -1,0 +1,65 @@
+{
+  "environment": {
+    "node": "v24.19.0",
+    "platform": "linux",
+    "architecture": "x64",
+    "cpu": "Intel(R) Xeon(R) Processor",
+    "logicalCpus": 8,
+    "totalMemoryBytes": 33654874112,
+    "revision": "28ca5890f56264c149161a6db384b8d7f2d1c4c8",
+    "workingTree": "M docs/install-guide.md\n M src/cli-args.ts\n M src/cli-commands.ts\n M src/cli-help.ts\n M src/engine.ts\n M tests/cli-args.test.ts\n M tests/cli-commands.test.ts\n?? node_modules\n?? scripts/bench-multiquestion.ts\n?? tests/multiquestion-search.test.ts",
+    "sourceHash": "81fc53a3b42eb1a8e2d6a545d9a335f903bd8534d38823dbedd6d6358276586c",
+    "harnessHash": "075725ddadf67b223807dbd5ceaf94941dd8b5835f740b7c336b7bf7b72152e7",
+    "packageLockHash": "37aedfa15a94c84ec716c28109e43f59223658b03775581380cc0fdcd4899db7"
+  },
+  "results": [
+    {
+      "corpus": "cobra",
+      "questions": 3,
+      "repeats": 5,
+      "separate_ms_median": 17300,
+      "shared_ms_median": 15168,
+      "saving": 0.123,
+      "provider_attempts_per_call": {
+        "separate": 18,
+        "shared": 18
+      }
+    },
+    {
+      "corpus": "walkdir",
+      "questions": 3,
+      "repeats": 5,
+      "separate_ms_median": 3596,
+      "shared_ms_median": 2813,
+      "saving": 0.218,
+      "provider_attempts_per_call": {
+        "separate": 6,
+        "shared": 6
+      }
+    },
+    {
+      "corpus": "clap",
+      "questions": 3,
+      "repeats": 5,
+      "separate_ms_median": 129400,
+      "shared_ms_median": 116223,
+      "saving": 0.102,
+      "provider_attempts_per_call": {
+        "separate": 102,
+        "shared": 102
+      }
+    },
+    {
+      "corpus": "jevgrep-src",
+      "questions": 3,
+      "repeats": 5,
+      "separate_ms_median": 11851,
+      "shared_ms_median": 10983,
+      "saving": 0.073,
+      "provider_attempts_per_call": {
+        "separate": 12,
+        "shared": 12
+      }
+    }
+  ]
+}
