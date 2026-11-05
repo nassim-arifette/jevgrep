@@ -70,12 +70,12 @@ frozen before the run:
 | lombok | Java | 1.0M | 0.78 | $0.04 | 30 s |
 | nushell | Rust | 2.1M | 0.79 | $0.09 | — |
 | ruff | Rust | 3.6M | 0.90 | $0.14 | 27 s |
-| lucene | Java | 7.6M | 0.88 | $0.25 | 61–78 s |
+| lucene | Java | 7.6M | 0.88 | $0.25 | 23 s |
 
 Times are through the Vercel AI Gateway at concurrency 16. prometheus, ruff and
-lucene are measured with the current code (before the batching and windowing fixes
-they took 20 s, 3 min and 7 min); hugo and lombok are from before those fixes;
-nushell was measured on a slower route only.
+lucene are measured with the current code (before the local batching, windowing and
+worker-pool fixes they took 20 s, 3 min and 7 min); hugo and lombok are from before
+those fixes; nushell was measured on a slower route only.
 Method, every number and the misses are in the
 [hard set](benchmarks/baselines/2026-11-04-hard-set.md) report.
 
