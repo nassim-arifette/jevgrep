@@ -194,7 +194,7 @@ function* preparationSteps(
   const pool = openPool(ordered, options);
   // Files are read in order and handed to the pool ahead of their turn; limits, stops
   // and exclusions are still applied in order, when each file's turn comes.
-  const ahead: { entry: InventoryResult['files'][number]; read: EntryRead; ticket: number | null; sha256: string | undefined }[] = [];
+  const ahead: { entry: InventoryResult['files'][number]; read: EntryRead; job: PoolJob | null }[] = [];
   let cursor = 0;
   const readAhead = (): void => {
     const depth = pool === null ? 1 : pool.size * 2;
@@ -203,7 +203,7 @@ function* preparationSteps(
       cursor += 1;
       const read = readEntry(root, entry.absolutePath, options.inventory.maxFileBytes);
       const job = pool !== null && read.kind === 'read' ? submitToPool(pool, entry, read.bytes, options) : null;
-      ahead.push({ entry, read, ticket: job?.ticket ?? null, sha256: job?.sha256 });
+      ahead.push({ entry, read, job });
     }
   };
 
@@ -238,9 +238,10 @@ function* preparationSteps(
         break;
       }
 
-      const computed = next.ticket === null || pool === null ? undefined : pool.collect(next.ticket);
+      const computed = next.job === null || pool === null ? undefined : pool.collect(next.job.ticket);
       const outcome = prepareWithCache(entry.relativePath, entry.absolutePath, bytes, options,
-        computed !== undefined && 'entry' in computed ? { entry: computed.entry, sha256: next.sha256! } : undefined);
+        computed !== undefined && 'entry' in computed && next.job !== null
+          ? { entry: computed.entry, sha256: next.job.sha256, cached: next.job.cached } : undefined);
     if (outcome.kind === 'excluded') {
       excluded.push({ relativePath: entry.relativePath, reason: outcome.reason, ...(outcome.detail === null ? {} : { detail: outcome.detail }) });
       continue;
@@ -323,19 +324,21 @@ function openPool(files: readonly { readonly sizeBytes: number }[], options: Pre
   }
 }
 
+type PoolJob = { readonly ticket: number; readonly sha256: string; readonly cached: PreparationEntry | undefined };
+
 /** Hand a file to the pool unless a cache entry already holds its chunks. */
 function submitToPool(
   pool: PreparePool, entry: { readonly relativePath: string; readonly absolutePath: string }, bytes: Buffer, options: PrepareOptions,
-): { ticket: number; sha256: string } | null {
+): PoolJob | null {
   const sha256 = measureSync('hash', () => hashBytes(bytes));
   const cache = options.cache?.enabled === true ? options.cache : undefined;
-  if (cache !== undefined) {
-    const known = measureSync('cache_lookup', () => cache.get(sha256, bytes.length));
+  const cached = cache === undefined ? undefined : measureSync('cache_lookup', () => cache.get(sha256, bytes.length));
+  if (cached !== undefined) {
     const key = chunkKey((options.chunker ?? DEFAULT_CHUNKER).identity(entry.relativePath), options.windowLimits ?? DEFAULT_WINDOW_LIMITS);
-    if (known.chunks[key] !== undefined || (known.scan !== null && known.scan.verdict !== 'ok' && known.scan.version === SCANNER_VERSION)) return null;
+    if (cached.chunks[key] !== undefined || (cached.scan !== null && cached.scan.verdict !== 'ok' && cached.scan.version === SCANNER_VERSION)) return null;
   }
   const ticket = pool.submit({ relativePath: entry.relativePath, absolutePath: entry.absolutePath, bytes, sha256, windowLimits: options.windowLimits ?? DEFAULT_WINDOW_LIMITS });
-  return { ticket, sha256 };
+  return { ticket, sha256, cached };
 }
 
 /**
@@ -354,20 +357,24 @@ export function prepareEntry(relativePath: string, absolutePath: string, bytes: 
  */
 function prepareWithCache(
   relativePath: string, absolutePath: string, bytes: Buffer, options: PrepareOptions,
-  computed?: { readonly entry: PreparationEntry; readonly sha256: string },
+  computed?: { readonly entry: PreparationEntry; readonly sha256: string; readonly cached: PreparationEntry | undefined },
 ): ContentOutcome {
   const cache = options.cache?.enabled === true ? options.cache : undefined;
   const sha256 = computed?.sha256 ?? (cache === undefined ? undefined : measureSync('hash', () => hashBytes(bytes)));
-  let cached = cache === undefined || sha256 === undefined ? undefined : measureSync('cache_lookup', () => cache.get(sha256, bytes.length));
+  let cached = computed !== undefined ? computed.cached
+    : cache === undefined || sha256 === undefined ? undefined : measureSync('cache_lookup', () => cache.get(sha256, bytes.length));
+  let seeded = false;
   if (computed !== undefined) {
+    countProfile('preparation_pool_files');
     if (cached === undefined) {
       cached = computed.entry;
     } else {
-      // The worker's result seeds the cache entry; `prepareContent` records the change.
-      if (cached.scan === null) cached.scan = computed.entry.scan;
-      if (cached.tokens === null) cached.tokens = computed.entry.tokens;
-      for (const [key, record] of Object.entries(computed.entry.chunks)) cached.chunks[key] ??= record;
-      countProfile('preparation_pool_files');
+      // The worker's result seeds the cache entry, which is then recorded like any change.
+      if (cached.scan === null) { cached.scan = computed.entry.scan; seeded = true; }
+      if (cached.tokens === null) { cached.tokens = computed.entry.tokens; seeded = true; }
+      for (const [key, record] of Object.entries(computed.entry.chunks)) {
+        if (cached.chunks[key] === undefined) { cached.chunks[key] = record; seeded = true; }
+      }
     }
   }
   const windowLimits = options.windowLimits ?? DEFAULT_WINDOW_LIMITS;
@@ -378,6 +385,7 @@ function prepareWithCache(
     countProfile('preparation_pool_rebuilt');
     outcome = prepareContent(relativePath, absolutePath, bytes, windowLimits, chunker, undefined, sha256);
   }
+  if (seeded && !outcome.rejected && cache !== undefined && cached !== undefined) cache.update(cached);
   if (cache !== undefined && cached !== undefined && sha256 !== undefined) {
     if (outcome.rejected) {
       // An entry that does not fit its verified bytes is dropped and rebuilt from scratch.
