@@ -136,13 +136,20 @@ function indexLines(text: string, count: TokenCounter): LineIndex {
   const endUtf16 = (line: number): number => (line < lineCount ? (startsUtf16[line] ?? text.length) : text.length);
   const endByte = (line: number): number => (line < lineCount ? (startsBytes[line] ?? byteOffset) : byteOffset);
   const sliceOf = (line: number): string => text.slice(startsUtf16[line - 1] ?? 0, endUtf16(line));
+  const lineTokens = new Int32Array(lineCount).fill(-1);
   return {
     lineCount,
     lineStartUtf16: (line) => startsUtf16[line - 1] ?? 0,
     lineEndUtf16: endUtf16,
     lineStartByte: (line) => startsBytes[line - 1] ?? 0,
     lineEndByte: endByte,
-    lineTokens: (line) => count(sliceOf(line)),
+    lineTokens: (line) => {
+      const cached = lineTokens[line - 1] ?? -1;
+      if (cached >= 0) return cached;
+      const tokens = count(sliceOf(line));
+      lineTokens[line - 1] = tokens;
+      return tokens;
+    },
     isBlankLine: (line) => isBlank(sliceOf(line)),
   };
 }
@@ -182,10 +189,22 @@ function buildWindow(
 
   let endLine = startLine;
   let bytes = firstBytes;
+  // Per-line counts sum to at least the BPE count of the joined text (merges only cross
+  // line endings), so the sum settles a limit unless it is reached; the exact text is
+  // measured only then, and once for the window returned. Windows are unchanged.
+  let summedTokens = tokenCount;
+  let exactTokens: number | null = tokenCount;
+  const exactWindow = (end: number): number => count(snapshot.text.slice(startOffset, lines.lineEndUtf16(end)));
   while (endLine < lines.lineCount) {
     const lineCount = endLine - startLine + 1;
-    if (lineCount >= limits.targetLines || tokenCount >= limits.targetTokens) {
+    if (lineCount >= limits.targetLines) {
       break;
+    }
+    if (summedTokens >= limits.targetTokens) {
+      exactTokens ??= exactWindow(endLine);
+      if (exactTokens >= limits.targetTokens) {
+        break;
+      }
     }
     if (lineCount + 1 > limits.maxLines) {
       break;
@@ -194,15 +213,21 @@ function buildWindow(
     if (bytes + nextBytes > limits.maxBytes) {
       break;
     }
-    // BPE merges can cross line endings, so each candidate is measured on its own text.
-    const expandedTokens = count(snapshot.text.slice(startOffset, lines.lineEndUtf16(endLine + 1)));
-    if (expandedTokens > limits.maxTokens) {
-      break;
+    const expandedSum = summedTokens + lines.lineTokens(endLine + 1);
+    if (expandedSum > limits.maxTokens) {
+      const expandedTokens = exactWindow(endLine + 1);
+      if (expandedTokens > limits.maxTokens) {
+        break;
+      }
+      exactTokens = expandedTokens;
+    } else {
+      exactTokens = null;
     }
     endLine += 1;
     bytes += nextBytes;
-    tokenCount = expandedTokens;
+    summedTokens = expandedSum;
   }
+  tokenCount = exactTokens ?? exactWindow(endLine);
 
   const byteStart = lines.lineStartByte(startLine);
   const byteEnd = lines.lineEndByte(endLine);
