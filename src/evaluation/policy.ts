@@ -32,16 +32,17 @@ export function fitsSerializedBatch(body: string, limits: BatchLimits): boolean 
 
 export type SerializedBatchMeasure = { readonly fits: boolean; readonly bytes: number; readonly tokens: number | null };
 
-/** Exact checks; the optional counter reuses only identical state/question JSON. */
+/** Exact checks; the optional counter reuses only identical state/question JSON, `bodyTokens` a count of `body` made elsewhere. */
 export function measureSerializedBatch(
   body: string, limits: BatchLimits, countQuestionTokens: (text: string) => number = countReferenceTokens,
+  bodyTokens?: number,
 ): SerializedBatchMeasure {
   const bytes = Buffer.byteLength(body, 'utf8');
   if (bytes > limits.maxRequestBytes) return { fits: false, bytes, tokens: null };
   const payload = JSON.parse(body) as { state: unknown; questions: Record<string, unknown> };
   const questions = Object.values(payload.questions);
   if (questions.length > limits.maxItems) return { fits: false, bytes, tokens: null };
-  const tokens = countReferenceTokens(body);
+  const tokens = bodyTokens ?? countReferenceTokens(body);
   if (tokens > limits.totalTokens * limits.headroomRatio) return { fits: false, bytes, tokens };
   // A BPE token covers at least one byte, so a question whose state and text fit the
   // per-question limit in bytes fits in tokens; only a question near the limit is counted.

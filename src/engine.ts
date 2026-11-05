@@ -32,11 +32,11 @@ import { ProviderError } from './evaluation/contracts.ts';
 import { CRITERION_VERSION, LAYOUT_VERSION, buildRequestPayload } from './evaluation/jev.ts';
 import type { BatchEvaluation, EvaluationBatch, ProviderClient } from './evaluation/contracts.ts';
 import { createConfiguredProvider } from './evaluation/provider.ts';
-import { batchLimits, measureSerializedBatch, isOpenRouterModelRevision, scoreCachePolicy, MAX_ROLLING_TTL_SECONDS, type SerializedBatchMeasure } from './evaluation/policy.ts';
+import { batchLimits, isOpenRouterModelRevision, scoreCachePolicy, MAX_ROLLING_TTL_SECONDS, type SerializedBatchMeasure } from './evaluation/policy.ts';
 import { runEvaluations } from './evaluation/scheduler.ts';
 import { SearchContext, SearchLogger, isAbortError, runPhase, systemClock } from './lifecycle.ts';
 import type { Clock } from './lifecycle.ts';
-import { batchCost, buildBatches, enabledCapsOf, planScan, questionTokenMemo } from './planning.ts';
+import { batchCost, buildBatches, enabledCapsOf, measureSerializedBodies, planScan, questionTokenMemo } from './planning.ts';
 import type { BatchCost, ScanPlan } from './planning.ts';
 import { PARTIAL_SCAN_ORDER, prioritizeFiles, prioritizeFragments, type CandidateOrder } from './priority.ts';
 import { estimateInputCostUsd } from './pricing.ts';
@@ -368,6 +368,7 @@ export class SearchEngine {
     const pending: PreparedFragment[] = [];
     const identities = new Map<string, string>();
     const singletonMeasures = new Map<string, SerializedBatchMeasure>();
+    const bodies: string[] = [];
     for (const fragment of fragments) {
       const hit = measureSync('cache_lookup', () => {
         const body = serialize({ query, items: [fragment] });
@@ -375,12 +376,14 @@ export class SearchEngine {
         const identity = fragmentIdentity(query, fragment, inputHash, options.identity);
         identities.set(fragment.id, identity);
         const score = options.identity.cacheMode !== 'disabled' ? this.#cache.read(identity) : null;
-        if (score === null) singletonMeasures.set(fragment.id, measureSerializedBatch(body, limits, countQuestionTokens));
+        if (score === null) bodies.push(body);
         return score;
       });
       if (hit !== null) cached.set(fragment.id, hit);
       else pending.push(fragment);
     }
+    const measures = measureSync('batching', () => measureSerializedBodies(bodies, limits, countQuestionTokens));
+    pending.forEach((fragment, index) => { singletonMeasures.set(fragment.id, measures[index]!); });
     return { cached, pending, identities, singletonMeasures };
   }
 

@@ -10,6 +10,7 @@ import { ConfigurationError } from './config.ts';
 import { buildRequestPayload } from './evaluation/jev.ts';
 import type { BatchItem, EvaluationBatch } from './evaluation/contracts.ts';
 import { batchLimits, measureSerializedBatch, type BatchLimits, type SerializedBatchMeasure } from './evaluation/policy.ts';
+import { PREPARE_POOL_MIN_BYTES, acquirePool, countTokensWith } from './source/prepare-pool.ts';
 import { estimateInputCostUsd } from './pricing.ts';
 import type { ReportInputs } from './response/render.ts';
 import { countReferenceTokens } from './response/token-counter.ts';
@@ -185,15 +186,34 @@ export function planScan(
 }
 
 /**
+ * Exact measures of serialized bodies; the token counts run on the worker pool when
+ * the bodies are large enough to pay for it (or `threads` names a pool explicitly).
+ */
+export function measureSerializedBodies(
+  bodies: readonly string[], limits: BatchLimits, countQuestionTokens: (text: string) => number, threads?: number,
+): SerializedBatchMeasure[] {
+  const chars = bodies.reduce((total, body) => total + body.length, 0);
+  const lease = threads === undefined && chars < PREPARE_POOL_MIN_BYTES ? null : acquirePool(threads);
+  try {
+    const counts = countTokensWith(lease?.pool ?? null, bodies, countReferenceTokens);
+    return bodies.map((body, index) => measureSerializedBatch(body, limits, countQuestionTokens, counts[index]));
+  } finally {
+    lease?.release();
+  }
+}
+
+/**
  * Deterministic batches bounded by the provider's own limits: path and offset order,
  * or the caller's order when `preserveOrder` is set (a prioritized partial scan).
  *
  * Growing a batch is bounded by an upper estimate (the sum of its singleton measures,
  * state counted once), and a batch closes when the next question would push that
- * estimate over a limit, so the wire body is tokenized once per batch: at flush, where
- * the exact measure decides and a batch that does not fit sheds its tail into the next
- * batch. Closing on the estimate rather than probing the exact measure at each
- * boundary leaves batches about one percent smaller for one tokenization less per batch.
+ * estimate over a limit, so the wire body is tokenized once per batch, after all the
+ * batches are closed and in parallel. The exact measure decides: a batch that does
+ * not fit sheds its tail, and the batches after it are closed again from that tail,
+ * which is what closing them one at a time would have done. Closing on the estimate
+ * rather than probing the exact measure at each boundary leaves batches about one
+ * percent smaller for one tokenization less per batch.
  */
 export function buildBatches(fragments: readonly PreparedFragment[], query: string, options: {
   readonly model?: string; readonly limits?: BatchLimits; readonly serialize?: (batch: EvaluationBatch) => string;
@@ -201,91 +221,100 @@ export function buildBatches(fragments: readonly PreparedFragment[], query: stri
   readonly countQuestionTokens?: (text: string) => number;
   readonly singletonMeasures?: ReadonlyMap<string, SerializedBatchMeasure>;
   readonly onBatchMeasure?: (batch: EvaluationBatch, measure: SerializedBatchMeasure, body: string) => void;
+  /** Worker threads for the token counts; default: the other cores when the scan is large. */
+  readonly threads?: number;
 } = {}): EvaluationBatch[] {
   const limits = options.limits ?? batchLimits();
   const serialize = options.serialize ?? ((batch) => JSON.stringify(buildRequestPayload(batch, options.model ?? 'estimate')));
   const countQuestionTokens = options.countQuestionTokens ?? questionTokenMemo();
-  // The body a boundary check just measured is the one `flush` emits next; keep the
-  // last two exact measures so the same wire body is not tokenized twice.
-  const recent: { body: string; result: SerializedBatchMeasure }[] = [];
-  const measure = (batch: EvaluationBatch): { result: SerializedBatchMeasure; body: string } => {
-    const body = serialize(batch);
-    const hit = recent.find((entry) => entry.body === body);
-    if (hit !== undefined) return { result: hit.result, body };
-    const result = measureSerializedBatch(body, limits, countQuestionTokens);
-    recent.push({ body, result });
-    if (recent.length > 2) recent.shift();
-    return { result, body };
-  };
+  const measureAll = (bodies: readonly string[]): SerializedBatchMeasure[] => measureSerializedBodies(bodies, limits, countQuestionTokens, options.threads);
   const ordered = options.preserveOrder === true ? fragments : [...fragments].sort((left, right) => (left.path < right.path ? -1 : left.path > right.path ? 1 : 0)
     || (left.startLine - right.startLine) || (left.endLine - right.endLine));
   const tokenBudget = limits.totalTokens * limits.headroomRatio;
-  const batches: EvaluationBatch[] = [];
-  let items: BatchItem[] = [];
-  let singletons: SerializedBatchMeasure[] = [];
-  let state: { tokens: number; bytes: number } | null = null;
 
-  const stateOf = (item: BatchItem): { tokens: number; bytes: number } => {
-    const payload = JSON.parse(serialize({ query, items: [item] })) as { state: unknown };
-    const text = JSON.stringify(payload.state);
-    return { tokens: countQuestionTokens(text), bytes: Buffer.byteLength(text, 'utf8') };
-  };
-  const estimate = (): { tokens: number; bytes: number } => {
-    const shared = state ?? { tokens: 0, bytes: 0 };
-    let tokens = shared.tokens;
-    let bytes = shared.bytes;
-    for (const single of singletons) {
-      tokens += (single.tokens ?? tokenBudget) - shared.tokens;
-      bytes += single.bytes - shared.bytes;
-    }
-    return { tokens, bytes };
-  };
-  const surelyFits = (): boolean => {
-    if (items.length > limits.maxItems) return false;
-    const upper = estimate();
-    return upper.tokens <= tokenBudget && upper.bytes <= limits.maxRequestBytes;
-  };
-
-  /** Emit the current batch from its exact measure; a tail the estimate let through starts the next batch. */
-  const flush = (drain: boolean): void => {
-    do {
-      const carried: { item: BatchItem; single: SerializedBatchMeasure }[] = [];
-      while (items.length > 0) {
-        const batch = { query, items };
-        const exact = measure(batch);
-        if (exact.result.fits || items.length === 1) {
-          batches.push(batch);
-          options.onBatchMeasure?.(batch, exact.result, exact.body);
-          break;
-        }
-        carried.unshift({ item: items.pop()!, single: singletons.pop()! });
-      }
-      items = carried.map((entry) => entry.item);
-      singletons = carried.map((entry) => entry.single);
-    } while (drain && items.length > 0);
-  };
-
-  for (const fragment of ordered) {
-    const item: BatchItem = {
-      id: fragment.id, path: fragment.path,
-      startLine: fragment.startLine, endLine: fragment.endLine,
-      text: fragment.text, label: fragment.label ?? null,
-    };
-    const single = options.singletonMeasures?.get(item.id) ?? measure({ query, items: [item] }).result;
-    if (!single.fits) {
-      throw new ConfigurationError('INVALID_REQUEST', 'one question exceeds the provider context estimate');
-    }
-    state ??= stateOf(item);
-    items.push(item);
-    singletons.push(single);
-    while (items.length > 1 && !surelyFits()) {
-      items.pop();
-      singletons.pop();
-      flush(false);
-      items.push(item);
-      singletons.push(single);
-    }
+  const items: BatchItem[] = ordered.map((fragment) => ({
+    id: fragment.id, path: fragment.path,
+    startLine: fragment.startLine, endLine: fragment.endLine,
+    text: fragment.text, label: fragment.label ?? null,
+  }));
+  const unmeasured = items.filter((item) => options.singletonMeasures?.get(item.id) === undefined);
+  const measured = measureAll(unmeasured.map((item) => serialize({ query, items: [item] })));
+  const singles = new Map<string, SerializedBatchMeasure>(unmeasured.map((item, index) => [item.id, measured[index]!]));
+  const singleOf = (item: BatchItem): SerializedBatchMeasure => options.singletonMeasures?.get(item.id) ?? singles.get(item.id)!;
+  for (const item of items) {
+    if (!singleOf(item).fits) throw new ConfigurationError('INVALID_REQUEST', 'one question exceeds the provider context estimate');
   }
-  flush(true);
+  if (items.length === 0) return [];
+  const first = items[0]!;
+  const statePayload = JSON.parse(serialize({ query, items: [first] })) as { state: unknown };
+  const stateText = JSON.stringify(statePayload.state);
+  const state = { tokens: countQuestionTokens(stateText), bytes: Buffer.byteLength(stateText, 'utf8') };
+
+  type Closed = { readonly items: BatchItem[]; readonly end: number };
+  /** Close batches on the estimate from `carried` followed by the items from index `from`. */
+  const closeFrom = (carried: readonly BatchItem[], from: number): Closed[] => {
+    const closed: Closed[] = [];
+    let current: BatchItem[] = [...carried];
+    let tokens = state.tokens;
+    let bytes = state.bytes;
+    for (const item of current) {
+      const single = singleOf(item);
+      tokens += (single.tokens ?? tokenBudget) - state.tokens;
+      bytes += single.bytes - state.bytes;
+    }
+    for (let index = from; index < items.length; index += 1) {
+      const item = items[index]!;
+      const single = singleOf(item);
+      const grownTokens = tokens + (single.tokens ?? tokenBudget) - state.tokens;
+      const grownBytes = bytes + single.bytes - state.bytes;
+      if (current.length > 0 && (current.length + 1 > limits.maxItems || grownTokens > tokenBudget || grownBytes > limits.maxRequestBytes)) {
+        closed.push({ items: current, end: index - 1 });
+        current = [];
+        tokens = state.tokens + (single.tokens ?? tokenBudget) - state.tokens;
+        bytes = state.bytes + single.bytes - state.bytes;
+      } else {
+        tokens = grownTokens;
+        bytes = grownBytes;
+      }
+      current.push(item);
+    }
+    if (current.length > 0) closed.push({ items: current, end: items.length - 1 });
+    return closed;
+  };
+
+  const batches: EvaluationBatch[] = [];
+  let pending = closeFrom([], 0);
+  while (pending.length > 0) {
+    const bodies = pending.map((closed) => serialize({ query, items: closed.items }));
+    const measures = measureAll(bodies);
+    let restart: Closed[] | null = null;
+    for (let index = 0; index < pending.length; index += 1) {
+      const closed = pending[index]!;
+      let batchItems = closed.items;
+      let body = bodies[index]!;
+      let exact = measures[index]!;
+      if (exact.fits || batchItems.length === 1) {
+        const batch = { query, items: batchItems };
+        batches.push(batch);
+        options.onBatchMeasure?.(batch, exact, body);
+        continue;
+      }
+      // The estimate let a tail through: shed it, then close what follows again from it.
+      const carried: BatchItem[] = [];
+      for (;;) {
+        carried.unshift(batchItems[batchItems.length - 1]!);
+        batchItems = batchItems.slice(0, -1);
+        body = serialize({ query, items: batchItems });
+        exact = measureSerializedBatch(body, limits, countQuestionTokens);
+        if (exact.fits || batchItems.length === 1) break;
+      }
+      const batch = { query, items: batchItems };
+      batches.push(batch);
+      options.onBatchMeasure?.(batch, exact, body);
+      restart = closeFrom(carried, closed.end + 1);
+      break;
+    }
+    pending = restart ?? [];
+  }
   return batches;
 }

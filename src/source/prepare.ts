@@ -26,7 +26,7 @@ import {
   PREPARATION_CACHE_SCHEMA_VERSION, chunkKey, decodeLineTokens, encodeLineTokens, isRecordable, recordOf, resultOf,
   type PreparationCache, type PreparationEntry, type ScanVerdict,
 } from './preparation-cache.ts';
-import { PREPARE_POOL_MIN_BYTES, PreparePool, defaultPrepareThreads } from './prepare-pool.ts';
+import { PREPARE_POOL_MIN_BYTES, type PreparePool, acquirePool } from './prepare-pool.ts';
 import { SnapshotError, createSnapshot, hashBytes } from './snapshot.ts';
 import type { SourceSnapshot } from './snapshot.ts';
 
@@ -191,7 +191,8 @@ function* preparationSteps(
   let complete = inventory.complete;
 
   const ordered = options.fileOrder?.(inventory.files) ?? inventory.files;
-  const pool = openPool(ordered, options);
+  const lease = openPool(ordered, options);
+  const pool = lease?.pool ?? null;
   // Files are read in order and handed to the pool ahead of their turn; limits, stops
   // and exclusions are still applied in order, when each file's turn comes.
   const ahead: { entry: InventoryResult['files'][number]; read: EntryRead; job: PoolJob | null }[] = [];
@@ -270,7 +271,7 @@ function* preparationSteps(
       preparedBytes += bytes.length;
     }
   } finally {
-    pool?.close();
+    lease?.release();
   }
 
   if (options.cache?.enabled === true) {
@@ -311,17 +312,12 @@ function readEntry(root: AuthorizedRoot, absolutePath: string, maxFileBytes: num
 }
 
 /** A pool when the scope is large enough and the production chunker is in use. */
-function openPool(files: readonly { readonly sizeBytes: number }[], options: PrepareOptions): PreparePool | null {
+function openPool(files: readonly { readonly sizeBytes: number }[], options: PrepareOptions): { pool: PreparePool; release: () => void } | null {
   if (options.chunker !== undefined && options.chunker !== DEFAULT_CHUNKER) return null;
-  const threads = options.threads ?? defaultPrepareThreads();
-  if (threads < 1 || files.length < 2) return null;
+  if (files.length < 2) return null;
   const bytes = files.reduce((total, file) => total + file.sizeBytes, 0);
   if (options.threads === undefined && bytes < PREPARE_POOL_MIN_BYTES) return null;
-  try {
-    return new PreparePool(threads);
-  } catch {
-    return null;
-  }
+  return acquirePool(options.threads);
 }
 
 type PoolJob = { readonly ticket: number; readonly sha256: string; readonly cached: PreparationEntry | undefined };

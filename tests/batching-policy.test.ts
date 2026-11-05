@@ -93,3 +93,14 @@ test('new direct profiles are pinned; rolling reuse is bounded, optional and ada
   assert.equal(scoreCachePolicy('vercel-ai-gateway', 'typesafe-ai/jev', { ...cache, rolling_ttl_seconds: 0 }).mode, 'disabled');
   assert.equal(scoreCachePolicy('vercel-ai-gateway', 'typesafe-ai/jev', { ...cache, enabled: false }).mode, 'disabled');
 });
+
+test('batches built with pool workers are the batches built on the calling thread', () => {
+  const fragments = Array.from({ length: 600 }, (_, i) => fragment(i, `const value${i} = "${'word '.repeat(60 + (i % 37))}";`));
+  const query = 'Find value';
+  const limits = batchLimits();
+  const sequential = buildBatches(fragments, query, { serialize: serializeDirect, limits, threads: 0 });
+  const pooled = buildBatches(fragments, query, { serialize: serializeDirect, limits, threads: 2 });
+  assert.deepEqual(pooled.map((batch) => batch.items.map((item) => item.id)), sequential.map((batch) => batch.items.map((item) => item.id)));
+  assert.ok(sequential.length > 5);
+  assert.ok(sequential.every((batch) => fitsSerializedBatch(serializeDirect(batch), limits)));
+});
