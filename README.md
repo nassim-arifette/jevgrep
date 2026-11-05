@@ -65,15 +65,17 @@ frozen before the run:
 
 | Repository | Language | Tokens per scan | R@5 | Cost per question | Time per question |
 |---|---|---:|---:|---:|---:|
-| prometheus | Go | 1.1M | 0.92 | $0.05 | 20 s |
+| prometheus | Go | 1.1M | 0.83 | $0.05 | 6 s |
 | hugo | Go | 1.0M | 0.86 | $0.04 | 20 s |
 | lombok | Java | 1.0M | 0.78 | $0.04 | 30 s |
 | nushell | Rust | 2.1M | 0.79 | $0.09 | — |
-| ruff | Rust | 3.6M | 0.89 | $0.14 | 3 min |
-| lucene | Java | 7.6M | 0.83 | $0.25 | 7 min |
+| ruff | Rust | 3.6M | 0.90 | $0.14 | 27 s |
+| lucene | Java | 7.6M | 0.88 | $0.25 | 61–78 s |
 
-Times are through the Vercel AI Gateway at concurrency 16, before the batching and
-windowing fixes that followed this run; nushell was measured on a slower route only.
+Times are through the Vercel AI Gateway at concurrency 16. prometheus, ruff and
+lucene are measured with the current code (before the batching and windowing fixes
+they took 20 s, 3 min and 7 min); hugo and lombok are from before those fixes;
+nushell was measured on a slower route only.
 Method, every number and the misses are in the
 [hard set](benchmarks/baselines/2026-11-04-hard-set.md) report.
 

@@ -1,0 +1,1193 @@
+{
+  "schemaVersion": 1,
+  "kind": "real-task-retrieval",
+  "createdAt": "2026-11-05T16:40:22.942Z",
+  "environment": {
+    "node": "v24.22.2",
+    "platform": "linux",
+    "architecture": "x64",
+    "cpu": "Intel(R) Xeon(R) Processor",
+    "logicalCpus": 8,
+    "totalMemoryBytes": 33654874112,
+    "revision": "82b6260c2c6bbabe6e075fcb023d287daca7b4c1",
+    "workingTree": "?? node_modules",
+    "sourceHash": "6b94d95215f5c4846179adfb6b325507d71a339271cf000b263d09d0e194236e",
+    "harnessHash": "f379d9416da71e2ac7fcd95f054740a2acf8361119dd0e4d04e9e7f7f8b4ab29",
+    "packageLockHash": "37aedfa15a94c84ec716c28109e43f59223658b03775581380cc0fdcd4899db7"
+  },
+  "sourceStable": true,
+  "frozen": null,
+  "dataset": {
+    "version": "swe-bench-multilingual-hard-1",
+    "source": {
+      "dataset": "SWE-bench/SWE-bench_Multilingual",
+      "split": "test",
+      "license": "MIT (dataset); issue text and code from the upstream repositories",
+      "revision": null
+    },
+    "selection": {
+      "seed": "jevgrep-hard-1",
+      "perRepository": {
+        "prometheus/prometheus": 8,
+        "gohugoio/hugo": 7,
+        "nushell/nushell": 5,
+        "astral-sh/ruff": 7,
+        "projectlombok/lombok": 8,
+        "apache/lucene": 9
+      },
+      "maxEditFiles": 3,
+      "maxQueryBytes": 7000
+    },
+    "split": "dev",
+    "hash": "18be669fd5aa6a13c942e49e2197163eb0ac3fb11cd8276c5a2c5bdab13e6f12",
+    "tasks": [
+      {
+        "id": "prometheus__prometheus-9248",
+        "repository": "prometheus/prometheus",
+        "split": "dev",
+        "baseCommit": "1fb3c1b5980d2ae3f844b6b9ae2ad38117710aa0",
+        "snapshotHash": "f8ae266eadf3f472ff840c2c6e1b6d75b1d4c9146400252c8bbad18b4266cf80",
+        "createdAt": "2021-08-25 00:08:41",
+        "queries": [
+          {
+            "id": "prometheus__prometheus-9248:change",
+            "category": "change-localization",
+            "query": "Which existing code must change to resolve this issue?\n\n`atan2` is currently not allowed between scalar values\nIn PromQL testing I noticed that `atan2` is currently not allowed between scalar values like `1 atan2 2` (`operator \"atan2\" not allowed for Scalar operations`). Is there a good reason for this? I would just treat it like any of the other arithmetic operators, which also work between scalars.\r\n\r\n_Originally posted by @juliusv in https://github.com/prometheus/prometheus/issues/9248#issuecomment-939952244_",
+            "evidence": [
+              {
+                "path": "promql/engine.go",
+                "startLine": 2118,
+                "endLine": 2118
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 76,
+                "endLine": 110
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 155,
+                "endLine": 155
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 207,
+                "endLine": 345
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 351,
+                "endLine": 419
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 423,
+                "endLine": 450
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 454,
+                "endLine": 458
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 466,
+                "endLine": 481
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 489,
+                "endLine": 498
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 503,
+                "endLine": 504
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 508,
+                "endLine": 535
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 539,
+                "endLine": 566
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 581,
+                "endLine": 581
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 999,
+                "endLine": 999
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1005,
+                "endLine": 1005
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1011,
+                "endLine": 1011
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1017,
+                "endLine": 1017
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1023,
+                "endLine": 1023
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1029,
+                "endLine": 1029
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1035,
+                "endLine": 1035
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1041,
+                "endLine": 1041
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1047,
+                "endLine": 1047
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1053,
+                "endLine": 1053
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1059,
+                "endLine": 1059
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1065,
+                "endLine": 1065
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1071,
+                "endLine": 1071
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1077,
+                "endLine": 1077
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1083,
+                "endLine": 1083
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1087,
+                "endLine": 1089
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1095,
+                "endLine": 1097
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1104,
+                "endLine": 1106
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1111,
+                "endLine": 1113
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1119,
+                "endLine": 1121
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1127,
+                "endLine": 1129
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1135,
+                "endLine": 1137
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1141,
+                "endLine": 1143
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1147,
+                "endLine": 1149
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1153,
+                "endLine": 1155
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1160,
+                "endLine": 1162
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1166,
+                "endLine": 1168
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1172,
+                "endLine": 1174
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1179,
+                "endLine": 1181
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1188,
+                "endLine": 1190
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1195,
+                "endLine": 1197
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1212,
+                "endLine": 1214
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1218,
+                "endLine": 1220
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1224,
+                "endLine": 1226
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1230,
+                "endLine": 1232
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1236,
+                "endLine": 1238
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1243,
+                "endLine": 1245
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1249,
+                "endLine": 1251
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1256,
+                "endLine": 1258
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1263,
+                "endLine": 1265
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1270,
+                "endLine": 1272
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1277,
+                "endLine": 1279
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1284,
+                "endLine": 1286
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1291,
+                "endLine": 1293
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1316,
+                "endLine": 1318
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1328,
+                "endLine": 1330
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1335,
+                "endLine": 1337
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1342,
+                "endLine": 1344
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1349,
+                "endLine": 1351
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1356,
+                "endLine": 1358
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1370,
+                "endLine": 1372
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1380,
+                "endLine": 1382
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1392,
+                "endLine": 1394
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1400,
+                "endLine": 1402
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1409,
+                "endLine": 1411
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1418,
+                "endLine": 1420
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1427,
+                "endLine": 1429
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1437,
+                "endLine": 1439
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1443,
+                "endLine": 1445
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1450,
+                "endLine": 1452
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1456,
+                "endLine": 1458
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1463,
+                "endLine": 1465
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1470,
+                "endLine": 1472
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1477,
+                "endLine": 1479
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1484,
+                "endLine": 1486
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1490,
+                "endLine": 1492
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1496,
+                "endLine": 1498
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1502,
+                "endLine": 1504
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1508,
+                "endLine": 1510
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1514,
+                "endLine": 1516
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1520,
+                "endLine": 1522
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1526,
+                "endLine": 1528
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1533,
+                "endLine": 1535
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1539,
+                "endLine": 1541
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1546,
+                "endLine": 1548
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1553,
+                "endLine": 1555
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1560,
+                "endLine": 1562
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1569,
+                "endLine": 1571
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1575,
+                "endLine": 1577
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1581,
+                "endLine": 1583
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1587,
+                "endLine": 1589
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1594,
+                "endLine": 1596
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1600,
+                "endLine": 1602
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1609,
+                "endLine": 1611
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1615,
+                "endLine": 1617
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1624,
+                "endLine": 1626
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1634,
+                "endLine": 1636
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1643,
+                "endLine": 1645
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1652,
+                "endLine": 1654
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1658,
+                "endLine": 1660
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1664,
+                "endLine": 1666
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1670,
+                "endLine": 1672
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1680,
+                "endLine": 1682
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1690,
+                "endLine": 1692
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1699,
+                "endLine": 1701
+              },
+              {
+                "path": "promql/parser/generated_parser.y.go",
+                "startLine": 1705,
+                "endLine": 1707
+              },
+              {
+                "path": "promql/parser/lex.go",
+                "startLine": 99,
+                "endLine": 99
+              }
+            ],
+            "complementary": [],
+            "label": "patch"
+          },
+          {
+            "id": "prometheus__prometheus-9248:understand",
+            "category": "code-understanding",
+            "query": "Where is the code that does this: evaluates a binary operation between two Vector elements.",
+            "evidence": [
+              {
+                "path": "promql/engine.go",
+                "startLine": 2093,
+                "endLine": 2121
+              }
+            ],
+            "complementary": [],
+            "label": "docstring"
+          }
+        ]
+      }
+    ]
+  },
+  "settings": {
+    "provider": {
+      "adapter": "vercel-ai-gateway",
+      "model": "typesafe-ai/jev",
+      "baseUrl": "https://ai-gateway.vercel.sh",
+      "pricing": {
+        "model": "typesafe-ai/jev",
+        "verified_at": "2026-09-20",
+        "input_usd_per_million_tokens": 0.042,
+        "output_usd_per_million_tokens": 0
+      }
+    },
+    "search": {
+      "deadline_ms": 2400000,
+      "concurrency": 16,
+      "require_fit": true,
+      "default_response_tokens": 8000,
+      "max_response_tokens": 16000,
+      "threshold": 0.5
+    },
+    "scanCaps": {
+      "estimated_cost_usd": null,
+      "estimated_input_tokens": null,
+      "transmitted_bytes": null,
+      "request_attempts": null,
+      "prepared_source_bytes": null,
+      "candidate_files": null,
+      "fragments": null
+    },
+    "responseTokens": 8000,
+    "caps": {
+      "requests": 40000,
+      "estimatedInputTokens": 400000000
+    },
+    "scoreCache": "disabled",
+    "chunker": "recursive"
+  },
+  "semantics": {
+    "labels": "required units are pre-change patch sites (whitespace/import/docstring-only hunks dropped, new-definition placement demoted to complementary); they are not exhaustive relevance",
+    "recall": "fraction of required units fully covered in the first k excerpts, over complete searches",
+    "fileRecall": "fraction of edited files with at least one returned excerpt",
+    "complementaryCoverage": "fraction of complementary units (tests, placement, audited context) overlapped by any excerpt; never counted as a miss",
+    "categories": "change-localization uses the issue text; code-understanding asks for the function whose docstring is quoted",
+    "limitations": "small public SWE-bench sample, issue text may name symbols; held-out means repository-held-out for tuning, not blind"
+  },
+  "usage": {
+    "attempts": 76,
+    "reservedInputTokens": 1645822,
+    "reportedInputTokens": 1593874,
+    "unknownUsageAttempts": 0,
+    "blocked": false
+  },
+  "summary": {
+    "overall": {
+      "planned": 2,
+      "complete": 2,
+      "incomplete": 0,
+      "notRun": 0,
+      "completionRate": 1,
+      "missing": [],
+      "recallAt1": 0.5045454545454545,
+      "recallAt5": 0.5045454545454545,
+      "mrr": 1,
+      "evidenceCoverage": 0.5045454545454545,
+      "fileRecall": 0.6666666666666666,
+      "complementaryCoverage": null
+    },
+    "byCategory": {
+      "change-localization": {
+        "planned": 1,
+        "complete": 1,
+        "incomplete": 0,
+        "notRun": 0,
+        "completionRate": 1,
+        "missing": [],
+        "recallAt1": 0.00909090909090909,
+        "recallAt5": 0.00909090909090909,
+        "mrr": 1,
+        "evidenceCoverage": 0.00909090909090909,
+        "fileRecall": 0.3333333333333333,
+        "complementaryCoverage": null
+      },
+      "code-understanding": {
+        "planned": 1,
+        "complete": 1,
+        "incomplete": 0,
+        "notRun": 0,
+        "completionRate": 1,
+        "missing": [],
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "mrr": 1,
+        "evidenceCoverage": 1,
+        "fileRecall": 1,
+        "complementaryCoverage": null
+      }
+    },
+    "byRepository": {
+      "prometheus/prometheus": {
+        "planned": 2,
+        "complete": 2,
+        "incomplete": 0,
+        "notRun": 0,
+        "completionRate": 1,
+        "missing": [],
+        "recallAt1": 0.5045454545454545,
+        "recallAt5": 0.5045454545454545,
+        "mrr": 1,
+        "evidenceCoverage": 0.5045454545454545,
+        "fileRecall": 0.6666666666666666,
+        "complementaryCoverage": null
+      }
+    },
+    "notRun": 0
+  },
+  "notRun": [],
+  "rows": [
+    {
+      "id": "prometheus__prometheus-9248:change",
+      "task": "prometheus__prometheus-9248",
+      "repository": "prometheus/prometheus",
+      "split": "dev",
+      "category": "change-localization",
+      "label": "patch",
+      "latencyMs": 6574.895995,
+      "metrics": {
+        "recallAt1": 0.00909090909090909,
+        "recallAt5": 0.00909090909090909,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 0.00909090909090909,
+        "negativeCorrect": null,
+        "fileRecall": 0.3333333333333333,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "responseTokens": 7354,
+      "outcome": {
+        "schema_version": "1",
+        "search_id": "prometheus__prometheus-9248:change",
+        "status": "complete",
+        "excerpts": [
+          {
+            "path": "promql/engine.go",
+            "start_line": 2057,
+            "end_line": 2131,
+            "file_sha256": "cf59075fc245e392933102fb3e51c0ab6191d20c2637d8a295cca7851e8ae245",
+            "score": 0.94,
+            "code": "func dropMetricName(l labels.Labels) labels.Labels {\n\treturn labels.NewBuilder(l).Del(labels.MetricName).Labels()\n}\n\n// scalarBinop evaluates a binary operation between two Scalars.\nfunc scalarBinop(op parser.ItemType, lhs, rhs float64) float64 {\n\tswitch op {\n\tcase parser.ADD:\n\t\treturn lhs + rhs\n\tcase parser.SUB:\n\t\treturn lhs - rhs\n\tcase parser.MUL:\n\t\treturn lhs * rhs\n\tcase parser.DIV:\n\t\treturn lhs / rhs\n\tcase parser.POW:\n\t\treturn math.Pow(lhs, rhs)\n\tcase parser.MOD:\n\t\treturn math.Mod(lhs, rhs)\n\tcase parser.EQLC:\n\t\treturn btos(lhs == rhs)\n\tcase parser.NEQ:\n\t\treturn btos(lhs != rhs)\n\tcase parser.GTR:\n\t\treturn btos(lhs > rhs)\n\tcase parser.LSS:\n\t\treturn btos(lhs < rhs)\n\tcase parser.GTE:\n\t\treturn btos(lhs >= rhs)\n\tcase parser.LTE:\n\t\treturn btos(lhs <= rhs)\n\t}\n\tpanic(errors.Errorf(\"operator %q not allowed for Scalar operations\", op))\n}\n\n// vectorElemBinop evaluates a binary operation between two Vector elements.\nfunc vectorElemBinop(op parser.ItemType, lhs, rhs float64) (float64, bool) {\n\tswitch op {\n\tcase parser.ADD:\n\t\treturn lhs + rhs, true\n\tcase parser.SUB:\n\t\treturn lhs - rhs, true\n\tcase parser.MUL:\n\t\treturn lhs * rhs, true\n\tcase parser.DIV:\n\t\treturn lhs / rhs, true\n\tcase parser.POW:\n\t\treturn math.Pow(lhs, rhs), true\n\tcase parser.MOD:\n\t\treturn math.Mod(lhs, rhs), true\n\tcase parser.EQLC:\n\t\treturn lhs, lhs == rhs\n\tcase parser.NEQ:\n\t\treturn lhs, lhs != rhs\n\tcase parser.GTR:\n\t\treturn lhs, lhs > rhs\n\tcase parser.LSS:\n\t\treturn lhs, lhs < rhs\n\tcase parser.GTE:\n\t\treturn lhs, lhs >= rhs\n\tcase parser.LTE:\n\t\treturn lhs, lhs <= rhs\n\t}\n\tpanic(errors.Errorf(\"operator %q not allowed for operations between Vectors\", op))\n}\n\ntype groupedAggregation struct {\n\tlabels      labels.Labels\n\tvalue       float64\n\tmean        float64\n\tgroupCount  int\n\theap        vectorByValueHeap\n\treverseHeap vectorByReverseValueHeap\n}\n\n"
+          },
+          {
+            "path": "promql/engine.go",
+            "start_line": 1154,
+            "end_line": 1591,
+            "file_sha256": "cf59075fc245e392933102fb3e51c0ab6191d20c2637d8a295cca7851e8ae245",
+            "score": 0.84,
+            "code": "\t// This is the top-level evaluation method.\n\t// Thus, we check for timeout/cancellation here.\n\tif err := contextDone(ev.ctx, \"expression evaluation\"); err != nil {\n\t\tev.error(err)\n\t}\n\tnumSteps := int((ev.endTimestamp-ev.startTimestamp)/ev.interval) + 1\n\n\t// Create a new span to help investigate inner evaluation performances.\n\tspan, _ := opentracing.StartSpanFromContext(ev.ctx, stats.InnerEvalTime.SpanOperation()+\" eval \"+reflect.TypeOf(expr).String())\n\tdefer span.Finish()\n\n\tswitch e := expr.(type) {\n\tcase *parser.AggregateExpr:\n\t\t// Grouping labels must be sorted (expected both by generateGroupingKey() and aggregation()).\n\t\tsortedGrouping := e.Grouping\n\t\tsort.Strings(sortedGrouping)\n\n\t\t// Prepare a function to initialise series helpers with the grouping key.\n\t\tbuf := make([]byte, 0, 1024)\n\t\tinitSeries := func(series labels.Labels, h *EvalSeriesHelper) {\n\t\t\th.groupingKey, buf = generateGroupingKey(series, sortedGrouping, e.Without, buf)\n\t\t}\n\n\t\tunwrapParenExpr(&e.Param)\n\t\tif s, ok := unwrapStepInvariantExpr(e.Param).(*parser.StringLiteral); ok {\n\t\t\treturn ev.rangeEval(initSeries, func(v []parser.Value, sh [][]EvalSeriesHelper, enh *EvalNodeHelper) (Vector, storage.Warnings) {\n\t\t\t\treturn ev.aggregation(e.Op, sortedGrouping, e.Without, s.Val, v[0].(Vector), sh[0], enh), nil\n\t\t\t}, e.Expr)\n\t\t}\n\n\t\treturn ev.rangeEval(initSeries, func(v []parser.Value, sh [][]EvalSeriesHelper, enh *EvalNodeHelper) (Vector, storage.Warnings) {\n\t\t\tvar param float64\n\t\t\tif e.Param != nil {\n\t\t\t\tparam = v[0].(Vector)[0].V\n\t\t\t}\n\t\t\treturn ev.aggregation(e.Op, sortedGrouping, e.Without, param, v[1].(Vector), sh[1], enh), nil\n\t\t}, e.Param, e.Expr)\n\n\tcase *parser.Call:\n\t\tcall := FunctionCalls[e.Func.Name]\n\t\tif e.Func.Name == \"timestamp\" {\n\t\t\t// Matrix evaluation always returns the evaluation time,\n\t\t\t// so this function needs special handling when given\n\t\t\t// a vector selector.\n\t\t\tunwrapParenExpr(&e.Args[0])\n\t\t\targ := unwrapStepInvariantExpr(e.Args[0])\n\t\t\tvs, ok := arg.(*parser.VectorSelector)\n\t\t\tif ok {\n\t\t\t\treturn ev.rangeEval(nil, func(v []parser.Value, _ [][]EvalSeriesHelper, enh *EvalNodeHelper) (Vector, storage.Warnings) {\n\t\t\t\t\tif vs.Timestamp != nil {\n\t\t\t\t\t\t// This is a special case only for \"timestamp\" since the offset\n\t\t\t\t\t\t// needs to be adjusted for every point.\n\t\t\t\t\t\tvs.Offset = time.Duration(enh.Ts-*vs.Timestamp) * time.Millisecond\n\t\t\t\t\t}\n\t\t\t\t\tval, ws := ev.vectorSelector(vs, enh.Ts)\n\t\t\t\t\treturn call([]parser.Value{val}, e.Args, enh), ws\n\t\t\t\t})\n\t\t\t}\n\t\t}\n\n\t\t// Check if the function has a matrix argument.\n\t\tvar (\n\t\t\tmatrixArgIndex int\n\t\t\tmatrixArg      bool\n\t\t\twarnings       storage.Warnings\n\t\t)\n\t\tfor i := range e.Args {\n\t\t\tunwrapParenExpr(&e.Args[i])\n\t\t\ta := unwrapStepInvariantExpr(e.Args[i])\n\t\t\tif _, ok := a.(*parser.MatrixSelector); ok {\n\t\t\t\tmatrixArgIndex = i\n\t\t\t\tmatrixArg = true\n\t\t\t\tbreak\n\t\t\t}\n\t\t\t// parser.SubqueryExpr can be used in place of parser.MatrixSelector.\n\t\t\tif subq, ok := a.(*parser.SubqueryExpr); ok {\n\t\t\t\tmatrixArgIndex = i\n\t\t\t\tmatrixArg = true\n\t\t\t\t// Replacing parser.SubqueryExpr with parser.MatrixSelector.\n\t\t\t\tval, totalSamples, ws := ev.evalSubquery(subq)\n\t\t\t\te.Args[i] = val\n\t\t\t\twarnings = append(warnings, ws...)\n\t\t\t\tdefer func() {\n\t\t\t\t\t// subquery result takes space in the memory. Get rid of that at the end.\n\t\t\t\t\tval.VectorSelector.(*parser.VectorSelector).Series = nil\n\t\t\t\t\tev.currentSamples -= totalSamples\n\t\t\t\t}()\n\t\t\t\tbreak\n\t\t\t}\n\t\t}\n\t\tif !matrixArg {\n\t\t\t// Does not have a matrix argument.\n\t\t\treturn ev.rangeEval(nil, func(v []parser.Value, _ [][]EvalSeriesHelper, enh *EvalNodeHelper) (Vector, storage.Warnings) {\n\t\t\t\treturn call(v, e.Args, enh), warnings\n\t\t\t}, e.Args...)\n\t\t}\n\n\t\tinArgs := make([]parser.Value, len(e.Args))\n\t\t// Evaluate any non-matrix arguments.\n\t\totherArgs := make([]Matrix, len(e.Args))\n\t\totherInArgs := make([]Vector, len(e.Args))\n\t\tfor i, e := range e.Args {\n\t\t\tif i != matrixArgIndex {\n\t\t\t\tval, ws := ev.eval(e)\n\t\t\t\totherArgs[i] = val.(Matrix)\n\t\t\t\totherInArgs[i] = Vector{Sample{}}\n\t\t\t\tinArgs[i] = otherInArgs[i]\n\t\t\t\twarnings = append(warnings, ws...)\n\t\t\t}\n\t\t}\n\n\t\tsel := unwrapStepInvariantExpr(e.Args[matrixArgIndex]).(*parser.MatrixSelector)\n\t\tselVS := sel.VectorSelector.(*parser.VectorSelector)\n\n\t\tws, err := checkAndExpandSeriesSet(ev.ctx, sel)\n\t\twarnings = append(warnings, ws...)\n\t\tif err != nil {\n\t\t\tev.error(errWithWarnings{errors.Wrap(err, \"expanding series\"), warnings})\n\t\t}\n\t\tmat := make(Matrix, 0, len(selVS.Series)) // Output matrix.\n\t\toffset := durationMilliseconds(selVS.Offset)\n\t\tselRange := durationMilliseconds(sel.Range)\n\t\tstepRange := selRange\n\t\tif stepRange > ev.interval {\n\t\t\tstepRange = ev.interval\n\t\t}\n\t\t// Reuse objects across steps to save memory allocations.\n\t\tpoints := getPointSlice(16)\n\t\tinMatrix := make(Matrix, 1)\n\t\tinArgs[matrixArgIndex] = inMatrix\n\t\tenh := &EvalNodeHelper{Out: make(Vector, 0, 1)}\n\t\t// Process all the calls for one time series at a time.\n\t\tit := storage.NewBuffer(selRange)\n\t\tfor i, s := range selVS.Series {\n\t\t\tev.currentSamples -= len(points)\n\t\t\tpoints = points[:0]\n\t\t\tit.Reset(s.Iterator())\n\t\t\tmetric := selVS.Series[i].Labels()\n\t\t\t// The last_over_time function acts like offset; thus, it\n\t\t\t// should keep the metric name.  For all the other range\n\t\t\t// vector functions, the only change needed is to drop the\n\t\t\t// metric name in the output.\n\t\t\tif e.Func.Name != \"last_over_time\" {\n\t\t\t\tmetric = dropMetricName(metric)\n\t\t\t}\n\t\t\tss := Series{\n\t\t\t\tMetric: metric,\n\t\t\t\tPoints: getPointSlice(numSteps),\n\t\t\t}\n\t\t\tinMatrix[0].Metric = selVS.Series[i].Labels()\n\t\t\tfor ts, step := ev.startTimestamp, -1; ts <= ev.endTimestamp; ts += ev.interval {\n\t\t\t\tstep++\n\t\t\t\t// Set the non-matrix arguments.\n\t\t\t\t// They are scalar, so it is safe to use the step number\n\t\t\t\t// when looking up the argument, as there will be no gaps.\n\t\t\t\tfor j := range e.Args {\n\t\t\t\t\tif j != matrixArgIndex {\n\t\t\t\t\t\totherInArgs[j][0].V = otherArgs[j][0].Points[step].V\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t\tmaxt := ts - offset\n\t\t\t\tmint := maxt - selRange\n\t\t\t\t// Evaluate the matrix selector for this series for this step.\n\t\t\t\tpoints = ev.matrixIterSlice(it, mint, maxt, points)\n\t\t\t\tif len(points) == 0 {\n\t\t\t\t\tcontinue\n\t\t\t\t}\n\t\t\t\tinMatrix[0].Points = points\n\t\t\t\tenh.Ts = ts\n\t\t\t\t// Make the function call.\n\t\t\t\toutVec := call(inArgs, e.Args, enh)\n\t\t\t\tenh.Out = outVec[:0]\n\t\t\t\tif len(outVec) > 0 {\n\t\t\t\t\tss.Points = append(ss.Points, Point{V: outVec[0].Point.V, T: ts})\n\t\t\t\t}\n\t\t\t\t// Only buffer stepRange milliseconds from the second step on.\n\t\t\t\tit.ReduceDelta(stepRange)\n\t\t\t}\n\t\t\tif len(ss.Points) > 0 {\n\t\t\t\tif ev.currentSamples+len(ss.Points) <= ev.maxSamples {\n\t\t\t\t\tmat = append(mat, ss)\n\t\t\t\t\tev.currentSamples += len(ss.Points)\n\t\t\t\t} else {\n\t\t\t\t\tev.error(ErrTooManySamples(env))\n\t\t\t\t}\n\t\t\t} else {\n\t\t\t\tputPointSlice(ss.Points)\n\t\t\t}\n\t\t}\n\n\t\tev.currentSamples -= len(points)\n\t\tputPointSlice(points)\n\n\t\t// The absent_over_time function returns 0 or 1 series. So far, the matrix\n\t\t// contains multiple series. The following code will create a new series\n\t\t// with values of 1 for the timestamps where no series has value.\n\t\tif e.Func.Name == \"absent_over_time\" {\n\t\t\tsteps := int(1 + (ev.endTimestamp-ev.startTimestamp)/ev.interval)\n\t\t\t// Iterate once to look for a complete series.\n\t\t\tfor _, s := range mat {\n\t\t\t\tif len(s.Points) == steps {\n\t\t\t\t\treturn Matrix{}, warnings\n\t\t\t\t}\n\t\t\t}\n\n\t\t\tfound := map[int64]struct{}{}\n\n\t\t\tfor i, s := range mat {\n\t\t\t\tfor _, p := range s.Points {\n\t\t\t\t\tfound[p.T] = struct{}{}\n\t\t\t\t}\n\t\t\t\tif i > 0 && len(found) == steps {\n\t\t\t\t\treturn Matrix{}, warnings\n\t\t\t\t}\n\t\t\t}\n\n\t\t\tnewp := make([]Point, 0, steps-len(found))\n\t\t\tfor ts := ev.startTimestamp; ts <= ev.endTimestamp; ts += ev.interval {\n\t\t\t\tif _, ok := found[ts]; !ok {\n\t\t\t\t\tnewp = append(newp, Point{T: ts, V: 1})\n\t\t\t\t}\n\t\t\t}\n\n\t\t\treturn Matrix{\n\t\t\t\tSeries{\n\t\t\t\t\tMetric: createLabelsForAbsentFunction(e.Args[0]),\n\t\t\t\t\tPoints: newp,\n\t\t\t\t},\n\t\t\t}, warnings\n\t\t}\n\n\t\tif mat.ContainsSameLabelset() {\n\t\t\tev.errorf(\"vector cannot contain metrics with the same labelset\")\n\t\t}\n\n\t\treturn mat, warnings\n\n\tcase *parser.ParenExpr:\n\t\treturn ev.eval(e.Expr)\n\n\tcase *parser.UnaryExpr:\n\t\tval, ws := ev.eval(e.Expr)\n\t\tmat := val.(Matrix)\n\t\tif e.Op == parser.SUB {\n\t\t\tfor i := range mat {\n\t\t\t\tmat[i].Metric = dropMetricName(mat[i].Metric)\n\t\t\t\tfor j := range mat[i].Points {\n\t\t\t\t\tmat[i].Points[j].V = -mat[i].Points[j].V\n\t\t\t\t}\n\t\t\t}\n\t\t\tif mat.ContainsSameLabelset() {\n\t\t\t\tev.errorf(\"vector cannot contain metrics with the same labelset\")\n\t\t\t}\n\t\t}\n\t\treturn mat, ws\n\n\tcase *parser.BinaryExpr:\n\t\tswitch lt, rt := e.LHS.Type(), e.RHS.Type(); {\n\t\tcase lt == parser.ValueTypeScalar && rt == parser.ValueTypeScalar:\n\t\t\treturn ev.rangeEval(nil, func(v []parser.Value, _ [][]EvalSeriesHelper, enh *EvalNodeHelper) (Vector, storage.Warnings) {\n\t\t\t\tval := scalarBinop(e.Op, v[0].(Vector)[0].Point.V, v[1].(Vector)[0].Point.V)\n\t\t\t\treturn append(enh.Out, Sample{Point: Point{V: val}}), nil\n\t\t\t}, e.LHS, e.RHS)\n\t\tcase lt == parser.ValueTypeVector && rt == parser.ValueTypeVector:\n\t\t\t// Function to compute the join signature for each series.\n\t\t\tbuf := make([]byte, 0, 1024)\n\t\t\tsigf := signatureFunc(e.VectorMatching.On, buf, e.VectorMatching.MatchingLabels...)\n\t\t\tinitSignatures := func(series labels.Labels, h *EvalSeriesHelper) {\n\t\t\t\th.signature = sigf(series)\n\t\t\t}\n\t\t\tswitch e.Op {\n\t\t\tcase parser.LAND:\n\t\t\t\treturn ev.rangeEval(initSignatures, func(v []parser.Value, sh [][]EvalSeriesHelper, enh *EvalNodeHelper) (Vector, storage.Warnings) {\n\t\t\t\t\treturn ev.VectorAnd(v[0].(Vector), v[1].(Vector), e.VectorMatching, sh[0], sh[1], enh), nil\n\t\t\t\t}, e.LHS, e.RHS)\n\t\t\tcase parser.LOR:\n\t\t\t\treturn ev.rangeEval(initSignatures, func(v []parser.Value, sh [][]EvalSeriesHelper, enh *EvalNodeHelper) (Vector, storage.Warnings) {\n\t\t\t\t\treturn ev.VectorOr(v[0].(Vector), v[1].(Vector), e.VectorMatching, sh[0], sh[1], enh), nil\n\t\t\t\t}, e.LHS, e.RHS)\n\t\t\tcase parser.LUNLESS:\n\t\t\t\treturn ev.rangeEval(initSignatures, func(v []parser.Value, sh [][]EvalSeriesHelper, enh *EvalNodeHelper) (Vector, storage.Warnings) {\n\t\t\t\t\treturn ev.VectorUnless(v[0].(Vector), v[1].(Vector), e.VectorMatching, sh[0], sh[1], enh), nil\n\t\t\t\t}, e.LHS, e.RHS)\n\t\t\tdefault:\n\t\t\t\treturn ev.rangeEval(initSignatures, func(v []parser.Value, sh [][]EvalSeriesHelper, enh *EvalNodeHelper) (Vector, storage.Warnings) {\n\t\t\t\t\treturn ev.VectorBinop(e.Op, v[0].(Vector), v[1].(Vector), e.VectorMatching, e.ReturnBool, sh[0], sh[1], enh), nil\n\t\t\t\t}, e.LHS, e.RHS)\n\t\t\t}\n\n\t\tcase lt == parser.ValueTypeVector && rt == parser.ValueTypeScalar:\n\t\t\treturn ev.rangeEval(nil, func(v []parser.Value, _ [][]EvalSeriesHelper, enh *EvalNodeHelper) (Vector, storage.Warnings) {\n\t\t\t\treturn ev.VectorscalarBinop(e.Op, v[0].(Vector), Scalar{V: v[1].(Vector)[0].Point.V}, false, e.ReturnBool, enh), nil\n\t\t\t}, e.LHS, e.RHS)\n\n\t\tcase lt == parser.ValueTypeScalar && rt == parser.ValueTypeVector:\n\t\t\treturn ev.rangeEval(nil, func(v []parser.Value, _ [][]EvalSeriesHelper, enh *EvalNodeHelper) (Vector, storage.Warnings) {\n\t\t\t\treturn ev.VectorscalarBinop(e.Op, v[1].(Vector), Scalar{V: v[0].(Vector)[0].Point.V}, true, e.ReturnBool, enh), nil\n\t\t\t}, e.LHS, e.RHS)\n\t\t}\n\n\tcase *parser.NumberLiteral:\n\t\treturn ev.rangeEval(nil, func(v []parser.Value, _ [][]EvalSeriesHelper, enh *EvalNodeHelper) (Vector, storage.Warnings) {\n\t\t\treturn append(enh.Out, Sample{Point: Point{V: e.Val}}), nil\n\t\t})\n\n\tcase *parser.StringLiteral:\n\t\treturn String{V: e.Val, T: ev.startTimestamp}, nil\n\n\tcase *parser.VectorSelector:\n\t\tws, err := checkAndExpandSeriesSet(ev.ctx, e)\n\t\tif err != nil {\n\t\t\tev.error(errWithWarnings{errors.Wrap(err, \"expanding series\"), ws})\n\t\t}\n\t\tmat := make(Matrix, 0, len(e.Series))\n\t\tit := storage.NewMemoizedEmptyIterator(durationMilliseconds(ev.lookbackDelta))\n\t\tfor i, s := range e.Series {\n\t\t\tit.Reset(s.Iterator())\n\t\t\tss := Series{\n\t\t\t\tMetric: e.Series[i].Labels(),\n\t\t\t\tPoints: getPointSlice(numSteps),\n\t\t\t}\n\n\t\t\tfor ts := ev.startTimestamp; ts <= ev.endTimestamp; ts += ev.interval {\n\t\t\t\t_, v, ok := ev.vectorSelectorSingle(it, e, ts)\n\t\t\t\tif ok {\n\t\t\t\t\tif ev.currentSamples < ev.maxSamples {\n\t\t\t\t\t\tss.Points = append(ss.Points, Point{V: v, T: ts})\n\t\t\t\t\t\tev.currentSamples++\n\t\t\t\t\t} else {\n\t\t\t\t\t\tev.error(ErrTooManySamples(env))\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t}\n\n\t\t\tif len(ss.Points) > 0 {\n\t\t\t\tmat = append(mat, ss)\n\t\t\t} else {\n\t\t\t\tputPointSlice(ss.Points)\n\t\t\t}\n\t\t}\n\t\treturn mat, ws\n\n\tcase *parser.MatrixSelector:\n\t\tif ev.startTimestamp != ev.endTimestamp {\n\t\t\tpanic(errors.New(\"cannot do range evaluation of matrix selector\"))\n\t\t}\n\t\treturn ev.matrixSelector(e)\n\n\tcase *parser.SubqueryExpr:\n\t\toffsetMillis := durationMilliseconds(e.Offset)\n\t\trangeMillis := durationMilliseconds(e.Range)\n\t\tnewEv := &evaluator{\n\t\t\tendTimestamp:             ev.endTimestamp - offsetMillis,\n\t\t\tctx:                      ev.ctx,\n\t\t\tcurrentSamples:           ev.currentSamples,\n\t\t\tmaxSamples:               ev.maxSamples,\n\t\t\tlogger:                   ev.logger,\n\t\t\tlookbackDelta:            ev.lookbackDelta,\n\t\t\tnoStepSubqueryIntervalFn: ev.noStepSubqueryIntervalFn,\n\t\t}\n\n\t\tif e.Step != 0 {\n\t\t\tnewEv.interval = durationMilliseconds(e.Step)\n\t\t} else {\n\t\t\tnewEv.interval = ev.noStepSubqueryIntervalFn(rangeMillis)\n\t\t}\n\n\t\t// Start with the first timestamp after (ev.startTimestamp - offset - range)\n\t\t// that is aligned with the step (multiple of 'newEv.interval').\n\t\tnewEv.startTimestamp = newEv.interval * ((ev.startTimestamp - offsetMillis - rangeMillis) / newEv.interval)\n\t\tif newEv.startTimestamp < (ev.startTimestamp - offsetMillis - rangeMillis) {\n\t\t\tnewEv.startTimestamp += newEv.interval\n\t\t}\n\n\t\tif newEv.startTimestamp != ev.startTimestamp {\n\t\t\t// Adjust the offset of selectors based on the new\n\t\t\t// start time of the evaluator since the calculation\n\t\t\t// of the offset with @ happens w.r.t. the start time.\n\t\t\tsetOffsetForAtModifier(newEv.startTimestamp, e.Expr)\n\t\t}\n\n\t\tres, ws := newEv.eval(e.Expr)\n\t\tev.currentSamples = newEv.currentSamples\n\t\treturn res, ws\n\tcase *parser.StepInvariantExpr:\n\t\tswitch ce := e.Expr.(type) {\n\t\tcase *parser.StringLiteral, *parser.NumberLiteral:\n\t\t\treturn ev.eval(ce)\n\t\t}\n\n\t\tnewEv := &evaluator{\n\t\t\tstartTimestamp:           ev.startTimestamp,\n\t\t\tendTimestamp:             ev.startTimestamp, // Always a single evaluation.\n\t\t\tinterval:                 ev.interval,\n\t\t\tctx:                      ev.ctx,\n\t\t\tcurrentSamples:           ev.currentSamples,\n\t\t\tmaxSamples:               ev.maxSamples,\n\t\t\tlogger:                   ev.logger,\n\t\t\tlookbackDelta:            ev.lookbackDelta,\n\t\t\tnoStepSubqueryIntervalFn: ev.noStepSubqueryIntervalFn,\n\t\t}\n\t\tres, ws := newEv.eval(e.Expr)\n\t\tev.currentSamples = newEv.currentSamples\n\t\tswitch e.Expr.(type) {\n\t\tcase *parser.MatrixSelector, *parser.SubqueryExpr:\n\t\t\t// We do not duplicate results for range selectors since result is a matrix\n\t\t\t// with their unique timestamps which does not depend on the step.\n\t\t\treturn res, ws\n\t\t}\n\n\t\t// For every evaluation while the value remains same, the timestamp for that\n\t\t// value would change for different eval times. Hence we duplicate the result\n\t\t// with changed timestamps.\n\t\tmat, ok := res.(Matrix)\n\t\tif !ok {\n\t\t\tpanic(errors.Errorf(\"unexpected result in StepInvariantExpr evaluation: %T\", expr))\n\t\t}\n\t\tfor i := range mat {\n\t\t\tif len(mat[i].Points) != 1 {\n\t\t\t\tpanic(errors.Errorf(\"unexpected number of samples\"))\n\t\t\t}\n\t\t\tfor ts := ev.startTimestamp + ev.interval; ts <= ev.endTimestamp; ts = ts + ev.interval {\n\t\t\t\tmat[i].Points = append(mat[i].Points, Point{\n\t\t\t\t\tT: ts,\n\t\t\t\t\tV: mat[i].Points[0].V,\n\t\t\t\t})\n\t\t\t\tev.currentSamples++\n\t\t\t\tif ev.currentSamples > ev.maxSamples {\n\t\t\t\t\tev.error(ErrTooManySamples(env))\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\t\treturn res, ws\n\t}\n\n\tpanic(errors.Errorf(\"unhandled expression of type: %T\", expr))\n}\n\n"
+          },
+          {
+            "path": "promql/parser/functions.go",
+            "start_line": 25,
+            "end_line": 104,
+            "file_sha256": "ed3972a2bde7c3fd24fb67c3f9cad572d245810a782f419c0e5ed52271415a6e",
+            "score": 0.78,
+            "code": "// Functions is a list of all functions supported by PromQL, including their types.\nvar Functions = map[string]*Function{\n\t\"abs\": {\n\t\tName:       \"abs\",\n\t\tArgTypes:   []ValueType{ValueTypeVector},\n\t\tReturnType: ValueTypeVector,\n\t},\n\t\"absent\": {\n\t\tName:       \"absent\",\n\t\tArgTypes:   []ValueType{ValueTypeVector},\n\t\tReturnType: ValueTypeVector,\n\t},\n\t\"absent_over_time\": {\n\t\tName:       \"absent_over_time\",\n\t\tArgTypes:   []ValueType{ValueTypeMatrix},\n\t\tReturnType: ValueTypeVector,\n\t},\n\t\"acos\": {\n\t\tName:       \"acos\",\n\t\tArgTypes:   []ValueType{ValueTypeVector},\n\t\tReturnType: ValueTypeVector,\n\t},\n\t\"acosh\": {\n\t\tName:       \"acosh\",\n\t\tArgTypes:   []ValueType{ValueTypeVector},\n\t\tReturnType: ValueTypeVector,\n\t},\n\t\"asin\": {\n\t\tName:       \"asin\",\n\t\tArgTypes:   []ValueType{ValueTypeVector},\n\t\tReturnType: ValueTypeVector,\n\t},\n\t\"asinh\": {\n\t\tName:       \"asinh\",\n\t\tArgTypes:   []ValueType{ValueTypeVector},\n\t\tReturnType: ValueTypeVector,\n\t},\n\t\"atan\": {\n\t\tName:       \"atan\",\n\t\tArgTypes:   []ValueType{ValueTypeVector},\n\t\tReturnType: ValueTypeVector,\n\t},\n\t\"atanh\": {\n\t\tName:       \"atanh\",\n\t\tArgTypes:   []ValueType{ValueTypeVector},\n\t\tReturnType: ValueTypeVector,\n\t},\n\t\"avg_over_time\": {\n\t\tName:       \"avg_over_time\",\n\t\tArgTypes:   []ValueType{ValueTypeMatrix},\n\t\tReturnType: ValueTypeVector,\n\t},\n\t\"ceil\": {\n\t\tName:       \"ceil\",\n\t\tArgTypes:   []ValueType{ValueTypeVector},\n\t\tReturnType: ValueTypeVector,\n\t},\n\t\"changes\": {\n\t\tName:       \"changes\",\n\t\tArgTypes:   []ValueType{ValueTypeMatrix},\n\t\tReturnType: ValueTypeVector,\n\t},\n\t\"clamp\": {\n\t\tName:       \"clamp\",\n\t\tArgTypes:   []ValueType{ValueTypeVector, ValueTypeScalar, ValueTypeScalar},\n\t\tReturnType: ValueTypeVector,\n\t},\n\t\"clamp_max\": {\n\t\tName:       \"clamp_max\",\n\t\tArgTypes:   []ValueType{ValueTypeVector, ValueTypeScalar},\n\t\tReturnType: ValueTypeVector,\n\t},\n\t\"clamp_min\": {\n\t\tName:       \"clamp_min\",\n\t\tArgTypes:   []ValueType{ValueTypeVector, ValueTypeScalar},\n\t\tReturnType: ValueTypeVector,\n\t},\n\t\"cos\": {\n\t\tName:       \"cos\",\n\t\tArgTypes:   []ValueType{ValueTypeVector},\n"
+          }
+        ],
+        "report": {
+          "scope": [
+            "."
+          ],
+          "inventory_complete": true,
+          "scope_fully_scanned": true,
+          "files": {
+            "discovered": 215,
+            "eligible": 215,
+            "excluded_by_reason": {},
+            "unreadable": 0,
+            "changed_before_return": 0
+          },
+          "fragments": {
+            "total": 1024,
+            "remote_evaluated": 1024,
+            "cache_reused": 0,
+            "not_evaluated": 0,
+            "below_threshold": 1010,
+            "above_threshold": 14,
+            "represented_in_response": 4,
+            "omitted_by_response_budget": 10,
+            "omitted_stale": 0
+          },
+          "selection": {
+            "outcome": "selected",
+            "threshold": 0.5,
+            "ranges_returned": 3,
+            "duplicate_ranges_collapsed": 0
+          },
+          "usage": {
+            "provider_request_attempts": 38,
+            "provider_input_tokens_reported": 799179,
+            "provider_input_tokens_known_subtotal": 799179,
+            "provider_input_tokens_estimated": 799179,
+            "estimated_cost_usd": 0.033565518,
+            "reported_cost_usd": null,
+            "attempts_with_unknown_usage": 0,
+            "transmitted_bytes": 2855724,
+            "elapsed_ms": 6568
+          },
+          "response_budget": {
+            "requested_tokens": 8000,
+            "counter": "tiktoken@1.0.22/cl100k_base",
+            "accounting": "reference_tokenizer"
+          },
+          "preflight": {
+            "planned_remote_fragments": 1024,
+            "planned_cache_hits": 0,
+            "estimated_first_attempt_tokens": 821512,
+            "estimated_first_attempt_cost_usd": 0.034503504,
+            "estimated_first_attempt_requests": 38,
+            "enabled_caps": {
+              "estimated_input_tokens": 400000000,
+              "request_attempts": 40000
+            },
+            "estimated_required_caps": {
+              "estimated_input_tokens": 821512,
+              "request_attempts": 38
+            }
+          },
+          "stop_reasons": [],
+          "diagnostics_truncated": false
+        }
+      },
+      "profile": {
+        "stages": {
+          "tokenization": {
+            "calls": 76604,
+            "durationMs": 4349.391995000026
+          },
+          "rendering": {
+            "calls": 2,
+            "durationMs": 120.97606099999985
+          },
+          "inventory": {
+            "calls": 1,
+            "durationMs": 128.11435500000005
+          },
+          "source_read": {
+            "calls": 215,
+            "durationMs": 49.468647999999234
+          },
+          "decode": {
+            "calls": 215,
+            "durationMs": 0.9089919999998983
+          },
+          "hash": {
+            "calls": 215,
+            "durationMs": 9.62074699999971
+          },
+          "snapshot": {
+            "calls": 215,
+            "durationMs": 26.259312999998542
+          },
+          "secret_scan": {
+            "calls": 215,
+            "durationMs": 13.746354000000338
+          },
+          "chunking": {
+            "calls": 215,
+            "durationMs": 1763.3650019999995
+          },
+          "parsing": {
+            "calls": 214,
+            "durationMs": 505.8198969999971
+          },
+          "preparation": {
+            "calls": 1,
+            "durationMs": 2007.523561
+          },
+          "serialization": {
+            "calls": 1113,
+            "durationMs": 44.723562999994556
+          },
+          "cache_lookup": {
+            "calls": 1024,
+            "durationMs": 1235.6532150000025
+          },
+          "batching": {
+            "calls": 1,
+            "durationMs": 1361.5642939999998
+          },
+          "planning": {
+            "calls": 1,
+            "durationMs": 0.4597149999999601
+          },
+          "provider": {
+            "calls": 38,
+            "durationMs": 24002.40918
+          },
+          "evaluation": {
+            "calls": 1,
+            "durationMs": 1815.70838
+          },
+          "selection": {
+            "calls": 1,
+            "durationMs": 26.835223000000042
+          },
+          "freshness": {
+            "calls": 3,
+            "durationMs": 0.8128339999993841
+          },
+          "search": {
+            "calls": 1,
+            "durationMs": 6573.916502
+          }
+        },
+        "counters": {
+          "tokenizerInputUtf16": 20732226,
+          "referenceTokensCounted": 5864536,
+          "serializedQuestions": 3467,
+          "serializedBytes": 10714564
+        },
+        "memory": {
+          "start": {
+            "rssBytes": 257732608,
+            "heapUsedBytes": 49458440,
+            "externalBytes": 120377189
+          },
+          "end": {
+            "rssBytes": 326193152,
+            "heapUsedBytes": 55746392,
+            "externalBytes": 89899166
+          },
+          "sampledMax": {
+            "rssBytes": 326590464,
+            "heapUsedBytes": 74017416,
+            "externalBytes": 135117650
+          },
+          "samples": 230
+        }
+      }
+    },
+    {
+      "id": "prometheus__prometheus-9248:understand",
+      "task": "prometheus__prometheus-9248",
+      "repository": "prometheus/prometheus",
+      "split": "dev",
+      "category": "code-understanding",
+      "label": "docstring",
+      "latencyMs": 6037.616231,
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "responseTokens": 7138,
+      "outcome": {
+        "schema_version": "1",
+        "search_id": "prometheus__prometheus-9248:understand",
+        "status": "complete",
+        "excerpts": [
+          {
+            "path": "promql/engine.go",
+            "start_line": 2057,
+            "end_line": 2131,
+            "file_sha256": "cf59075fc245e392933102fb3e51c0ab6191d20c2637d8a295cca7851e8ae245",
+            "score": 0.97,
+            "code": "func dropMetricName(l labels.Labels) labels.Labels {\n\treturn labels.NewBuilder(l).Del(labels.MetricName).Labels()\n}\n\n// scalarBinop evaluates a binary operation between two Scalars.\nfunc scalarBinop(op parser.ItemType, lhs, rhs float64) float64 {\n\tswitch op {\n\tcase parser.ADD:\n\t\treturn lhs + rhs\n\tcase parser.SUB:\n\t\treturn lhs - rhs\n\tcase parser.MUL:\n\t\treturn lhs * rhs\n\tcase parser.DIV:\n\t\treturn lhs / rhs\n\tcase parser.POW:\n\t\treturn math.Pow(lhs, rhs)\n\tcase parser.MOD:\n\t\treturn math.Mod(lhs, rhs)\n\tcase parser.EQLC:\n\t\treturn btos(lhs == rhs)\n\tcase parser.NEQ:\n\t\treturn btos(lhs != rhs)\n\tcase parser.GTR:\n\t\treturn btos(lhs > rhs)\n\tcase parser.LSS:\n\t\treturn btos(lhs < rhs)\n\tcase parser.GTE:\n\t\treturn btos(lhs >= rhs)\n\tcase parser.LTE:\n\t\treturn btos(lhs <= rhs)\n\t}\n\tpanic(errors.Errorf(\"operator %q not allowed for Scalar operations\", op))\n}\n\n// vectorElemBinop evaluates a binary operation between two Vector elements.\nfunc vectorElemBinop(op parser.ItemType, lhs, rhs float64) (float64, bool) {\n\tswitch op {\n\tcase parser.ADD:\n\t\treturn lhs + rhs, true\n\tcase parser.SUB:\n\t\treturn lhs - rhs, true\n\tcase parser.MUL:\n\t\treturn lhs * rhs, true\n\tcase parser.DIV:\n\t\treturn lhs / rhs, true\n\tcase parser.POW:\n\t\treturn math.Pow(lhs, rhs), true\n\tcase parser.MOD:\n\t\treturn math.Mod(lhs, rhs), true\n\tcase parser.EQLC:\n\t\treturn lhs, lhs == rhs\n\tcase parser.NEQ:\n\t\treturn lhs, lhs != rhs\n\tcase parser.GTR:\n\t\treturn lhs, lhs > rhs\n\tcase parser.LSS:\n\t\treturn lhs, lhs < rhs\n\tcase parser.GTE:\n\t\treturn lhs, lhs >= rhs\n\tcase parser.LTE:\n\t\treturn lhs, lhs <= rhs\n\t}\n\tpanic(errors.Errorf(\"operator %q not allowed for operations between Vectors\", op))\n}\n\ntype groupedAggregation struct {\n\tlabels      labels.Labels\n\tvalue       float64\n\tmean        float64\n\tgroupCount  int\n\theap        vectorByValueHeap\n\treverseHeap vectorByReverseValueHeap\n}\n\n"
+          },
+          {
+            "path": "promql/engine.go",
+            "start_line": 1154,
+            "end_line": 1591,
+            "file_sha256": "cf59075fc245e392933102fb3e51c0ab6191d20c2637d8a295cca7851e8ae245",
+            "score": 0.96,
+            "code": "\t// This is the top-level evaluation method.\n\t// Thus, we check for timeout/cancellation here.\n\tif err := contextDone(ev.ctx, \"expression evaluation\"); err != nil {\n\t\tev.error(err)\n\t}\n\tnumSteps := int((ev.endTimestamp-ev.startTimestamp)/ev.interval) + 1\n\n\t// Create a new span to help investigate inner evaluation performances.\n\tspan, _ := opentracing.StartSpanFromContext(ev.ctx, stats.InnerEvalTime.SpanOperation()+\" eval \"+reflect.TypeOf(expr).String())\n\tdefer span.Finish()\n\n\tswitch e := expr.(type) {\n\tcase *parser.AggregateExpr:\n\t\t// Grouping labels must be sorted (expected both by generateGroupingKey() and aggregation()).\n\t\tsortedGrouping := e.Grouping\n\t\tsort.Strings(sortedGrouping)\n\n\t\t// Prepare a function to initialise series helpers with the grouping key.\n\t\tbuf := make([]byte, 0, 1024)\n\t\tinitSeries := func(series labels.Labels, h *EvalSeriesHelper) {\n\t\t\th.groupingKey, buf = generateGroupingKey(series, sortedGrouping, e.Without, buf)\n\t\t}\n\n\t\tunwrapParenExpr(&e.Param)\n\t\tif s, ok := unwrapStepInvariantExpr(e.Param).(*parser.StringLiteral); ok {\n\t\t\treturn ev.rangeEval(initSeries, func(v []parser.Value, sh [][]EvalSeriesHelper, enh *EvalNodeHelper) (Vector, storage.Warnings) {\n\t\t\t\treturn ev.aggregation(e.Op, sortedGrouping, e.Without, s.Val, v[0].(Vector), sh[0], enh), nil\n\t\t\t}, e.Expr)\n\t\t}\n\n\t\treturn ev.rangeEval(initSeries, func(v []parser.Value, sh [][]EvalSeriesHelper, enh *EvalNodeHelper) (Vector, storage.Warnings) {\n\t\t\tvar param float64\n\t\t\tif e.Param != nil {\n\t\t\t\tparam = v[0].(Vector)[0].V\n\t\t\t}\n\t\t\treturn ev.aggregation(e.Op, sortedGrouping, e.Without, param, v[1].(Vector), sh[1], enh), nil\n\t\t}, e.Param, e.Expr)\n\n\tcase *parser.Call:\n\t\tcall := FunctionCalls[e.Func.Name]\n\t\tif e.Func.Name == \"timestamp\" {\n\t\t\t// Matrix evaluation always returns the evaluation time,\n\t\t\t// so this function needs special handling when given\n\t\t\t// a vector selector.\n\t\t\tunwrapParenExpr(&e.Args[0])\n\t\t\targ := unwrapStepInvariantExpr(e.Args[0])\n\t\t\tvs, ok := arg.(*parser.VectorSelector)\n\t\t\tif ok {\n\t\t\t\treturn ev.rangeEval(nil, func(v []parser.Value, _ [][]EvalSeriesHelper, enh *EvalNodeHelper) (Vector, storage.Warnings) {\n\t\t\t\t\tif vs.Timestamp != nil {\n\t\t\t\t\t\t// This is a special case only for \"timestamp\" since the offset\n\t\t\t\t\t\t// needs to be adjusted for every point.\n\t\t\t\t\t\tvs.Offset = time.Duration(enh.Ts-*vs.Timestamp) * time.Millisecond\n\t\t\t\t\t}\n\t\t\t\t\tval, ws := ev.vectorSelector(vs, enh.Ts)\n\t\t\t\t\treturn call([]parser.Value{val}, e.Args, enh), ws\n\t\t\t\t})\n\t\t\t}\n\t\t}\n\n\t\t// Check if the function has a matrix argument.\n\t\tvar (\n\t\t\tmatrixArgIndex int\n\t\t\tmatrixArg      bool\n\t\t\twarnings       storage.Warnings\n\t\t)\n\t\tfor i := range e.Args {\n\t\t\tunwrapParenExpr(&e.Args[i])\n\t\t\ta := unwrapStepInvariantExpr(e.Args[i])\n\t\t\tif _, ok := a.(*parser.MatrixSelector); ok {\n\t\t\t\tmatrixArgIndex = i\n\t\t\t\tmatrixArg = true\n\t\t\t\tbreak\n\t\t\t}\n\t\t\t// parser.SubqueryExpr can be used in place of parser.MatrixSelector.\n\t\t\tif subq, ok := a.(*parser.SubqueryExpr); ok {\n\t\t\t\tmatrixArgIndex = i\n\t\t\t\tmatrixArg = true\n\t\t\t\t// Replacing parser.SubqueryExpr with parser.MatrixSelector.\n\t\t\t\tval, totalSamples, ws := ev.evalSubquery(subq)\n\t\t\t\te.Args[i] = val\n\t\t\t\twarnings = append(warnings, ws...)\n\t\t\t\tdefer func() {\n\t\t\t\t\t// subquery result takes space in the memory. Get rid of that at the end.\n\t\t\t\t\tval.VectorSelector.(*parser.VectorSelector).Series = nil\n\t\t\t\t\tev.currentSamples -= totalSamples\n\t\t\t\t}()\n\t\t\t\tbreak\n\t\t\t}\n\t\t}\n\t\tif !matrixArg {\n\t\t\t// Does not have a matrix argument.\n\t\t\treturn ev.rangeEval(nil, func(v []parser.Value, _ [][]EvalSeriesHelper, enh *EvalNodeHelper) (Vector, storage.Warnings) {\n\t\t\t\treturn call(v, e.Args, enh), warnings\n\t\t\t}, e.Args...)\n\t\t}\n\n\t\tinArgs := make([]parser.Value, len(e.Args))\n\t\t// Evaluate any non-matrix arguments.\n\t\totherArgs := make([]Matrix, len(e.Args))\n\t\totherInArgs := make([]Vector, len(e.Args))\n\t\tfor i, e := range e.Args {\n\t\t\tif i != matrixArgIndex {\n\t\t\t\tval, ws := ev.eval(e)\n\t\t\t\totherArgs[i] = val.(Matrix)\n\t\t\t\totherInArgs[i] = Vector{Sample{}}\n\t\t\t\tinArgs[i] = otherInArgs[i]\n\t\t\t\twarnings = append(warnings, ws...)\n\t\t\t}\n\t\t}\n\n\t\tsel := unwrapStepInvariantExpr(e.Args[matrixArgIndex]).(*parser.MatrixSelector)\n\t\tselVS := sel.VectorSelector.(*parser.VectorSelector)\n\n\t\tws, err := checkAndExpandSeriesSet(ev.ctx, sel)\n\t\twarnings = append(warnings, ws...)\n\t\tif err != nil {\n\t\t\tev.error(errWithWarnings{errors.Wrap(err, \"expanding series\"), warnings})\n\t\t}\n\t\tmat := make(Matrix, 0, len(selVS.Series)) // Output matrix.\n\t\toffset := durationMilliseconds(selVS.Offset)\n\t\tselRange := durationMilliseconds(sel.Range)\n\t\tstepRange := selRange\n\t\tif stepRange > ev.interval {\n\t\t\tstepRange = ev.interval\n\t\t}\n\t\t// Reuse objects across steps to save memory allocations.\n\t\tpoints := getPointSlice(16)\n\t\tinMatrix := make(Matrix, 1)\n\t\tinArgs[matrixArgIndex] = inMatrix\n\t\tenh := &EvalNodeHelper{Out: make(Vector, 0, 1)}\n\t\t// Process all the calls for one time series at a time.\n\t\tit := storage.NewBuffer(selRange)\n\t\tfor i, s := range selVS.Series {\n\t\t\tev.currentSamples -= len(points)\n\t\t\tpoints = points[:0]\n\t\t\tit.Reset(s.Iterator())\n\t\t\tmetric := selVS.Series[i].Labels()\n\t\t\t// The last_over_time function acts like offset; thus, it\n\t\t\t// should keep the metric name.  For all the other range\n\t\t\t// vector functions, the only change needed is to drop the\n\t\t\t// metric name in the output.\n\t\t\tif e.Func.Name != \"last_over_time\" {\n\t\t\t\tmetric = dropMetricName(metric)\n\t\t\t}\n\t\t\tss := Series{\n\t\t\t\tMetric: metric,\n\t\t\t\tPoints: getPointSlice(numSteps),\n\t\t\t}\n\t\t\tinMatrix[0].Metric = selVS.Series[i].Labels()\n\t\t\tfor ts, step := ev.startTimestamp, -1; ts <= ev.endTimestamp; ts += ev.interval {\n\t\t\t\tstep++\n\t\t\t\t// Set the non-matrix arguments.\n\t\t\t\t// They are scalar, so it is safe to use the step number\n\t\t\t\t// when looking up the argument, as there will be no gaps.\n\t\t\t\tfor j := range e.Args {\n\t\t\t\t\tif j != matrixArgIndex {\n\t\t\t\t\t\totherInArgs[j][0].V = otherArgs[j][0].Points[step].V\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t\tmaxt := ts - offset\n\t\t\t\tmint := maxt - selRange\n\t\t\t\t// Evaluate the matrix selector for this series for this step.\n\t\t\t\tpoints = ev.matrixIterSlice(it, mint, maxt, points)\n\t\t\t\tif len(points) == 0 {\n\t\t\t\t\tcontinue\n\t\t\t\t}\n\t\t\t\tinMatrix[0].Points = points\n\t\t\t\tenh.Ts = ts\n\t\t\t\t// Make the function call.\n\t\t\t\toutVec := call(inArgs, e.Args, enh)\n\t\t\t\tenh.Out = outVec[:0]\n\t\t\t\tif len(outVec) > 0 {\n\t\t\t\t\tss.Points = append(ss.Points, Point{V: outVec[0].Point.V, T: ts})\n\t\t\t\t}\n\t\t\t\t// Only buffer stepRange milliseconds from the second step on.\n\t\t\t\tit.ReduceDelta(stepRange)\n\t\t\t}\n\t\t\tif len(ss.Points) > 0 {\n\t\t\t\tif ev.currentSamples+len(ss.Points) <= ev.maxSamples {\n\t\t\t\t\tmat = append(mat, ss)\n\t\t\t\t\tev.currentSamples += len(ss.Points)\n\t\t\t\t} else {\n\t\t\t\t\tev.error(ErrTooManySamples(env))\n\t\t\t\t}\n\t\t\t} else {\n\t\t\t\tputPointSlice(ss.Points)\n\t\t\t}\n\t\t}\n\n\t\tev.currentSamples -= len(points)\n\t\tputPointSlice(points)\n\n\t\t// The absent_over_time function returns 0 or 1 series. So far, the matrix\n\t\t// contains multiple series. The following code will create a new series\n\t\t// with values of 1 for the timestamps where no series has value.\n\t\tif e.Func.Name == \"absent_over_time\" {\n\t\t\tsteps := int(1 + (ev.endTimestamp-ev.startTimestamp)/ev.interval)\n\t\t\t// Iterate once to look for a complete series.\n\t\t\tfor _, s := range mat {\n\t\t\t\tif len(s.Points) == steps {\n\t\t\t\t\treturn Matrix{}, warnings\n\t\t\t\t}\n\t\t\t}\n\n\t\t\tfound := map[int64]struct{}{}\n\n\t\t\tfor i, s := range mat {\n\t\t\t\tfor _, p := range s.Points {\n\t\t\t\t\tfound[p.T] = struct{}{}\n\t\t\t\t}\n\t\t\t\tif i > 0 && len(found) == steps {\n\t\t\t\t\treturn Matrix{}, warnings\n\t\t\t\t}\n\t\t\t}\n\n\t\t\tnewp := make([]Point, 0, steps-len(found))\n\t\t\tfor ts := ev.startTimestamp; ts <= ev.endTimestamp; ts += ev.interval {\n\t\t\t\tif _, ok := found[ts]; !ok {\n\t\t\t\t\tnewp = append(newp, Point{T: ts, V: 1})\n\t\t\t\t}\n\t\t\t}\n\n\t\t\treturn Matrix{\n\t\t\t\tSeries{\n\t\t\t\t\tMetric: createLabelsForAbsentFunction(e.Args[0]),\n\t\t\t\t\tPoints: newp,\n\t\t\t\t},\n\t\t\t}, warnings\n\t\t}\n\n\t\tif mat.ContainsSameLabelset() {\n\t\t\tev.errorf(\"vector cannot contain metrics with the same labelset\")\n\t\t}\n\n\t\treturn mat, warnings\n\n\tcase *parser.ParenExpr:\n\t\treturn ev.eval(e.Expr)\n\n\tcase *parser.UnaryExpr:\n\t\tval, ws := ev.eval(e.Expr)\n\t\tmat := val.(Matrix)\n\t\tif e.Op == parser.SUB {\n\t\t\tfor i := range mat {\n\t\t\t\tmat[i].Metric = dropMetricName(mat[i].Metric)\n\t\t\t\tfor j := range mat[i].Points {\n\t\t\t\t\tmat[i].Points[j].V = -mat[i].Points[j].V\n\t\t\t\t}\n\t\t\t}\n\t\t\tif mat.ContainsSameLabelset() {\n\t\t\t\tev.errorf(\"vector cannot contain metrics with the same labelset\")\n\t\t\t}\n\t\t}\n\t\treturn mat, ws\n\n\tcase *parser.BinaryExpr:\n\t\tswitch lt, rt := e.LHS.Type(), e.RHS.Type(); {\n\t\tcase lt == parser.ValueTypeScalar && rt == parser.ValueTypeScalar:\n\t\t\treturn ev.rangeEval(nil, func(v []parser.Value, _ [][]EvalSeriesHelper, enh *EvalNodeHelper) (Vector, storage.Warnings) {\n\t\t\t\tval := scalarBinop(e.Op, v[0].(Vector)[0].Point.V, v[1].(Vector)[0].Point.V)\n\t\t\t\treturn append(enh.Out, Sample{Point: Point{V: val}}), nil\n\t\t\t}, e.LHS, e.RHS)\n\t\tcase lt == parser.ValueTypeVector && rt == parser.ValueTypeVector:\n\t\t\t// Function to compute the join signature for each series.\n\t\t\tbuf := make([]byte, 0, 1024)\n\t\t\tsigf := signatureFunc(e.VectorMatching.On, buf, e.VectorMatching.MatchingLabels...)\n\t\t\tinitSignatures := func(series labels.Labels, h *EvalSeriesHelper) {\n\t\t\t\th.signature = sigf(series)\n\t\t\t}\n\t\t\tswitch e.Op {\n\t\t\tcase parser.LAND:\n\t\t\t\treturn ev.rangeEval(initSignatures, func(v []parser.Value, sh [][]EvalSeriesHelper, enh *EvalNodeHelper) (Vector, storage.Warnings) {\n\t\t\t\t\treturn ev.VectorAnd(v[0].(Vector), v[1].(Vector), e.VectorMatching, sh[0], sh[1], enh), nil\n\t\t\t\t}, e.LHS, e.RHS)\n\t\t\tcase parser.LOR:\n\t\t\t\treturn ev.rangeEval(initSignatures, func(v []parser.Value, sh [][]EvalSeriesHelper, enh *EvalNodeHelper) (Vector, storage.Warnings) {\n\t\t\t\t\treturn ev.VectorOr(v[0].(Vector), v[1].(Vector), e.VectorMatching, sh[0], sh[1], enh), nil\n\t\t\t\t}, e.LHS, e.RHS)\n\t\t\tcase parser.LUNLESS:\n\t\t\t\treturn ev.rangeEval(initSignatures, func(v []parser.Value, sh [][]EvalSeriesHelper, enh *EvalNodeHelper) (Vector, storage.Warnings) {\n\t\t\t\t\treturn ev.VectorUnless(v[0].(Vector), v[1].(Vector), e.VectorMatching, sh[0], sh[1], enh), nil\n\t\t\t\t}, e.LHS, e.RHS)\n\t\t\tdefault:\n\t\t\t\treturn ev.rangeEval(initSignatures, func(v []parser.Value, sh [][]EvalSeriesHelper, enh *EvalNodeHelper) (Vector, storage.Warnings) {\n\t\t\t\t\treturn ev.VectorBinop(e.Op, v[0].(Vector), v[1].(Vector), e.VectorMatching, e.ReturnBool, sh[0], sh[1], enh), nil\n\t\t\t\t}, e.LHS, e.RHS)\n\t\t\t}\n\n\t\tcase lt == parser.ValueTypeVector && rt == parser.ValueTypeScalar:\n\t\t\treturn ev.rangeEval(nil, func(v []parser.Value, _ [][]EvalSeriesHelper, enh *EvalNodeHelper) (Vector, storage.Warnings) {\n\t\t\t\treturn ev.VectorscalarBinop(e.Op, v[0].(Vector), Scalar{V: v[1].(Vector)[0].Point.V}, false, e.ReturnBool, enh), nil\n\t\t\t}, e.LHS, e.RHS)\n\n\t\tcase lt == parser.ValueTypeScalar && rt == parser.ValueTypeVector:\n\t\t\treturn ev.rangeEval(nil, func(v []parser.Value, _ [][]EvalSeriesHelper, enh *EvalNodeHelper) (Vector, storage.Warnings) {\n\t\t\t\treturn ev.VectorscalarBinop(e.Op, v[1].(Vector), Scalar{V: v[0].(Vector)[0].Point.V}, true, e.ReturnBool, enh), nil\n\t\t\t}, e.LHS, e.RHS)\n\t\t}\n\n\tcase *parser.NumberLiteral:\n\t\treturn ev.rangeEval(nil, func(v []parser.Value, _ [][]EvalSeriesHelper, enh *EvalNodeHelper) (Vector, storage.Warnings) {\n\t\t\treturn append(enh.Out, Sample{Point: Point{V: e.Val}}), nil\n\t\t})\n\n\tcase *parser.StringLiteral:\n\t\treturn String{V: e.Val, T: ev.startTimestamp}, nil\n\n\tcase *parser.VectorSelector:\n\t\tws, err := checkAndExpandSeriesSet(ev.ctx, e)\n\t\tif err != nil {\n\t\t\tev.error(errWithWarnings{errors.Wrap(err, \"expanding series\"), ws})\n\t\t}\n\t\tmat := make(Matrix, 0, len(e.Series))\n\t\tit := storage.NewMemoizedEmptyIterator(durationMilliseconds(ev.lookbackDelta))\n\t\tfor i, s := range e.Series {\n\t\t\tit.Reset(s.Iterator())\n\t\t\tss := Series{\n\t\t\t\tMetric: e.Series[i].Labels(),\n\t\t\t\tPoints: getPointSlice(numSteps),\n\t\t\t}\n\n\t\t\tfor ts := ev.startTimestamp; ts <= ev.endTimestamp; ts += ev.interval {\n\t\t\t\t_, v, ok := ev.vectorSelectorSingle(it, e, ts)\n\t\t\t\tif ok {\n\t\t\t\t\tif ev.currentSamples < ev.maxSamples {\n\t\t\t\t\t\tss.Points = append(ss.Points, Point{V: v, T: ts})\n\t\t\t\t\t\tev.currentSamples++\n\t\t\t\t\t} else {\n\t\t\t\t\t\tev.error(ErrTooManySamples(env))\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t}\n\n\t\t\tif len(ss.Points) > 0 {\n\t\t\t\tmat = append(mat, ss)\n\t\t\t} else {\n\t\t\t\tputPointSlice(ss.Points)\n\t\t\t}\n\t\t}\n\t\treturn mat, ws\n\n\tcase *parser.MatrixSelector:\n\t\tif ev.startTimestamp != ev.endTimestamp {\n\t\t\tpanic(errors.New(\"cannot do range evaluation of matrix selector\"))\n\t\t}\n\t\treturn ev.matrixSelector(e)\n\n\tcase *parser.SubqueryExpr:\n\t\toffsetMillis := durationMilliseconds(e.Offset)\n\t\trangeMillis := durationMilliseconds(e.Range)\n\t\tnewEv := &evaluator{\n\t\t\tendTimestamp:             ev.endTimestamp - offsetMillis,\n\t\t\tctx:                      ev.ctx,\n\t\t\tcurrentSamples:           ev.currentSamples,\n\t\t\tmaxSamples:               ev.maxSamples,\n\t\t\tlogger:                   ev.logger,\n\t\t\tlookbackDelta:            ev.lookbackDelta,\n\t\t\tnoStepSubqueryIntervalFn: ev.noStepSubqueryIntervalFn,\n\t\t}\n\n\t\tif e.Step != 0 {\n\t\t\tnewEv.interval = durationMilliseconds(e.Step)\n\t\t} else {\n\t\t\tnewEv.interval = ev.noStepSubqueryIntervalFn(rangeMillis)\n\t\t}\n\n\t\t// Start with the first timestamp after (ev.startTimestamp - offset - range)\n\t\t// that is aligned with the step (multiple of 'newEv.interval').\n\t\tnewEv.startTimestamp = newEv.interval * ((ev.startTimestamp - offsetMillis - rangeMillis) / newEv.interval)\n\t\tif newEv.startTimestamp < (ev.startTimestamp - offsetMillis - rangeMillis) {\n\t\t\tnewEv.startTimestamp += newEv.interval\n\t\t}\n\n\t\tif newEv.startTimestamp != ev.startTimestamp {\n\t\t\t// Adjust the offset of selectors based on the new\n\t\t\t// start time of the evaluator since the calculation\n\t\t\t// of the offset with @ happens w.r.t. the start time.\n\t\t\tsetOffsetForAtModifier(newEv.startTimestamp, e.Expr)\n\t\t}\n\n\t\tres, ws := newEv.eval(e.Expr)\n\t\tev.currentSamples = newEv.currentSamples\n\t\treturn res, ws\n\tcase *parser.StepInvariantExpr:\n\t\tswitch ce := e.Expr.(type) {\n\t\tcase *parser.StringLiteral, *parser.NumberLiteral:\n\t\t\treturn ev.eval(ce)\n\t\t}\n\n\t\tnewEv := &evaluator{\n\t\t\tstartTimestamp:           ev.startTimestamp,\n\t\t\tendTimestamp:             ev.startTimestamp, // Always a single evaluation.\n\t\t\tinterval:                 ev.interval,\n\t\t\tctx:                      ev.ctx,\n\t\t\tcurrentSamples:           ev.currentSamples,\n\t\t\tmaxSamples:               ev.maxSamples,\n\t\t\tlogger:                   ev.logger,\n\t\t\tlookbackDelta:            ev.lookbackDelta,\n\t\t\tnoStepSubqueryIntervalFn: ev.noStepSubqueryIntervalFn,\n\t\t}\n\t\tres, ws := newEv.eval(e.Expr)\n\t\tev.currentSamples = newEv.currentSamples\n\t\tswitch e.Expr.(type) {\n\t\tcase *parser.MatrixSelector, *parser.SubqueryExpr:\n\t\t\t// We do not duplicate results for range selectors since result is a matrix\n\t\t\t// with their unique timestamps which does not depend on the step.\n\t\t\treturn res, ws\n\t\t}\n\n\t\t// For every evaluation while the value remains same, the timestamp for that\n\t\t// value would change for different eval times. Hence we duplicate the result\n\t\t// with changed timestamps.\n\t\tmat, ok := res.(Matrix)\n\t\tif !ok {\n\t\t\tpanic(errors.Errorf(\"unexpected result in StepInvariantExpr evaluation: %T\", expr))\n\t\t}\n\t\tfor i := range mat {\n\t\t\tif len(mat[i].Points) != 1 {\n\t\t\t\tpanic(errors.Errorf(\"unexpected number of samples\"))\n\t\t\t}\n\t\t\tfor ts := ev.startTimestamp + ev.interval; ts <= ev.endTimestamp; ts = ts + ev.interval {\n\t\t\t\tmat[i].Points = append(mat[i].Points, Point{\n\t\t\t\t\tT: ts,\n\t\t\t\t\tV: mat[i].Points[0].V,\n\t\t\t\t})\n\t\t\t\tev.currentSamples++\n\t\t\t\tif ev.currentSamples > ev.maxSamples {\n\t\t\t\t\tev.error(ErrTooManySamples(env))\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\t\treturn res, ws\n\t}\n\n\tpanic(errors.Errorf(\"unhandled expression of type: %T\", expr))\n}\n\n"
+          },
+          {
+            "path": "promql/engine.go",
+            "start_line": 1790,
+            "end_line": 1837,
+            "file_sha256": "cf59075fc245e392933102fb3e51c0ab6191d20c2637d8a295cca7851e8ae245",
+            "score": 0.84,
+            "code": "func (ev *evaluator) VectorOr(lhs, rhs Vector, matching *parser.VectorMatching, lhsh, rhsh []EvalSeriesHelper, enh *EvalNodeHelper) Vector {\n\tif matching.Card != parser.CardManyToMany {\n\t\tpanic(\"set operations must only use many-to-many matching\")\n\t}\n\tif len(lhs) == 0 { // Short-circuit.\n\t\treturn rhs\n\t} else if len(rhs) == 0 {\n\t\treturn lhs\n\t}\n\n\tleftSigs := map[string]struct{}{}\n\t// Add everything from the left-hand-side Vector.\n\tfor i, ls := range lhs {\n\t\tleftSigs[lhsh[i].signature] = struct{}{}\n\t\tenh.Out = append(enh.Out, ls)\n\t}\n\t// Add all right-hand side elements which have not been added from the left-hand side.\n\tfor j, rs := range rhs {\n\t\tif _, ok := leftSigs[rhsh[j].signature]; !ok {\n\t\t\tenh.Out = append(enh.Out, rs)\n\t\t}\n\t}\n\treturn enh.Out\n}\n\nfunc (ev *evaluator) VectorUnless(lhs, rhs Vector, matching *parser.VectorMatching, lhsh, rhsh []EvalSeriesHelper, enh *EvalNodeHelper) Vector {\n\tif matching.Card != parser.CardManyToMany {\n\t\tpanic(\"set operations must only use many-to-many matching\")\n\t}\n\t// Short-circuit: empty rhs means we will return everything in lhs;\n\t// empty lhs means we will return empty - don't need to build a map.\n\tif len(lhs) == 0 || len(rhs) == 0 {\n\t\treturn lhs\n\t}\n\n\trightSigs := map[string]struct{}{}\n\tfor _, sh := range rhsh {\n\t\trightSigs[sh.signature] = struct{}{}\n\t}\n\n\tfor i, ls := range lhs {\n\t\tif _, ok := rightSigs[lhsh[i].signature]; !ok {\n\t\t\tenh.Out = append(enh.Out, ls)\n\t\t}\n\t}\n\treturn enh.Out\n}\n\n"
+          }
+        ],
+        "report": {
+          "scope": [
+            "."
+          ],
+          "inventory_complete": true,
+          "scope_fully_scanned": true,
+          "files": {
+            "discovered": 215,
+            "eligible": 215,
+            "excluded_by_reason": {},
+            "unreadable": 0,
+            "changed_before_return": 0
+          },
+          "fragments": {
+            "total": 1024,
+            "remote_evaluated": 1024,
+            "cache_reused": 0,
+            "not_evaluated": 0,
+            "below_threshold": 1009,
+            "above_threshold": 15,
+            "represented_in_response": 4,
+            "omitted_by_response_budget": 11,
+            "omitted_stale": 0
+          },
+          "selection": {
+            "outcome": "selected",
+            "threshold": 0.5,
+            "ranges_returned": 3,
+            "duplicate_ranges_collapsed": 0
+          },
+          "usage": {
+            "provider_request_attempts": 38,
+            "provider_input_tokens_reported": 794695,
+            "provider_input_tokens_known_subtotal": 794695,
+            "provider_input_tokens_estimated": 794695,
+            "estimated_cost_usd": 0.03337719,
+            "reported_cost_usd": null,
+            "attempts_with_unknown_usage": 0,
+            "transmitted_bytes": 2839198,
+            "elapsed_ms": 6032
+          },
+          "response_budget": {
+            "requested_tokens": 8000,
+            "counter": "tiktoken@1.0.22/cl100k_base",
+            "accounting": "reference_tokenizer"
+          },
+          "preflight": {
+            "planned_remote_fragments": 1024,
+            "planned_cache_hits": 0,
+            "estimated_first_attempt_tokens": 817408,
+            "estimated_first_attempt_cost_usd": 0.034331136,
+            "estimated_first_attempt_requests": 38,
+            "enabled_caps": {
+              "estimated_input_tokens": 399174858,
+              "request_attempts": 39962
+            },
+            "estimated_required_caps": {
+              "estimated_input_tokens": 817408,
+              "request_attempts": 38
+            }
+          },
+          "stop_reasons": [],
+          "diagnostics_truncated": false
+        }
+      },
+      "profile": {
+        "stages": {
+          "tokenization": {
+            "calls": 76602,
+            "durationMs": 4116.613491000031
+          },
+          "rendering": {
+            "calls": 2,
+            "durationMs": 5.0511549999991985
+          },
+          "inventory": {
+            "calls": 1,
+            "durationMs": 42.00544500000433
+          },
+          "source_read": {
+            "calls": 215,
+            "durationMs": 53.68950500000665
+          },
+          "decode": {
+            "calls": 215,
+            "durationMs": 1.0477670000018406
+          },
+          "hash": {
+            "calls": 215,
+            "durationMs": 9.50617899998906
+          },
+          "snapshot": {
+            "calls": 215,
+            "durationMs": 27.76775999999245
+          },
+          "secret_scan": {
+            "calls": 215,
+            "durationMs": 10.815929000003052
+          },
+          "chunking": {
+            "calls": 215,
+            "durationMs": 1704.4547100000045
+          },
+          "parsing": {
+            "calls": 214,
+            "durationMs": 505.70745300000453
+          },
+          "preparation": {
+            "calls": 1,
+            "durationMs": 1866.2143539999997
+          },
+          "serialization": {
+            "calls": 1114,
+            "durationMs": 45.036541999983456
+          },
+          "cache_lookup": {
+            "calls": 1024,
+            "durationMs": 1355.4917729999706
+          },
+          "batching": {
+            "calls": 1,
+            "durationMs": 1163.117298000001
+          },
+          "planning": {
+            "calls": 1,
+            "durationMs": 0.13227399999959744
+          },
+          "provider": {
+            "calls": 38,
+            "durationMs": 19467.183496000005
+          },
+          "evaluation": {
+            "calls": 1,
+            "durationMs": 1612.625333
+          },
+          "selection": {
+            "calls": 1,
+            "durationMs": 31.40226799999982
+          },
+          "freshness": {
+            "calls": 3,
+            "durationMs": 0.4092220000002271
+          },
+          "search": {
+            "calls": 1,
+            "durationMs": 6037.3456209999995
+          }
+        },
+        "counters": {
+          "tokenizerInputUtf16": 20362732,
+          "referenceTokensCounted": 5784605,
+          "serializedQuestions": 3512,
+          "serializedBytes": 10334484
+        },
+        "memory": {
+          "start": {
+            "rssBytes": 326193152,
+            "heapUsedBytes": 56869648,
+            "externalBytes": 90030238
+          },
+          "end": {
+            "rssBytes": 349503488,
+            "heapUsedBytes": 53783848,
+            "externalBytes": 89312562
+          },
+          "sampledMax": {
+            "rssBytes": 349564928,
+            "heapUsedBytes": 77830368,
+            "externalBytes": 97934382
+          },
+          "samples": 231
+        }
+      }
+    }
+  ]
+}
