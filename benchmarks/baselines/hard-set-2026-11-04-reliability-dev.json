@@ -1,0 +1,1868 @@
+{
+  "schemaVersion": 1,
+  "kind": "real-task-retrieval",
+  "createdAt": "2026-11-04T18:51:02.297Z",
+  "environment": {
+    "node": "v24.22.2",
+    "platform": "linux",
+    "architecture": "x64",
+    "cpu": "Intel(R) Xeon(R) Processor",
+    "logicalCpus": 8,
+    "totalMemoryBytes": 33654874112,
+    "revision": "39a8bde41c2583f0d2e1cb7b9e7289c63dfcc814",
+    "workingTree": "M scripts/bench-real-import.ts\n M scripts/bench-real.ts\n M scripts/bench/real-tasks.ts\n?? benchmarks/real-tasks/hand-go-rust-reliability-1.json\n?? benchmarks/real-tasks/swe-bench-multilingual-hard-1.json\n?? node_modules",
+    "sourceHash": "c155596e29eafd9c161bbc54f9c18f06b6697a0912a98a03b17b37d794c4e89a",
+    "harnessHash": "f379d9416da71e2ac7fcd95f054740a2acf8361119dd0e4d04e9e7f7f8b4ab29",
+    "packageLockHash": "37aedfa15a94c84ec716c28109e43f59223658b03775581380cc0fdcd4899db7"
+  },
+  "sourceStable": true,
+  "frozen": null,
+  "dataset": {
+    "version": "hand-go-rust-reliability-1",
+    "source": {
+      "dataset": "hand-written on SWE-bench Multilingual snapshots",
+      "split": "n/a",
+      "license": "code from the upstream repositories",
+      "revision": null
+    },
+    "selection": {
+      "seed": "manual",
+      "perRepository": {
+        "caddyserver/caddy": 4,
+        "gin-gonic/gin": 5,
+        "sharkdp/bat": 3,
+        "tokio-rs/axum": 4
+      },
+      "maxEditFiles": 0,
+      "maxQueryBytes": 7000
+    },
+    "split": "dev",
+    "hash": "dacd8861e607fb1807bf3d591585881066a073a22422a4558d4392ea1cc6db5d",
+    "tasks": [
+      {
+        "id": "hand__caddy-reliability-1",
+        "repository": "caddyserver/caddy",
+        "split": "dev",
+        "baseCommit": "d129ae6aec6af2182217ee8a235f4df8cd2bbfde",
+        "snapshotHash": "d7b8d7057177371f2ff9c8cae9b364b638b1a0e99637c505a33aa85edd52b78b",
+        "createdAt": "2026-11-04T00:00:00Z",
+        "queries": [
+          {
+            "id": "hand-caddy-fp-01",
+            "category": "false-premise",
+            "query": "Why does the Caddy admin API accept requests from any Origin without checking it against the allowed origins?",
+            "evidence": [
+              {
+                "path": "admin.go",
+                "startLine": 900,
+                "endLine": 915
+              },
+              {
+                "path": "admin.go",
+                "startLine": 934,
+                "endLine": 948
+              }
+            ],
+            "complementary": [
+              {
+                "path": "admin.go",
+                "startLine": 879,
+                "endLine": 894
+              }
+            ],
+            "label": "audit"
+          },
+          {
+            "id": "hand-caddy-fp-02",
+            "category": "false-premise",
+            "query": "Why does Replacer.ReplaceAll leave unknown placeholders untouched in the output instead of substituting the empty value?",
+            "evidence": [
+              {
+                "path": "replacer.go",
+                "startLine": 146,
+                "endLine": 153
+              }
+            ],
+            "complementary": [
+              {
+                "path": "replacer.go",
+                "startLine": 138,
+                "endLine": 144
+              }
+            ],
+            "label": "audit"
+          },
+          {
+            "id": "hand-caddy-na-01",
+            "category": "no-answer",
+            "query": "Where does Caddy parse YAML configuration files natively, without an external config adapter?",
+            "evidence": [],
+            "complementary": [],
+            "label": "audit"
+          },
+          {
+            "id": "hand-caddy-na-02",
+            "category": "no-answer",
+            "query": "Where does the Caddy admin API authenticate requests with a bearer token or a password?",
+            "evidence": [],
+            "complementary": [],
+            "label": "audit"
+          }
+        ]
+      },
+      {
+        "id": "hand__bat-reliability-1",
+        "repository": "sharkdp/bat",
+        "split": "dev",
+        "baseCommit": "2b9d25df052e50c60531b1000703b79bf9b6065a",
+        "snapshotHash": "6003952710e0872293213b3efca0726bff303fadced811cd4cb50d5e59cbe0f1",
+        "createdAt": "2026-11-04T00:00:00Z",
+        "queries": [
+          {
+            "id": "hand-bat-fp-01",
+            "category": "false-premise",
+            "query": "Why does bat run the pager from the PAGER variable as-is, so \"less\" without -R prints raw ANSI escape codes?",
+            "evidence": [
+              {
+                "path": "src/output.rs",
+                "startLine": 31,
+                "endLine": 44
+              }
+            ],
+            "complementary": [
+              {
+                "path": "src/output.rs",
+                "startLine": 67,
+                "endLine": 76
+              }
+            ],
+            "label": "audit"
+          },
+          {
+            "id": "hand-bat-fp-02",
+            "category": "false-premise",
+            "query": "Why does an open-ended line range like --line-range 40: fail to parse?",
+            "evidence": [
+              {
+                "path": "src/line_range.rs",
+                "startLine": 21,
+                "endLine": 40
+              }
+            ],
+            "complementary": [],
+            "label": "audit"
+          },
+          {
+            "id": "hand-bat-na-01",
+            "category": "no-answer",
+            "query": "Where does bat render git blame author annotations in the gutter?",
+            "evidence": [],
+            "complementary": [],
+            "label": "audit"
+          }
+        ]
+      }
+    ]
+  },
+  "settings": {
+    "provider": {
+      "adapter": "typesafe-direct",
+      "model": "jev-1.13.0",
+      "baseUrl": "https://api.typesafe.ai",
+      "pricing": {
+        "model": "jev-1.13.0",
+        "verified_at": "2026-09-20",
+        "input_usd_per_million_tokens": 0.042,
+        "output_usd_per_million_tokens": 0
+      }
+    },
+    "search": {
+      "deadline_ms": 1200000,
+      "concurrency": 8,
+      "require_fit": true,
+      "default_response_tokens": 8000,
+      "max_response_tokens": 16000,
+      "threshold": 0.5
+    },
+    "scanCaps": {
+      "estimated_cost_usd": null,
+      "estimated_input_tokens": null,
+      "transmitted_bytes": null,
+      "request_attempts": null,
+      "prepared_source_bytes": null,
+      "candidate_files": null,
+      "fragments": null
+    },
+    "responseTokens": 8000,
+    "caps": {
+      "requests": 400,
+      "estimatedInputTokens": 4000000
+    },
+    "scoreCache": "disabled",
+    "chunker": "recursive"
+  },
+  "semantics": {
+    "labels": "required units are pre-change patch sites (whitespace/import/docstring-only hunks dropped, new-definition placement demoted to complementary); they are not exhaustive relevance",
+    "recall": "fraction of required units fully covered in the first k excerpts, over complete searches",
+    "fileRecall": "fraction of edited files with at least one returned excerpt",
+    "complementaryCoverage": "fraction of complementary units (tests, placement, audited context) overlapped by any excerpt; never counted as a miss",
+    "categories": "change-localization uses the issue text; code-understanding asks for the function whose docstring is quoted",
+    "limitations": "small public SWE-bench sample, issue text may name symbols; held-out means repository-held-out for tuning, not blind"
+  },
+  "usage": {
+    "attempts": 19,
+    "reservedInputTokens": 800344,
+    "reportedInputTokens": 750234,
+    "unknownUsageAttempts": 0,
+    "blocked": false
+  },
+  "summary": {
+    "overall": {
+      "planned": 7,
+      "complete": 7,
+      "incomplete": 0,
+      "notRun": 0,
+      "completionRate": 1,
+      "missing": [],
+      "recallAt1": 0.75,
+      "recallAt5": 1,
+      "mrr": 0.875,
+      "evidenceCoverage": 1,
+      "fileRecall": 1,
+      "complementaryCoverage": 1
+    },
+    "byCategory": {
+      "false-premise": {
+        "planned": 4,
+        "complete": 4,
+        "incomplete": 0,
+        "notRun": 0,
+        "completionRate": 1,
+        "missing": [],
+        "recallAt1": 0.75,
+        "recallAt5": 1,
+        "mrr": 0.875,
+        "evidenceCoverage": 1,
+        "fileRecall": 1,
+        "complementaryCoverage": 1
+      },
+      "no-answer": {
+        "planned": 3,
+        "complete": 3,
+        "incomplete": 0,
+        "notRun": 0,
+        "completionRate": 1,
+        "missing": [],
+        "recallAt1": null,
+        "recallAt5": null,
+        "mrr": null,
+        "evidenceCoverage": null,
+        "fileRecall": null,
+        "complementaryCoverage": null
+      }
+    },
+    "byRepository": {
+      "caddyserver/caddy": {
+        "planned": 4,
+        "complete": 4,
+        "incomplete": 0,
+        "notRun": 0,
+        "completionRate": 1,
+        "missing": [],
+        "recallAt1": 0.5,
+        "recallAt5": 1,
+        "mrr": 0.75,
+        "evidenceCoverage": 1,
+        "fileRecall": 1,
+        "complementaryCoverage": 1
+      },
+      "sharkdp/bat": {
+        "planned": 3,
+        "complete": 3,
+        "incomplete": 0,
+        "notRun": 0,
+        "completionRate": 1,
+        "missing": [],
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "mrr": 1,
+        "evidenceCoverage": 1,
+        "fileRecall": 1,
+        "complementaryCoverage": 1
+      }
+    },
+    "notRun": 0
+  },
+  "notRun": [],
+  "rows": [
+    {
+      "id": "hand-caddy-fp-01",
+      "task": "hand__caddy-reliability-1",
+      "repository": "caddyserver/caddy",
+      "split": "dev",
+      "category": "false-premise",
+      "label": "audit",
+      "latencyMs": 4374.914814000001,
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 1,
+        "reciprocalRank": 0.5,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 2,
+        "complementaryCoverage": 1
+      },
+      "responseTokens": 7049,
+      "outcome": {
+        "schema_version": "1",
+        "search_id": "hand-caddy-fp-01",
+        "status": "complete",
+        "excerpts": [
+          {
+            "path": "admin.go",
+            "start_line": 514,
+            "end_line": 615,
+            "file_sha256": "5894bb47eebf29a22b871507b0b13eb3f4a4109ff478805c4399287f9df5218b",
+            "score": 0.91,
+            "code": "// replaceRemoteAdminServer replaces the running remote admin server\n// according to the relevant configuration in cfg. It stops any previous\n// remote admin server and only starts a new one if configured.\nfunc replaceRemoteAdminServer(ctx Context, cfg *Config) error {\n\tif cfg == nil {\n\t\treturn nil\n\t}\n\n\tremoteLogger := Log().Named(\"admin.remote\")\n\n\toldAdminServer := remoteAdminServer\n\tdefer func() {\n\t\tif oldAdminServer != nil {\n\t\t\tgo func(oldAdminServer *http.Server) {\n\t\t\t\terr := stopAdminServer(oldAdminServer)\n\t\t\t\tif err != nil {\n\t\t\t\t\tLog().Named(\"admin\").Error(\"stopping current secure admin endpoint\", zap.Error(err))\n\t\t\t\t}\n\t\t\t}(oldAdminServer)\n\t\t}\n\t}()\n\n\tif cfg.Admin == nil || cfg.Admin.Remote == nil {\n\t\treturn nil\n\t}\n\n\taddr, err := parseAdminListenAddr(cfg.Admin.Remote.Listen, DefaultRemoteAdminListen)\n\tif err != nil {\n\t\treturn err\n\t}\n\n\t// make the HTTP handler but disable Host/Origin enforcement\n\t// because we are using TLS authentication instead\n\thandler := cfg.Admin.newAdminHandler(addr, true)\n\n\t// create client certificate pool for TLS mutual auth, and extract public keys\n\t// so that we can enforce access controls at the application layer\n\tclientCertPool := x509.NewCertPool()\n\tfor i, accessControl := range cfg.Admin.Remote.AccessControl {\n\t\tfor j, certBase64 := range accessControl.PublicKeys {\n\t\t\tcert, err := decodeBase64DERCert(certBase64)\n\t\t\tif err != nil {\n\t\t\t\treturn fmt.Errorf(\"access control %d public key %d: parsing base64 certificate DER: %v\", i, j, err)\n\t\t\t}\n\t\t\taccessControl.publicKeys = append(accessControl.publicKeys, cert.PublicKey)\n\t\t\tclientCertPool.AddCert(cert)\n\t\t}\n\t}\n\n\t// create TLS config that will enforce mutual authentication\n\tif identityCertCache == nil {\n\t\treturn fmt.Errorf(\"cannot enable remote admin without a certificate cache; configure identity management to initialize a certificate cache\")\n\t}\n\tcmCfg := cfg.Admin.Identity.certmagicConfig(remoteLogger, false)\n\ttlsConfig := cmCfg.TLSConfig()\n\ttlsConfig.NextProtos = nil // this server does not solve ACME challenges\n\ttlsConfig.ClientAuth = tls.RequireAndVerifyClientCert\n\ttlsConfig.ClientCAs = clientCertPool\n\n\t// convert logger to stdlib so it can be used by HTTP server\n\tserverLogger, err := zap.NewStdLogAt(remoteLogger, zap.DebugLevel)\n\tif err != nil {\n\t\treturn err\n\t}\n\n\tserverMu.Lock()\n\t// create secure HTTP server\n\tremoteAdminServer = &http.Server{\n\t\tAddr:              addr.String(), // for logging purposes only\n\t\tHandler:           handler,\n\t\tTLSConfig:         tlsConfig,\n\t\tReadTimeout:       10 * time.Second,\n\t\tReadHeaderTimeout: 5 * time.Second,\n\t\tIdleTimeout:       60 * time.Second,\n\t\tMaxHeaderBytes:    1024 * 64,\n\t\tErrorLog:          serverLogger,\n\t}\n\tserverMu.Unlock()\n\n\t// start listener\n\tlnAny, err := addr.Listen(ctx, 0, net.ListenConfig{})\n\tif err != nil {\n\t\treturn err\n\t}\n\tln := lnAny.(net.Listener)\n\tln = tls.NewListener(ln, tlsConfig)\n\n\tgo func() {\n\t\tserverMu.Lock()\n\t\tserver := remoteAdminServer\n\t\tserverMu.Unlock()\n\t\tif err := server.Serve(ln); !errors.Is(err, http.ErrServerClosed) {\n\t\t\tremoteLogger.Error(\"admin remote server shutdown for unknown reason\", zap.Error(err))\n\t\t}\n\t}()\n\n\tremoteLogger.Info(\"secure admin remote control endpoint started\",\n\t\tzap.String(\"address\", addr.String()))\n\n\treturn nil\n}\n\n"
+          },
+          {
+            "path": "admin.go",
+            "start_line": 761,
+            "end_line": 949,
+            "file_sha256": "5894bb47eebf29a22b871507b0b13eb3f4a4109ff478805c4399287f9df5218b",
+            "score": 0.9,
+            "code": "// ServeHTTP is the external entry point for API requests.\n// It will only be called once per request.\nfunc (h adminHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {\n\tip, port, err := net.SplitHostPort(r.RemoteAddr)\n\tif err != nil {\n\t\tip = r.RemoteAddr\n\t\tport = \"\"\n\t}\n\tlog := Log().Named(\"admin.api\").With(\n\t\tzap.String(\"method\", r.Method),\n\t\tzap.String(\"host\", r.Host),\n\t\tzap.String(\"uri\", r.RequestURI),\n\t\tzap.String(\"remote_ip\", ip),\n\t\tzap.String(\"remote_port\", port),\n\t\tzap.Reflect(\"headers\", r.Header),\n\t)\n\tif r.TLS != nil {\n\t\tlog = log.With(\n\t\t\tzap.Bool(\"secure\", true),\n\t\t\tzap.Int(\"verified_chains\", len(r.TLS.VerifiedChains)),\n\t\t)\n\t}\n\tif r.RequestURI == \"/metrics\" {\n\t\tlog.Debug(\"received request\")\n\t} else {\n\t\tlog.Info(\"received request\")\n\t}\n\th.serveHTTP(w, r)\n}\n\n// serveHTTP is the internal entry point for API requests. It may\n// be called more than once per request, for example if a request\n// is rewritten (i.e. internal redirect).\nfunc (h adminHandler) serveHTTP(w http.ResponseWriter, r *http.Request) {\n\tif h.remoteControl != nil {\n\t\t// enforce access controls on secure endpoint\n\t\tif err := h.remoteControl.enforceAccessControls(r); err != nil {\n\t\t\th.handleError(w, r, err)\n\t\t\treturn\n\t\t}\n\t}\n\n\tif strings.Contains(r.Header.Get(\"Upgrade\"), \"websocket\") {\n\t\t// I've never been able demonstrate a vulnerability myself, but apparently\n\t\t// WebSocket connections originating from browsers aren't subject to CORS\n\t\t// restrictions, so we'll just be on the safe side\n\t\th.handleError(w, r, fmt.Errorf(\"websocket connections aren't allowed\"))\n\t\treturn\n\t}\n\n\tif h.enforceHost {\n\t\t// DNS rebinding mitigation\n\t\terr := h.checkHost(r)\n\t\tif err != nil {\n\t\t\th.handleError(w, r, err)\n\t\t\treturn\n\t\t}\n\t}\n\n\tif h.enforceOrigin {\n\t\t// cross-site mitigation\n\t\torigin, err := h.checkOrigin(r)\n\t\tif err != nil {\n\t\t\th.handleError(w, r, err)\n\t\t\treturn\n\t\t}\n\n\t\tif r.Method == http.MethodOptions {\n\t\t\tw.Header().Set(\"Access-Control-Allow-Methods\", \"OPTIONS, GET, POST, PUT, PATCH, DELETE\")\n\t\t\tw.Header().Set(\"Access-Control-Allow-Headers\", \"Content-Type, Content-Length, Cache-Control\")\n\t\t\tw.Header().Set(\"Access-Control-Allow-Credentials\", \"true\")\n\t\t}\n\t\tw.Header().Set(\"Access-Control-Allow-Origin\", origin)\n\t}\n\n\th.mux.ServeHTTP(w, r)\n}\n\nfunc (h adminHandler) handleError(w http.ResponseWriter, r *http.Request, err error) {\n\tif err == nil {\n\t\treturn\n\t}\n\tif err == errInternalRedir {\n\t\th.serveHTTP(w, r)\n\t\treturn\n\t}\n\n\tapiErr, ok := err.(APIError)\n\tif !ok {\n\t\tapiErr = APIError{\n\t\t\tHTTPStatus: http.StatusInternalServerError,\n\t\t\tErr:        err,\n\t\t}\n\t}\n\tif apiErr.HTTPStatus == 0 {\n\t\tapiErr.HTTPStatus = http.StatusInternalServerError\n\t}\n\tif apiErr.Message == \"\" && apiErr.Err != nil {\n\t\tapiErr.Message = apiErr.Err.Error()\n\t}\n\n\tLog().Named(\"admin.api\").Error(\"request error\",\n\t\tzap.Error(err),\n\t\tzap.Int(\"status_code\", apiErr.HTTPStatus),\n\t)\n\n\tw.Header().Set(\"Content-Type\", \"application/json\")\n\tw.WriteHeader(apiErr.HTTPStatus)\n\tencErr := json.NewEncoder(w).Encode(apiErr)\n\tif encErr != nil {\n\t\tLog().Named(\"admin.api\").Error(\"failed to encode error response\", zap.Error(encErr))\n\t}\n}\n\n// checkHost returns a handler that wraps next such that\n// it will only be called if the request's Host header matches\n// a trustworthy/expected value. This helps to mitigate DNS\n// rebinding attacks.\nfunc (h adminHandler) checkHost(r *http.Request) error {\n\tvar allowed bool\n\tfor _, allowedOrigin := range h.allowedOrigins {\n\t\tif r.Host == allowedOrigin.Host {\n\t\t\tallowed = true\n\t\t\tbreak\n\t\t}\n\t}\n\tif !allowed {\n\t\treturn APIError{\n\t\t\tHTTPStatus: http.StatusForbidden,\n\t\t\tErr:        fmt.Errorf(\"host not allowed: %s\", r.Host),\n\t\t}\n\t}\n\treturn nil\n}\n\n// checkOrigin ensures that the Origin header, if\n// set, matches the intended target; prevents arbitrary\n// sites from issuing requests to our listener. It\n// returns the origin that was obtained from r.\nfunc (h adminHandler) checkOrigin(r *http.Request) (string, error) {\n\toriginStr, origin := h.getOrigin(r)\n\tif origin == nil {\n\t\treturn \"\", APIError{\n\t\t\tHTTPStatus: http.StatusForbidden,\n\t\t\tErr:        fmt.Errorf(\"required Origin header is missing or invalid\"),\n\t\t}\n\t}\n\tif !h.originAllowed(origin) {\n\t\treturn \"\", APIError{\n\t\t\tHTTPStatus: http.StatusForbidden,\n\t\t\tErr:        fmt.Errorf(\"client is not allowed to access from origin '%s'\", originStr),\n\t\t}\n\t}\n\treturn origin.String(), nil\n}\n\nfunc (h adminHandler) getOrigin(r *http.Request) (string, *url.URL) {\n\torigin := r.Header.Get(\"Origin\")\n\tif origin == \"\" {\n\t\torigin = r.Header.Get(\"Referer\")\n\t}\n\toriginURL, err := url.Parse(origin)\n\tif err != nil {\n\t\treturn origin, nil\n\t}\n\toriginURL.Path = \"\"\n\toriginURL.RawPath = \"\"\n\toriginURL.Fragment = \"\"\n\toriginURL.RawFragment = \"\"\n\toriginURL.RawQuery = \"\"\n\treturn origin, originURL\n}\n\nfunc (h adminHandler) originAllowed(origin *url.URL) bool {\n\tfor _, allowedOrigin := range h.allowedOrigins {\n\t\tif allowedOrigin.Scheme != \"\" && origin.Scheme != allowedOrigin.Scheme {\n\t\t\tcontinue\n\t\t}\n\t\tif origin.Host == allowedOrigin.Host {\n\t\t\treturn true\n\t\t}\n\t}\n\treturn false\n}\n\n// etagHasher returns a the hasher we used on the config to both\n// produce and verify ETags.\nfunc etagHasher() hash.Hash { return xxhash.New() }\n\n"
+          },
+          {
+            "path": "admin.go",
+            "start_line": 214,
+            "end_line": 466,
+            "file_sha256": "5894bb47eebf29a22b871507b0b13eb3f4a4109ff478805c4399287f9df5218b",
+            "score": 0.87,
+            "code": "// newAdminHandler reads admin's config and returns an http.Handler suitable\n// for use in an admin endpoint server, which will be listening on listenAddr.\nfunc (admin *AdminConfig) newAdminHandler(addr NetworkAddress, remote bool) adminHandler {\n\tmuxWrap := adminHandler{mux: http.NewServeMux()}\n\n\t// secure the local or remote endpoint respectively\n\tif remote {\n\t\tmuxWrap.remoteControl = admin.Remote\n\t} else {\n\t\tmuxWrap.enforceHost = !addr.isWildcardInterface()\n\t\tmuxWrap.allowedOrigins = admin.allowedOrigins(addr)\n\t\tmuxWrap.enforceOrigin = admin.EnforceOrigin\n\t}\n\n\taddRouteWithMetrics := func(pattern string, handlerLabel string, h http.Handler) {\n\t\tlabels := prometheus.Labels{\"path\": pattern, \"handler\": handlerLabel}\n\t\th = instrumentHandlerCounter(\n\t\t\tadminMetrics.requestCount.MustCurryWith(labels),\n\t\t\th,\n\t\t)\n\t\tmuxWrap.mux.Handle(pattern, h)\n\t}\n\t// addRoute just calls muxWrap.mux.Handle after\n\t// wrapping the handler with error handling\n\taddRoute := func(pattern string, handlerLabel string, h AdminHandler) {\n\t\twrapper := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {\n\t\t\terr := h.ServeHTTP(w, r)\n\t\t\tif err != nil {\n\t\t\t\tlabels := prometheus.Labels{\n\t\t\t\t\t\"path\":    pattern,\n\t\t\t\t\t\"handler\": handlerLabel,\n\t\t\t\t\t\"method\":  strings.ToUpper(r.Method),\n\t\t\t\t}\n\t\t\t\tadminMetrics.requestErrors.With(labels).Inc()\n\t\t\t}\n\t\t\tmuxWrap.handleError(w, r, err)\n\t\t})\n\t\taddRouteWithMetrics(pattern, handlerLabel, wrapper)\n\t}\n\n\tconst handlerLabel = \"admin\"\n\n\t// register standard config control endpoints\n\taddRoute(\"/\"+rawConfigKey+\"/\", handlerLabel, AdminHandlerFunc(handleConfig))\n\taddRoute(\"/id/\", handlerLabel, AdminHandlerFunc(handleConfigID))\n\taddRoute(\"/stop\", handlerLabel, AdminHandlerFunc(handleStop))\n\n\t// register debugging endpoints\n\taddRouteWithMetrics(\"/debug/pprof/\", handlerLabel, http.HandlerFunc(pprof.Index))\n\taddRouteWithMetrics(\"/debug/pprof/cmdline\", handlerLabel, http.HandlerFunc(pprof.Cmdline))\n\taddRouteWithMetrics(\"/debug/pprof/profile\", handlerLabel, http.HandlerFunc(pprof.Profile))\n\taddRouteWithMetrics(\"/debug/pprof/symbol\", handlerLabel, http.HandlerFunc(pprof.Symbol))\n\taddRouteWithMetrics(\"/debug/pprof/trace\", handlerLabel, http.HandlerFunc(pprof.Trace))\n\taddRouteWithMetrics(\"/debug/vars\", handlerLabel, expvar.Handler())\n\n\t// register third-party module endpoints\n\tfor _, m := range GetModules(\"admin.api\") {\n\t\trouter := m.New().(AdminRouter)\n\t\thandlerLabel := m.ID.Name()\n\t\tfor _, route := range router.Routes() {\n\t\t\taddRoute(route.Pattern, handlerLabel, route.Handler)\n\t\t}\n\t\tadmin.routers = append(admin.routers, router)\n\t}\n\n\treturn muxWrap\n}\n\n// provisionAdminRouters provisions all the router modules\n// in the admin.api namespace that need provisioning.\nfunc (admin *AdminConfig) provisionAdminRouters(ctx Context) error {\n\tfor _, router := range admin.routers {\n\t\tprovisioner, ok := router.(Provisioner)\n\t\tif !ok {\n\t\t\tcontinue\n\t\t}\n\n\t\terr := provisioner.Provision(ctx)\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\t}\n\n\t// We no longer need the routers once provisioned, allow for GC\n\tadmin.routers = nil\n\n\treturn nil\n}\n\n// allowedOrigins returns a list of origins that are allowed.\n// If admin.Origins is nil (null), the provided listen address\n// will be used as the default origin. If admin.Origins is\n// empty, no origins will be allowed, effectively bricking the\n// endpoint for non-unix-socket endpoints, but whatever.\nfunc (admin AdminConfig) allowedOrigins(addr NetworkAddress) []*url.URL {\n\tuniqueOrigins := make(map[string]struct{})\n\tfor _, o := range admin.Origins {\n\t\tuniqueOrigins[o] = struct{}{}\n\t}\n\tif admin.Origins == nil {\n\t\tif addr.isLoopback() {\n\t\t\tif addr.IsUnixNetwork() {\n\t\t\t\t// RFC 2616, Section 14.26:\n\t\t\t\t// \"A client MUST include a Host header field in all HTTP/1.1 request\n\t\t\t\t// messages. If the requested URI does not include an Internet host\n\t\t\t\t// name for the service being requested, then the Host header field MUST\n\t\t\t\t// be given with an empty value.\"\n\t\t\t\t//\n\t\t\t\t// UPDATE July 2023: Go broke this by patching a minor security bug in 1.20.6.\n\t\t\t\t// Understandable, but frustrating. See:\n\t\t\t\t// https://github.com/golang/go/issues/60374\n\t\t\t\t// See also the discussion here:\n\t\t\t\t// https://github.com/golang/go/issues/61431\n\t\t\t\t//\n\t\t\t\t// We can no longer conform to RFC 2616 Section 14.26 from either Go or curl\n\t\t\t\t// in purity. (Curl allowed no host between 7.40 and 7.50, but now requires a\n\t\t\t\t// bogus host; see https://superuser.com/a/925610.) If we disable Host/Origin\n\t\t\t\t// security checks, the infosec community assures me that it is secure to do\n\t\t\t\t// so, because:\n\t\t\t\t// 1) Browsers do not allow access to unix sockets\n\t\t\t\t// 2) DNS is irrelevant to unix sockets\n\t\t\t\t//\n\t\t\t\t// I am not quite ready to trust either of those external factors, so instead\n\t\t\t\t// of disabling Host/Origin checks, we now allow specific Host values when\n\t\t\t\t// accessing the admin endpoint over unix sockets. I definitely don't trust\n\t\t\t\t// DNS (e.g. I don't trust 'localhost' to always resolve to the local host),\n\t\t\t\t// and IP shouldn't even be used, but if it is for some reason, I think we can\n\t\t\t\t// at least be reasonably assured that 127.0.0.1 and ::1 route to the local\n\t\t\t\t// machine, meaning that a hypothetical browser origin would have to be on the\n\t\t\t\t// local machine as well.\n\t\t\t\tuniqueOrigins[\"\"] = struct{}{}\n\t\t\t\tuniqueOrigins[\"127.0.0.1\"] = struct{}{}\n\t\t\t\tuniqueOrigins[\"::1\"] = struct{}{}\n\t\t\t} else {\n\t\t\t\tuniqueOrigins[net.JoinHostPort(\"localhost\", addr.port())] = struct{}{}\n\t\t\t\tuniqueOrigins[net.JoinHostPort(\"::1\", addr.port())] = struct{}{}\n\t\t\t\tuniqueOrigins[net.JoinHostPort(\"127.0.0.1\", addr.port())] = struct{}{}\n\t\t\t}\n\t\t}\n\t\tif !addr.IsUnixNetwork() {\n\t\t\tuniqueOrigins[addr.JoinHostPort(0)] = struct{}{}\n\t\t}\n\t}\n\tallowed := make([]*url.URL, 0, len(uniqueOrigins))\n\tfor originStr := range uniqueOrigins {\n\t\tvar origin *url.URL\n\t\tif strings.Contains(originStr, \"://\") {\n\t\t\tvar err error\n\t\t\torigin, err = url.Parse(originStr)\n\t\t\tif err != nil {\n\t\t\t\tcontinue\n\t\t\t}\n\t\t\torigin.Path = \"\"\n\t\t\torigin.RawPath = \"\"\n\t\t\torigin.Fragment = \"\"\n\t\t\torigin.RawFragment = \"\"\n\t\t\torigin.RawQuery = \"\"\n\t\t} else {\n\t\t\torigin = &url.URL{Host: originStr}\n\t\t}\n\t\tallowed = append(allowed, origin)\n\t}\n\treturn allowed\n}\n\n// replaceLocalAdminServer replaces the running local admin server\n// according to the relevant configuration in cfg. If no configuration\n// for the admin endpoint exists in cfg, a default one is used, so\n// that there is always an admin server (unless it is explicitly\n// configured to be disabled).\nfunc replaceLocalAdminServer(cfg *Config) error {\n\t// always* be sure to close down the old admin endpoint\n\t// as gracefully as possible, even if the new one is\n\t// disabled -- careful to use reference to the current\n\t// (old) admin endpoint since it will be different\n\t// when the function returns\n\t// (* except if the new one fails to start)\n\toldAdminServer := localAdminServer\n\tvar err error\n\tdefer func() {\n\t\t// do the shutdown asynchronously so that any\n\t\t// current API request gets a response; this\n\t\t// goroutine may last a few seconds\n\t\tif oldAdminServer != nil && err == nil {\n\t\t\tgo func(oldAdminServer *http.Server) {\n\t\t\t\terr := stopAdminServer(oldAdminServer)\n\t\t\t\tif err != nil {\n\t\t\t\t\tLog().Named(\"admin\").Error(\"stopping current admin endpoint\", zap.Error(err))\n\t\t\t\t}\n\t\t\t}(oldAdminServer)\n\t\t}\n\t}()\n\n\t// set a default if admin wasn't otherwise configured\n\tif cfg.Admin == nil {\n\t\tcfg.Admin = &AdminConfig{\n\t\t\tListen: DefaultAdminListen,\n\t\t}\n\t}\n\n\t// if new admin endpoint is to be disabled, we're done\n\tif cfg.Admin.Disabled {\n\t\tLog().Named(\"admin\").Warn(\"admin endpoint disabled\")\n\t\treturn nil\n\t}\n\n\t// extract a singular listener address\n\taddr, err := parseAdminListenAddr(cfg.Admin.Listen, DefaultAdminListen)\n\tif err != nil {\n\t\treturn err\n\t}\n\n\thandler := cfg.Admin.newAdminHandler(addr, false)\n\n\tln, err := addr.Listen(context.TODO(), 0, net.ListenConfig{})\n\tif err != nil {\n\t\treturn err\n\t}\n\n\tserverMu.Lock()\n\tlocalAdminServer = &http.Server{\n\t\tAddr:              addr.String(), // for logging purposes only\n\t\tHandler:           handler,\n\t\tReadTimeout:       10 * time.Second,\n\t\tReadHeaderTimeout: 5 * time.Second,\n\t\tIdleTimeout:       60 * time.Second,\n\t\tMaxHeaderBytes:    1024 * 64,\n\t}\n\tserverMu.Unlock()\n\n\tadminLogger := Log().Named(\"admin\")\n\tgo func() {\n\t\tserverMu.Lock()\n\t\tserver := localAdminServer\n\t\tserverMu.Unlock()\n\t\tif err := server.Serve(ln.(net.Listener)); !errors.Is(err, http.ErrServerClosed) {\n\t\t\tadminLogger.Error(\"admin server shutdown for unknown reason\", zap.Error(err))\n\t\t}\n\t}()\n\n\tadminLogger.Info(\"admin endpoint started\",\n\t\tzap.String(\"address\", addr.String()),\n\t\tzap.Bool(\"enforce_origin\", cfg.Admin.EnforceOrigin),\n\t\tzap.Array(\"origins\", loggableURLArray(handler.allowedOrigins)))\n\n\tif !handler.enforceHost {\n\t\tadminLogger.Warn(\"admin endpoint on open interface; host checking disabled\",\n\t\t\tzap.String(\"address\", addr.String()))\n\t}\n\n\treturn nil\n}\n\n"
+          },
+          {
+            "path": "admin.go",
+            "start_line": 60,
+            "end_line": 119,
+            "file_sha256": "5894bb47eebf29a22b871507b0b13eb3f4a4109ff478805c4399287f9df5218b",
+            "score": 0.86,
+            "code": "// AdminConfig configures Caddy's API endpoint, which is used\n// to manage Caddy while it is running.\ntype AdminConfig struct {\n\t// If true, the admin endpoint will be completely disabled.\n\t// Note that this makes any runtime changes to the config\n\t// impossible, since the interface to do so is through the\n\t// admin endpoint.\n\tDisabled bool `json:\"disabled,omitempty\"`\n\n\t// The address to which the admin endpoint's listener should\n\t// bind itself. Can be any single network address that can be\n\t// parsed by Caddy. Accepts placeholders.\n\t// Default: the value of the `CADDY_ADMIN` environment variable,\n\t// or `localhost:2019` otherwise.\n\t//\n\t// Remember: When changing this value through a config reload,\n\t// be sure to use the `--address` CLI flag to specify the current\n\t// admin address if the currently-running admin endpoint is not\n\t// the default address.\n\tListen string `json:\"listen,omitempty\"`\n\n\t// If true, CORS headers will be emitted, and requests to the\n\t// API will be rejected if their `Host` and `Origin` headers\n\t// do not match the expected value(s). Use `origins` to\n\t// customize which origins/hosts are allowed. If `origins` is\n\t// not set, the listen address is the only value allowed by\n\t// default. Enforced only on local (plaintext) endpoint.\n\tEnforceOrigin bool `json:\"enforce_origin,omitempty\"`\n\n\t// The list of allowed origins/hosts for API requests. Only needed\n\t// if accessing the admin endpoint from a host different from the\n\t// socket's network interface or if `enforce_origin` is true. If not\n\t// set, the listener address will be the default value. If set but\n\t// empty, no origins will be allowed. Enforced only on local\n\t// (plaintext) endpoint.\n\tOrigins []string `json:\"origins,omitempty\"`\n\n\t// Options pertaining to configuration management.\n\tConfig *ConfigSettings `json:\"config,omitempty\"`\n\n\t// Options that establish this server's identity. Identity refers to\n\t// credentials which can be used to uniquely identify and authenticate\n\t// this server instance. This is required if remote administration is\n\t// enabled (but does not require remote administration to be enabled).\n\t// Default: no identity management.\n\tIdentity *IdentityConfig `json:\"identity,omitempty\"`\n\n\t// Options pertaining to remote administration. By default, remote\n\t// administration is disabled. If enabled, identity management must\n\t// also be configured, as that is how the endpoint is secured.\n\t// See the neighboring \"identity\" object.\n\t//\n\t// EXPERIMENTAL: This feature is subject to change.\n\tRemote *RemoteAdmin `json:\"remote,omitempty\"`\n\n\t// Holds onto the routers so that we can later provision them\n\t// if they require provisioning.\n\trouters []AdminRouter\n}\n\n"
+          },
+          {
+            "path": "caddyconfig/httpcaddyfile/options.go",
+            "start_line": 296,
+            "end_line": 331,
+            "file_sha256": "e0c61951ae458c298f03adf3ed7fe07541e2ed8d2b2222439ecacd3330c955fa",
+            "score": 0.81,
+            "code": "func parseOptAdmin(d *caddyfile.Dispenser, _ any) (any, error) {\n\td.Next() // consume option name\n\n\tadminCfg := new(caddy.AdminConfig)\n\tif d.NextArg() {\n\t\tlistenAddress := d.Val()\n\t\tif listenAddress == \"off\" {\n\t\t\tadminCfg.Disabled = true\n\t\t\tif d.Next() { // Do not accept any remaining options including block\n\t\t\t\treturn nil, d.Err(\"No more option is allowed after turning off admin config\")\n\t\t\t}\n\t\t} else {\n\t\t\tadminCfg.Listen = listenAddress\n\t\t\tif d.NextArg() { // At most 1 arg is allowed\n\t\t\t\treturn nil, d.ArgErr()\n\t\t\t}\n\t\t}\n\t}\n\tfor d.NextBlock(0) {\n\t\tswitch d.Val() {\n\t\tcase \"enforce_origin\":\n\t\t\tadminCfg.EnforceOrigin = true\n\n\t\tcase \"origins\":\n\t\t\tadminCfg.Origins = d.RemainingArgs()\n\n\t\tdefault:\n\t\t\treturn nil, d.Errf(\"unrecognized parameter '%s'\", d.Val())\n\t\t}\n\t}\n\tif adminCfg.Listen == \"\" && !adminCfg.Disabled {\n\t\tadminCfg.Listen = caddy.DefaultAdminListen\n\t}\n\treturn adminCfg, nil\n}\n\n"
+          }
+        ],
+        "report": {
+          "scope": [
+            "."
+          ],
+          "inventory_complete": true,
+          "scope_fully_scanned": true,
+          "files": {
+            "discovered": 44,
+            "eligible": 44,
+            "excluded_by_reason": {},
+            "unreadable": 0,
+            "changed_before_return": 0
+          },
+          "fragments": {
+            "total": 234,
+            "remote_evaluated": 234,
+            "cache_reused": 0,
+            "not_evaluated": 0,
+            "below_threshold": 224,
+            "above_threshold": 10,
+            "represented_in_response": 8,
+            "omitted_by_response_budget": 2,
+            "omitted_stale": 0
+          },
+          "selection": {
+            "outcome": "selected",
+            "threshold": 0.5,
+            "ranges_returned": 5,
+            "duplicate_ranges_collapsed": 0
+          },
+          "usage": {
+            "provider_request_attempts": 4,
+            "provider_input_tokens_reported": 166691,
+            "provider_input_tokens_known_subtotal": 166691,
+            "provider_input_tokens_estimated": 166691,
+            "estimated_cost_usd": 0.007001022,
+            "reported_cost_usd": null,
+            "attempts_with_unknown_usage": 0,
+            "transmitted_bytes": 644581,
+            "elapsed_ms": 4367
+          },
+          "response_budget": {
+            "requested_tokens": 8000,
+            "counter": "tiktoken@1.0.22/cl100k_base",
+            "accounting": "reference_tokenizer"
+          },
+          "preflight": {
+            "planned_remote_fragments": 234,
+            "planned_cache_hits": 0,
+            "estimated_first_attempt_tokens": 177702,
+            "estimated_first_attempt_cost_usd": 0.007463484,
+            "estimated_first_attempt_requests": 4,
+            "enabled_caps": {
+              "estimated_input_tokens": 4000000,
+              "request_attempts": 400
+            },
+            "estimated_required_caps": {
+              "estimated_input_tokens": 177702,
+              "request_attempts": 4
+            }
+          },
+          "stop_reasons": [],
+          "diagnostics_truncated": false
+        }
+      },
+      "profile": {
+        "stages": {
+          "tokenization": {
+            "calls": 16248,
+            "durationMs": 3675.7353140000077
+          },
+          "rendering": {
+            "calls": 2,
+            "durationMs": 77.19016099999965
+          },
+          "inventory": {
+            "calls": 1,
+            "durationMs": 10.131487000000561
+          },
+          "source_read": {
+            "calls": 44,
+            "durationMs": 9.10259199999905
+          },
+          "decode": {
+            "calls": 44,
+            "durationMs": 0.3990059999994173
+          },
+          "hash": {
+            "calls": 44,
+            "durationMs": 1.6604189999999335
+          },
+          "snapshot": {
+            "calls": 44,
+            "durationMs": 7.465779000000339
+          },
+          "secret_scan": {
+            "calls": 44,
+            "durationMs": 2.847856999999749
+          },
+          "parsing": {
+            "calls": 44,
+            "durationMs": 96.74792200000036
+          },
+          "chunking": {
+            "calls": 44,
+            "durationMs": 340.08285299999943
+          },
+          "preparation": {
+            "calls": 1,
+            "durationMs": 376.10124900000005
+          },
+          "serialization": {
+            "calls": 467,
+            "durationMs": 80.9656189999979
+          },
+          "cache_lookup": {
+            "calls": 234,
+            "durationMs": 243.74852299999998
+          },
+          "batching": {
+            "calls": 1,
+            "durationMs": 3233.273099
+          },
+          "planning": {
+            "calls": 1,
+            "durationMs": 0.37193200000001525
+          },
+          "provider": {
+            "calls": 4,
+            "durationMs": 1397.3647519999995
+          },
+          "evaluation": {
+            "calls": 1,
+            "durationMs": 424.44688399999995
+          },
+          "selection": {
+            "calls": 1,
+            "durationMs": 14.434674000000086
+          },
+          "freshness": {
+            "calls": 5,
+            "durationMs": 0.9093970000003537
+          },
+          "search": {
+            "calls": 1,
+            "durationMs": 4373.904478
+          }
+        },
+        "counters": {
+          "tokenizerInputUtf16": 22885296,
+          "referenceTokensCounted": 6267829,
+          "serializedQuestions": 7383,
+          "serializedBytes": 20551356
+        },
+        "memory": {
+          "start": {
+            "rssBytes": 210280448,
+            "heapUsedBytes": 47209952,
+            "externalBytes": 78212965
+          },
+          "end": {
+            "rssBytes": 293556224,
+            "heapUsedBytes": 49488336,
+            "externalBytes": 95729689
+          },
+          "sampledMax": {
+            "rssBytes": 293556224,
+            "heapUsedBytes": 59250432,
+            "externalBytes": 96111138
+          },
+          "samples": 165
+        }
+      }
+    },
+    {
+      "id": "hand-caddy-fp-02",
+      "task": "hand__caddy-reliability-1",
+      "repository": "caddyserver/caddy",
+      "split": "dev",
+      "category": "false-premise",
+      "label": "audit",
+      "latencyMs": 4567.475114999999,
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": 1
+      },
+      "responseTokens": 7374,
+      "outcome": {
+        "schema_version": "1",
+        "search_id": "hand-caddy-fp-02",
+        "status": "complete",
+        "excerpts": [
+          {
+            "path": "replacer.go",
+            "start_line": 115,
+            "end_line": 442,
+            "file_sha256": "d0e8287e79cf6cf912947757d8f304e698d791487fd874b044ff6906c76f3885",
+            "score": 0.95,
+            "code": "// Delete removes a variable with a static value\n// that was created using Set.\nfunc (r *Replacer) Delete(variable string) {\n\tr.mapMutex.Lock()\n\tdelete(r.static, variable)\n\tr.mapMutex.Unlock()\n}\n\n// fromStatic provides values from r.static.\nfunc (r *Replacer) fromStatic(key string) (any, bool) {\n\tr.mapMutex.RLock()\n\tdefer r.mapMutex.RUnlock()\n\tval, ok := r.static[key]\n\treturn val, ok\n}\n\n// ReplaceOrErr is like ReplaceAll, but any placeholders\n// that are empty or not recognized will cause an error to\n// be returned.\nfunc (r *Replacer) ReplaceOrErr(input string, errOnEmpty, errOnUnknown bool) (string, error) {\n\treturn r.replace(input, \"\", false, errOnEmpty, errOnUnknown, nil)\n}\n\n// ReplaceKnown is like ReplaceAll but only replaces\n// placeholders that are known (recognized). Unrecognized\n// placeholders will remain in the output.\nfunc (r *Replacer) ReplaceKnown(input, empty string) string {\n\tout, _ := r.replace(input, empty, false, false, false, nil)\n\treturn out\n}\n\n// ReplaceAll efficiently replaces placeholders in input with\n// their values. All placeholders are replaced in the output\n// whether they are recognized or not. Values that are empty\n// string will be substituted with empty.\nfunc (r *Replacer) ReplaceAll(input, empty string) string {\n\tout, _ := r.replace(input, empty, true, false, false, nil)\n\treturn out\n}\n\n// ReplaceFunc is the same as ReplaceAll, but calls f for every\n// replacement to be made, in case f wants to change or inspect\n// the replacement.\nfunc (r *Replacer) ReplaceFunc(input string, f ReplacementFunc) (string, error) {\n\treturn r.replace(input, \"\", true, false, false, f)\n}\n\nfunc (r *Replacer) replace(input, empty string,\n\ttreatUnknownAsEmpty, errOnEmpty, errOnUnknown bool,\n\tf ReplacementFunc,\n) (string, error) {\n\tif !strings.Contains(input, string(phOpen)) && !strings.Contains(input, string(phClose)) {\n\t\treturn input, nil\n\t}\n\n\tvar sb strings.Builder\n\n\t// it is reasonable to assume that the output\n\t// will be approximately as long as the input\n\tsb.Grow(len(input))\n\n\t// iterate the input to find each placeholder\n\tvar lastWriteCursor int\n\n\t// fail fast if too many placeholders are unclosed\n\tvar unclosedCount int\n\nscan:\n\tfor i := 0; i < len(input); i++ {\n\t\t// check for escaped braces\n\t\tif i > 0 && input[i-1] == phEscape && (input[i] == phClose || input[i] == phOpen) {\n\t\t\tsb.WriteString(input[lastWriteCursor : i-1])\n\t\t\tlastWriteCursor = i\n\t\t\tcontinue\n\t\t}\n\n\t\tif input[i] != phOpen {\n\t\t\tcontinue\n\t\t}\n\n\t\t// our iterator is now on an unescaped open brace (start of placeholder)\n\n\t\t// too many unclosed placeholders in absolutely ridiculous input can be extremely slow (issue #4170)\n\t\tif unclosedCount > 100 {\n\t\t\treturn \"\", fmt.Errorf(\"too many unclosed placeholders\")\n\t\t}\n\n\t\t// find the end of the placeholder\n\t\tend := strings.Index(input[i:], string(phClose)) + i\n\t\tif end < i {\n\t\t\tunclosedCount++\n\t\t\tcontinue\n\t\t}\n\n\t\t// if necessary look for the first closing brace that is not escaped\n\t\tfor end > 0 && end < len(input)-1 && input[end-1] == phEscape {\n\t\t\tnextEnd := strings.Index(input[end+1:], string(phClose))\n\t\t\tif nextEnd < 0 {\n\t\t\t\tunclosedCount++\n\t\t\t\tcontinue scan\n\t\t\t}\n\t\t\tend += nextEnd + 1\n\t\t}\n\n\t\t// write the substring from the last cursor to this point\n\t\tsb.WriteString(input[lastWriteCursor:i])\n\n\t\t// trim opening bracket\n\t\tkey := input[i+1 : end]\n\n\t\t// try to get a value for this key, handle empty values accordingly\n\t\tval, found := r.Get(key)\n\t\tif !found {\n\t\t\t// placeholder is unknown (unrecognized); handle accordingly\n\t\t\tif errOnUnknown {\n\t\t\t\treturn \"\", fmt.Errorf(\"unrecognized placeholder %s%s%s\",\n\t\t\t\t\tstring(phOpen), key, string(phClose))\n\t\t\t} else if !treatUnknownAsEmpty {\n\t\t\t\t// if treatUnknownAsEmpty is true, we'll handle an empty\n\t\t\t\t// val later; so only continue otherwise\n\t\t\t\tlastWriteCursor = i\n\t\t\t\tcontinue\n\t\t\t}\n\t\t}\n\n\t\t// apply any transformations\n\t\tif f != nil {\n\t\t\tvar err error\n\t\t\tval, err = f(key, val)\n\t\t\tif err != nil {\n\t\t\t\treturn \"\", err\n\t\t\t}\n\t\t}\n\n\t\t// convert val to a string as efficiently as possible\n\t\tvalStr := ToString(val)\n\n\t\t// write the value; if it's empty, either return\n\t\t// an error or write a default value\n\t\tif valStr == \"\" {\n\t\t\tif errOnEmpty {\n\t\t\t\treturn \"\", fmt.Errorf(\"evaluated placeholder %s%s%s is empty\",\n\t\t\t\t\tstring(phOpen), key, string(phClose))\n\t\t\t} else if empty != \"\" {\n\t\t\t\tsb.WriteString(empty)\n\t\t\t}\n\t\t} else {\n\t\t\tsb.WriteString(valStr)\n\t\t}\n\n\t\t// advance cursor to end of placeholder\n\t\ti = end\n\t\tlastWriteCursor = i + 1\n\t}\n\n\t// flush any unwritten remainder\n\tsb.WriteString(input[lastWriteCursor:])\n\n\treturn sb.String(), nil\n}\n\n// ToString returns val as a string, as efficiently as possible.\n// EXPERIMENTAL: may be changed or removed later.\nfunc ToString(val any) string {\n\tswitch v := val.(type) {\n\tcase nil:\n\t\treturn \"\"\n\tcase string:\n\t\treturn v\n\tcase fmt.Stringer:\n\t\treturn v.String()\n\tcase error:\n\t\treturn v.Error()\n\tcase byte:\n\t\treturn string(v)\n\tcase []byte:\n\t\treturn string(v)\n\tcase []rune:\n\t\treturn string(v)\n\tcase int:\n\t\treturn strconv.Itoa(v)\n\tcase int32:\n\t\treturn strconv.Itoa(int(v))\n\tcase int64:\n\t\treturn strconv.Itoa(int(v))\n\tcase uint:\n\t\treturn strconv.Itoa(int(v))\n\tcase uint32:\n\t\treturn strconv.Itoa(int(v))\n\tcase uint64:\n\t\treturn strconv.Itoa(int(v))\n\tcase float32:\n\t\treturn strconv.FormatFloat(float64(v), 'f', -1, 32)\n\tcase float64:\n\t\treturn strconv.FormatFloat(v, 'f', -1, 64)\n\tcase bool:\n\t\tif v {\n\t\t\treturn \"true\"\n\t\t}\n\t\treturn \"false\"\n\tdefault:\n\t\treturn fmt.Sprintf(\"%+v\", v)\n\t}\n}\n\n// ReplacerFunc is a function that returns a replacement for the\n// given key along with true if the function is able to service\n// that key (even if the value is blank). If the function does\n// not recognize the key, false should be returned.\ntype ReplacerFunc func(key string) (any, bool)\n\nfunc (f ReplacerFunc) replace(key string) (any, bool) {\n\treturn f(key)\n}\n\n// replacementProvider is a type that can provide replacements\n// for placeholders. Allows for type assertion to determine\n// which type of provider it is.\ntype replacementProvider interface {\n\treplace(key string) (any, bool)\n}\n\n// fileReplacementsProvider handles {file.*} replacements,\n// reading a file from disk and replacing with its contents.\ntype fileReplacementProvider struct{}\n\nfunc (f fileReplacementProvider) replace(key string) (any, bool) {\n\tif !strings.HasPrefix(key, filePrefix) {\n\t\treturn nil, false\n\t}\n\n\tfilename := key[len(filePrefix):]\n\tmaxSize := 1024 * 1024\n\tbody, err := readFileIntoBuffer(filename, maxSize)\n\tif err != nil {\n\t\twd, _ := os.Getwd()\n\t\tLog().Error(\"placeholder: failed to read file\",\n\t\t\tzap.String(\"file\", filename),\n\t\t\tzap.String(\"working_dir\", wd),\n\t\t\tzap.Error(err))\n\t\treturn nil, true\n\t}\n\treturn string(body), true\n}\n\n// globalDefaultReplacementsProvider handles replacements\n// that can be used in any context, such as system variables,\n// time, or environment variables.\ntype globalDefaultReplacementProvider struct{}\n\nfunc (f globalDefaultReplacementProvider) replace(key string) (any, bool) {\n\t// check environment variable\n\tconst envPrefix = \"env.\"\n\tif strings.HasPrefix(key, envPrefix) {\n\t\treturn os.Getenv(key[len(envPrefix):]), true\n\t}\n\n\tswitch key {\n\tcase \"system.hostname\":\n\t\t// OK if there is an error; just return empty string\n\t\tname, _ := os.Hostname()\n\t\treturn name, true\n\tcase \"system.slash\":\n\t\treturn string(filepath.Separator), true\n\tcase \"system.os\":\n\t\treturn runtime.GOOS, true\n\tcase \"system.wd\":\n\t\t// OK if there is an error; just return empty string\n\t\twd, _ := os.Getwd()\n\t\treturn wd, true\n\tcase \"system.arch\":\n\t\treturn runtime.GOARCH, true\n\tcase \"time.now\":\n\t\treturn nowFunc(), true\n\tcase \"time.now.http\":\n\t\t// According to the comment for http.TimeFormat, the timezone must be in UTC\n\t\t// to generate the correct format.\n\t\t// https://github.com/caddyserver/caddy/issues/5773\n\t\treturn nowFunc().UTC().Format(http.TimeFormat), true\n\tcase \"time.now.common_log\":\n\t\treturn nowFunc().Format(\"02/Jan/2006:15:04:05 -0700\"), true\n\tcase \"time.now.year\":\n\t\treturn strconv.Itoa(nowFunc().Year()), true\n\tcase \"time.now.unix\":\n\t\treturn strconv.FormatInt(nowFunc().Unix(), 10), true\n\tcase \"time.now.unix_ms\":\n\t\treturn strconv.FormatInt(nowFunc().UnixNano()/int64(time.Millisecond), 10), true\n\t}\n\n\treturn nil, false\n}\n\n// readFileIntoBuffer reads the file at filePath into a size limited buffer.\nfunc readFileIntoBuffer(filename string, size int) ([]byte, error) {\n\tfile, err := os.Open(filename)\n\tif err != nil {\n\t\treturn nil, err\n\t}\n\tdefer file.Close()\n\n\tbuffer := make([]byte, size)\n\tn, err := file.Read(buffer)\n\tif err != nil && err != io.EOF {\n\t\treturn nil, err\n\t}\n\n\t// slice the buffer to the actual size\n\treturn buffer[:n], nil\n}\n\n// ReplacementFunc is a function that is called when a\n// replacement is being performed. It receives the\n// variable (i.e. placeholder name) and the value that\n// will be the replacement, and returns the value that\n// will actually be the replacement, or an error. Note\n// that errors are sometimes ignored by replacers.\ntype ReplacementFunc func(variable string, val any) (any, error)\n\n// nowFunc is a variable so tests can change it\n// in order to obtain a deterministic time.\nvar nowFunc = time.Now\n\n// ReplacerCtxKey is the context key for a replacer.\nconst ReplacerCtxKey CtxKey = \"replacer\"\n\nconst phOpen, phClose, phEscape = '{', '}', '\\\\'\n\nconst filePrefix = \"file.\"\n"
+          },
+          {
+            "path": "caddyconfig/caddyfile/parse.go",
+            "start_line": 347,
+            "end_line": 518,
+            "file_sha256": "397ac376048605748dbdab13ee3ab4d34712cff8828dfbb3b332944ccfc10a82",
+            "score": 0.86,
+            "code": "\t// syntax checks\n\tif !p.NextArg() {\n\t\treturn p.ArgErr()\n\t}\n\timportPattern := p.Val()\n\tif importPattern == \"\" {\n\t\treturn p.Err(\"Import requires a non-empty filepath\")\n\t}\n\n\t// grab remaining args as placeholder replacements\n\targs := p.RemainingArgs()\n\n\t// set up a replacer for non-variadic args replacement\n\trepl := makeArgsReplacer(args)\n\n\t// splice out the import directive and its arguments\n\t// (2 tokens, plus the length of args)\n\ttokensBefore := p.tokens[:p.cursor-1-len(args)]\n\ttokensAfter := p.tokens[p.cursor+1:]\n\tvar importedTokens []Token\n\tvar nodes []string\n\n\t// first check snippets. That is a simple, non-recursive replacement\n\tif p.definedSnippets != nil && p.definedSnippets[importPattern] != nil {\n\t\timportedTokens = p.definedSnippets[importPattern]\n\t\tif len(importedTokens) > 0 {\n\t\t\t// just grab the first one\n\t\t\tnodes = append(nodes, fmt.Sprintf(\"%s:%s\", importedTokens[0].File, importedTokens[0].snippetName))\n\t\t}\n\t} else {\n\t\t// make path relative to the file of the _token_ being processed rather\n\t\t// than current working directory (issue #867) and then use glob to get\n\t\t// list of matching filenames\n\t\tabsFile, err := filepath.Abs(p.Dispenser.File())\n\t\tif err != nil {\n\t\t\treturn p.Errf(\"Failed to get absolute path of file: %s: %v\", p.Dispenser.File(), err)\n\t\t}\n\n\t\tvar matches []string\n\t\tvar globPattern string\n\t\tif !filepath.IsAbs(importPattern) {\n\t\t\tglobPattern = filepath.Join(filepath.Dir(absFile), importPattern)\n\t\t} else {\n\t\t\tglobPattern = importPattern\n\t\t}\n\t\tif strings.Count(globPattern, \"*\") > 1 || strings.Count(globPattern, \"?\") > 1 ||\n\t\t\t(strings.Contains(globPattern, \"[\") && strings.Contains(globPattern, \"]\")) {\n\t\t\t// See issue #2096 - a pattern with many glob expansions can hang for too long\n\t\t\treturn p.Errf(\"Glob pattern may only contain one wildcard (*), but has others: %s\", globPattern)\n\t\t}\n\t\tmatches, err = filepath.Glob(globPattern)\n\t\tif err != nil {\n\t\t\treturn p.Errf(\"Failed to use import pattern %s: %v\", importPattern, err)\n\t\t}\n\t\tif len(matches) == 0 {\n\t\t\tif strings.ContainsAny(globPattern, \"*?[]\") {\n\t\t\t\tcaddy.Log().Warn(\"No files matching import glob pattern\", zap.String(\"pattern\", importPattern))\n\t\t\t} else {\n\t\t\t\treturn p.Errf(\"File to import not found: %s\", importPattern)\n\t\t\t}\n\t\t} else {\n\t\t\t// See issue #5295 - should skip any files that start with a . when iterating over them.\n\t\t\tsep := string(filepath.Separator)\n\t\t\tsegGlobPattern := strings.Split(globPattern, sep)\n\t\t\tif strings.HasPrefix(segGlobPattern[len(segGlobPattern)-1], \"*\") {\n\t\t\t\tvar tmpMatches []string\n\t\t\t\tfor _, m := range matches {\n\t\t\t\t\tseg := strings.Split(m, sep)\n\t\t\t\t\tif !strings.HasPrefix(seg[len(seg)-1], \".\") {\n\t\t\t\t\t\ttmpMatches = append(tmpMatches, m)\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t\tmatches = tmpMatches\n\t\t\t}\n\t\t}\n\n\t\t// collect all the imported tokens\n\t\tfor _, importFile := range matches {\n\t\t\tnewTokens, err := p.doSingleImport(importFile)\n\t\t\tif err != nil {\n\t\t\t\treturn err\n\t\t\t}\n\t\t\timportedTokens = append(importedTokens, newTokens...)\n\t\t}\n\t\tnodes = matches\n\t}\n\n\tnodeName := p.File()\n\tif p.Token().snippetName != \"\" {\n\t\tnodeName += fmt.Sprintf(\":%s\", p.Token().snippetName)\n\t}\n\tp.importGraph.addNode(nodeName)\n\tp.importGraph.addNodes(nodes)\n\tif err := p.importGraph.addEdges(nodeName, nodes); err != nil {\n\t\tp.importGraph.removeNodes(nodes)\n\t\treturn err\n\t}\n\n\t// copy the tokens so we don't overwrite p.definedSnippets\n\ttokensCopy := make([]Token, 0, len(importedTokens))\n\n\tvar (\n\t\tmaybeSnippet   bool\n\t\tmaybeSnippetId bool\n\t\tindex          int\n\t)\n\n\t// run the argument replacer on the tokens\n\t// golang for range slice return a copy of value\n\t// similarly, append also copy value\n\tfor i, token := range importedTokens {\n\t\t// update the token's imports to refer to import directive filename, line number and snippet name if there is one\n\t\tif token.snippetName != \"\" {\n\t\t\ttoken.imports = append(token.imports, fmt.Sprintf(\"%s:%d (import %s)\", p.File(), p.Line(), token.snippetName))\n\t\t} else {\n\t\t\ttoken.imports = append(token.imports, fmt.Sprintf(\"%s:%d (import)\", p.File(), p.Line()))\n\t\t}\n\n\t\t// naive way of determine snippets, as snippets definition can only follow name + block\n\t\t// format, won't check for nesting correctness or any other error, that's what parser does.\n\t\tif !maybeSnippet && nesting == 0 {\n\t\t\t// first of the line\n\t\t\tif i == 0 || isNextOnNewLine(tokensCopy[i-1], token) {\n\t\t\t\tindex = 0\n\t\t\t} else {\n\t\t\t\tindex++\n\t\t\t}\n\n\t\t\tif index == 0 && len(token.Text) >= 3 && strings.HasPrefix(token.Text, \"(\") && strings.HasSuffix(token.Text, \")\") {\n\t\t\t\tmaybeSnippetId = true\n\t\t\t}\n\t\t}\n\n\t\tswitch token.Text {\n\t\tcase \"{\":\n\t\t\tnesting++\n\t\t\tif index == 1 && maybeSnippetId && nesting == 1 {\n\t\t\t\tmaybeSnippet = true\n\t\t\t\tmaybeSnippetId = false\n\t\t\t}\n\t\tcase \"}\":\n\t\t\tnesting--\n\t\t\tif nesting == 0 && maybeSnippet {\n\t\t\t\tmaybeSnippet = false\n\t\t\t}\n\t\t}\n\n\t\tif maybeSnippet {\n\t\t\ttokensCopy = append(tokensCopy, token)\n\t\t\tcontinue\n\t\t}\n\n\t\tfoundVariadic, startIndex, endIndex := parseVariadic(token, len(args))\n\t\tif foundVariadic {\n\t\t\tfor _, arg := range args[startIndex:endIndex] {\n\t\t\t\ttoken.Text = arg\n\t\t\t\ttokensCopy = append(tokensCopy, token)\n\t\t\t}\n\t\t} else {\n\t\t\ttoken.Text = repl.ReplaceKnown(token.Text, \"\")\n\t\t\ttokensCopy = append(tokensCopy, token)\n\t\t}\n\t}\n\n\t// splice the imported tokens in the place of the import statement\n\t// and rewind cursor so Next() will land on first imported token\n\tp.tokens = append(tokensBefore, append(tokensCopy, tokensAfter...)...)\n\tp.cursor -= len(args) + 1\n\n\treturn nil\n}\n\n"
+          },
+          {
+            "path": "caddyconfig/caddyfile/importargs.go",
+            "start_line": 96,
+            "end_line": 160,
+            "file_sha256": "27a9dc1a9dadebc619510db1db5deb827a5ae7dd054561bf0cddd552a195d00d",
+            "score": 0.78,
+            "code": "// makeArgsReplacer prepares a Replacer which can replace\n// non-variadic args placeholders in imported tokens.\nfunc makeArgsReplacer(args []string) *caddy.Replacer {\n\trepl := caddy.NewEmptyReplacer()\n\trepl.Map(func(key string) (any, bool) {\n\t\t// TODO: Remove the deprecated {args.*} placeholder\n\t\t// support at some point in the future\n\t\tif matches := argsRegexpIndexDeprecated.FindStringSubmatch(key); len(matches) > 0 {\n\t\t\t// What's matched may be a substring of the key\n\t\t\tif matches[0] != key {\n\t\t\t\treturn nil, false\n\t\t\t}\n\n\t\t\tvalue, err := strconv.Atoi(matches[1])\n\t\t\tif err != nil {\n\t\t\t\tcaddy.Log().Named(\"caddyfile\").Warn(\n\t\t\t\t\t\"Placeholder {args.\" + matches[1] + \"} has an invalid index\")\n\t\t\t\treturn nil, false\n\t\t\t}\n\t\t\tif value >= len(args) {\n\t\t\t\tcaddy.Log().Named(\"caddyfile\").Warn(\n\t\t\t\t\t\"Placeholder {args.\" + matches[1] + \"} index is out of bounds, only \" + strconv.Itoa(len(args)) + \" argument(s) exist\")\n\t\t\t\treturn nil, false\n\t\t\t}\n\t\t\tcaddy.Log().Named(\"caddyfile\").Warn(\n\t\t\t\t\"Placeholder {args.\" + matches[1] + \"} deprecated, use {args[\" + matches[1] + \"]} instead\")\n\t\t\treturn args[value], true\n\t\t}\n\n\t\t// Handle args[*] form\n\t\tif matches := argsRegexpIndex.FindStringSubmatch(key); len(matches) > 0 {\n\t\t\t// What's matched may be a substring of the key\n\t\t\tif matches[0] != key {\n\t\t\t\treturn nil, false\n\t\t\t}\n\n\t\t\tif strings.Contains(matches[1], \":\") {\n\t\t\t\tcaddy.Log().Named(\"caddyfile\").Warn(\n\t\t\t\t\t\"Variadic placeholder {args[\" + matches[1] + \"]} must be a token on its own\")\n\t\t\t\treturn nil, false\n\t\t\t}\n\t\t\tvalue, err := strconv.Atoi(matches[1])\n\t\t\tif err != nil {\n\t\t\t\tcaddy.Log().Named(\"caddyfile\").Warn(\n\t\t\t\t\t\"Placeholder {args[\" + matches[1] + \"]} has an invalid index\")\n\t\t\t\treturn nil, false\n\t\t\t}\n\t\t\tif value >= len(args) {\n\t\t\t\tcaddy.Log().Named(\"caddyfile\").Warn(\n\t\t\t\t\t\"Placeholder {args[\" + matches[1] + \"]} index is out of bounds, only \" + strconv.Itoa(len(args)) + \" argument(s) exist\")\n\t\t\t\treturn nil, false\n\t\t\t}\n\t\t\treturn args[value], true\n\t\t}\n\n\t\t// Not an args placeholder, ignore\n\t\treturn nil, false\n\t})\n\treturn repl\n}\n\nvar (\n\targsRegexpIndexDeprecated = regexp.MustCompile(`args\\.(.+)`)\n\targsRegexpIndex           = regexp.MustCompile(`args\\[(.+)]`)\n)\n"
+          },
+          {
+            "path": "caddyconfig/caddyfile/parse.go",
+            "start_line": 1,
+            "end_line": 145,
+            "file_sha256": "397ac376048605748dbdab13ee3ab4d34712cff8828dfbb3b332944ccfc10a82",
+            "score": 0.66,
+            "code": "// Copyright 2015 Matthew Holt and The Caddy Authors\n//\n// Licensed under the Apache License, Version 2.0 (the \"License\");\n// you may not use this file except in compliance with the License.\n// You may obtain a copy of the License at\n//\n//     http://www.apache.org/licenses/LICENSE-2.0\n//\n// Unless required by applicable law or agreed to in writing, software\n// distributed under the License is distributed on an \"AS IS\" BASIS,\n// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n// See the License for the specific language governing permissions and\n// limitations under the License.\n\npackage caddyfile\n\nimport (\n\t\"bytes\"\n\t\"fmt\"\n\t\"io\"\n\t\"os\"\n\t\"path/filepath\"\n\t\"strings\"\n\n\t\"go.uber.org/zap\"\n\n\t\"github.com/caddyserver/caddy/v2\"\n)\n\n// Parse parses the input just enough to group tokens, in\n// order, by server block. No further parsing is performed.\n// Server blocks are returned in the order in which they appear.\n// Directives that do not appear in validDirectives will cause\n// an error. If you do not want to check for valid directives,\n// pass in nil instead.\n//\n// Environment variables in {$ENVIRONMENT_VARIABLE} notation\n// will be replaced before parsing begins.\nfunc Parse(filename string, input []byte) ([]ServerBlock, error) {\n\t// unfortunately, we must copy the input because parsing must\n\t// remain a read-only operation, but we have to expand environment\n\t// variables before we parse, which changes the underlying array (#4422)\n\tinputCopy := make([]byte, len(input))\n\tcopy(inputCopy, input)\n\n\ttokens, err := allTokens(filename, inputCopy)\n\tif err != nil {\n\t\treturn nil, err\n\t}\n\tp := parser{\n\t\tDispenser: NewDispenser(tokens),\n\t\timportGraph: importGraph{\n\t\t\tnodes: make(map[string]struct{}),\n\t\t\tedges: make(adjacency),\n\t\t},\n\t}\n\treturn p.parseAll()\n}\n\n// allTokens lexes the entire input, but does not parse it.\n// It returns all the tokens from the input, unstructured\n// and in order. It may mutate input as it expands env vars.\nfunc allTokens(filename string, input []byte) ([]Token, error) {\n\treturn Tokenize(replaceEnvVars(input), filename)\n}\n\n// replaceEnvVars replaces all occurrences of environment variables.\n// It mutates the underlying array and returns the updated slice.\nfunc replaceEnvVars(input []byte) []byte {\n\tvar offset int\n\tfor {\n\t\tbegin := bytes.Index(input[offset:], spanOpen)\n\t\tif begin < 0 {\n\t\t\tbreak\n\t\t}\n\t\tbegin += offset // make beginning relative to input, not offset\n\t\tend := bytes.Index(input[begin+len(spanOpen):], spanClose)\n\t\tif end < 0 {\n\t\t\tbreak\n\t\t}\n\t\tend += begin + len(spanOpen) // make end relative to input, not begin\n\n\t\t// get the name; if there is no name, skip it\n\t\tenvString := input[begin+len(spanOpen) : end]\n\t\tif len(envString) == 0 {\n\t\t\toffset = end + len(spanClose)\n\t\t\tcontinue\n\t\t}\n\n\t\t// split the string into a key and an optional default\n\t\tenvParts := strings.SplitN(string(envString), envVarDefaultDelimiter, 2)\n\n\t\t// do a lookup for the env var, replace with the default if not found\n\t\tenvVarValue, found := os.LookupEnv(envParts[0])\n\t\tif !found && len(envParts) == 2 {\n\t\t\tenvVarValue = envParts[1]\n\t\t}\n\n\t\t// get the value of the environment variable\n\t\t// note that this causes one-level deep chaining\n\t\tenvVarBytes := []byte(envVarValue)\n\n\t\t// splice in the value\n\t\tinput = append(input[:begin],\n\t\t\tappend(envVarBytes, input[end+len(spanClose):]...)...)\n\n\t\t// continue at the end of the replacement\n\t\toffset = begin + len(envVarBytes)\n\t}\n\treturn input\n}\n\ntype parser struct {\n\t*Dispenser\n\tblock           ServerBlock // current server block being parsed\n\teof             bool        // if we encounter a valid EOF in a hard place\n\tdefinedSnippets map[string][]Token\n\tnesting         int\n\timportGraph     importGraph\n}\n\nfunc (p *parser) parseAll() ([]ServerBlock, error) {\n\tvar blocks []ServerBlock\n\n\tfor p.Next() {\n\t\terr := p.parseOne()\n\t\tif err != nil {\n\t\t\treturn blocks, err\n\t\t}\n\t\tif len(p.block.Keys) > 0 || len(p.block.Segments) > 0 {\n\t\t\tblocks = append(blocks, p.block)\n\t\t}\n\t\tif p.nesting > 0 {\n\t\t\treturn blocks, p.EOFErr()\n\t\t}\n\t}\n\n\treturn blocks, nil\n}\n\nfunc (p *parser) parseOne() error {\n\tp.block = ServerBlock{}\n\treturn p.begin()\n}\n\n"
+          }
+        ],
+        "report": {
+          "scope": [
+            "."
+          ],
+          "inventory_complete": true,
+          "scope_fully_scanned": true,
+          "files": {
+            "discovered": 44,
+            "eligible": 44,
+            "excluded_by_reason": {},
+            "unreadable": 0,
+            "changed_before_return": 0
+          },
+          "fragments": {
+            "total": 234,
+            "remote_evaluated": 234,
+            "cache_reused": 0,
+            "not_evaluated": 0,
+            "below_threshold": 221,
+            "above_threshold": 13,
+            "represented_in_response": 8,
+            "omitted_by_response_budget": 5,
+            "omitted_stale": 0
+          },
+          "selection": {
+            "outcome": "selected",
+            "threshold": 0.5,
+            "ranges_returned": 4,
+            "duplicate_ranges_collapsed": 0
+          },
+          "usage": {
+            "provider_request_attempts": 4,
+            "provider_input_tokens_reported": 166711,
+            "provider_input_tokens_known_subtotal": 166711,
+            "provider_input_tokens_estimated": 166711,
+            "estimated_cost_usd": 0.007001862,
+            "reported_cost_usd": null,
+            "attempts_with_unknown_usage": 0,
+            "transmitted_bytes": 644625,
+            "elapsed_ms": 4563
+          },
+          "response_budget": {
+            "requested_tokens": 8000,
+            "counter": "tiktoken@1.0.22/cl100k_base",
+            "accounting": "reference_tokenizer"
+          },
+          "preflight": {
+            "planned_remote_fragments": 234,
+            "planned_cache_hits": 0,
+            "estimated_first_attempt_tokens": 177706,
+            "estimated_first_attempt_cost_usd": 0.007463652,
+            "estimated_first_attempt_requests": 4,
+            "enabled_caps": {
+              "estimated_input_tokens": 3822298,
+              "request_attempts": 396
+            },
+            "estimated_required_caps": {
+              "estimated_input_tokens": 177706,
+              "request_attempts": 4
+            }
+          },
+          "stop_reasons": [],
+          "diagnostics_truncated": false
+        }
+      },
+      "profile": {
+        "stages": {
+          "tokenization": {
+            "calls": 16253,
+            "durationMs": 3935.3793729999097
+          },
+          "rendering": {
+            "calls": 2,
+            "durationMs": 5.1582520000010845
+          },
+          "inventory": {
+            "calls": 1,
+            "durationMs": 6.0751020000006974
+          },
+          "source_read": {
+            "calls": 44,
+            "durationMs": 7.801619999999275
+          },
+          "decode": {
+            "calls": 44,
+            "durationMs": 0.1900619999942137
+          },
+          "hash": {
+            "calls": 44,
+            "durationMs": 1.586065999998027
+          },
+          "snapshot": {
+            "calls": 44,
+            "durationMs": 5.272543000000951
+          },
+          "secret_scan": {
+            "calls": 44,
+            "durationMs": 2.4164410000039425
+          },
+          "parsing": {
+            "calls": 44,
+            "durationMs": 77.38577200000145
+          },
+          "chunking": {
+            "calls": 44,
+            "durationMs": 302.5453729999963
+          },
+          "preparation": {
+            "calls": 1,
+            "durationMs": 328.5609059999997
+          },
+          "serialization": {
+            "calls": 467,
+            "durationMs": 91.68377499999133
+          },
+          "cache_lookup": {
+            "calls": 234,
+            "durationMs": 273.7418909999933
+          },
+          "batching": {
+            "calls": 1,
+            "durationMs": 3579.523537000001
+          },
+          "planning": {
+            "calls": 1,
+            "durationMs": 0.069112999999561
+          },
+          "provider": {
+            "calls": 4,
+            "durationMs": 1265.662652000001
+          },
+          "evaluation": {
+            "calls": 1,
+            "durationMs": 363.6883339999986
+          },
+          "selection": {
+            "calls": 1,
+            "durationMs": 14.993480000001
+          },
+          "freshness": {
+            "calls": 4,
+            "durationMs": 0.6799230000015086
+          },
+          "search": {
+            "calls": 1,
+            "durationMs": 4567.171936999999
+          }
+        },
+        "counters": {
+          "tokenizerInputUtf16": 22912084,
+          "referenceTokensCounted": 6275340,
+          "serializedQuestions": 7383,
+          "serializedBytes": 20556493
+        },
+        "memory": {
+          "start": {
+            "rssBytes": 293556224,
+            "heapUsedBytes": 49931088,
+            "externalBytes": 95860761
+          },
+          "end": {
+            "rssBytes": 301715456,
+            "heapUsedBytes": 59443520,
+            "externalBytes": 97653687
+          },
+          "sampledMax": {
+            "rssBytes": 302948352,
+            "heapUsedBytes": 67856280,
+            "externalBytes": 99224434
+          },
+          "samples": 172
+        }
+      }
+    },
+    {
+      "id": "hand-caddy-na-01",
+      "task": "hand__caddy-reliability-1",
+      "repository": "caddyserver/caddy",
+      "split": "dev",
+      "category": "no-answer",
+      "label": "audit",
+      "latencyMs": 4247.605291,
+      "metrics": {
+        "recallAt1": null,
+        "recallAt5": null,
+        "reciprocalRank": null,
+        "evidenceCoverage": null,
+        "negativeCorrect": false,
+        "fileRecall": null,
+        "firstOverlapRank": null,
+        "complementaryCoverage": null
+      },
+      "responseTokens": 2665,
+      "outcome": {
+        "schema_version": "1",
+        "search_id": "hand-caddy-na-01",
+        "status": "complete",
+        "excerpts": [
+          {
+            "path": "caddyconfig/load.go",
+            "start_line": 68,
+            "end_line": 214,
+            "file_sha256": "aac5fd3d3121eee7cab32ee03fb803df102d24dc966bde5cdc9544d4f4abf62f",
+            "score": 0.74,
+            "code": "// handleLoad replaces the entire current configuration with\n// a new one provided in the response body. It supports config\n// adapters through the use of the Content-Type header. A\n// config that is identical to the currently-running config\n// will be a no-op unless Cache-Control: must-revalidate is set.\nfunc (adminLoad) handleLoad(w http.ResponseWriter, r *http.Request) error {\n\tif r.Method != http.MethodPost {\n\t\treturn caddy.APIError{\n\t\t\tHTTPStatus: http.StatusMethodNotAllowed,\n\t\t\tErr:        fmt.Errorf(\"method not allowed\"),\n\t\t}\n\t}\n\n\tbuf := bufPool.Get().(*bytes.Buffer)\n\tbuf.Reset()\n\tdefer bufPool.Put(buf)\n\n\t_, err := io.Copy(buf, r.Body)\n\tif err != nil {\n\t\treturn caddy.APIError{\n\t\t\tHTTPStatus: http.StatusBadRequest,\n\t\t\tErr:        fmt.Errorf(\"reading request body: %v\", err),\n\t\t}\n\t}\n\tbody := buf.Bytes()\n\n\t// if the config is formatted other than Caddy's native\n\t// JSON, we need to adapt it before loading it\n\tif ctHeader := r.Header.Get(\"Content-Type\"); ctHeader != \"\" {\n\t\tresult, warnings, err := adaptByContentType(ctHeader, body)\n\t\tif err != nil {\n\t\t\treturn caddy.APIError{\n\t\t\t\tHTTPStatus: http.StatusBadRequest,\n\t\t\t\tErr:        err,\n\t\t\t}\n\t\t}\n\t\tif len(warnings) > 0 {\n\t\t\trespBody, err := json.Marshal(warnings)\n\t\t\tif err != nil {\n\t\t\t\tcaddy.Log().Named(\"admin.api.load\").Error(err.Error())\n\t\t\t}\n\t\t\t_, _ = w.Write(respBody)\n\t\t}\n\t\tbody = result\n\t}\n\n\tforceReload := r.Header.Get(\"Cache-Control\") == \"must-revalidate\"\n\n\terr = caddy.Load(body, forceReload)\n\tif err != nil {\n\t\treturn caddy.APIError{\n\t\t\tHTTPStatus: http.StatusBadRequest,\n\t\t\tErr:        fmt.Errorf(\"loading config: %v\", err),\n\t\t}\n\t}\n\n\tcaddy.Log().Named(\"admin.api\").Info(\"load complete\")\n\n\treturn nil\n}\n\n// handleAdapt adapts the given Caddy config to JSON and responds with the result.\nfunc (adminLoad) handleAdapt(w http.ResponseWriter, r *http.Request) error {\n\tif r.Method != http.MethodPost {\n\t\treturn caddy.APIError{\n\t\t\tHTTPStatus: http.StatusMethodNotAllowed,\n\t\t\tErr:        fmt.Errorf(\"method not allowed\"),\n\t\t}\n\t}\n\n\tbuf := bufPool.Get().(*bytes.Buffer)\n\tbuf.Reset()\n\tdefer bufPool.Put(buf)\n\n\t_, err := io.Copy(buf, r.Body)\n\tif err != nil {\n\t\treturn caddy.APIError{\n\t\t\tHTTPStatus: http.StatusBadRequest,\n\t\t\tErr:        fmt.Errorf(\"reading request body: %v\", err),\n\t\t}\n\t}\n\n\tresult, warnings, err := adaptByContentType(r.Header.Get(\"Content-Type\"), buf.Bytes())\n\tif err != nil {\n\t\treturn caddy.APIError{\n\t\t\tHTTPStatus: http.StatusBadRequest,\n\t\t\tErr:        err,\n\t\t}\n\t}\n\n\tout := struct {\n\t\tWarnings []Warning       `json:\"warnings,omitempty\"`\n\t\tResult   json.RawMessage `json:\"result\"`\n\t}{\n\t\tWarnings: warnings,\n\t\tResult:   result,\n\t}\n\n\tw.Header().Set(\"Content-Type\", \"application/json\")\n\treturn json.NewEncoder(w).Encode(out)\n}\n\n// adaptByContentType adapts body to Caddy JSON using the adapter specified by contentType.\n// If contentType is empty or ends with \"/json\", the input will be returned, as a no-op.\nfunc adaptByContentType(contentType string, body []byte) ([]byte, []Warning, error) {\n\t// assume JSON as the default\n\tif contentType == \"\" {\n\t\treturn body, nil, nil\n\t}\n\n\tct, _, err := mime.ParseMediaType(contentType)\n\tif err != nil {\n\t\treturn nil, nil, caddy.APIError{\n\t\t\tHTTPStatus: http.StatusBadRequest,\n\t\t\tErr:        fmt.Errorf(\"invalid Content-Type: %v\", err),\n\t\t}\n\t}\n\n\t// if already JSON, no need to adapt\n\tif strings.HasSuffix(ct, \"/json\") {\n\t\treturn body, nil, nil\n\t}\n\n\t// adapter name should be suffix of MIME type\n\t_, adapterName, slashFound := strings.Cut(ct, \"/\")\n\tif !slashFound {\n\t\treturn nil, nil, fmt.Errorf(\"malformed Content-Type\")\n\t}\n\n\tcfgAdapter := GetAdapter(adapterName)\n\tif cfgAdapter == nil {\n\t\treturn nil, nil, fmt.Errorf(\"unrecognized config adapter '%s'\", adapterName)\n\t}\n\n\tresult, warnings, err := cfgAdapter.Adapt(body, nil)\n\tif err != nil {\n\t\treturn nil, nil, fmt.Errorf(\"adapting config using %s adapter: %v\", adapterName, err)\n\t}\n\n\treturn result, warnings, nil\n}\n\nvar bufPool = sync.Pool{\n\tNew: func() any {\n\t\treturn new(bytes.Buffer)\n\t},\n}\n"
+          },
+          {
+            "path": "caddy.go",
+            "start_line": 1,
+            "end_line": 98,
+            "file_sha256": "7d9c64dc67d11c9521f22041379325ba3a4909f728dcf427eca0ab416ad92e33",
+            "score": 0.7,
+            "code": "// Copyright 2015 Matthew Holt and The Caddy Authors\n//\n// Licensed under the Apache License, Version 2.0 (the \"License\");\n// you may not use this file except in compliance with the License.\n// You may obtain a copy of the License at\n//\n//     http://www.apache.org/licenses/LICENSE-2.0\n//\n// Unless required by applicable law or agreed to in writing, software\n// distributed under the License is distributed on an \"AS IS\" BASIS,\n// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n// See the License for the specific language governing permissions and\n// limitations under the License.\n\npackage caddy\n\nimport (\n\t\"bytes\"\n\t\"context\"\n\t\"encoding/hex\"\n\t\"encoding/json\"\n\t\"errors\"\n\t\"fmt\"\n\t\"io\"\n\t\"io/fs\"\n\t\"log\"\n\t\"net/http\"\n\t\"os\"\n\t\"path\"\n\t\"path/filepath\"\n\t\"runtime/debug\"\n\t\"strconv\"\n\t\"strings\"\n\t\"sync\"\n\t\"sync/atomic\"\n\t\"time\"\n\n\t\"github.com/caddyserver/certmagic\"\n\t\"github.com/google/uuid\"\n\t\"go.uber.org/zap\"\n\n\t\"github.com/caddyserver/caddy/v2/internal/filesystems\"\n\t\"github.com/caddyserver/caddy/v2/notify\"\n)\n\n// Config is the top (or beginning) of the Caddy configuration structure.\n// Caddy config is expressed natively as a JSON document. If you prefer\n// not to work with JSON directly, there are [many config adapters](/docs/config-adapters)\n// available that can convert various inputs into Caddy JSON.\n//\n// Many parts of this config are extensible through the use of Caddy modules.\n// Fields which have a json.RawMessage type and which appear as dots (•••) in\n// the online docs can be fulfilled by modules in a certain module\n// namespace. The docs show which modules can be used in a given place.\n//\n// Whenever a module is used, its name must be given either inline as part of\n// the module, or as the key to the module's value. The docs will make it clear\n// which to use.\n//\n// Generally, all config settings are optional, as it is Caddy convention to\n// have good, documented default values. If a parameter is required, the docs\n// should say so.\n//\n// Go programs which are directly building a Config struct value should take\n// care to populate the JSON-encodable fields of the struct (i.e. the fields\n// with `json` struct tags) if employing the module lifecycle (e.g. Provision\n// method calls).\ntype Config struct {\n\tAdmin   *AdminConfig `json:\"admin,omitempty\"`\n\tLogging *Logging     `json:\"logging,omitempty\"`\n\n\t// StorageRaw is a storage module that defines how/where Caddy\n\t// stores assets (such as TLS certificates). The default storage\n\t// module is `caddy.storage.file_system` (the local file system),\n\t// and the default path\n\t// [depends on the OS and environment](/docs/conventions#data-directory).\n\tStorageRaw json.RawMessage `json:\"storage,omitempty\" caddy:\"namespace=caddy.storage inline_key=module\"`\n\n\t// AppsRaw are the apps that Caddy will load and run. The\n\t// app module name is the key, and the app's config is the\n\t// associated value.\n\tAppsRaw ModuleMap `json:\"apps,omitempty\" caddy:\"namespace=\"`\n\n\tapps    map[string]App\n\tstorage certmagic.Storage\n\n\tcancelFunc context.CancelFunc\n\n\t// filesystems is a dict of filesystems that will later be loaded from and added to.\n\tfilesystems FileSystems\n}\n\n// App is a thing that Caddy runs.\ntype App interface {\n\tStart() error\n\tStop() error\n}\n\n"
+          }
+        ],
+        "report": {
+          "scope": [
+            "."
+          ],
+          "inventory_complete": true,
+          "scope_fully_scanned": true,
+          "files": {
+            "discovered": 44,
+            "eligible": 44,
+            "excluded_by_reason": {},
+            "unreadable": 0,
+            "changed_before_return": 0
+          },
+          "fragments": {
+            "total": 234,
+            "remote_evaluated": 234,
+            "cache_reused": 0,
+            "not_evaluated": 0,
+            "below_threshold": 231,
+            "above_threshold": 3,
+            "represented_in_response": 3,
+            "omitted_by_response_budget": 0,
+            "omitted_stale": 0
+          },
+          "selection": {
+            "outcome": "selected",
+            "threshold": 0.5,
+            "ranges_returned": 2,
+            "duplicate_ranges_collapsed": 0
+          },
+          "usage": {
+            "provider_request_attempts": 4,
+            "provider_input_tokens_reported": 166683,
+            "provider_input_tokens_known_subtotal": 166683,
+            "provider_input_tokens_estimated": 166683,
+            "estimated_cost_usd": 0.007000686,
+            "reported_cost_usd": null,
+            "attempts_with_unknown_usage": 0,
+            "transmitted_bytes": 644517,
+            "elapsed_ms": 4246
+          },
+          "response_budget": {
+            "requested_tokens": 8000,
+            "counter": "tiktoken@1.0.22/cl100k_base",
+            "accounting": "reference_tokenizer"
+          },
+          "preflight": {
+            "planned_remote_fragments": 234,
+            "planned_cache_hits": 0,
+            "estimated_first_attempt_tokens": 177690,
+            "estimated_first_attempt_cost_usd": 0.00746298,
+            "estimated_first_attempt_requests": 4,
+            "enabled_caps": {
+              "estimated_input_tokens": 3644592,
+              "request_attempts": 392
+            },
+            "estimated_required_caps": {
+              "estimated_input_tokens": 177690,
+              "request_attempts": 4
+            }
+          },
+          "stop_reasons": [],
+          "diagnostics_truncated": false
+        }
+      },
+      "profile": {
+        "stages": {
+          "tokenization": {
+            "calls": 16238,
+            "durationMs": 3399.10510599985
+          },
+          "rendering": {
+            "calls": 2,
+            "durationMs": 2.5400379999973666
+          },
+          "inventory": {
+            "calls": 1,
+            "durationMs": 5.3455400000038935
+          },
+          "source_read": {
+            "calls": 44,
+            "durationMs": 6.469848999997339
+          },
+          "decode": {
+            "calls": 44,
+            "durationMs": 0.19513200000255893
+          },
+          "hash": {
+            "calls": 44,
+            "durationMs": 1.3679969999975583
+          },
+          "snapshot": {
+            "calls": 44,
+            "durationMs": 3.598603999997067
+          },
+          "secret_scan": {
+            "calls": 44,
+            "durationMs": 2.178920999991533
+          },
+          "parsing": {
+            "calls": 44,
+            "durationMs": 63.61553699999422
+          },
+          "chunking": {
+            "calls": 44,
+            "durationMs": 249.87679999999455
+          },
+          "preparation": {
+            "calls": 1,
+            "durationMs": 271.0200480000003
+          },
+          "serialization": {
+            "calls": 467,
+            "durationMs": 79.17593600001601
+          },
+          "cache_lookup": {
+            "calls": 234,
+            "durationMs": 217.6039560000063
+          },
+          "batching": {
+            "calls": 1,
+            "durationMs": 3100.6746120000007
+          },
+          "planning": {
+            "calls": 1,
+            "durationMs": 0.08149100000082399
+          },
+          "provider": {
+            "calls": 4,
+            "durationMs": 1575.260169000001
+          },
+          "evaluation": {
+            "calls": 1,
+            "durationMs": 652.2590070000006
+          },
+          "selection": {
+            "calls": 1,
+            "durationMs": 2.0150160000011965
+          },
+          "freshness": {
+            "calls": 2,
+            "durationMs": 0.4475110000003042
+          },
+          "search": {
+            "calls": 1,
+            "durationMs": 4247.332716999999
+          }
+        },
+        "counters": {
+          "tokenizerInputUtf16": 22805343,
+          "referenceTokensCounted": 6245163,
+          "serializedQuestions": 7383,
+          "serializedBytes": 20543884
+        },
+        "memory": {
+          "start": {
+            "rssBytes": 301715456,
+            "heapUsedBytes": 59851872,
+            "externalBytes": 97784759
+          },
+          "end": {
+            "rssBytes": 336990208,
+            "heapUsedBytes": 54978664,
+            "externalBytes": 96681964
+          },
+          "sampledMax": {
+            "rssBytes": 344993792,
+            "heapUsedBytes": 93639112,
+            "externalBytes": 104777495
+          },
+          "samples": 152
+        }
+      }
+    },
+    {
+      "id": "hand-caddy-na-02",
+      "task": "hand__caddy-reliability-1",
+      "repository": "caddyserver/caddy",
+      "split": "dev",
+      "category": "no-answer",
+      "label": "audit",
+      "latencyMs": 4123.099187999998,
+      "metrics": {
+        "recallAt1": null,
+        "recallAt5": null,
+        "reciprocalRank": null,
+        "evidenceCoverage": null,
+        "negativeCorrect": false,
+        "fileRecall": null,
+        "firstOverlapRank": null,
+        "complementaryCoverage": null
+      },
+      "responseTokens": 1881,
+      "outcome": {
+        "schema_version": "1",
+        "search_id": "hand-caddy-na-02",
+        "status": "complete",
+        "excerpts": [
+          {
+            "path": "admin.go",
+            "start_line": 60,
+            "end_line": 119,
+            "file_sha256": "5894bb47eebf29a22b871507b0b13eb3f4a4109ff478805c4399287f9df5218b",
+            "score": 0.63,
+            "code": "// AdminConfig configures Caddy's API endpoint, which is used\n// to manage Caddy while it is running.\ntype AdminConfig struct {\n\t// If true, the admin endpoint will be completely disabled.\n\t// Note that this makes any runtime changes to the config\n\t// impossible, since the interface to do so is through the\n\t// admin endpoint.\n\tDisabled bool `json:\"disabled,omitempty\"`\n\n\t// The address to which the admin endpoint's listener should\n\t// bind itself. Can be any single network address that can be\n\t// parsed by Caddy. Accepts placeholders.\n\t// Default: the value of the `CADDY_ADMIN` environment variable,\n\t// or `localhost:2019` otherwise.\n\t//\n\t// Remember: When changing this value through a config reload,\n\t// be sure to use the `--address` CLI flag to specify the current\n\t// admin address if the currently-running admin endpoint is not\n\t// the default address.\n\tListen string `json:\"listen,omitempty\"`\n\n\t// If true, CORS headers will be emitted, and requests to the\n\t// API will be rejected if their `Host` and `Origin` headers\n\t// do not match the expected value(s). Use `origins` to\n\t// customize which origins/hosts are allowed. If `origins` is\n\t// not set, the listen address is the only value allowed by\n\t// default. Enforced only on local (plaintext) endpoint.\n\tEnforceOrigin bool `json:\"enforce_origin,omitempty\"`\n\n\t// The list of allowed origins/hosts for API requests. Only needed\n\t// if accessing the admin endpoint from a host different from the\n\t// socket's network interface or if `enforce_origin` is true. If not\n\t// set, the listener address will be the default value. If set but\n\t// empty, no origins will be allowed. Enforced only on local\n\t// (plaintext) endpoint.\n\tOrigins []string `json:\"origins,omitempty\"`\n\n\t// Options pertaining to configuration management.\n\tConfig *ConfigSettings `json:\"config,omitempty\"`\n\n\t// Options that establish this server's identity. Identity refers to\n\t// credentials which can be used to uniquely identify and authenticate\n\t// this server instance. This is required if remote administration is\n\t// enabled (but does not require remote administration to be enabled).\n\t// Default: no identity management.\n\tIdentity *IdentityConfig `json:\"identity,omitempty\"`\n\n\t// Options pertaining to remote administration. By default, remote\n\t// administration is disabled. If enabled, identity management must\n\t// also be configured, as that is how the endpoint is secured.\n\t// See the neighboring \"identity\" object.\n\t//\n\t// EXPERIMENTAL: This feature is subject to change.\n\tRemote *RemoteAdmin `json:\"remote,omitempty\"`\n\n\t// Holds onto the routers so that we can later provision them\n\t// if they require provisioning.\n\trouters []AdminRouter\n}\n\n"
+          },
+          {
+            "path": "admin.go",
+            "start_line": 761,
+            "end_line": 838,
+            "file_sha256": "5894bb47eebf29a22b871507b0b13eb3f4a4109ff478805c4399287f9df5218b",
+            "score": 0.61,
+            "code": "// ServeHTTP is the external entry point for API requests.\n// It will only be called once per request.\nfunc (h adminHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {\n\tip, port, err := net.SplitHostPort(r.RemoteAddr)\n\tif err != nil {\n\t\tip = r.RemoteAddr\n\t\tport = \"\"\n\t}\n\tlog := Log().Named(\"admin.api\").With(\n\t\tzap.String(\"method\", r.Method),\n\t\tzap.String(\"host\", r.Host),\n\t\tzap.String(\"uri\", r.RequestURI),\n\t\tzap.String(\"remote_ip\", ip),\n\t\tzap.String(\"remote_port\", port),\n\t\tzap.Reflect(\"headers\", r.Header),\n\t)\n\tif r.TLS != nil {\n\t\tlog = log.With(\n\t\t\tzap.Bool(\"secure\", true),\n\t\t\tzap.Int(\"verified_chains\", len(r.TLS.VerifiedChains)),\n\t\t)\n\t}\n\tif r.RequestURI == \"/metrics\" {\n\t\tlog.Debug(\"received request\")\n\t} else {\n\t\tlog.Info(\"received request\")\n\t}\n\th.serveHTTP(w, r)\n}\n\n// serveHTTP is the internal entry point for API requests. It may\n// be called more than once per request, for example if a request\n// is rewritten (i.e. internal redirect).\nfunc (h adminHandler) serveHTTP(w http.ResponseWriter, r *http.Request) {\n\tif h.remoteControl != nil {\n\t\t// enforce access controls on secure endpoint\n\t\tif err := h.remoteControl.enforceAccessControls(r); err != nil {\n\t\t\th.handleError(w, r, err)\n\t\t\treturn\n\t\t}\n\t}\n\n\tif strings.Contains(r.Header.Get(\"Upgrade\"), \"websocket\") {\n\t\t// I've never been able demonstrate a vulnerability myself, but apparently\n\t\t// WebSocket connections originating from browsers aren't subject to CORS\n\t\t// restrictions, so we'll just be on the safe side\n\t\th.handleError(w, r, fmt.Errorf(\"websocket connections aren't allowed\"))\n\t\treturn\n\t}\n\n\tif h.enforceHost {\n\t\t// DNS rebinding mitigation\n\t\terr := h.checkHost(r)\n\t\tif err != nil {\n\t\t\th.handleError(w, r, err)\n\t\t\treturn\n\t\t}\n\t}\n\n\tif h.enforceOrigin {\n\t\t// cross-site mitigation\n\t\torigin, err := h.checkOrigin(r)\n\t\tif err != nil {\n\t\t\th.handleError(w, r, err)\n\t\t\treturn\n\t\t}\n\n\t\tif r.Method == http.MethodOptions {\n\t\t\tw.Header().Set(\"Access-Control-Allow-Methods\", \"OPTIONS, GET, POST, PUT, PATCH, DELETE\")\n\t\t\tw.Header().Set(\"Access-Control-Allow-Headers\", \"Content-Type, Content-Length, Cache-Control\")\n\t\t\tw.Header().Set(\"Access-Control-Allow-Credentials\", \"true\")\n\t\t}\n\t\tw.Header().Set(\"Access-Control-Allow-Origin\", origin)\n\t}\n\n\th.mux.ServeHTTP(w, r)\n}\n\n"
+          }
+        ],
+        "report": {
+          "scope": [
+            "."
+          ],
+          "inventory_complete": true,
+          "scope_fully_scanned": true,
+          "files": {
+            "discovered": 44,
+            "eligible": 44,
+            "excluded_by_reason": {},
+            "unreadable": 0,
+            "changed_before_return": 0
+          },
+          "fragments": {
+            "total": 234,
+            "remote_evaluated": 234,
+            "cache_reused": 0,
+            "not_evaluated": 0,
+            "below_threshold": 232,
+            "above_threshold": 2,
+            "represented_in_response": 2,
+            "omitted_by_response_budget": 0,
+            "omitted_stale": 0
+          },
+          "selection": {
+            "outcome": "selected",
+            "threshold": 0.5,
+            "ranges_returned": 2,
+            "duplicate_ranges_collapsed": 0
+          },
+          "usage": {
+            "provider_request_attempts": 4,
+            "provider_input_tokens_reported": 166679,
+            "provider_input_tokens_known_subtotal": 166679,
+            "provider_input_tokens_estimated": 166679,
+            "estimated_cost_usd": 0.007000518,
+            "reported_cost_usd": null,
+            "attempts_with_unknown_usage": 0,
+            "transmitted_bytes": 644493,
+            "elapsed_ms": 4121
+          },
+          "response_budget": {
+            "requested_tokens": 8000,
+            "counter": "tiktoken@1.0.22/cl100k_base",
+            "accounting": "reference_tokenizer"
+          },
+          "preflight": {
+            "planned_remote_fragments": 234,
+            "planned_cache_hits": 0,
+            "estimated_first_attempt_tokens": 177690,
+            "estimated_first_attempt_cost_usd": 0.00746298,
+            "estimated_first_attempt_requests": 4,
+            "enabled_caps": {
+              "estimated_input_tokens": 3466902,
+              "request_attempts": 388
+            },
+            "estimated_required_caps": {
+              "estimated_input_tokens": 177690,
+              "request_attempts": 4
+            }
+          },
+          "stop_reasons": [],
+          "diagnostics_truncated": false
+        }
+      },
+      "profile": {
+        "stages": {
+          "tokenization": {
+            "calls": 16236,
+            "durationMs": 3535.0062599999837
+          },
+          "rendering": {
+            "calls": 2,
+            "durationMs": 1.969744999998511
+          },
+          "inventory": {
+            "calls": 1,
+            "durationMs": 5.024484999996275
+          },
+          "source_read": {
+            "calls": 44,
+            "durationMs": 6.125469000000521
+          },
+          "decode": {
+            "calls": 44,
+            "durationMs": 0.18633999999838124
+          },
+          "hash": {
+            "calls": 44,
+            "durationMs": 1.3174420000068494
+          },
+          "snapshot": {
+            "calls": 44,
+            "durationMs": 3.5821090000008553
+          },
+          "secret_scan": {
+            "calls": 44,
+            "durationMs": 2.0110959999983606
+          },
+          "parsing": {
+            "calls": 44,
+            "durationMs": 67.22396800000024
+          },
+          "chunking": {
+            "calls": 44,
+            "durationMs": 252.42489999999634
+          },
+          "preparation": {
+            "calls": 1,
+            "durationMs": 271.4165690000009
+          },
+          "serialization": {
+            "calls": 467,
+            "durationMs": 79.63791600001787
+          },
+          "cache_lookup": {
+            "calls": 234,
+            "durationMs": 213.82394700001896
+          },
+          "batching": {
+            "calls": 1,
+            "durationMs": 3263.8166949999995
+          },
+          "planning": {
+            "calls": 1,
+            "durationMs": 0.10679399999935413
+          },
+          "provider": {
+            "calls": 4,
+            "durationMs": 1258.1737159999939
+          },
+          "evaluation": {
+            "calls": 1,
+            "durationMs": 369.8959520000026
+          },
+          "selection": {
+            "calls": 1,
+            "durationMs": 0.9970109999994747
+          },
+          "freshness": {
+            "calls": 2,
+            "durationMs": 0.28879500000039116
+          },
+          "search": {
+            "calls": 1,
+            "durationMs": 4122.8310919999985
+          }
+        },
+        "counters": {
+          "tokenizerInputUtf16": 22794415,
+          "referenceTokensCounted": 6242661,
+          "serializedQuestions": 7383,
+          "serializedBytes": 20541082
+        },
+        "memory": {
+          "start": {
+            "rssBytes": 336990208,
+            "heapUsedBytes": 55383256,
+            "externalBytes": 96813036
+          },
+          "end": {
+            "rssBytes": 327733248,
+            "heapUsedBytes": 38677384,
+            "externalBytes": 84172781
+          },
+          "sampledMax": {
+            "rssBytes": 338288640,
+            "heapUsedBytes": 75573856,
+            "externalBytes": 99575146
+          },
+          "samples": 154
+        }
+      }
+    },
+    {
+      "id": "hand-bat-fp-01",
+      "task": "hand__bat-reliability-1",
+      "repository": "sharkdp/bat",
+      "split": "dev",
+      "category": "false-premise",
+      "label": "audit",
+      "latencyMs": 863.4758230000007,
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": 1
+      },
+      "responseTokens": 7371,
+      "outcome": {
+        "schema_version": "1",
+        "search_id": "hand-bat-fp-01",
+        "status": "complete",
+        "excerpts": [
+          {
+            "path": "src/output.rs",
+            "start_line": 17,
+            "end_line": 118,
+            "file_sha256": "ffbaaf5740b1c7a2959af41468306ccd9ad54bab5b34a018bce225b42f7af1d2",
+            "score": 0.92,
+            "code": "impl OutputType {\n    pub fn from_mode(mode: PagingMode, pager: Option<&str>) -> Result<Self> {\n        use self::PagingMode::*;\n        Ok(match mode {\n            Always => OutputType::try_pager(false, pager)?,\n            QuitIfOneScreen => OutputType::try_pager(true, pager)?,\n            _ => OutputType::stdout(),\n        })\n    }\n\n    /// Try to launch the pager. Fall back to stdout in case of errors.\n    fn try_pager(quit_if_one_screen: bool, pager_from_config: Option<&str>) -> Result<Self> {\n        let mut replace_arguments_to_less = false;\n\n        let pager_from_env = match (env::var(\"BAT_PAGER\"), env::var(\"PAGER\")) {\n            (Ok(bat_pager), _) => Some(bat_pager),\n            (_, Ok(pager)) => {\n                // less needs to be called with the '-R' option in order to properly interpret the\n                // ANSI color sequences printed by bat. If someone has set PAGER=\"less -F\", we\n                // therefore need to overwrite the arguments and add '-R'.\n                //\n                // We only do this for PAGER (as it is not specific to 'bat'), not for BAT_PAGER\n                // or bats '--pager' command line option.\n                replace_arguments_to_less = true;\n                Some(pager)\n            }\n            _ => None,\n        };\n\n        let pager_from_config = pager_from_config.map(|p| p.to_string());\n\n        if pager_from_config.is_some() {\n            replace_arguments_to_less = false;\n        }\n\n        let pager = pager_from_config\n            .or(pager_from_env)\n            .unwrap_or_else(|| String::from(\"less\"));\n\n        let pagerflags =\n            shell_words::split(&pager).chain_err(|| \"Could not parse pager command.\")?;\n\n        match pagerflags.split_first() {\n            Some((pager_name, args)) => {\n                let mut pager_path = PathBuf::from(pager_name);\n\n                if pager_path.file_stem() == Some(&OsString::from(\"bat\")) {\n                    pager_path = PathBuf::from(\"less\");\n                }\n\n                let is_less = pager_path.file_stem() == Some(&OsString::from(\"less\"));\n\n                let mut process = if is_less {\n                    let mut p = Command::new(&pager_path);\n                    if args.is_empty() || replace_arguments_to_less {\n                        p.args(vec![\"--RAW-CONTROL-CHARS\", \"--no-init\"]);\n                        if quit_if_one_screen {\n                            p.arg(\"--quit-if-one-screen\");\n                        }\n                    } else {\n                        p.args(args);\n                    }\n                    p.env(\"LESSCHARSET\", \"UTF-8\");\n                    p\n                } else {\n                    let mut p = Command::new(&pager_path);\n                    p.args(args);\n                    p\n                };\n\n                Ok(process\n                    .stdin(Stdio::piped())\n                    .spawn()\n                    .map(OutputType::Pager)\n                    .unwrap_or_else(|_| OutputType::stdout()))\n            }\n            None => Ok(OutputType::stdout()),\n        }\n    }\n\n    fn stdout() -> Self {\n        OutputType::Stdout(io::stdout())\n    }\n\n    pub fn handle(&mut self) -> Result<&mut Write> {\n        Ok(match *self {\n            OutputType::Pager(ref mut command) => command\n                .stdin\n                .as_mut()\n                .chain_err(|| \"Could not open stdin for pager\")?,\n            OutputType::Stdout(ref mut handle) => handle,\n        })\n    }\n}\n\nimpl Drop for OutputType {\n    fn drop(&mut self) {\n        if let OutputType::Pager(ref mut command) = *self {\n            let _ = command.wait();\n        }\n    }\n}\n"
+          },
+          {
+            "path": "src/app.rs",
+            "start_line": 180,
+            "end_line": 279,
+            "file_sha256": "bb68fc7c42d600c78895ec8cfdf333411a3781ee19bb6be923667f782a4e8ad7",
+            "score": 0.54,
+            "code": "        Ok(Config {\n            true_color: is_truecolor_terminal(),\n            language: self.matches.value_of(\"language\").or_else(|| {\n                if self.matches.is_present(\"show-all\") {\n                    Some(\"show-nonprintable\")\n                } else {\n                    None\n                }\n            }),\n            show_nonprintable: self.matches.is_present(\"show-all\"),\n            output_wrap: if !self.interactive_output {\n                // We don't have the tty width when piping to another program.\n                // There's no point in wrapping when this is the case.\n                OutputWrap::None\n            } else {\n                match self.matches.value_of(\"wrap\") {\n                    Some(\"character\") => OutputWrap::Character,\n                    Some(\"never\") => OutputWrap::None,\n                    Some(\"auto\") | _ => {\n                        if output_components.plain() {\n                            OutputWrap::None\n                        } else {\n                            OutputWrap::Character\n                        }\n                    }\n                }\n            },\n            colored_output: match self.matches.value_of(\"color\") {\n                Some(\"always\") => true,\n                Some(\"never\") => false,\n                Some(\"auto\") | _ => self.interactive_output,\n            },\n            paging_mode,\n            term_width: self\n                .matches\n                .value_of(\"terminal-width\")\n                .and_then(|w| {\n                    if w.starts_with('+') || w.starts_with('-') {\n                        // Treat argument as a delta to the current terminal width\n                        w.parse().ok().map(|delta: i16| {\n                            let old_width: u16 = Term::stdout().size().1;\n                            let new_width: i32 = i32::from(old_width) + i32::from(delta);\n\n                            if new_width <= 0 {\n                                old_width as usize\n                            } else {\n                                new_width as usize\n                            }\n                        })\n                    } else {\n                        w.parse().ok()\n                    }\n                })\n                .unwrap_or(Term::stdout().size().1 as usize),\n            loop_through: !(self.interactive_output\n                || self.matches.value_of(\"color\") == Some(\"always\")\n                || self.matches.value_of(\"decorations\") == Some(\"always\")),\n            files,\n            tab_width: self\n                .matches\n                .value_of(\"tabs\")\n                .map(String::from)\n                .or_else(|| env::var(\"BAT_TABS\").ok())\n                .and_then(|t| t.parse().ok())\n                .unwrap_or(\n                    if output_components.plain() && paging_mode == PagingMode::Never {\n                        0\n                    } else {\n                        4\n                    },\n                ),\n            theme: self\n                .matches\n                .value_of(\"theme\")\n                .map(String::from)\n                .or_else(|| env::var(\"BAT_THEME\").ok())\n                .unwrap_or_else(|| String::from(BAT_THEME_DEFAULT)),\n            line_ranges: LineRanges::from(\n                transpose(\n                    self.matches\n                        .values_of(\"line-range\")\n                        .map(|vs| vs.map(LineRange::from).collect()),\n                )?\n                .unwrap_or_else(|| vec![]),\n            ),\n            output_components,\n            syntax_mapping,\n            pager: self.matches.value_of(\"pager\"),\n            use_italic_text: match self.matches.value_of(\"italic-text\") {\n                Some(\"always\") => true,\n                _ => false,\n            },\n            highlight_lines: self\n                .matches\n                .values_of(\"highlight-line\")\n                .and_then(|ws| ws.map(|w| w.parse().ok()).collect())\n                .unwrap_or_default(),\n        })\n    }\n\n"
+          },
+          {
+            "path": "src/controller.rs",
+            "start_line": 17,
+            "end_line": 121,
+            "file_sha256": "8364a9f0d86fe69c7f71727d51637158e5375aafe25f2b8c63aa978e6cbe211e",
+            "score": 0.53,
+            "code": "impl<'b> Controller<'b> {\n    pub fn new<'a>(config: &'a Config, assets: &'a HighlightingAssets) -> Controller<'a> {\n        Controller { config, assets }\n    }\n\n    pub fn run(&self) -> Result<bool> {\n        // Do not launch the pager if NONE of the input files exist\n        let mut paging_mode = self.config.paging_mode;\n        if self.config.paging_mode != PagingMode::Never {\n            let call_pager = self.config.files.iter().any(|file| {\n                if let InputFile::Ordinary(path) = file {\n                    return Path::new(path).exists();\n                } else {\n                    return true;\n                }\n            });\n            if !call_pager {\n                paging_mode = PagingMode::Never;\n            }\n        }\n\n        let mut output_type = OutputType::from_mode(paging_mode, self.config.pager)?;\n        let writer = output_type.handle()?;\n        let mut no_errors: bool = true;\n\n        let stdin = io::stdin();\n\n        for input_file in &self.config.files {\n            match input_file.get_reader(&stdin) {\n                Err(error) => {\n                    handle_error(&error);\n                    no_errors = false;\n                }\n                Ok(mut reader) => {\n                    let result = if self.config.loop_through {\n                        let mut printer = SimplePrinter::new();\n                        self.print_file(reader, &mut printer, writer, *input_file)\n                    } else {\n                        let mut printer = InteractivePrinter::new(\n                            &self.config,\n                            &self.assets,\n                            *input_file,\n                            &mut reader,\n                        );\n                        self.print_file(reader, &mut printer, writer, *input_file)\n                    };\n\n                    if let Err(error) = result {\n                        handle_error(&error);\n                        no_errors = false;\n                    }\n                }\n            }\n        }\n\n        Ok(no_errors)\n    }\n\n    fn print_file<'a, P: Printer>(\n        &self,\n        reader: InputFileReader,\n        printer: &mut P,\n        writer: &mut Write,\n        input_file: InputFile<'a>,\n    ) -> Result<()> {\n        printer.print_header(writer, input_file)?;\n        if !reader.first_line.is_empty() {\n            self.print_file_ranges(printer, writer, reader, &self.config.line_ranges)?;\n        }\n        printer.print_footer(writer)?;\n\n        Ok(())\n    }\n\n    fn print_file_ranges<P: Printer>(\n        &self,\n        printer: &mut P,\n        writer: &mut Write,\n        mut reader: InputFileReader,\n        line_ranges: &LineRanges,\n    ) -> Result<()> {\n        let mut line_buffer = Vec::new();\n        let mut line_number: usize = 1;\n\n        while reader.read_line(&mut line_buffer)? {\n            match line_ranges.check(line_number) {\n                RangeCheckResult::OutsideRange => {\n                    // Call the printer in case we need to call the syntax highlighter\n                    // for this line. However, set `out_of_range` to `true`.\n                    printer.print_line(true, writer, line_number, &line_buffer)?;\n                }\n                RangeCheckResult::InRange => {\n                    printer.print_line(false, writer, line_number, &line_buffer)?;\n                }\n                RangeCheckResult::AfterLastRange => {\n                    break;\n                }\n            }\n\n            line_number += 1;\n            line_buffer.clear();\n        }\n        Ok(())\n    }\n}\n"
+          },
+          {
+            "path": "src/clap_app.rs",
+            "start_line": 15,
+            "end_line": 427,
+            "file_sha256": "f3648766d7ae2ad08517aba6f56d896c9d5df6e620203294527a23b61c1c475f",
+            "score": 0.51,
+            "code": "    ClapApp::new(crate_name!())\n        .version(crate_version!())\n        .global_setting(clap_color_setting)\n        .global_setting(AppSettings::DeriveDisplayOrder)\n        .global_setting(AppSettings::UnifiedHelpMessage)\n        .global_setting(AppSettings::HidePossibleValuesInHelp)\n        .setting(AppSettings::InferSubcommands)\n        .setting(AppSettings::ArgsNegateSubcommands)\n        .setting(AppSettings::DisableHelpSubcommand)\n        .setting(AppSettings::VersionlessSubcommands)\n        .max_term_width(100)\n        .about(\n            \"A cat(1) clone with wings.\\n\\n\\\n             Use '--help' instead of '-h' to see a more detailed version of the help text.\",\n        )\n        .long_about(\"A cat(1) clone with syntax highlighting and Git integration.\")\n        .arg(\n            Arg::with_name(\"FILE\")\n                .help(\"File(s) to print / concatenate. Use '-' for standard input.\")\n                .long_help(\n                    \"File(s) to print / concatenate. Use a dash ('-') or no argument at all \\\n                     to read from standard input.\",\n                )\n                .multiple(true)\n                .empty_values(false),\n        )\n        .arg(\n            Arg::with_name(\"language\")\n                .short(\"l\")\n                .long(\"language\")\n                .overrides_with(\"language\")\n                .help(\"Set the language for syntax highlighting.\")\n                .long_help(\n                    \"Explicitly set the language for syntax highlighting. The language can be \\\n                     specified as a name (like 'C++' or 'LaTeX') or possible file extension \\\n                     (like 'cpp', 'hpp' or 'md'). Use '--list-languages' to show all supported \\\n                     language names and file extensions.\",\n                )\n                .takes_value(true),\n        )\n        .arg(\n            Arg::with_name(\"list-languages\")\n                .long(\"list-languages\")\n                .conflicts_with(\"list-themes\")\n                .help(\"Display all supported languages.\")\n                .long_help(\"Display a list of supported languages for syntax highlighting.\"),\n        )\n        .arg(\n            Arg::with_name(\"map-syntax\")\n                .short(\"m\")\n                .long(\"map-syntax\")\n                .multiple(true)\n                .takes_value(true)\n                .number_of_values(1)\n                .value_name(\"from:to\")\n                .help(\"Map a file extension or name to an existing syntax.\")\n                .long_help(\n                    \"Map a file extension or file name to an existing syntax. For example, \\\n                     to highlight *.conf files with the INI syntax, use '-m conf:ini'. \\\n                     To highlight files named '.myignore' with the Git Ignore syntax, use \\\n                     '-m .myignore:gitignore'.\",\n                )\n                .takes_value(true),\n        )\n        .arg(\n            Arg::with_name(\"theme\")\n                .long(\"theme\")\n                .overrides_with(\"theme\")\n                .takes_value(true)\n                .help(\"Set the color theme for syntax highlighting.\")\n                .long_help(\n                    \"Set the theme for syntax highlighting. Use '--list-themes' to \\\n                     see all available themes. To set a default theme, add the \\\n                     '--theme=\\\"...\\\"' option to the configuration file or export the \\\n                     BAT_THEME environment variable (e.g.: export \\\n                     BAT_THEME=\\\"...\\\").\",\n                ),\n        )\n        .arg(\n            Arg::with_name(\"list-themes\")\n                .long(\"list-themes\")\n                .help(\"Display all supported highlighting themes.\")\n                .long_help(\"Display a list of supported themes for syntax highlighting.\"),\n        )\n        .arg(\n            Arg::with_name(\"style\")\n                .long(\"style\")\n                .value_name(\"style-components\")\n                // Need to turn this off for overrides_with to work as we want. See the bottom most\n                // example at https://docs.rs/clap/2.32.0/clap/struct.Arg.html#method.overrides_with\n                .use_delimiter(false)\n                .takes_value(true)\n                .overrides_with(\"style\")\n                .overrides_with(\"plain\")\n                .overrides_with(\"number\")\n                // Cannot use clap's built in validation because we have to turn off clap's delimiters\n                .validator(|val| {\n                    let mut invalid_vals = val.split(',').filter(|style| {\n                        !&[\n                            \"auto\", \"full\", \"plain\", \"changes\", \"header\", \"grid\", \"numbers\",\n                        ]\n                        .contains(style)\n                    });\n\n                    if let Some(invalid) = invalid_vals.next() {\n                        Err(format!(\"Unknown style, '{}'\", invalid))\n                    } else {\n                        Ok(())\n                    }\n                })\n                .help(\n                    \"Comma-separated list of style elements to display \\\n                     (*auto*, full, plain, changes, header, grid, numbers).\",\n                )\n                .long_help(\n                    \"Configure which elements (line numbers, file headers, grid \\\n                     borders, Git modifications, ..) to display in addition to the \\\n                     file contents. The argument is a comma-separated list of \\\n                     components to display (e.g. 'numbers,changes,grid') or a \\\n                     pre-defined style ('full'). To set a default style, add the \\\n                     '--style=\\\"..\\\"' option to the configuration file or export the \\\n                     BAT_STYLE environment variable (e.g.: export BAT_STYLE=\\\"..\\\"). \\\n                     Possible values: *auto*, full, plain, changes, header, grid, numbers.\",\n                ),\n        )\n        .arg(\n            Arg::with_name(\"plain\")\n                .overrides_with(\"plain\")\n                .overrides_with(\"number\")\n                .short(\"p\")\n                .long(\"plain\")\n                .multiple(true)\n                .help(\"Show plain style (alias for '--style=plain').\")\n                .long_help(\n                    \"Only show plain style, no decorations. This is an alias for \\\n                     '--style=plain'. When '-p' is used twice ('-pp'), it also disables \\\n                     automatic paging (alias for '--style=plain --pager=never').\",\n                ),\n        )\n        .arg(\n            Arg::with_name(\"number\")\n                .long(\"number\")\n                .overrides_with(\"number\")\n                .short(\"n\")\n                .help(\"Show line numbers (alias for '--style=numbers').\")\n                .long_help(\n                    \"Only show line numbers, no other decorations. This is an alias for \\\n                     '--style=numbers'\",\n                ),\n        )\n        .arg(\n            Arg::with_name(\"show-all\")\n                .long(\"show-all\")\n                .alias(\"show-nonprintable\")\n                .short(\"A\")\n                .conflicts_with(\"language\")\n                .help(\"Show non-printable characters (space, tab, newline, ..).\")\n                .long_help(\n                    \"Show non-printable characters like space, tab or newline. \\\n                     Use '--tabs' to control the width of the tab-placeholders.\",\n                ),\n        )\n        .arg(\n            Arg::with_name(\"line-range\")\n                .long(\"line-range\")\n                .short(\"r\")\n                .multiple(true)\n                .takes_value(true)\n                .number_of_values(1)\n                .value_name(\"N:M\")\n                .help(\"Only print the lines from N to M.\")\n                .long_help(\n                    \"Only print the specified range of lines for each file. \\\n                     For example:\\n  \\\n                     '--line-range 30:40' prints lines 30 to 40\\n  \\\n                     '--line-range :40' prints lines 1 to 40\\n  \\\n                     '--line-range 40:' prints lines 40 to the end of the file\",\n                ),\n        )\n        .arg(\n            Arg::with_name(\"highlight-line\")\n                .long(\"highlight-line\")\n                .short(\"H\")\n                .takes_value(true)\n                .number_of_values(1)\n                .multiple(true)\n                .value_name(\"N\")\n                .help(\"Highlight the given line.\")\n                .long_help(\n                    \"Highlight the N-th line with a different background color\",\n                ),\n        )\n        .arg(\n            Arg::with_name(\"color\")\n                .long(\"color\")\n                .overrides_with(\"color\")\n                .takes_value(true)\n                .value_name(\"when\")\n                .possible_values(&[\"auto\", \"never\", \"always\"])\n                .hide_default_value(true)\n                .default_value(\"auto\")\n                .help(\"When to use colors (*auto*, never, always).\")\n                .long_help(\n                    \"Specify when to use colored output. The automatic mode \\\n                     only enables colors if an interactive terminal is detected. \\\n                     Possible values: *auto*, never, always.\",\n                ),\n        )\n        .arg(\n            Arg::with_name(\"italic-text\")\n                .long(\"italic-text\")\n                .takes_value(true)\n                .value_name(\"when\")\n                .possible_values(&[\"always\", \"never\"])\n                .default_value(\"never\")\n                .hide_default_value(true)\n                .help(\"Use italics in output (always, *never*)\")\n                .long_help(\"Specify when to use ANSI sequences for italic text in the output. Possible values: always, *never*.\"),\n        )\n        .arg(\n            Arg::with_name(\"decorations\")\n                .long(\"decorations\")\n                .overrides_with(\"decorations\")\n                .takes_value(true)\n                .value_name(\"when\")\n                .possible_values(&[\"auto\", \"never\", \"always\"])\n                .default_value(\"auto\")\n                .hide_default_value(true)\n                .help(\"When to show the decorations (*auto*, never, always).\")\n                .long_help(\n                    \"Specify when to use the decorations that have been specified \\\n                     via '--style'. The automatic mode only enables decorations if \\\n                     an interactive terminal is detected. Possible values: *auto*, never, always.\",\n                ),\n        )\n        .arg(\n            Arg::with_name(\"paging\")\n                .long(\"paging\")\n                .overrides_with(\"paging\")\n                .takes_value(true)\n                .value_name(\"when\")\n                .possible_values(&[\"auto\", \"never\", \"always\"])\n                .default_value(\"auto\")\n                .hide_default_value(true)\n                .help(\"Specify when to use the pager (*auto*, never, always).\")\n                .long_help(\n                    \"Specify when to use the pager. To control which pager \\\n                     is used, set the PAGER or BAT_PAGER environment \\\n                     variables (the latter takes precedence) or use the '--pager' option. \\\n                     To disable the pager permanently, set BAT_PAGER to an empty string \\\n                     or set '--paging=never' in the configuration file. \\\n                     Possible values: *auto*, never, always.\",\n                ),\n        )\n        .arg(\n            Arg::with_name(\"pager\")\n                .long(\"pager\")\n                .overrides_with(\"pager\")\n                .takes_value(true)\n                .value_name(\"command\")\n                .hidden_short_help(true)\n                .help(\"Determine which pager to use.\")\n                .long_help(\n                    \"Determine which pager is used. This option will overwrite \\\n                     the PAGER and BAT_PAGER environment variables. The default \\\n                     pager is 'less'. To disable the pager completely, use the \\\n                     '--paging' option. \\\n                     Example: '--pager \\\"less -RF\\\"'.\",\n                ),\n        )\n        .arg(\n            Arg::with_name(\"wrap\")\n                .long(\"wrap\")\n                .overrides_with(\"wrap\")\n                .takes_value(true)\n                .value_name(\"mode\")\n                .possible_values(&[\"auto\", \"never\", \"character\"])\n                .default_value(\"auto\")\n                .hide_default_value(true)\n                .help(\"Specify the text-wrapping mode (*auto*, never, character).\")\n                .long_help(\"Specify the text-wrapping mode (*auto*, never, character).\"),\n        )\n        .arg(\n            Arg::with_name(\"tabs\")\n                .long(\"tabs\")\n                .overrides_with(\"tabs\")\n                .takes_value(true)\n                .value_name(\"T\")\n                .validator(\n                    |t| {\n                        t.parse::<u32>()\n                            .map_err(|_t| \"must be a number\")\n                            .map(|_t| ()) // Convert to Result<(), &str>\n                            .map_err(|e| e.to_string())\n                    }, // Convert to Result<(), String>\n                )\n                .help(\"Set the tab width to T spaces.\")\n                .long_help(\n                    \"Set the tab width to T spaces. Use a width of 0 to pass tabs through \\\n                     directly\",\n                ),\n        )\n        .arg(\n            Arg::with_name(\"unbuffered\")\n                .short(\"u\")\n                .long(\"unbuffered\")\n                .hidden_short_help(true)\n                .long_help(\n                    \"This option exists for POSIX-compliance reasons ('u' is for \\\n                     'unbuffered'). The output is always unbuffered - this option \\\n                     is simply ignored.\",\n                ),\n        )\n        .arg(\n            Arg::with_name(\"terminal-width\")\n                .long(\"terminal-width\")\n                .takes_value(true)\n                .value_name(\"width\")\n                .hidden_short_help(true)\n                .validator(\n                    |t| {\n                        let is_offset = t.starts_with('+') || t.starts_with('-');\n                        t.parse::<i32>()\n                            .map_err(|_e| \"must be an offset or number\")\n                            .and_then(|v| if v == 0 && !is_offset {\n                                Err(\"terminal width cannot be zero\".into())\n                            } else {\n                                Ok(())\n                            })\n                            .map_err(|e| e.to_string())\n                    })\n                .help(\n                    \"Explicitly set the width of the terminal instead of determining it \\\n                     automatically. If prefixed with '+' or '-', the value will be treated \\\n                     as an offset to the actual terminal width.\",\n                ),\n        )\n        .arg(\n            Arg::with_name(\"no-config\")\n                .long(\"no-config\")\n                .hidden(true)\n                .help(\"Do not use the configuration file\"),\n        )\n        .arg(\n            Arg::with_name(\"config-file\")\n                .long(\"config-file\")\n                .conflicts_with(\"list-languages\")\n                .conflicts_with(\"list-themes\")\n                .hidden(true)\n                .help(\"Show path to the configuration file.\"),\n        )\n        .arg(\n            Arg::with_name(\"config-dir\")\n                .long(\"config-dir\")\n                .hidden(true)\n                .help(\"Show bat's configuration directory.\"),\n        )\n        .arg(\n            Arg::with_name(\"cache-dir\")\n                .long(\"cache-dir\")\n                .hidden(true)\n                .help(\"Show bat's cache directory.\"),\n        )\n        .subcommand(\n            SubCommand::with_name(\"cache\")\n                .about(\"Modify the syntax-definition and theme cache\")\n                .arg(\n                    Arg::with_name(\"build\")\n                        .long(\"build\")\n                        .short(\"b\")\n                        .help(\"Initialize (or update) the syntax/theme cache.\")\n                        .long_help(\n                            \"Initialize (or update) the syntax/theme cache by loading from \\\n                             the source directory (default: the configuration directory).\",\n                        ),\n                )\n                .arg(\n                    Arg::with_name(\"clear\")\n                        .long(\"clear\")\n                        .short(\"c\")\n                        .help(\"Remove the cached syntax definitions and themes.\"),\n                )\n                .group(\n                    ArgGroup::with_name(\"cache-actions\")\n                        .args(&[\"build\", \"clear\"])\n                        .required(arg_group_required),\n                )\n                .arg(\n                    Arg::with_name(\"source\")\n                        .long(\"source\")\n                        .requires(\"build\")\n                        .takes_value(true)\n                        .value_name(\"dir\")\n                        .help(\"Use a different directory to load syntaxes and themes from.\"),\n                )\n                .arg(\n                    Arg::with_name(\"target\")\n                        .long(\"target\")\n                        .requires(\"build\")\n                        .takes_value(true)\n                        .value_name(\"dir\")\n                        .help(\n                            \"Use a different directory to store the cached syntax and theme set.\",\n                        ),\n                )\n                .arg(Arg::with_name(\"blank\").long(\"blank\").requires(\"build\").help(\n                    \"Create completely new syntax and theme sets \\\n                     (instead of appending to the default sets).\",\n                )),\n        )\n        .help_message(\"Print this help message.\")\n        .version_message(\"Show version information.\")\n}\n"
+          }
+        ],
+        "report": {
+          "scope": [
+            "."
+          ],
+          "inventory_complete": true,
+          "scope_fully_scanned": true,
+          "files": {
+            "discovered": 18,
+            "eligible": 18,
+            "excluded_by_reason": {},
+            "unreadable": 0,
+            "changed_before_return": 0
+          },
+          "fragments": {
+            "total": 47,
+            "remote_evaluated": 47,
+            "cache_reused": 0,
+            "not_evaluated": 0,
+            "below_threshold": 43,
+            "above_threshold": 4,
+            "represented_in_response": 4,
+            "omitted_by_response_budget": 0,
+            "omitted_stale": 0
+          },
+          "selection": {
+            "outcome": "selected",
+            "threshold": 0.5,
+            "ranges_returned": 4,
+            "duplicate_ranges_collapsed": 0
+          },
+          "usage": {
+            "provider_request_attempts": 1,
+            "provider_input_tokens_reported": 27831,
+            "provider_input_tokens_known_subtotal": 27831,
+            "provider_input_tokens_estimated": 27831,
+            "estimated_cost_usd": 0.001168902,
+            "reported_cost_usd": null,
+            "attempts_with_unknown_usage": 0,
+            "transmitted_bytes": 128690,
+            "elapsed_ms": 857
+          },
+          "response_budget": {
+            "requested_tokens": 8000,
+            "counter": "tiktoken@1.0.22/cl100k_base",
+            "accounting": "reference_tokenizer"
+          },
+          "preflight": {
+            "planned_remote_fragments": 47,
+            "planned_cache_hits": 0,
+            "estimated_first_attempt_tokens": 29860,
+            "estimated_first_attempt_cost_usd": 0.00125412,
+            "estimated_first_attempt_requests": 1,
+            "enabled_caps": {
+              "estimated_input_tokens": 3289212,
+              "request_attempts": 384
+            },
+            "estimated_required_caps": {
+              "estimated_input_tokens": 29860,
+              "request_attempts": 1
+            }
+          },
+          "stop_reasons": [],
+          "diagnostics_truncated": false
+        }
+      },
+      "profile": {
+        "stages": {
+          "tokenization": {
+            "calls": 3185,
+            "durationMs": 624.1009649998377
+          },
+          "rendering": {
+            "calls": 2,
+            "durationMs": 6.477329000001191
+          },
+          "inventory": {
+            "calls": 1,
+            "durationMs": 2.0333370000007562
+          },
+          "source_read": {
+            "calls": 18,
+            "durationMs": 2.340450999992754
+          },
+          "decode": {
+            "calls": 18,
+            "durationMs": 0.061417999993864214
+          },
+          "hash": {
+            "calls": 18,
+            "durationMs": 0.3589480000009644
+          },
+          "snapshot": {
+            "calls": 18,
+            "durationMs": 0.915367999998125
+          },
+          "secret_scan": {
+            "calls": 18,
+            "durationMs": 0.3964579999956186
+          },
+          "parsing": {
+            "calls": 18,
+            "durationMs": 17.706926000002568
+          },
+          "chunking": {
+            "calls": 18,
+            "durationMs": 55.20927099999972
+          },
+          "preparation": {
+            "calls": 1,
+            "durationMs": 61.458127999998396
+          },
+          "serialization": {
+            "calls": 93,
+            "durationMs": 13.638733999985561
+          },
+          "cache_lookup": {
+            "calls": 47,
+            "durationMs": 44.13126900001225
+          },
+          "batching": {
+            "calls": 1,
+            "durationMs": 545.0175249999993
+          },
+          "planning": {
+            "calls": 1,
+            "durationMs": 0.0761930000007851
+          },
+          "provider": {
+            "calls": 1,
+            "durationMs": 197.77285699999993
+          },
+          "evaluation": {
+            "calls": 1,
+            "durationMs": 199.10104500000307
+          },
+          "selection": {
+            "calls": 1,
+            "durationMs": 5.686177999999927
+          },
+          "freshness": {
+            "calls": 4,
+            "durationMs": 0.8180600000014238
+          },
+          "search": {
+            "calls": 1,
+            "durationMs": 863.2041959999988
+          }
+        },
+        "counters": {
+          "tokenizerInputUtf16": 3882012,
+          "referenceTokensCounted": 895161,
+          "serializedQuestions": 1174,
+          "serializedBytes": 3360427
+        },
+        "memory": {
+          "start": {
+            "rssBytes": 327733248,
+            "heapUsedBytes": 39002312,
+            "externalBytes": 84303853
+          },
+          "end": {
+            "rssBytes": 326459392,
+            "heapUsedBytes": 35705344,
+            "externalBytes": 82948384
+          },
+          "sampledMax": {
+            "rssBytes": 333070336,
+            "heapUsedBytes": 64248648,
+            "externalBytes": 91414495
+          },
+          "samples": 31
+        }
+      }
+    },
+    {
+      "id": "hand-bat-fp-02",
+      "task": "hand__bat-reliability-1",
+      "repository": "sharkdp/bat",
+      "split": "dev",
+      "category": "false-premise",
+      "label": "audit",
+      "latencyMs": 888.5045160000009,
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "responseTokens": 7070,
+      "outcome": {
+        "schema_version": "1",
+        "search_id": "hand-bat-fp-02",
+        "status": "complete",
+        "excerpts": [
+          {
+            "path": "src/line_range.rs",
+            "start_line": 1,
+            "end_line": 174,
+            "file_sha256": "866a47d382f7531eb03d64b1ec0373bb0a8df7c0ca7baeabbe73c6f3a7b54356",
+            "score": 0.87,
+            "code": "use crate::errors::*;\n\n#[derive(Clone)]\npub struct LineRange {\n    pub lower: usize,\n    pub upper: usize,\n}\n\nimpl LineRange {\n    pub fn from(range_raw: &str) -> Result<LineRange> {\n        LineRange::parse_range(range_raw)\n    }\n\n    pub fn new() -> LineRange {\n        LineRange {\n            lower: usize::min_value(),\n            upper: usize::max_value(),\n        }\n    }\n\n    pub fn parse_range(range_raw: &str) -> Result<LineRange> {\n        let mut new_range = LineRange::new();\n\n        if range_raw.bytes().nth(0).ok_or(\"Empty line range\")? == b':' {\n            new_range.upper = range_raw[1..].parse()?;\n            return Ok(new_range);\n        } else if range_raw.bytes().last().ok_or(\"Empty line range\")? == b':' {\n            new_range.lower = range_raw[..range_raw.len() - 1].parse()?;\n            return Ok(new_range);\n        }\n\n        let line_numbers: Vec<&str> = range_raw.split(':').collect();\n        if line_numbers.len() == 2 {\n            new_range.lower = line_numbers[0].parse()?;\n            new_range.upper = line_numbers[1].parse()?;\n            return Ok(new_range);\n        }\n\n        Err(\"expected single ':' character\".into())\n    }\n\n    pub fn is_inside(&self, line: usize) -> bool {\n        line >= self.lower && line <= self.upper\n    }\n}\n\n#[test]\nfn test_parse_full() {\n    let range = LineRange::from(\"40:50\").expect(\"Shouldn't fail on test!\");\n    assert_eq!(40, range.lower);\n    assert_eq!(50, range.upper);\n}\n\n#[test]\nfn test_parse_partial_min() {\n    let range = LineRange::from(\":50\").expect(\"Shouldn't fail on test!\");\n    assert_eq!(usize::min_value(), range.lower);\n    assert_eq!(50, range.upper);\n}\n\n#[test]\nfn test_parse_partial_max() {\n    let range = LineRange::from(\"40:\").expect(\"Shouldn't fail on test!\");\n    assert_eq!(40, range.lower);\n    assert_eq!(usize::max_value(), range.upper);\n}\n\n#[test]\nfn test_parse_fail() {\n    let range = LineRange::from(\"40:50:80\");\n    assert!(range.is_err());\n    let range = LineRange::from(\"40::80\");\n    assert!(range.is_err());\n    let range = LineRange::from(\":40:\");\n    assert!(range.is_err());\n    let range = LineRange::from(\"40\");\n    assert!(range.is_err());\n}\n\n#[derive(Copy, Clone, Debug, PartialEq)]\npub enum RangeCheckResult {\n    // Within one of the given ranges\n    InRange,\n\n    // Before the first range or within two ranges\n    OutsideRange,\n\n    // Line number is outside of all ranges and larger than the last range.\n    AfterLastRange,\n}\n\n#[derive(Clone)]\npub struct LineRanges {\n    ranges: Vec<LineRange>,\n    largest_upper_bound: usize,\n}\n\nimpl LineRanges {\n    pub fn from(ranges: Vec<LineRange>) -> LineRanges {\n        let largest_upper_bound = ranges\n            .iter()\n            .map(|r| r.upper)\n            .max()\n            .unwrap_or(usize::max_value());\n        LineRanges {\n            ranges,\n            largest_upper_bound,\n        }\n    }\n\n    pub fn check(&self, line: usize) -> RangeCheckResult {\n        if self.ranges.is_empty() | self.ranges.iter().any(|r| r.is_inside(line)) {\n            RangeCheckResult::InRange\n        } else if line < self.largest_upper_bound {\n            RangeCheckResult::OutsideRange\n        } else {\n            RangeCheckResult::AfterLastRange\n        }\n    }\n}\n\n#[cfg(test)]\nfn ranges(rs: &[&str]) -> LineRanges {\n    LineRanges::from(rs.iter().map(|r| LineRange::from(r).unwrap()).collect())\n}\n\n#[test]\nfn test_ranges_simple() {\n    let ranges = ranges(&[\"3:8\"]);\n\n    assert_eq!(RangeCheckResult::OutsideRange, ranges.check(2));\n    assert_eq!(RangeCheckResult::InRange, ranges.check(5));\n    assert_eq!(RangeCheckResult::AfterLastRange, ranges.check(9));\n}\n\n#[test]\nfn test_ranges_advanced() {\n    let ranges = ranges(&[\"3:8\", \"11:20\", \"25:30\"]);\n\n    assert_eq!(RangeCheckResult::OutsideRange, ranges.check(2));\n    assert_eq!(RangeCheckResult::InRange, ranges.check(5));\n    assert_eq!(RangeCheckResult::OutsideRange, ranges.check(9));\n    assert_eq!(RangeCheckResult::InRange, ranges.check(11));\n    assert_eq!(RangeCheckResult::OutsideRange, ranges.check(22));\n    assert_eq!(RangeCheckResult::InRange, ranges.check(28));\n    assert_eq!(RangeCheckResult::AfterLastRange, ranges.check(31));\n}\n\n#[test]\nfn test_ranges_open_low() {\n    let ranges = ranges(&[\"3:8\", \":5\"]);\n\n    assert_eq!(RangeCheckResult::InRange, ranges.check(1));\n    assert_eq!(RangeCheckResult::InRange, ranges.check(3));\n    assert_eq!(RangeCheckResult::InRange, ranges.check(7));\n    assert_eq!(RangeCheckResult::AfterLastRange, ranges.check(9));\n}\n\n#[test]\nfn test_ranges_open_high() {\n    let ranges = ranges(&[\"3:\", \"2:5\"]);\n\n    assert_eq!(RangeCheckResult::OutsideRange, ranges.check(1));\n    assert_eq!(RangeCheckResult::InRange, ranges.check(3));\n    assert_eq!(RangeCheckResult::InRange, ranges.check(5));\n    assert_eq!(RangeCheckResult::InRange, ranges.check(9));\n}\n\n#[test]\nfn test_ranges_empty() {\n    let ranges = ranges(&[]);\n\n    assert_eq!(RangeCheckResult::InRange, ranges.check(1));\n}\n"
+          },
+          {
+            "path": "src/app.rs",
+            "start_line": 180,
+            "end_line": 279,
+            "file_sha256": "bb68fc7c42d600c78895ec8cfdf333411a3781ee19bb6be923667f782a4e8ad7",
+            "score": 0.57,
+            "code": "        Ok(Config {\n            true_color: is_truecolor_terminal(),\n            language: self.matches.value_of(\"language\").or_else(|| {\n                if self.matches.is_present(\"show-all\") {\n                    Some(\"show-nonprintable\")\n                } else {\n                    None\n                }\n            }),\n            show_nonprintable: self.matches.is_present(\"show-all\"),\n            output_wrap: if !self.interactive_output {\n                // We don't have the tty width when piping to another program.\n                // There's no point in wrapping when this is the case.\n                OutputWrap::None\n            } else {\n                match self.matches.value_of(\"wrap\") {\n                    Some(\"character\") => OutputWrap::Character,\n                    Some(\"never\") => OutputWrap::None,\n                    Some(\"auto\") | _ => {\n                        if output_components.plain() {\n                            OutputWrap::None\n                        } else {\n                            OutputWrap::Character\n                        }\n                    }\n                }\n            },\n            colored_output: match self.matches.value_of(\"color\") {\n                Some(\"always\") => true,\n                Some(\"never\") => false,\n                Some(\"auto\") | _ => self.interactive_output,\n            },\n            paging_mode,\n            term_width: self\n                .matches\n                .value_of(\"terminal-width\")\n                .and_then(|w| {\n                    if w.starts_with('+') || w.starts_with('-') {\n                        // Treat argument as a delta to the current terminal width\n                        w.parse().ok().map(|delta: i16| {\n                            let old_width: u16 = Term::stdout().size().1;\n                            let new_width: i32 = i32::from(old_width) + i32::from(delta);\n\n                            if new_width <= 0 {\n                                old_width as usize\n                            } else {\n                                new_width as usize\n                            }\n                        })\n                    } else {\n                        w.parse().ok()\n                    }\n                })\n                .unwrap_or(Term::stdout().size().1 as usize),\n            loop_through: !(self.interactive_output\n                || self.matches.value_of(\"color\") == Some(\"always\")\n                || self.matches.value_of(\"decorations\") == Some(\"always\")),\n            files,\n            tab_width: self\n                .matches\n                .value_of(\"tabs\")\n                .map(String::from)\n                .or_else(|| env::var(\"BAT_TABS\").ok())\n                .and_then(|t| t.parse().ok())\n                .unwrap_or(\n                    if output_components.plain() && paging_mode == PagingMode::Never {\n                        0\n                    } else {\n                        4\n                    },\n                ),\n            theme: self\n                .matches\n                .value_of(\"theme\")\n                .map(String::from)\n                .or_else(|| env::var(\"BAT_THEME\").ok())\n                .unwrap_or_else(|| String::from(BAT_THEME_DEFAULT)),\n            line_ranges: LineRanges::from(\n                transpose(\n                    self.matches\n                        .values_of(\"line-range\")\n                        .map(|vs| vs.map(LineRange::from).collect()),\n                )?\n                .unwrap_or_else(|| vec![]),\n            ),\n            output_components,\n            syntax_mapping,\n            pager: self.matches.value_of(\"pager\"),\n            use_italic_text: match self.matches.value_of(\"italic-text\") {\n                Some(\"always\") => true,\n                _ => false,\n            },\n            highlight_lines: self\n                .matches\n                .values_of(\"highlight-line\")\n                .and_then(|ws| ws.map(|w| w.parse().ok()).collect())\n                .unwrap_or_default(),\n        })\n    }\n\n"
+          },
+          {
+            "path": "src/clap_app.rs",
+            "start_line": 15,
+            "end_line": 427,
+            "file_sha256": "f3648766d7ae2ad08517aba6f56d896c9d5df6e620203294527a23b61c1c475f",
+            "score": 0.54,
+            "code": "    ClapApp::new(crate_name!())\n        .version(crate_version!())\n        .global_setting(clap_color_setting)\n        .global_setting(AppSettings::DeriveDisplayOrder)\n        .global_setting(AppSettings::UnifiedHelpMessage)\n        .global_setting(AppSettings::HidePossibleValuesInHelp)\n        .setting(AppSettings::InferSubcommands)\n        .setting(AppSettings::ArgsNegateSubcommands)\n        .setting(AppSettings::DisableHelpSubcommand)\n        .setting(AppSettings::VersionlessSubcommands)\n        .max_term_width(100)\n        .about(\n            \"A cat(1) clone with wings.\\n\\n\\\n             Use '--help' instead of '-h' to see a more detailed version of the help text.\",\n        )\n        .long_about(\"A cat(1) clone with syntax highlighting and Git integration.\")\n        .arg(\n            Arg::with_name(\"FILE\")\n                .help(\"File(s) to print / concatenate. Use '-' for standard input.\")\n                .long_help(\n                    \"File(s) to print / concatenate. Use a dash ('-') or no argument at all \\\n                     to read from standard input.\",\n                )\n                .multiple(true)\n                .empty_values(false),\n        )\n        .arg(\n            Arg::with_name(\"language\")\n                .short(\"l\")\n                .long(\"language\")\n                .overrides_with(\"language\")\n                .help(\"Set the language for syntax highlighting.\")\n                .long_help(\n                    \"Explicitly set the language for syntax highlighting. The language can be \\\n                     specified as a name (like 'C++' or 'LaTeX') or possible file extension \\\n                     (like 'cpp', 'hpp' or 'md'). Use '--list-languages' to show all supported \\\n                     language names and file extensions.\",\n                )\n                .takes_value(true),\n        )\n        .arg(\n            Arg::with_name(\"list-languages\")\n                .long(\"list-languages\")\n                .conflicts_with(\"list-themes\")\n                .help(\"Display all supported languages.\")\n                .long_help(\"Display a list of supported languages for syntax highlighting.\"),\n        )\n        .arg(\n            Arg::with_name(\"map-syntax\")\n                .short(\"m\")\n                .long(\"map-syntax\")\n                .multiple(true)\n                .takes_value(true)\n                .number_of_values(1)\n                .value_name(\"from:to\")\n                .help(\"Map a file extension or name to an existing syntax.\")\n                .long_help(\n                    \"Map a file extension or file name to an existing syntax. For example, \\\n                     to highlight *.conf files with the INI syntax, use '-m conf:ini'. \\\n                     To highlight files named '.myignore' with the Git Ignore syntax, use \\\n                     '-m .myignore:gitignore'.\",\n                )\n                .takes_value(true),\n        )\n        .arg(\n            Arg::with_name(\"theme\")\n                .long(\"theme\")\n                .overrides_with(\"theme\")\n                .takes_value(true)\n                .help(\"Set the color theme for syntax highlighting.\")\n                .long_help(\n                    \"Set the theme for syntax highlighting. Use '--list-themes' to \\\n                     see all available themes. To set a default theme, add the \\\n                     '--theme=\\\"...\\\"' option to the configuration file or export the \\\n                     BAT_THEME environment variable (e.g.: export \\\n                     BAT_THEME=\\\"...\\\").\",\n                ),\n        )\n        .arg(\n            Arg::with_name(\"list-themes\")\n                .long(\"list-themes\")\n                .help(\"Display all supported highlighting themes.\")\n                .long_help(\"Display a list of supported themes for syntax highlighting.\"),\n        )\n        .arg(\n            Arg::with_name(\"style\")\n                .long(\"style\")\n                .value_name(\"style-components\")\n                // Need to turn this off for overrides_with to work as we want. See the bottom most\n                // example at https://docs.rs/clap/2.32.0/clap/struct.Arg.html#method.overrides_with\n                .use_delimiter(false)\n                .takes_value(true)\n                .overrides_with(\"style\")\n                .overrides_with(\"plain\")\n                .overrides_with(\"number\")\n                // Cannot use clap's built in validation because we have to turn off clap's delimiters\n                .validator(|val| {\n                    let mut invalid_vals = val.split(',').filter(|style| {\n                        !&[\n                            \"auto\", \"full\", \"plain\", \"changes\", \"header\", \"grid\", \"numbers\",\n                        ]\n                        .contains(style)\n                    });\n\n                    if let Some(invalid) = invalid_vals.next() {\n                        Err(format!(\"Unknown style, '{}'\", invalid))\n                    } else {\n                        Ok(())\n                    }\n                })\n                .help(\n                    \"Comma-separated list of style elements to display \\\n                     (*auto*, full, plain, changes, header, grid, numbers).\",\n                )\n                .long_help(\n                    \"Configure which elements (line numbers, file headers, grid \\\n                     borders, Git modifications, ..) to display in addition to the \\\n                     file contents. The argument is a comma-separated list of \\\n                     components to display (e.g. 'numbers,changes,grid') or a \\\n                     pre-defined style ('full'). To set a default style, add the \\\n                     '--style=\\\"..\\\"' option to the configuration file or export the \\\n                     BAT_STYLE environment variable (e.g.: export BAT_STYLE=\\\"..\\\"). \\\n                     Possible values: *auto*, full, plain, changes, header, grid, numbers.\",\n                ),\n        )\n        .arg(\n            Arg::with_name(\"plain\")\n                .overrides_with(\"plain\")\n                .overrides_with(\"number\")\n                .short(\"p\")\n                .long(\"plain\")\n                .multiple(true)\n                .help(\"Show plain style (alias for '--style=plain').\")\n                .long_help(\n                    \"Only show plain style, no decorations. This is an alias for \\\n                     '--style=plain'. When '-p' is used twice ('-pp'), it also disables \\\n                     automatic paging (alias for '--style=plain --pager=never').\",\n                ),\n        )\n        .arg(\n            Arg::with_name(\"number\")\n                .long(\"number\")\n                .overrides_with(\"number\")\n                .short(\"n\")\n                .help(\"Show line numbers (alias for '--style=numbers').\")\n                .long_help(\n                    \"Only show line numbers, no other decorations. This is an alias for \\\n                     '--style=numbers'\",\n                ),\n        )\n        .arg(\n            Arg::with_name(\"show-all\")\n                .long(\"show-all\")\n                .alias(\"show-nonprintable\")\n                .short(\"A\")\n                .conflicts_with(\"language\")\n                .help(\"Show non-printable characters (space, tab, newline, ..).\")\n                .long_help(\n                    \"Show non-printable characters like space, tab or newline. \\\n                     Use '--tabs' to control the width of the tab-placeholders.\",\n                ),\n        )\n        .arg(\n            Arg::with_name(\"line-range\")\n                .long(\"line-range\")\n                .short(\"r\")\n                .multiple(true)\n                .takes_value(true)\n                .number_of_values(1)\n                .value_name(\"N:M\")\n                .help(\"Only print the lines from N to M.\")\n                .long_help(\n                    \"Only print the specified range of lines for each file. \\\n                     For example:\\n  \\\n                     '--line-range 30:40' prints lines 30 to 40\\n  \\\n                     '--line-range :40' prints lines 1 to 40\\n  \\\n                     '--line-range 40:' prints lines 40 to the end of the file\",\n                ),\n        )\n        .arg(\n            Arg::with_name(\"highlight-line\")\n                .long(\"highlight-line\")\n                .short(\"H\")\n                .takes_value(true)\n                .number_of_values(1)\n                .multiple(true)\n                .value_name(\"N\")\n                .help(\"Highlight the given line.\")\n                .long_help(\n                    \"Highlight the N-th line with a different background color\",\n                ),\n        )\n        .arg(\n            Arg::with_name(\"color\")\n                .long(\"color\")\n                .overrides_with(\"color\")\n                .takes_value(true)\n                .value_name(\"when\")\n                .possible_values(&[\"auto\", \"never\", \"always\"])\n                .hide_default_value(true)\n                .default_value(\"auto\")\n                .help(\"When to use colors (*auto*, never, always).\")\n                .long_help(\n                    \"Specify when to use colored output. The automatic mode \\\n                     only enables colors if an interactive terminal is detected. \\\n                     Possible values: *auto*, never, always.\",\n                ),\n        )\n        .arg(\n            Arg::with_name(\"italic-text\")\n                .long(\"italic-text\")\n                .takes_value(true)\n                .value_name(\"when\")\n                .possible_values(&[\"always\", \"never\"])\n                .default_value(\"never\")\n                .hide_default_value(true)\n                .help(\"Use italics in output (always, *never*)\")\n                .long_help(\"Specify when to use ANSI sequences for italic text in the output. Possible values: always, *never*.\"),\n        )\n        .arg(\n            Arg::with_name(\"decorations\")\n                .long(\"decorations\")\n                .overrides_with(\"decorations\")\n                .takes_value(true)\n                .value_name(\"when\")\n                .possible_values(&[\"auto\", \"never\", \"always\"])\n                .default_value(\"auto\")\n                .hide_default_value(true)\n                .help(\"When to show the decorations (*auto*, never, always).\")\n                .long_help(\n                    \"Specify when to use the decorations that have been specified \\\n                     via '--style'. The automatic mode only enables decorations if \\\n                     an interactive terminal is detected. Possible values: *auto*, never, always.\",\n                ),\n        )\n        .arg(\n            Arg::with_name(\"paging\")\n                .long(\"paging\")\n                .overrides_with(\"paging\")\n                .takes_value(true)\n                .value_name(\"when\")\n                .possible_values(&[\"auto\", \"never\", \"always\"])\n                .default_value(\"auto\")\n                .hide_default_value(true)\n                .help(\"Specify when to use the pager (*auto*, never, always).\")\n                .long_help(\n                    \"Specify when to use the pager. To control which pager \\\n                     is used, set the PAGER or BAT_PAGER environment \\\n                     variables (the latter takes precedence) or use the '--pager' option. \\\n                     To disable the pager permanently, set BAT_PAGER to an empty string \\\n                     or set '--paging=never' in the configuration file. \\\n                     Possible values: *auto*, never, always.\",\n                ),\n        )\n        .arg(\n            Arg::with_name(\"pager\")\n                .long(\"pager\")\n                .overrides_with(\"pager\")\n                .takes_value(true)\n                .value_name(\"command\")\n                .hidden_short_help(true)\n                .help(\"Determine which pager to use.\")\n                .long_help(\n                    \"Determine which pager is used. This option will overwrite \\\n                     the PAGER and BAT_PAGER environment variables. The default \\\n                     pager is 'less'. To disable the pager completely, use the \\\n                     '--paging' option. \\\n                     Example: '--pager \\\"less -RF\\\"'.\",\n                ),\n        )\n        .arg(\n            Arg::with_name(\"wrap\")\n                .long(\"wrap\")\n                .overrides_with(\"wrap\")\n                .takes_value(true)\n                .value_name(\"mode\")\n                .possible_values(&[\"auto\", \"never\", \"character\"])\n                .default_value(\"auto\")\n                .hide_default_value(true)\n                .help(\"Specify the text-wrapping mode (*auto*, never, character).\")\n                .long_help(\"Specify the text-wrapping mode (*auto*, never, character).\"),\n        )\n        .arg(\n            Arg::with_name(\"tabs\")\n                .long(\"tabs\")\n                .overrides_with(\"tabs\")\n                .takes_value(true)\n                .value_name(\"T\")\n                .validator(\n                    |t| {\n                        t.parse::<u32>()\n                            .map_err(|_t| \"must be a number\")\n                            .map(|_t| ()) // Convert to Result<(), &str>\n                            .map_err(|e| e.to_string())\n                    }, // Convert to Result<(), String>\n                )\n                .help(\"Set the tab width to T spaces.\")\n                .long_help(\n                    \"Set the tab width to T spaces. Use a width of 0 to pass tabs through \\\n                     directly\",\n                ),\n        )\n        .arg(\n            Arg::with_name(\"unbuffered\")\n                .short(\"u\")\n                .long(\"unbuffered\")\n                .hidden_short_help(true)\n                .long_help(\n                    \"This option exists for POSIX-compliance reasons ('u' is for \\\n                     'unbuffered'). The output is always unbuffered - this option \\\n                     is simply ignored.\",\n                ),\n        )\n        .arg(\n            Arg::with_name(\"terminal-width\")\n                .long(\"terminal-width\")\n                .takes_value(true)\n                .value_name(\"width\")\n                .hidden_short_help(true)\n                .validator(\n                    |t| {\n                        let is_offset = t.starts_with('+') || t.starts_with('-');\n                        t.parse::<i32>()\n                            .map_err(|_e| \"must be an offset or number\")\n                            .and_then(|v| if v == 0 && !is_offset {\n                                Err(\"terminal width cannot be zero\".into())\n                            } else {\n                                Ok(())\n                            })\n                            .map_err(|e| e.to_string())\n                    })\n                .help(\n                    \"Explicitly set the width of the terminal instead of determining it \\\n                     automatically. If prefixed with '+' or '-', the value will be treated \\\n                     as an offset to the actual terminal width.\",\n                ),\n        )\n        .arg(\n            Arg::with_name(\"no-config\")\n                .long(\"no-config\")\n                .hidden(true)\n                .help(\"Do not use the configuration file\"),\n        )\n        .arg(\n            Arg::with_name(\"config-file\")\n                .long(\"config-file\")\n                .conflicts_with(\"list-languages\")\n                .conflicts_with(\"list-themes\")\n                .hidden(true)\n                .help(\"Show path to the configuration file.\"),\n        )\n        .arg(\n            Arg::with_name(\"config-dir\")\n                .long(\"config-dir\")\n                .hidden(true)\n                .help(\"Show bat's configuration directory.\"),\n        )\n        .arg(\n            Arg::with_name(\"cache-dir\")\n                .long(\"cache-dir\")\n                .hidden(true)\n                .help(\"Show bat's cache directory.\"),\n        )\n        .subcommand(\n            SubCommand::with_name(\"cache\")\n                .about(\"Modify the syntax-definition and theme cache\")\n                .arg(\n                    Arg::with_name(\"build\")\n                        .long(\"build\")\n                        .short(\"b\")\n                        .help(\"Initialize (or update) the syntax/theme cache.\")\n                        .long_help(\n                            \"Initialize (or update) the syntax/theme cache by loading from \\\n                             the source directory (default: the configuration directory).\",\n                        ),\n                )\n                .arg(\n                    Arg::with_name(\"clear\")\n                        .long(\"clear\")\n                        .short(\"c\")\n                        .help(\"Remove the cached syntax definitions and themes.\"),\n                )\n                .group(\n                    ArgGroup::with_name(\"cache-actions\")\n                        .args(&[\"build\", \"clear\"])\n                        .required(arg_group_required),\n                )\n                .arg(\n                    Arg::with_name(\"source\")\n                        .long(\"source\")\n                        .requires(\"build\")\n                        .takes_value(true)\n                        .value_name(\"dir\")\n                        .help(\"Use a different directory to load syntaxes and themes from.\"),\n                )\n                .arg(\n                    Arg::with_name(\"target\")\n                        .long(\"target\")\n                        .requires(\"build\")\n                        .takes_value(true)\n                        .value_name(\"dir\")\n                        .help(\n                            \"Use a different directory to store the cached syntax and theme set.\",\n                        ),\n                )\n                .arg(Arg::with_name(\"blank\").long(\"blank\").requires(\"build\").help(\n                    \"Create completely new syntax and theme sets \\\n                     (instead of appending to the default sets).\",\n                )),\n        )\n        .help_message(\"Print this help message.\")\n        .version_message(\"Show version information.\")\n}\n"
+          }
+        ],
+        "report": {
+          "scope": [
+            "."
+          ],
+          "inventory_complete": true,
+          "scope_fully_scanned": true,
+          "files": {
+            "discovered": 18,
+            "eligible": 18,
+            "excluded_by_reason": {},
+            "unreadable": 0,
+            "changed_before_return": 0
+          },
+          "fragments": {
+            "total": 47,
+            "remote_evaluated": 47,
+            "cache_reused": 0,
+            "not_evaluated": 0,
+            "below_threshold": 43,
+            "above_threshold": 4,
+            "represented_in_response": 4,
+            "omitted_by_response_budget": 0,
+            "omitted_stale": 0
+          },
+          "selection": {
+            "outcome": "selected",
+            "threshold": 0.5,
+            "ranges_returned": 3,
+            "duplicate_ranges_collapsed": 0
+          },
+          "usage": {
+            "provider_request_attempts": 1,
+            "provider_input_tokens_reported": 27823,
+            "provider_input_tokens_known_subtotal": 27823,
+            "provider_input_tokens_estimated": 27823,
+            "estimated_cost_usd": 0.001168566,
+            "reported_cost_usd": null,
+            "attempts_with_unknown_usage": 0,
+            "transmitted_bytes": 128650,
+            "elapsed_ms": 883
+          },
+          "response_budget": {
+            "requested_tokens": 8000,
+            "counter": "tiktoken@1.0.22/cl100k_base",
+            "accounting": "reference_tokenizer"
+          },
+          "preflight": {
+            "planned_remote_fragments": 47,
+            "planned_cache_hits": 0,
+            "estimated_first_attempt_tokens": 29851,
+            "estimated_first_attempt_cost_usd": 0.001253742,
+            "estimated_first_attempt_requests": 1,
+            "enabled_caps": {
+              "estimated_input_tokens": 3259352,
+              "request_attempts": 383
+            },
+            "estimated_required_caps": {
+              "estimated_input_tokens": 29851,
+              "request_attempts": 1
+            }
+          },
+          "stop_reasons": [],
+          "diagnostics_truncated": false
+        }
+      },
+      "profile": {
+        "stages": {
+          "tokenization": {
+            "calls": 3186,
+            "durationMs": 648.2069130001255
+          },
+          "rendering": {
+            "calls": 2,
+            "durationMs": 5.934395000000222
+          },
+          "inventory": {
+            "calls": 1,
+            "durationMs": 2.431956000003993
+          },
+          "source_read": {
+            "calls": 18,
+            "durationMs": 2.6909950000008394
+          },
+          "decode": {
+            "calls": 18,
+            "durationMs": 0.0647460000072897
+          },
+          "hash": {
+            "calls": 18,
+            "durationMs": 0.3901309999891964
+          },
+          "snapshot": {
+            "calls": 18,
+            "durationMs": 1.0455150000016147
+          },
+          "secret_scan": {
+            "calls": 18,
+            "durationMs": 0.4532030000082159
+          },
+          "parsing": {
+            "calls": 18,
+            "durationMs": 16.6150009999983
+          },
+          "chunking": {
+            "calls": 18,
+            "durationMs": 60.41845199999807
+          },
+          "preparation": {
+            "calls": 1,
+            "durationMs": 67.64644300000145
+          },
+          "serialization": {
+            "calls": 93,
+            "durationMs": 13.941346999985399
+          },
+          "cache_lookup": {
+            "calls": 47,
+            "durationMs": 51.19352099999742
+          },
+          "batching": {
+            "calls": 1,
+            "durationMs": 559.7756850000005
+          },
+          "planning": {
+            "calls": 1,
+            "durationMs": 0.05936999999903492
+          },
+          "provider": {
+            "calls": 1,
+            "durationMs": 195.7191660000026
+          },
+          "evaluation": {
+            "calls": 1,
+            "durationMs": 196.82626900000105
+          },
+          "selection": {
+            "calls": 1,
+            "durationMs": 5.779220999997051
+          },
+          "freshness": {
+            "calls": 3,
+            "durationMs": 0.595525999997335
+          },
+          "search": {
+            "calls": 1,
+            "durationMs": 888.2386639999968
+          }
+        },
+        "counters": {
+          "tokenizerInputUtf16": 3879035,
+          "referenceTokensCounted": 895403,
+          "serializedQuestions": 1174,
+          "serializedBytes": 3356707
+        },
+        "memory": {
+          "start": {
+            "rssBytes": 326459392,
+            "heapUsedBytes": 36010928,
+            "externalBytes": 83079456
+          },
+          "end": {
+            "rssBytes": 331964416,
+            "heapUsedBytes": 62339400,
+            "externalBytes": 89799941
+          },
+          "sampledMax": {
+            "rssBytes": 331964416,
+            "heapUsedBytes": 62339400,
+            "externalBytes": 89799941
+          },
+          "samples": 29
+        }
+      }
+    },
+    {
+      "id": "hand-bat-na-01",
+      "task": "hand__bat-reliability-1",
+      "repository": "sharkdp/bat",
+      "split": "dev",
+      "category": "no-answer",
+      "label": "audit",
+      "latencyMs": 836.5762900000009,
+      "metrics": {
+        "recallAt1": null,
+        "recallAt5": null,
+        "reciprocalRank": null,
+        "evidenceCoverage": null,
+        "negativeCorrect": false,
+        "fileRecall": null,
+        "firstOverlapRank": null,
+        "complementaryCoverage": null
+      },
+      "responseTokens": 1238,
+      "outcome": {
+        "schema_version": "1",
+        "search_id": "hand-bat-na-01",
+        "status": "complete",
+        "excerpts": [
+          {
+            "path": "src/printer.rs",
+            "start_line": 254,
+            "end_line": 321,
+            "file_sha256": "75701e5c84b7a942dde7740749d2828f8c8e1b384e809ca8c00216d4567d853b",
+            "score": 0.63,
+            "code": "    fn print_line(\n        &mut self,\n        out_of_range: bool,\n        handle: &mut Write,\n        line_number: usize,\n        line_buffer: &[u8],\n    ) -> Result<()> {\n        let mut line = match self.content_type {\n            ContentType::BINARY => {\n                return Ok(());\n            }\n            ContentType::UTF_16LE => UTF_16LE\n                .decode(&line_buffer, DecoderTrap::Replace)\n                .map_err(|_| \"Invalid UTF-16LE\")?,\n            ContentType::UTF_16BE => UTF_16BE\n                .decode(&line_buffer, DecoderTrap::Replace)\n                .map_err(|_| \"Invalid UTF-16BE\")?,\n            _ => String::from_utf8_lossy(&line_buffer).to_string(),\n        };\n\n        if self.config.show_nonprintable {\n            line = replace_nonprintable(&line, self.config.tab_width);\n        }\n\n        let regions = {\n            let highlighter = match self.highlighter {\n                Some(ref mut highlighter) => highlighter,\n                _ => {\n                    return Ok(());\n                }\n            };\n            highlighter.highlight(line.as_ref(), self.syntax_set)\n        };\n\n        if out_of_range {\n            return Ok(());\n        }\n\n        let mut cursor: usize = 0;\n        let mut cursor_max: usize = self.config.term_width;\n        let mut cursor_total: usize = 0;\n        let mut panel_wrap: Option<String> = None;\n\n        // Line highlighting\n        let highlight_this_line = self\n            .config\n            .highlight_lines\n            .iter()\n            .any(|&l| l == line_number);\n\n        let background_color = self\n            .background_color_highlight\n            .filter(|_| highlight_this_line);\n\n        // Line decorations.\n        if self.panel_width > 0 {\n            let decorations = self\n                .decorations\n                .iter()\n                .map(|ref d| d.generate(line_number, false, self))\n                .collect::<Vec<_>>();\n\n            for deco in decorations {\n                write!(handle, \"{} \", deco.text)?;\n                cursor_max -= deco.width + 1;\n            }\n        }\n\n"
+          },
+          {
+            "path": "src/printer.rs",
+            "start_line": 494,
+            "end_line": 527,
+            "file_sha256": "75701e5c84b7a942dde7740749d2828f8c8e1b384e809ca8c00216d4567d853b",
+            "score": 0.6,
+            "code": "const DEFAULT_GUTTER_COLOR: u8 = 238;\n\n#[derive(Default)]\npub struct Colors {\n    pub grid: Style,\n    pub filename: Style,\n    pub git_added: Style,\n    pub git_removed: Style,\n    pub git_modified: Style,\n    pub line_number: Style,\n}\n\nimpl Colors {\n    fn plain() -> Self {\n        Colors::default()\n    }\n\n    fn colored(theme: &Theme, true_color: bool) -> Self {\n        let gutter_color = theme\n            .settings\n            .gutter_foreground\n            .map(|c| to_ansi_color(c, true_color))\n            .unwrap_or(Fixed(DEFAULT_GUTTER_COLOR));\n\n        Colors {\n            grid: gutter_color.normal(),\n            filename: Style::new().bold(),\n            git_added: Green.normal(),\n            git_removed: Red.normal(),\n            git_modified: Yellow.normal(),\n            line_number: gutter_color.normal(),\n        }\n    }\n}\n"
+          }
+        ],
+        "report": {
+          "scope": [
+            "."
+          ],
+          "inventory_complete": true,
+          "scope_fully_scanned": true,
+          "files": {
+            "discovered": 18,
+            "eligible": 18,
+            "excluded_by_reason": {},
+            "unreadable": 0,
+            "changed_before_return": 0
+          },
+          "fragments": {
+            "total": 47,
+            "remote_evaluated": 47,
+            "cache_reused": 0,
+            "not_evaluated": 0,
+            "below_threshold": 45,
+            "above_threshold": 2,
+            "represented_in_response": 2,
+            "omitted_by_response_budget": 0,
+            "omitted_stale": 0
+          },
+          "selection": {
+            "outcome": "selected",
+            "threshold": 0.5,
+            "ranges_returned": 2,
+            "duplicate_ranges_collapsed": 0
+          },
+          "usage": {
+            "provider_request_attempts": 1,
+            "provider_input_tokens_reported": 27816,
+            "provider_input_tokens_known_subtotal": 27816,
+            "provider_input_tokens_estimated": 27816,
+            "estimated_cost_usd": 0.001168272,
+            "reported_cost_usd": null,
+            "attempts_with_unknown_usage": 0,
+            "transmitted_bytes": 128645,
+            "elapsed_ms": 835
+          },
+          "response_budget": {
+            "requested_tokens": 8000,
+            "counter": "tiktoken@1.0.22/cl100k_base",
+            "accounting": "reference_tokenizer"
+          },
+          "preflight": {
+            "planned_remote_fragments": 47,
+            "planned_cache_hits": 0,
+            "estimated_first_attempt_tokens": 29845,
+            "estimated_first_attempt_cost_usd": 0.00125349,
+            "estimated_first_attempt_requests": 1,
+            "enabled_caps": {
+              "estimated_input_tokens": 3229501,
+              "request_attempts": 382
+            },
+            "estimated_required_caps": {
+              "estimated_input_tokens": 29845,
+              "request_attempts": 1
+            }
+          },
+          "stop_reasons": [],
+          "diagnostics_truncated": false
+        }
+      },
+      "profile": {
+        "stages": {
+          "tokenization": {
+            "calls": 3183,
+            "durationMs": 594.2463190000271
+          },
+          "rendering": {
+            "calls": 2,
+            "durationMs": 1.8164409999990312
+          },
+          "inventory": {
+            "calls": 1,
+            "durationMs": 1.9449180000083288
+          },
+          "source_read": {
+            "calls": 18,
+            "durationMs": 2.5325359999987995
+          },
+          "decode": {
+            "calls": 18,
+            "durationMs": 0.07772000000113621
+          },
+          "hash": {
+            "calls": 18,
+            "durationMs": 0.3831539999919187
+          },
+          "snapshot": {
+            "calls": 18,
+            "durationMs": 1.0335589999958756
+          },
+          "secret_scan": {
+            "calls": 18,
+            "durationMs": 0.39119199999186094
+          },
+          "parsing": {
+            "calls": 18,
+            "durationMs": 14.626572999990458
+          },
+          "chunking": {
+            "calls": 18,
+            "durationMs": 52.08439699999508
+          },
+          "preparation": {
+            "calls": 1,
+            "durationMs": 62.15113399999973
+          },
+          "serialization": {
+            "calls": 93,
+            "durationMs": 13.017796000021917
+          },
+          "cache_lookup": {
+            "calls": 47,
+            "durationMs": 44.07716999999684
+          },
+          "batching": {
+            "calls": 1,
+            "durationMs": 524.1833800000022
+          },
+          "planning": {
+            "calls": 1,
+            "durationMs": 0.05736299999989569
+          },
+          "provider": {
+            "calls": 1,
+            "durationMs": 201.2976060000001
+          },
+          "evaluation": {
+            "calls": 1,
+            "durationMs": 202.52151899999808
+          },
+          "selection": {
+            "calls": 1,
+            "durationMs": 0.8087880000020959
+          },
+          "freshness": {
+            "calls": 2,
+            "durationMs": 0.3001540000004752
+          },
+          "search": {
+            "calls": 1,
+            "durationMs": 836.3312189999997
+          }
+        },
+        "counters": {
+          "tokenizerInputUtf16": 3822087,
+          "referenceTokensCounted": 881468,
+          "serializedQuestions": 1174,
+          "serializedBytes": 3356242
+        },
+        "memory": {
+          "start": {
+            "rssBytes": 331964416,
+            "heapUsedBytes": 62634184,
+            "externalBytes": 89931013
+          },
+          "end": {
+            "rssBytes": 327667712,
+            "heapUsedBytes": 52485488,
+            "externalBytes": 87681174
+          },
+          "sampledMax": {
+            "rssBytes": 331964416,
+            "heapUsedBytes": 65053904,
+            "externalBytes": 90444350
+          },
+          "samples": 28
+        }
+      }
+    }
+  ]
+}

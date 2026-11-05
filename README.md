@@ -59,6 +59,24 @@ Terra finds a little more, but it costs 25 to 50 times as much, takes three time
 long and only works while the whole repository fits in its context window. JevGrep
 gives most of that quality at a fraction of the price on repositories of any size.
 
+On repositories too large for any context window, JevGrep keeps the same recall. Six
+repositories of 1 to 7.6 million tokens, 50 questions from real issues, held-out half
+frozen before the run:
+
+| Repository | Language | Tokens per scan | R@5 | Cost per question | Time per question |
+|---|---|---:|---:|---:|---:|
+| prometheus | Go | 1.1M | 0.92 | $0.05 | 20 s |
+| hugo | Go | 1.0M | 0.86 | $0.04 | 20 s |
+| lombok | Java | 1.0M | 0.78 | $0.04 | 30 s |
+| nushell | Rust | 2.1M | 0.79 | $0.09 | — |
+| ruff | Rust | 3.6M | 0.89 | $0.14 | 3 min |
+| lucene | Java | 7.6M | 0.83 | $0.25 | 7 min |
+
+Times are through the Vercel AI Gateway at concurrency 16, before the batching and
+windowing fixes that followed this run; nushell was measured on a slower route only.
+Method, every number and the misses are in the
+[hard set](benchmarks/baselines/2026-11-04-hard-set.md) report.
+
 We also kept JevGrep and swapped only the model that scores each fragment, on 65
 searches. "No answer" is the share of questions with no answer in the repository
 where nothing is returned; "False premise" is the share of questions built on a

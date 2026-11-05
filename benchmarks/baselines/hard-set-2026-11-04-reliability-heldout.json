@@ -1,0 +1,2217 @@
+{
+  "schemaVersion": 1,
+  "kind": "real-task-retrieval",
+  "createdAt": "2026-11-04T18:51:37.821Z",
+  "environment": {
+    "node": "v24.22.2",
+    "platform": "linux",
+    "architecture": "x64",
+    "cpu": "Intel(R) Xeon(R) Processor",
+    "logicalCpus": 8,
+    "totalMemoryBytes": 33654874112,
+    "revision": "39a8bde41c2583f0d2e1cb7b9e7289c63dfcc814",
+    "workingTree": "M scripts/bench-real-import.ts\n M scripts/bench-real.ts\n M scripts/bench/real-tasks.ts\n?? benchmarks/real-tasks/hand-go-rust-reliability-1.json\n?? benchmarks/real-tasks/swe-bench-multilingual-hard-1.json\n?? node_modules",
+    "sourceHash": "c155596e29eafd9c161bbc54f9c18f06b6697a0912a98a03b17b37d794c4e89a",
+    "harnessHash": "f379d9416da71e2ac7fcd95f054740a2acf8361119dd0e4d04e9e7f7f8b4ab29",
+    "packageLockHash": "37aedfa15a94c84ec716c28109e43f59223658b03775581380cc0fdcd4899db7"
+  },
+  "sourceStable": true,
+  "frozen": {
+    "kind": "benchmark-freeze",
+    "createdAt": "2026-11-04T18:51:02.823Z",
+    "split": "heldout",
+    "datasetHash": "0a3ba6cc3c17efc0805b6542506fd19f68bf6055e17cb5bea8d48f7232438e1b",
+    "sourceHash": "c155596e29eafd9c161bbc54f9c18f06b6697a0912a98a03b17b37d794c4e89a",
+    "harnessHash": "f379d9416da71e2ac7fcd95f054740a2acf8361119dd0e4d04e9e7f7f8b4ab29",
+    "packageLockHash": "37aedfa15a94c84ec716c28109e43f59223658b03775581380cc0fdcd4899db7",
+    "settingsHash": "0973dc5bff2167d70559c298ec7812f832ff92ac60e2da8fafd78b13f4ba9a82",
+    "model": "jev-1.13.0"
+  },
+  "dataset": {
+    "version": "hand-go-rust-reliability-1",
+    "source": {
+      "dataset": "hand-written on SWE-bench Multilingual snapshots",
+      "split": "n/a",
+      "license": "code from the upstream repositories",
+      "revision": null
+    },
+    "selection": {
+      "seed": "manual",
+      "perRepository": {
+        "caddyserver/caddy": 4,
+        "gin-gonic/gin": 5,
+        "sharkdp/bat": 3,
+        "tokio-rs/axum": 4
+      },
+      "maxEditFiles": 0,
+      "maxQueryBytes": 7000
+    },
+    "split": "heldout",
+    "hash": "0a3ba6cc3c17efc0805b6542506fd19f68bf6055e17cb5bea8d48f7232438e1b",
+    "tasks": [
+      {
+        "id": "hand__gin-reliability-1",
+        "repository": "gin-gonic/gin",
+        "split": "heldout",
+        "baseCommit": "f2bbdfe9f26d84cb994f381050692a9e4553bf75",
+        "snapshotHash": "9c403cdb2d7740be3c71ae903641b9e5348a3906484b719130aa0a4f99f342d7",
+        "createdAt": "2026-11-04T00:00:00Z",
+        "queries": [
+          {
+            "id": "hand-gin-fp-01",
+            "category": "false-premise",
+            "query": "Why does gin BasicAuth compare the Authorization header with plain string equality, which leaks timing information?",
+            "evidence": [
+              {
+                "path": "auth.go",
+                "startLine": 29,
+                "endLine": 39
+              }
+            ],
+            "complementary": [],
+            "label": "audit"
+          },
+          {
+            "id": "hand-gin-fp-02",
+            "category": "false-premise",
+            "query": "Why does gin BasicAuth answer 403 Forbidden instead of 401 with a WWW-Authenticate header when credentials are wrong?",
+            "evidence": [
+              {
+                "path": "auth.go",
+                "startLine": 51,
+                "endLine": 65
+              }
+            ],
+            "complementary": [],
+            "label": "audit"
+          },
+          {
+            "id": "hand-gin-fp-03",
+            "category": "false-premise",
+            "query": "Why does Context.ClientIP trust X-Forwarded-For from any remote address, even when the peer is not a trusted proxy?",
+            "evidence": [
+              {
+                "path": "context.go",
+                "startLine": 755,
+                "endLine": 769
+              }
+            ],
+            "complementary": [
+              {
+                "path": "context.go",
+                "startLine": 775,
+                "endLine": 795
+              }
+            ],
+            "label": "audit"
+          },
+          {
+            "id": "hand-gin-na-01",
+            "category": "no-answer",
+            "query": "Where does gin validate JWT bearer tokens in a built-in authentication middleware?",
+            "evidence": [],
+            "complementary": [],
+            "label": "audit"
+          },
+          {
+            "id": "hand-gin-na-02",
+            "category": "no-answer",
+            "query": "Where does gin implement a built-in request rate-limiting middleware?",
+            "evidence": [],
+            "complementary": [],
+            "label": "audit"
+          }
+        ]
+      },
+      {
+        "id": "hand__axum-reliability-1",
+        "repository": "tokio-rs/axum",
+        "split": "heldout",
+        "baseCommit": "b4204e223dc96df3d51fc8893f32d37b66be7005",
+        "snapshotHash": "ef08d590157f8e91f6bffc01dddf1540f778c50434feeab73d8dbb90ff8f7001",
+        "createdAt": "2026-11-04T00:00:00Z",
+        "queries": [
+          {
+            "id": "hand-axum-fp-01",
+            "category": "false-premise",
+            "query": "Why does the Bytes extractor accept request bodies of unbounded size by default?",
+            "evidence": [
+              {
+                "path": "axum-core/src/ext_traits/request.rs",
+                "startLine": 327,
+                "endLine": 339
+              }
+            ],
+            "complementary": [
+              {
+                "path": "axum-core/src/extract/default_body_limit.rs",
+                "startLine": 1,
+                "endLine": 15
+              }
+            ],
+            "label": "audit"
+          },
+          {
+            "id": "hand-axum-fp-02",
+            "category": "false-premise",
+            "query": "Why does CookieJar never emit Set-Cookie headers for cookies removed with CookieJar::remove?",
+            "evidence": [
+              {
+                "path": "axum-extra/src/extract/cookie/mod.rs",
+                "startLine": 205,
+                "endLine": 225
+              }
+            ],
+            "complementary": [
+              {
+                "path": "axum-extra/src/extract/cookie/mod.rs",
+                "startLine": 160,
+                "endLine": 195
+              }
+            ],
+            "label": "audit"
+          },
+          {
+            "id": "hand-axum-na-01",
+            "category": "no-answer",
+            "query": "Where does axum implement a built-in per-client rate limiter?",
+            "evidence": [],
+            "complementary": [],
+            "label": "audit"
+          },
+          {
+            "id": "hand-axum-na-02",
+            "category": "no-answer",
+            "query": "Where does axum implement CSRF token generation and verification?",
+            "evidence": [],
+            "complementary": [],
+            "label": "audit"
+          }
+        ]
+      }
+    ]
+  },
+  "settings": {
+    "provider": {
+      "adapter": "typesafe-direct",
+      "model": "jev-1.13.0",
+      "baseUrl": "https://api.typesafe.ai",
+      "pricing": {
+        "model": "jev-1.13.0",
+        "verified_at": "2026-09-20",
+        "input_usd_per_million_tokens": 0.042,
+        "output_usd_per_million_tokens": 0
+      }
+    },
+    "search": {
+      "deadline_ms": 1200000,
+      "concurrency": 8,
+      "require_fit": true,
+      "default_response_tokens": 8000,
+      "max_response_tokens": 16000,
+      "threshold": 0.5
+    },
+    "scanCaps": {
+      "estimated_cost_usd": null,
+      "estimated_input_tokens": null,
+      "transmitted_bytes": null,
+      "request_attempts": null,
+      "prepared_source_bytes": null,
+      "candidate_files": null,
+      "fragments": null
+    },
+    "responseTokens": 8000,
+    "caps": {
+      "requests": 400,
+      "estimatedInputTokens": 4000000
+    },
+    "scoreCache": "disabled",
+    "chunker": "recursive"
+  },
+  "semantics": {
+    "labels": "required units are pre-change patch sites (whitespace/import/docstring-only hunks dropped, new-definition placement demoted to complementary); they are not exhaustive relevance",
+    "recall": "fraction of required units fully covered in the first k excerpts, over complete searches",
+    "fileRecall": "fraction of edited files with at least one returned excerpt",
+    "complementaryCoverage": "fraction of complementary units (tests, placement, audited context) overlapped by any excerpt; never counted as a miss",
+    "categories": "change-localization uses the issue text; code-understanding asks for the function whose docstring is quoted",
+    "limitations": "small public SWE-bench sample, issue text may name symbols; held-out means repository-held-out for tuning, not blind"
+  },
+  "usage": {
+    "attempts": 34,
+    "reservedInputTokens": 1257640,
+    "reportedInputTokens": 1184031,
+    "unknownUsageAttempts": 0,
+    "blocked": false
+  },
+  "summary": {
+    "overall": {
+      "planned": 9,
+      "complete": 9,
+      "incomplete": 0,
+      "notRun": 0,
+      "completionRate": 1,
+      "missing": [],
+      "recallAt1": 0.6,
+      "recallAt5": 1,
+      "mrr": 0.75,
+      "evidenceCoverage": 1,
+      "fileRecall": 1,
+      "complementaryCoverage": 1
+    },
+    "byCategory": {
+      "false-premise": {
+        "planned": 5,
+        "complete": 5,
+        "incomplete": 0,
+        "notRun": 0,
+        "completionRate": 1,
+        "missing": [],
+        "recallAt1": 0.6,
+        "recallAt5": 1,
+        "mrr": 0.75,
+        "evidenceCoverage": 1,
+        "fileRecall": 1,
+        "complementaryCoverage": 1
+      },
+      "no-answer": {
+        "planned": 4,
+        "complete": 4,
+        "incomplete": 0,
+        "notRun": 0,
+        "completionRate": 1,
+        "missing": [],
+        "recallAt1": null,
+        "recallAt5": null,
+        "mrr": null,
+        "evidenceCoverage": null,
+        "fileRecall": null,
+        "complementaryCoverage": null
+      }
+    },
+    "byRepository": {
+      "gin-gonic/gin": {
+        "planned": 5,
+        "complete": 5,
+        "incomplete": 0,
+        "notRun": 0,
+        "completionRate": 1,
+        "missing": [],
+        "recallAt1": 0.6666666666666666,
+        "recallAt5": 1,
+        "mrr": 0.8333333333333334,
+        "evidenceCoverage": 1,
+        "fileRecall": 1,
+        "complementaryCoverage": 1
+      },
+      "tokio-rs/axum": {
+        "planned": 4,
+        "complete": 4,
+        "incomplete": 0,
+        "notRun": 0,
+        "completionRate": 1,
+        "missing": [],
+        "recallAt1": 0.5,
+        "recallAt5": 1,
+        "mrr": 0.625,
+        "evidenceCoverage": 1,
+        "fileRecall": 1,
+        "complementaryCoverage": 1
+      }
+    },
+    "notRun": 0
+  },
+  "notRun": [],
+  "rows": [
+    {
+      "id": "hand-gin-fp-01",
+      "task": "hand__gin-reliability-1",
+      "repository": "gin-gonic/gin",
+      "split": "heldout",
+      "category": "false-premise",
+      "label": "audit",
+      "latencyMs": 2056.065166,
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "responseTokens": 1227,
+      "outcome": {
+        "schema_version": "1",
+        "search_id": "hand-gin-fp-01",
+        "status": "complete",
+        "excerpts": [
+          {
+            "path": "auth.go",
+            "start_line": 1,
+            "end_line": 91,
+            "file_sha256": "0f50100638e1e6df1ef6a807c3f28fa40afaec8d634194d5925308056e9290b5",
+            "score": 0.74,
+            "code": "// Copyright 2014 Manu Martinez-Almeida.  All rights reserved.\n// Use of this source code is governed by a MIT style\n// license that can be found in the LICENSE file.\n\npackage gin\n\nimport (\n\t\"crypto/subtle\"\n\t\"encoding/base64\"\n\t\"net/http\"\n\t\"strconv\"\n\n\t\"github.com/gin-gonic/gin/internal/bytesconv\"\n)\n\n// AuthUserKey is the cookie name for user credential in basic auth.\nconst AuthUserKey = \"user\"\n\n// Accounts defines a key/value for user/pass list of authorized logins.\ntype Accounts map[string]string\n\ntype authPair struct {\n\tvalue string\n\tuser  string\n}\n\ntype authPairs []authPair\n\nfunc (a authPairs) searchCredential(authValue string) (string, bool) {\n\tif authValue == \"\" {\n\t\treturn \"\", false\n\t}\n\tfor _, pair := range a {\n\t\tif subtle.ConstantTimeCompare([]byte(pair.value), []byte(authValue)) == 1 {\n\t\t\treturn pair.user, true\n\t\t}\n\t}\n\treturn \"\", false\n}\n\n// BasicAuthForRealm returns a Basic HTTP Authorization middleware. It takes as arguments a map[string]string where\n// the key is the user name and the value is the password, as well as the name of the Realm.\n// If the realm is empty, \"Authorization Required\" will be used by default.\n// (see http://tools.ietf.org/html/rfc2617#section-1.2)\nfunc BasicAuthForRealm(accounts Accounts, realm string) HandlerFunc {\n\tif realm == \"\" {\n\t\trealm = \"Authorization Required\"\n\t}\n\trealm = \"Basic realm=\" + strconv.Quote(realm)\n\tpairs := processAccounts(accounts)\n\treturn func(c *Context) {\n\t\t// Search user in the slice of allowed credentials\n\t\tuser, found := pairs.searchCredential(c.requestHeader(\"Authorization\"))\n\t\tif !found {\n\t\t\t// Credentials doesn't match, we return 401 and abort handlers chain.\n\t\t\tc.Header(\"WWW-Authenticate\", realm)\n\t\t\tc.AbortWithStatus(http.StatusUnauthorized)\n\t\t\treturn\n\t\t}\n\n\t\t// The user credentials was found, set user's id to key AuthUserKey in this context, the user's id can be read later using\n\t\t// c.MustGet(gin.AuthUserKey).\n\t\tc.Set(AuthUserKey, user)\n\t}\n}\n\n// BasicAuth returns a Basic HTTP Authorization middleware. It takes as argument a map[string]string where\n// the key is the user name and the value is the password.\nfunc BasicAuth(accounts Accounts) HandlerFunc {\n\treturn BasicAuthForRealm(accounts, \"\")\n}\n\nfunc processAccounts(accounts Accounts) authPairs {\n\tlength := len(accounts)\n\tassert1(length > 0, \"Empty list of authorized credentials\")\n\tpairs := make(authPairs, 0, length)\n\tfor user, password := range accounts {\n\t\tassert1(user != \"\", \"User can not be empty\")\n\t\tvalue := authorizationHeader(user, password)\n\t\tpairs = append(pairs, authPair{\n\t\t\tvalue: value,\n\t\t\tuser:  user,\n\t\t})\n\t}\n\treturn pairs\n}\n\nfunc authorizationHeader(user, password string) string {\n\tbase := user + \":\" + password\n\treturn \"Basic \" + base64.StdEncoding.EncodeToString(bytesconv.StringToBytes(base))\n}\n"
+          }
+        ],
+        "report": {
+          "scope": [
+            "."
+          ],
+          "inventory_complete": true,
+          "scope_fully_scanned": true,
+          "files": {
+            "discovered": 49,
+            "eligible": 49,
+            "excluded_by_reason": {},
+            "unreadable": 0,
+            "changed_before_return": 0
+          },
+          "fragments": {
+            "total": 100,
+            "remote_evaluated": 100,
+            "cache_reused": 0,
+            "not_evaluated": 0,
+            "below_threshold": 99,
+            "above_threshold": 1,
+            "represented_in_response": 1,
+            "omitted_by_response_budget": 0,
+            "omitted_stale": 0
+          },
+          "selection": {
+            "outcome": "selected",
+            "threshold": 0.5,
+            "ranges_returned": 1,
+            "duplicate_ranges_collapsed": 0
+          },
+          "usage": {
+            "provider_request_attempts": 2,
+            "provider_input_tokens_reported": 60823,
+            "provider_input_tokens_known_subtotal": 60823,
+            "provider_input_tokens_estimated": 60823,
+            "estimated_cost_usd": 0.002554566,
+            "reported_cost_usd": null,
+            "attempts_with_unknown_usage": 0,
+            "transmitted_bytes": 240476,
+            "elapsed_ms": 2051
+          },
+          "response_budget": {
+            "requested_tokens": 8000,
+            "counter": "tiktoken@1.0.22/cl100k_base",
+            "accounting": "reference_tokenizer"
+          },
+          "preflight": {
+            "planned_remote_fragments": 100,
+            "planned_cache_hits": 0,
+            "estimated_first_attempt_tokens": 63938,
+            "estimated_first_attempt_cost_usd": 0.002685396,
+            "estimated_first_attempt_requests": 2,
+            "enabled_caps": {
+              "estimated_input_tokens": 4000000,
+              "request_attempts": 400
+            },
+            "estimated_required_caps": {
+              "estimated_input_tokens": 63938,
+              "request_attempts": 2
+            }
+          },
+          "stop_reasons": [],
+          "diagnostics_truncated": false
+        }
+      },
+      "profile": {
+        "stages": {
+          "tokenization": {
+            "calls": 6692,
+            "durationMs": 1522.9851080000014
+          },
+          "rendering": {
+            "calls": 2,
+            "durationMs": 87.43755099999993
+          },
+          "inventory": {
+            "calls": 1,
+            "durationMs": 22.848175999999853
+          },
+          "source_read": {
+            "calls": 49,
+            "durationMs": 11.127672000000643
+          },
+          "decode": {
+            "calls": 49,
+            "durationMs": 0.18989200000009987
+          },
+          "hash": {
+            "calls": 49,
+            "durationMs": 0.8595370000001594
+          },
+          "snapshot": {
+            "calls": 49,
+            "durationMs": 2.9447779999998147
+          },
+          "secret_scan": {
+            "calls": 49,
+            "durationMs": 0.9334220000000641
+          },
+          "parsing": {
+            "calls": 49,
+            "durationMs": 63.10140599999988
+          },
+          "chunking": {
+            "calls": 49,
+            "durationMs": 163.80126100000064
+          },
+          "preparation": {
+            "calls": 1,
+            "durationMs": 210.38578900000005
+          },
+          "serialization": {
+            "calls": 199,
+            "durationMs": 32.49909100000025
+          },
+          "cache_lookup": {
+            "calls": 100,
+            "durationMs": 82.7192789999998
+          },
+          "batching": {
+            "calls": 1,
+            "durationMs": 1312.0607690000002
+          },
+          "planning": {
+            "calls": 1,
+            "durationMs": 0.4030809999999292
+          },
+          "provider": {
+            "calls": 2,
+            "durationMs": 541.9420480000003
+          },
+          "evaluation": {
+            "calls": 1,
+            "durationMs": 357.069986
+          },
+          "selection": {
+            "calls": 1,
+            "durationMs": 1.5157389999999396
+          },
+          "freshness": {
+            "calls": 1,
+            "durationMs": 0.48981099999991784
+          },
+          "search": {
+            "calls": 1,
+            "durationMs": 2055.124708
+          }
+        },
+        "counters": {
+          "tokenizerInputUtf16": 8047383,
+          "referenceTokensCounted": 2100766,
+          "serializedQuestions": 2909,
+          "serializedBytes": 7373910
+        },
+        "memory": {
+          "start": {
+            "rssBytes": 209362944,
+            "heapUsedBytes": 47788488,
+            "externalBytes": 72820581
+          },
+          "end": {
+            "rssBytes": 284573696,
+            "heapUsedBytes": 45765728,
+            "externalBytes": 88716448
+          },
+          "sampledMax": {
+            "rssBytes": 284573696,
+            "heapUsedBytes": 58257224,
+            "externalBytes": 91043274
+          },
+          "samples": 69
+        }
+      }
+    },
+    {
+      "id": "hand-gin-fp-02",
+      "task": "hand__gin-reliability-1",
+      "repository": "gin-gonic/gin",
+      "split": "heldout",
+      "category": "false-premise",
+      "label": "audit",
+      "latencyMs": 2023.7118289999999,
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": null
+      },
+      "responseTokens": 1227,
+      "outcome": {
+        "schema_version": "1",
+        "search_id": "hand-gin-fp-02",
+        "status": "complete",
+        "excerpts": [
+          {
+            "path": "auth.go",
+            "start_line": 1,
+            "end_line": 91,
+            "file_sha256": "0f50100638e1e6df1ef6a807c3f28fa40afaec8d634194d5925308056e9290b5",
+            "score": 0.85,
+            "code": "// Copyright 2014 Manu Martinez-Almeida.  All rights reserved.\n// Use of this source code is governed by a MIT style\n// license that can be found in the LICENSE file.\n\npackage gin\n\nimport (\n\t\"crypto/subtle\"\n\t\"encoding/base64\"\n\t\"net/http\"\n\t\"strconv\"\n\n\t\"github.com/gin-gonic/gin/internal/bytesconv\"\n)\n\n// AuthUserKey is the cookie name for user credential in basic auth.\nconst AuthUserKey = \"user\"\n\n// Accounts defines a key/value for user/pass list of authorized logins.\ntype Accounts map[string]string\n\ntype authPair struct {\n\tvalue string\n\tuser  string\n}\n\ntype authPairs []authPair\n\nfunc (a authPairs) searchCredential(authValue string) (string, bool) {\n\tif authValue == \"\" {\n\t\treturn \"\", false\n\t}\n\tfor _, pair := range a {\n\t\tif subtle.ConstantTimeCompare([]byte(pair.value), []byte(authValue)) == 1 {\n\t\t\treturn pair.user, true\n\t\t}\n\t}\n\treturn \"\", false\n}\n\n// BasicAuthForRealm returns a Basic HTTP Authorization middleware. It takes as arguments a map[string]string where\n// the key is the user name and the value is the password, as well as the name of the Realm.\n// If the realm is empty, \"Authorization Required\" will be used by default.\n// (see http://tools.ietf.org/html/rfc2617#section-1.2)\nfunc BasicAuthForRealm(accounts Accounts, realm string) HandlerFunc {\n\tif realm == \"\" {\n\t\trealm = \"Authorization Required\"\n\t}\n\trealm = \"Basic realm=\" + strconv.Quote(realm)\n\tpairs := processAccounts(accounts)\n\treturn func(c *Context) {\n\t\t// Search user in the slice of allowed credentials\n\t\tuser, found := pairs.searchCredential(c.requestHeader(\"Authorization\"))\n\t\tif !found {\n\t\t\t// Credentials doesn't match, we return 401 and abort handlers chain.\n\t\t\tc.Header(\"WWW-Authenticate\", realm)\n\t\t\tc.AbortWithStatus(http.StatusUnauthorized)\n\t\t\treturn\n\t\t}\n\n\t\t// The user credentials was found, set user's id to key AuthUserKey in this context, the user's id can be read later using\n\t\t// c.MustGet(gin.AuthUserKey).\n\t\tc.Set(AuthUserKey, user)\n\t}\n}\n\n// BasicAuth returns a Basic HTTP Authorization middleware. It takes as argument a map[string]string where\n// the key is the user name and the value is the password.\nfunc BasicAuth(accounts Accounts) HandlerFunc {\n\treturn BasicAuthForRealm(accounts, \"\")\n}\n\nfunc processAccounts(accounts Accounts) authPairs {\n\tlength := len(accounts)\n\tassert1(length > 0, \"Empty list of authorized credentials\")\n\tpairs := make(authPairs, 0, length)\n\tfor user, password := range accounts {\n\t\tassert1(user != \"\", \"User can not be empty\")\n\t\tvalue := authorizationHeader(user, password)\n\t\tpairs = append(pairs, authPair{\n\t\t\tvalue: value,\n\t\t\tuser:  user,\n\t\t})\n\t}\n\treturn pairs\n}\n\nfunc authorizationHeader(user, password string) string {\n\tbase := user + \":\" + password\n\treturn \"Basic \" + base64.StdEncoding.EncodeToString(bytesconv.StringToBytes(base))\n}\n"
+          }
+        ],
+        "report": {
+          "scope": [
+            "."
+          ],
+          "inventory_complete": true,
+          "scope_fully_scanned": true,
+          "files": {
+            "discovered": 49,
+            "eligible": 49,
+            "excluded_by_reason": {},
+            "unreadable": 0,
+            "changed_before_return": 0
+          },
+          "fragments": {
+            "total": 100,
+            "remote_evaluated": 100,
+            "cache_reused": 0,
+            "not_evaluated": 0,
+            "below_threshold": 99,
+            "above_threshold": 1,
+            "represented_in_response": 1,
+            "omitted_by_response_budget": 0,
+            "omitted_stale": 0
+          },
+          "selection": {
+            "outcome": "selected",
+            "threshold": 0.5,
+            "ranges_returned": 1,
+            "duplicate_ranges_collapsed": 0
+          },
+          "usage": {
+            "provider_request_attempts": 2,
+            "provider_input_tokens_reported": 60845,
+            "provider_input_tokens_known_subtotal": 60845,
+            "provider_input_tokens_estimated": 60845,
+            "estimated_cost_usd": 0.00255549,
+            "reported_cost_usd": null,
+            "attempts_with_unknown_usage": 0,
+            "transmitted_bytes": 240480,
+            "elapsed_ms": 2022
+          },
+          "response_budget": {
+            "requested_tokens": 8000,
+            "counter": "tiktoken@1.0.22/cl100k_base",
+            "accounting": "reference_tokenizer"
+          },
+          "preflight": {
+            "planned_remote_fragments": 100,
+            "planned_cache_hits": 0,
+            "estimated_first_attempt_tokens": 63948,
+            "estimated_first_attempt_cost_usd": 0.002685816,
+            "estimated_first_attempt_requests": 2,
+            "enabled_caps": {
+              "estimated_input_tokens": 3936062,
+              "request_attempts": 398
+            },
+            "estimated_required_caps": {
+              "estimated_input_tokens": 63948,
+              "request_attempts": 2
+            }
+          },
+          "stop_reasons": [],
+          "diagnostics_truncated": false
+        }
+      },
+      "profile": {
+        "stages": {
+          "tokenization": {
+            "calls": 6692,
+            "durationMs": 1594.963076000029
+          },
+          "rendering": {
+            "calls": 2,
+            "durationMs": 2.2979789999990317
+          },
+          "inventory": {
+            "calls": 1,
+            "durationMs": 14.756323000000975
+          },
+          "source_read": {
+            "calls": 49,
+            "durationMs": 9.14045699999997
+          },
+          "decode": {
+            "calls": 49,
+            "durationMs": 0.17357100000117498
+          },
+          "hash": {
+            "calls": 49,
+            "durationMs": 1.2782229999993433
+          },
+          "snapshot": {
+            "calls": 49,
+            "durationMs": 2.7849790000009307
+          },
+          "secret_scan": {
+            "calls": 49,
+            "durationMs": 0.9623689999980343
+          },
+          "parsing": {
+            "calls": 49,
+            "durationMs": 39.06505500000003
+          },
+          "chunking": {
+            "calls": 49,
+            "durationMs": 154.04037900000048
+          },
+          "preparation": {
+            "calls": 1,
+            "durationMs": 187.7256769999999
+          },
+          "serialization": {
+            "calls": 199,
+            "durationMs": 28.83599799999729
+          },
+          "cache_lookup": {
+            "calls": 100,
+            "durationMs": 135.20723800000042
+          },
+          "batching": {
+            "calls": 1,
+            "durationMs": 1403.093203
+          },
+          "planning": {
+            "calls": 1,
+            "durationMs": 0.06785599999966507
+          },
+          "provider": {
+            "calls": 2,
+            "durationMs": 436.7456919999995
+          },
+          "evaluation": {
+            "calls": 1,
+            "durationMs": 293.0891849999998
+          },
+          "selection": {
+            "calls": 1,
+            "durationMs": 0.8415500000000975
+          },
+          "freshness": {
+            "calls": 1,
+            "durationMs": 0.25029300000005605
+          },
+          "search": {
+            "calls": 1,
+            "durationMs": 2023.351122
+          }
+        },
+        "counters": {
+          "tokenizerInputUtf16": 8047784,
+          "referenceTokensCounted": 2101771,
+          "serializedQuestions": 2909,
+          "serializedBytes": 7374308
+        },
+        "memory": {
+          "start": {
+            "rssBytes": 284573696,
+            "heapUsedBytes": 46073720,
+            "externalBytes": 88847520
+          },
+          "end": {
+            "rssBytes": 287502336,
+            "heapUsedBytes": 51460624,
+            "externalBytes": 90300320
+          },
+          "sampledMax": {
+            "rssBytes": 287502336,
+            "heapUsedBytes": 56334672,
+            "externalBytes": 94256222
+          },
+          "samples": 75
+        }
+      }
+    },
+    {
+      "id": "hand-gin-fp-03",
+      "task": "hand__gin-reliability-1",
+      "repository": "gin-gonic/gin",
+      "split": "heldout",
+      "category": "false-premise",
+      "label": "audit",
+      "latencyMs": 1606.1262369999995,
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 1,
+        "reciprocalRank": 0.5,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 2,
+        "complementaryCoverage": 1
+      },
+      "responseTokens": 4128,
+      "outcome": {
+        "schema_version": "1",
+        "search_id": "hand-gin-fp-03",
+        "status": "complete",
+        "excerpts": [
+          {
+            "path": "gin.go",
+            "start_line": 65,
+            "end_line": 246,
+            "file_sha256": "0f66709a059d73026a7b123e6c091c946ca78af8c36ef191211d51f13d7de970",
+            "score": 0.91,
+            "code": "// Engine is the framework's instance, it contains the muxer, middleware and configuration settings.\n// Create an instance of Engine, by using New() or Default()\ntype Engine struct {\n\tRouterGroup\n\n\t// Enables automatic redirection if the current route can't be matched but a\n\t// handler for the path with (without) the trailing slash exists.\n\t// For example if /foo/ is requested but a route only exists for /foo, the\n\t// client is redirected to /foo with http status code 301 for GET requests\n\t// and 307 for all other request methods.\n\tRedirectTrailingSlash bool\n\n\t// If enabled, the router tries to fix the current request path, if no\n\t// handle is registered for it.\n\t// First superfluous path elements like ../ or // are removed.\n\t// Afterwards the router does a case-insensitive lookup of the cleaned path.\n\t// If a handle can be found for this route, the router makes a redirection\n\t// to the corrected path with status code 301 for GET requests and 307 for\n\t// all other request methods.\n\t// For example /FOO and /..//Foo could be redirected to /foo.\n\t// RedirectTrailingSlash is independent of this option.\n\tRedirectFixedPath bool\n\n\t// If enabled, the router checks if another method is allowed for the\n\t// current route, if the current request can not be routed.\n\t// If this is the case, the request is answered with 'Method Not Allowed'\n\t// and HTTP status code 405.\n\t// If no other Method is allowed, the request is delegated to the NotFound\n\t// handler.\n\tHandleMethodNotAllowed bool\n\n\t// If enabled, client IP will be parsed from the request's headers that\n\t// match those stored at `(*gin.Engine).RemoteIPHeaders`. If no IP was\n\t// fetched, it falls back to the IP obtained from\n\t// `(*gin.Context).Request.RemoteAddr`.\n\tForwardedByClientIP bool\n\n\t// List of headers used to obtain the client IP when\n\t// `(*gin.Engine).ForwardedByClientIP` is `true` and\n\t// `(*gin.Context).Request.RemoteAddr` is matched by at least one of the\n\t// network origins of `(*gin.Engine).TrustedProxies`.\n\tRemoteIPHeaders []string\n\n\t// List of network origins (IPv4 addresses, IPv4 CIDRs, IPv6 addresses or\n\t// IPv6 CIDRs) from which to trust request's headers that contain\n\t// alternative client IP when `(*gin.Engine).ForwardedByClientIP` is\n\t// `true`.\n\tTrustedProxies []string\n\n\t// If set to a constant of value gin.Platform*, trusts the headers set by\n\t// that platform, for example to determine the client IP\n\tTrustedPlatform string\n\n\t// DEPRECATED: USE `TrustedPlatform` WITH VALUE `gin.GoogleAppEngine` INSTEAD\n\t// #726 #755 If enabled, it will trust some headers starting with\n\t// 'X-AppEngine...' for better integration with that PaaS.\n\tAppEngine bool\n\n\t// If enabled, the url.RawPath will be used to find parameters.\n\tUseRawPath bool\n\n\t// If true, the path value will be unescaped.\n\t// If UseRawPath is false (by default), the UnescapePathValues effectively is true,\n\t// as url.Path gonna be used, which is already unescaped.\n\tUnescapePathValues bool\n\n\t// Value of 'maxMemory' param that is given to http.Request's ParseMultipartForm\n\t// method call.\n\tMaxMultipartMemory int64\n\n\t// RemoveExtraSlash a parameter can be parsed from the URL even with extra slashes.\n\t// See the PR #1817 and issue #1644\n\tRemoveExtraSlash bool\n\n\tdelims           render.Delims\n\tsecureJSONPrefix string\n\tHTMLRender       render.HTMLRender\n\tFuncMap          template.FuncMap\n\tallNoRoute       HandlersChain\n\tallNoMethod      HandlersChain\n\tnoRoute          HandlersChain\n\tnoMethod         HandlersChain\n\tpool             sync.Pool\n\ttrees            methodTrees\n\tmaxParams        uint16\n\ttrustedCIDRs     []*net.IPNet\n}\n\nvar _ IRouter = &Engine{}\n\n// New returns a new blank Engine instance without any middleware attached.\n// By default the configuration is:\n// - RedirectTrailingSlash:  true\n// - RedirectFixedPath:      false\n// - HandleMethodNotAllowed: false\n// - ForwardedByClientIP:    true\n// - UseRawPath:             false\n// - UnescapePathValues:     true\nfunc New() *Engine {\n\tdebugPrintWARNINGNew()\n\tengine := &Engine{\n\t\tRouterGroup: RouterGroup{\n\t\t\tHandlers: nil,\n\t\t\tbasePath: \"/\",\n\t\t\troot:     true,\n\t\t},\n\t\tFuncMap:                template.FuncMap{},\n\t\tRedirectTrailingSlash:  true,\n\t\tRedirectFixedPath:      false,\n\t\tHandleMethodNotAllowed: false,\n\t\tForwardedByClientIP:    true,\n\t\tRemoteIPHeaders:        []string{\"X-Forwarded-For\", \"X-Real-IP\"},\n\t\tTrustedProxies:         []string{\"0.0.0.0/0\"},\n\t\tTrustedPlatform:        defaultPlatform,\n\t\tUseRawPath:             false,\n\t\tRemoveExtraSlash:       false,\n\t\tUnescapePathValues:     true,\n\t\tMaxMultipartMemory:     defaultMultipartMemory,\n\t\ttrees:                  make(methodTrees, 0, 9),\n\t\tdelims:                 render.Delims{Left: \"{{\", Right: \"}}\"},\n\t\tsecureJSONPrefix:       \"while(1);\",\n\t}\n\tengine.RouterGroup.engine = engine\n\tengine.pool.New = func() interface{} {\n\t\treturn engine.allocateContext()\n\t}\n\treturn engine\n}\n\n// Default returns an Engine instance with the Logger and Recovery middleware already attached.\nfunc Default() *Engine {\n\tdebugPrintWARNINGDefault()\n\tengine := New()\n\tengine.Use(Logger(), Recovery())\n\treturn engine\n}\n\nfunc (engine *Engine) allocateContext() *Context {\n\tv := make(Params, 0, engine.maxParams)\n\treturn &Context{engine: engine, params: &v}\n}\n\n// Delims sets template left and right delims and returns a Engine instance.\nfunc (engine *Engine) Delims(left, right string) *Engine {\n\tengine.delims = render.Delims{Left: left, Right: right}\n\treturn engine\n}\n\n// SecureJsonPrefix sets the secureJSONPrefix used in Context.SecureJSON.\nfunc (engine *Engine) SecureJsonPrefix(prefix string) *Engine {\n\tengine.secureJSONPrefix = prefix\n\treturn engine\n}\n\n// LoadHTMLGlob loads HTML files identified by glob pattern\n// and associates the result with HTML renderer.\nfunc (engine *Engine) LoadHTMLGlob(pattern string) {\n\tleft := engine.delims.Left\n\tright := engine.delims.Right\n\ttempl := template.Must(template.New(\"\").Delims(left, right).Funcs(engine.FuncMap).ParseGlob(pattern))\n\n\tif IsDebugging() {\n\t\tdebugPrintLoadTemplate(templ)\n\t\tengine.HTMLRender = render.HTMLDebug{Glob: pattern, FuncMap: engine.FuncMap, Delims: engine.delims}\n\t\treturn\n\t}\n\n\tengine.SetHTMLTemplate(templ)\n}\n\n// LoadHTMLFiles loads a slice of HTML files\n// and associates the result with HTML renderer.\nfunc (engine *Engine) LoadHTMLFiles(files ...string) {\n\tif IsDebugging() {\n\t\tengine.HTMLRender = render.HTMLDebug{Files: files, FuncMap: engine.FuncMap, Delims: engine.delims}\n\t\treturn\n\t}\n\n\ttempl := template.Must(template.New(\"\").Delims(engine.delims.Left, engine.delims.Right).Funcs(engine.FuncMap).ParseFiles(files...))\n\tengine.SetHTMLTemplate(templ)\n}\n\n"
+          },
+          {
+            "path": "context.go",
+            "start_line": 729,
+            "end_line": 823,
+            "file_sha256": "d585840596897cce26e4bb0b5a488178e8f58519f6f84e6d7a6e38887eb73f2e",
+            "score": 0.82,
+            "code": "// ClientIP implements a best effort algorithm to return the real client IP.\n// It called c.RemoteIP() under the hood, to check if the remote IP is a trusted proxy or not.\n// If it's it will then try to parse the headers defined in Engine.RemoteIPHeaders (defaulting to [X-Forwarded-For, X-Real-Ip]).\n// If the headers are nots syntactically valid OR the remote IP does not correspong to a trusted proxy,\n// the remote IP (coming form Request.RemoteAddr) is returned.\nfunc (c *Context) ClientIP() string {\n\t// Check if we're running on a tursted platform\n\tswitch c.engine.TrustedPlatform {\n\tcase PlatformGoogleAppEngine:\n\t\tif addr := c.requestHeader(\"X-Appengine-Remote-Addr\"); addr != \"\" {\n\t\t\treturn addr\n\t\t}\n\tcase PlatformCloudflare:\n\t\tif addr := c.requestHeader(\"CF-Connecting-IP\"); addr != \"\" {\n\t\t\treturn addr\n\t\t}\n\t}\n\n\t// Legacy \"AppEngine\" flag\n\tif c.engine.AppEngine {\n\t\tlog.Println(`The AppEngine flag is going to be deprecated. Please check issues #2723 and #2739 and use 'TrustedPlatform: gin.PlatformGoogleAppEngine' instead.`)\n\t\tif addr := c.requestHeader(\"X-Appengine-Remote-Addr\"); addr != \"\" {\n\t\t\treturn addr\n\t\t}\n\t}\n\n\tremoteIP, trusted := c.RemoteIP()\n\tif remoteIP == nil {\n\t\treturn \"\"\n\t}\n\n\tif trusted && c.engine.ForwardedByClientIP && c.engine.RemoteIPHeaders != nil {\n\t\tfor _, headerName := range c.engine.RemoteIPHeaders {\n\t\t\tip, valid := validateHeader(c.requestHeader(headerName))\n\t\t\tif valid {\n\t\t\t\treturn ip\n\t\t\t}\n\t\t}\n\t}\n\treturn remoteIP.String()\n}\n\n// RemoteIP parses the IP from Request.RemoteAddr, normalizes and returns the IP (without the port).\n// It also checks if the remoteIP is a trusted proxy or not.\n// In order to perform this validation, it will see if the IP is contained within at least one of the CIDR blocks\n// defined in Engine.TrustedProxies\nfunc (c *Context) RemoteIP() (net.IP, bool) {\n\tip, _, err := net.SplitHostPort(strings.TrimSpace(c.Request.RemoteAddr))\n\tif err != nil {\n\t\treturn nil, false\n\t}\n\tremoteIP := net.ParseIP(ip)\n\tif remoteIP == nil {\n\t\treturn nil, false\n\t}\n\n\tif c.engine.trustedCIDRs != nil {\n\t\tfor _, cidr := range c.engine.trustedCIDRs {\n\t\t\tif cidr.Contains(remoteIP) {\n\t\t\t\treturn remoteIP, true\n\t\t\t}\n\t\t}\n\t}\n\n\treturn remoteIP, false\n}\n\nfunc validateHeader(header string) (clientIP string, valid bool) {\n\tif header == \"\" {\n\t\treturn \"\", false\n\t}\n\titems := strings.Split(header, \",\")\n\tfor i, ipStr := range items {\n\t\tipStr = strings.TrimSpace(ipStr)\n\t\tip := net.ParseIP(ipStr)\n\t\tif ip == nil {\n\t\t\treturn \"\", false\n\t\t}\n\n\t\t// We need to return the first IP in the list, but,\n\t\t// we should not early return since we need to validate that\n\t\t// the rest of the header is syntactically valid\n\t\tif i == 0 {\n\t\t\tclientIP = ipStr\n\t\t\tvalid = true\n\t\t}\n\t}\n\treturn\n}\n\n// ContentType returns the Content-Type header of the request.\nfunc (c *Context) ContentType() string {\n\treturn filterFlags(c.requestHeader(\"Content-Type\"))\n}\n\n"
+          },
+          {
+            "path": "gin.go",
+            "start_line": 338,
+            "end_line": 426,
+            "file_sha256": "0f66709a059d73026a7b123e6c091c946ca78af8c36ef191211d51f13d7de970",
+            "score": 0.64,
+            "code": "// Run attaches the router to a http.Server and starts listening and serving HTTP requests.\n// It is a shortcut for http.ListenAndServe(addr, router)\n// Note: this method will block the calling goroutine indefinitely unless an error happens.\nfunc (engine *Engine) Run(addr ...string) (err error) {\n\tdefer func() { debugPrintError(err) }()\n\n\terr = engine.parseTrustedProxies()\n\tif err != nil {\n\t\treturn err\n\t}\n\n\taddress := resolveAddress(addr)\n\tdebugPrint(\"Listening and serving HTTP on %s\\n\", address)\n\terr = http.ListenAndServe(address, engine)\n\treturn\n}\n\nfunc (engine *Engine) prepareTrustedCIDRs() ([]*net.IPNet, error) {\n\tif engine.TrustedProxies == nil {\n\t\treturn nil, nil\n\t}\n\n\tcidr := make([]*net.IPNet, 0, len(engine.TrustedProxies))\n\tfor _, trustedProxy := range engine.TrustedProxies {\n\t\tif !strings.Contains(trustedProxy, \"/\") {\n\t\t\tip := parseIP(trustedProxy)\n\t\t\tif ip == nil {\n\t\t\t\treturn cidr, &net.ParseError{Type: \"IP address\", Text: trustedProxy}\n\t\t\t}\n\n\t\t\tswitch len(ip) {\n\t\t\tcase net.IPv4len:\n\t\t\t\ttrustedProxy += \"/32\"\n\t\t\tcase net.IPv6len:\n\t\t\t\ttrustedProxy += \"/128\"\n\t\t\t}\n\t\t}\n\t\t_, cidrNet, err := net.ParseCIDR(trustedProxy)\n\t\tif err != nil {\n\t\t\treturn cidr, err\n\t\t}\n\t\tcidr = append(cidr, cidrNet)\n\t}\n\treturn cidr, nil\n}\n\n// SetTrustedProxies  set Engine.TrustedProxies\nfunc (engine *Engine) SetTrustedProxies(trustedProxies []string) error {\n\tengine.TrustedProxies = trustedProxies\n\treturn engine.parseTrustedProxies()\n}\n\n// parseTrustedProxies parse Engine.TrustedProxies to Engine.trustedCIDRs\nfunc (engine *Engine) parseTrustedProxies() error {\n\ttrustedCIDRs, err := engine.prepareTrustedCIDRs()\n\tengine.trustedCIDRs = trustedCIDRs\n\treturn err\n}\n\n// parseIP parse a string representation of an IP and returns a net.IP with the\n// minimum byte representation or nil if input is invalid.\nfunc parseIP(ip string) net.IP {\n\tparsedIP := net.ParseIP(ip)\n\n\tif ipv4 := parsedIP.To4(); ipv4 != nil {\n\t\t// return ip in a 4-byte representation\n\t\treturn ipv4\n\t}\n\n\t// return ip in a 16-byte representation or nil\n\treturn parsedIP\n}\n\n// RunTLS attaches the router to a http.Server and starts listening and serving HTTPS (secure) requests.\n// It is a shortcut for http.ListenAndServeTLS(addr, certFile, keyFile, router)\n// Note: this method will block the calling goroutine indefinitely unless an error happens.\nfunc (engine *Engine) RunTLS(addr, certFile, keyFile string) (err error) {\n\tdebugPrint(\"Listening and serving HTTPS on %s\\n\", addr)\n\tdefer func() { debugPrintError(err) }()\n\n\terr = engine.parseTrustedProxies()\n\tif err != nil {\n\t\treturn err\n\t}\n\n\terr = http.ListenAndServeTLS(addr, certFile, keyFile, engine)\n\treturn\n}\n\n"
+          }
+        ],
+        "report": {
+          "scope": [
+            "."
+          ],
+          "inventory_complete": true,
+          "scope_fully_scanned": true,
+          "files": {
+            "discovered": 49,
+            "eligible": 49,
+            "excluded_by_reason": {},
+            "unreadable": 0,
+            "changed_before_return": 0
+          },
+          "fragments": {
+            "total": 100,
+            "remote_evaluated": 100,
+            "cache_reused": 0,
+            "not_evaluated": 0,
+            "below_threshold": 96,
+            "above_threshold": 4,
+            "represented_in_response": 4,
+            "omitted_by_response_budget": 0,
+            "omitted_stale": 0
+          },
+          "selection": {
+            "outcome": "selected",
+            "threshold": 0.5,
+            "ranges_returned": 3,
+            "duplicate_ranges_collapsed": 0
+          },
+          "usage": {
+            "provider_request_attempts": 2,
+            "provider_input_tokens_reported": 60841,
+            "provider_input_tokens_known_subtotal": 60841,
+            "provider_input_tokens_estimated": 60841,
+            "estimated_cost_usd": 0.002555322,
+            "reported_cost_usd": null,
+            "attempts_with_unknown_usage": 0,
+            "transmitted_bytes": 240476,
+            "elapsed_ms": 1600
+          },
+          "response_budget": {
+            "requested_tokens": 8000,
+            "counter": "tiktoken@1.0.22/cl100k_base",
+            "accounting": "reference_tokenizer"
+          },
+          "preflight": {
+            "planned_remote_fragments": 100,
+            "planned_cache_hits": 0,
+            "estimated_first_attempt_tokens": 63954,
+            "estimated_first_attempt_cost_usd": 0.002686068,
+            "estimated_first_attempt_requests": 2,
+            "enabled_caps": {
+              "estimated_input_tokens": 3872114,
+              "request_attempts": 396
+            },
+            "estimated_required_caps": {
+              "estimated_input_tokens": 63954,
+              "request_attempts": 2
+            }
+          },
+          "stop_reasons": [],
+          "diagnostics_truncated": false
+        }
+      },
+      "profile": {
+        "stages": {
+          "tokenization": {
+            "calls": 6696,
+            "durationMs": 1238.9573930000315
+          },
+          "rendering": {
+            "calls": 2,
+            "durationMs": 6.621925000000374
+          },
+          "inventory": {
+            "calls": 1,
+            "durationMs": 6.241716000004089
+          },
+          "source_read": {
+            "calls": 49,
+            "durationMs": 6.127090999999382
+          },
+          "decode": {
+            "calls": 49,
+            "durationMs": 0.108196000002863
+          },
+          "hash": {
+            "calls": 49,
+            "durationMs": 0.6600699999971766
+          },
+          "snapshot": {
+            "calls": 49,
+            "durationMs": 1.6609879999987243
+          },
+          "secret_scan": {
+            "calls": 49,
+            "durationMs": 0.7200209999973595
+          },
+          "parsing": {
+            "calls": 49,
+            "durationMs": 27.721669000000475
+          },
+          "chunking": {
+            "calls": 49,
+            "durationMs": 99.8884349999953
+          },
+          "preparation": {
+            "calls": 1,
+            "durationMs": 116.52044399999977
+          },
+          "serialization": {
+            "calls": 199,
+            "durationMs": 19.725298999996994
+          },
+          "cache_lookup": {
+            "calls": 100,
+            "durationMs": 86.26730299999781
+          },
+          "batching": {
+            "calls": 1,
+            "durationMs": 1101.5369059999994
+          },
+          "planning": {
+            "calls": 1,
+            "durationMs": 0.0544449999997596
+          },
+          "provider": {
+            "calls": 2,
+            "durationMs": 439.2284789999994
+          },
+          "evaluation": {
+            "calls": 1,
+            "durationMs": 288.2905609999998
+          },
+          "selection": {
+            "calls": 1,
+            "durationMs": 5.504272000000128
+          },
+          "freshness": {
+            "calls": 3,
+            "durationMs": 0.44823600000017905
+          },
+          "search": {
+            "calls": 1,
+            "durationMs": 1605.7706740000003
+          }
+        },
+        "counters": {
+          "tokenizerInputUtf16": 8074549,
+          "referenceTokensCounted": 2110094,
+          "serializedQuestions": 2909,
+          "serializedBytes": 7373910
+        },
+        "memory": {
+          "start": {
+            "rssBytes": 287502336,
+            "heapUsedBytes": 52067968,
+            "externalBytes": 90431392
+          },
+          "end": {
+            "rssBytes": 289120256,
+            "heapUsedBytes": 52680768,
+            "externalBytes": 90699923
+          },
+          "sampledMax": {
+            "rssBytes": 289189888,
+            "heapUsedBytes": 58284712,
+            "externalBytes": 95363315
+          },
+          "samples": 59
+        }
+      }
+    },
+    {
+      "id": "hand-gin-na-01",
+      "task": "hand__gin-reliability-1",
+      "repository": "gin-gonic/gin",
+      "split": "heldout",
+      "category": "no-answer",
+      "label": "audit",
+      "latencyMs": 1709.0318619999998,
+      "metrics": {
+        "recallAt1": null,
+        "recallAt5": null,
+        "reciprocalRank": null,
+        "evidenceCoverage": null,
+        "negativeCorrect": true,
+        "fileRecall": null,
+        "firstOverlapRank": null,
+        "complementaryCoverage": null
+      },
+      "responseTokens": 355,
+      "outcome": {
+        "schema_version": "1",
+        "search_id": "hand-gin-na-01",
+        "status": "complete",
+        "excerpts": [],
+        "report": {
+          "scope": [
+            "."
+          ],
+          "inventory_complete": true,
+          "scope_fully_scanned": true,
+          "files": {
+            "discovered": 49,
+            "eligible": 49,
+            "excluded_by_reason": {},
+            "unreadable": 0,
+            "changed_before_return": 0
+          },
+          "fragments": {
+            "total": 100,
+            "remote_evaluated": 100,
+            "cache_reused": 0,
+            "not_evaluated": 0,
+            "below_threshold": 100,
+            "above_threshold": 0,
+            "represented_in_response": 0,
+            "omitted_by_response_budget": 0,
+            "omitted_stale": 0
+          },
+          "selection": {
+            "outcome": "no_score_above_threshold",
+            "threshold": 0.5,
+            "ranges_returned": 0,
+            "duplicate_ranges_collapsed": 0
+          },
+          "usage": {
+            "provider_request_attempts": 2,
+            "provider_input_tokens_reported": 60811,
+            "provider_input_tokens_known_subtotal": 60811,
+            "provider_input_tokens_estimated": 60811,
+            "estimated_cost_usd": 0.002554062,
+            "reported_cost_usd": null,
+            "attempts_with_unknown_usage": 0,
+            "transmitted_bytes": 240410,
+            "elapsed_ms": 1708
+          },
+          "response_budget": {
+            "requested_tokens": 8000,
+            "counter": "tiktoken@1.0.22/cl100k_base",
+            "accounting": "reference_tokenizer"
+          },
+          "preflight": {
+            "planned_remote_fragments": 100,
+            "planned_cache_hits": 0,
+            "estimated_first_attempt_tokens": 63928,
+            "estimated_first_attempt_cost_usd": 0.002684976,
+            "estimated_first_attempt_requests": 2,
+            "enabled_caps": {
+              "estimated_input_tokens": 3808160,
+              "request_attempts": 394
+            },
+            "estimated_required_caps": {
+              "estimated_input_tokens": 63928,
+              "request_attempts": 2
+            }
+          },
+          "stop_reasons": [],
+          "diagnostics_truncated": false
+        }
+      },
+      "profile": {
+        "stages": {
+          "tokenization": {
+            "calls": 6691,
+            "durationMs": 1305.8236969999934
+          },
+          "rendering": {
+            "calls": 2,
+            "durationMs": 4.280376000000615
+          },
+          "inventory": {
+            "calls": 1,
+            "durationMs": 7.894439000000602
+          },
+          "source_read": {
+            "calls": 49,
+            "durationMs": 9.520773999995981
+          },
+          "decode": {
+            "calls": 49,
+            "durationMs": 0.14096799999879295
+          },
+          "hash": {
+            "calls": 49,
+            "durationMs": 0.7442779999973936
+          },
+          "snapshot": {
+            "calls": 49,
+            "durationMs": 4.499035000000731
+          },
+          "secret_scan": {
+            "calls": 49,
+            "durationMs": 0.75583099999767
+          },
+          "parsing": {
+            "calls": 49,
+            "durationMs": 43.597491999997146
+          },
+          "chunking": {
+            "calls": 49,
+            "durationMs": 148.13532800000212
+          },
+          "preparation": {
+            "calls": 1,
+            "durationMs": 173.5050029999993
+          },
+          "serialization": {
+            "calls": 199,
+            "durationMs": 21.950918999995338
+          },
+          "cache_lookup": {
+            "calls": 100,
+            "durationMs": 93.12893700000677
+          },
+          "batching": {
+            "calls": 1,
+            "durationMs": 1086.3617399999994
+          },
+          "planning": {
+            "calls": 1,
+            "durationMs": 0.04584100000010949
+          },
+          "provider": {
+            "calls": 2,
+            "durationMs": 508.9948550000008
+          },
+          "evaluation": {
+            "calls": 1,
+            "durationMs": 350.9780389999996
+          },
+          "selection": {
+            "calls": 1,
+            "durationMs": 0.024835000000166474
+          },
+          "search": {
+            "calls": 1,
+            "durationMs": 1708.7447819999998
+          }
+        },
+        "counters": {
+          "tokenizerInputUtf16": 8034500,
+          "referenceTokensCounted": 2098013,
+          "serializedQuestions": 2909,
+          "serializedBytes": 7367343
+        },
+        "memory": {
+          "start": {
+            "rssBytes": 289120256,
+            "heapUsedBytes": 53099448,
+            "externalBytes": 90830995
+          },
+          "end": {
+            "rssBytes": 290557952,
+            "heapUsedBytes": 52479696,
+            "externalBytes": 90387438
+          },
+          "sampledMax": {
+            "rssBytes": 291106816,
+            "heapUsedBytes": 60380296,
+            "externalBytes": 95929584
+          },
+          "samples": 62
+        }
+      }
+    },
+    {
+      "id": "hand-gin-na-02",
+      "task": "hand__gin-reliability-1",
+      "repository": "gin-gonic/gin",
+      "split": "heldout",
+      "category": "no-answer",
+      "label": "audit",
+      "latencyMs": 1770.516000999999,
+      "metrics": {
+        "recallAt1": null,
+        "recallAt5": null,
+        "reciprocalRank": null,
+        "evidenceCoverage": null,
+        "negativeCorrect": true,
+        "fileRecall": null,
+        "firstOverlapRank": null,
+        "complementaryCoverage": null
+      },
+      "responseTokens": 355,
+      "outcome": {
+        "schema_version": "1",
+        "search_id": "hand-gin-na-02",
+        "status": "complete",
+        "excerpts": [],
+        "report": {
+          "scope": [
+            "."
+          ],
+          "inventory_complete": true,
+          "scope_fully_scanned": true,
+          "files": {
+            "discovered": 49,
+            "eligible": 49,
+            "excluded_by_reason": {},
+            "unreadable": 0,
+            "changed_before_return": 0
+          },
+          "fragments": {
+            "total": 100,
+            "remote_evaluated": 100,
+            "cache_reused": 0,
+            "not_evaluated": 0,
+            "below_threshold": 100,
+            "above_threshold": 0,
+            "represented_in_response": 0,
+            "omitted_by_response_budget": 0,
+            "omitted_stale": 0
+          },
+          "selection": {
+            "outcome": "no_score_above_threshold",
+            "threshold": 0.5,
+            "ranges_returned": 0,
+            "duplicate_ranges_collapsed": 0
+          },
+          "usage": {
+            "provider_request_attempts": 2,
+            "provider_input_tokens_reported": 60811,
+            "provider_input_tokens_known_subtotal": 60811,
+            "provider_input_tokens_estimated": 60811,
+            "estimated_cost_usd": 0.002554062,
+            "reported_cost_usd": null,
+            "attempts_with_unknown_usage": 0,
+            "transmitted_bytes": 240384,
+            "elapsed_ms": 1770
+          },
+          "response_budget": {
+            "requested_tokens": 8000,
+            "counter": "tiktoken@1.0.22/cl100k_base",
+            "accounting": "reference_tokenizer"
+          },
+          "preflight": {
+            "planned_remote_fragments": 100,
+            "planned_cache_hits": 0,
+            "estimated_first_attempt_tokens": 63926,
+            "estimated_first_attempt_cost_usd": 0.002684892,
+            "estimated_first_attempt_requests": 2,
+            "enabled_caps": {
+              "estimated_input_tokens": 3744232,
+              "request_attempts": 392
+            },
+            "estimated_required_caps": {
+              "estimated_input_tokens": 63926,
+              "request_attempts": 2
+            }
+          },
+          "stop_reasons": [],
+          "diagnostics_truncated": false
+        }
+      },
+      "profile": {
+        "stages": {
+          "tokenization": {
+            "calls": 6691,
+            "durationMs": 1397.2723909999722
+          },
+          "rendering": {
+            "calls": 2,
+            "durationMs": 1.4427609999993365
+          },
+          "inventory": {
+            "calls": 1,
+            "durationMs": 5.283832000001894
+          },
+          "source_read": {
+            "calls": 49,
+            "durationMs": 5.51115999999729
+          },
+          "decode": {
+            "calls": 49,
+            "durationMs": 0.10615899999720568
+          },
+          "hash": {
+            "calls": 49,
+            "durationMs": 0.6210250000021915
+          },
+          "snapshot": {
+            "calls": 49,
+            "durationMs": 1.6284619999987626
+          },
+          "secret_scan": {
+            "calls": 49,
+            "durationMs": 0.6860749999977998
+          },
+          "parsing": {
+            "calls": 49,
+            "durationMs": 27.222309000002497
+          },
+          "chunking": {
+            "calls": 49,
+            "durationMs": 96.14060900000459
+          },
+          "preparation": {
+            "calls": 1,
+            "durationMs": 110.84663300000011
+          },
+          "serialization": {
+            "calls": 199,
+            "durationMs": 21.194780999989234
+          },
+          "cache_lookup": {
+            "calls": 100,
+            "durationMs": 100.19122299999526
+          },
+          "batching": {
+            "calls": 1,
+            "durationMs": 1246.3055289999993
+          },
+          "planning": {
+            "calls": 1,
+            "durationMs": 0.10280000000057044
+          },
+          "provider": {
+            "calls": 2,
+            "durationMs": 455.48504799999864
+          },
+          "evaluation": {
+            "calls": 1,
+            "durationMs": 310.6466639999999
+          },
+          "selection": {
+            "calls": 1,
+            "durationMs": 0.11763500000051863
+          },
+          "search": {
+            "calls": 1,
+            "durationMs": 1770.1661760000006
+          }
+        },
+        "counters": {
+          "tokenizerInputUtf16": 8031887,
+          "referenceTokensCounted": 2097812,
+          "serializedQuestions": 2909,
+          "serializedBytes": 7364756
+        },
+        "memory": {
+          "start": {
+            "rssBytes": 290557952,
+            "heapUsedBytes": 52881072,
+            "externalBytes": 90518510
+          },
+          "end": {
+            "rssBytes": 291966976,
+            "heapUsedBytes": 52600224,
+            "externalBytes": 90430945
+          },
+          "sampledMax": {
+            "rssBytes": 293142528,
+            "heapUsedBytes": 62225920,
+            "externalBytes": 95678593
+          },
+          "samples": 62
+        }
+      }
+    },
+    {
+      "id": "hand-axum-fp-01",
+      "task": "hand__axum-reliability-1",
+      "repository": "tokio-rs/axum",
+      "split": "heldout",
+      "category": "false-premise",
+      "label": "audit",
+      "latencyMs": 5997.945324,
+      "metrics": {
+        "recallAt1": 0,
+        "recallAt5": 1,
+        "reciprocalRank": 0.25,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 4,
+        "complementaryCoverage": 1
+      },
+      "responseTokens": 7333,
+      "outcome": {
+        "schema_version": "1",
+        "search_id": "hand-axum-fp-01",
+        "status": "complete",
+        "excerpts": [
+          {
+            "path": "axum-core/src/extract/request_parts.rs",
+            "start_line": 1,
+            "end_line": 98,
+            "file_sha256": "85794b4265a354319a46895edea2fa7940712e2aef1388354cfd1060868cac5f",
+            "score": 0.86,
+            "code": "use super::{rejection::*, FromRequest, FromRequestParts};\nuse crate::{BoxError, RequestExt};\nuse async_trait::async_trait;\nuse bytes::Bytes;\nuse http::{request::Parts, HeaderMap, Method, Request, Uri, Version};\nuse std::convert::Infallible;\n\n#[async_trait]\nimpl<S, B> FromRequest<S, B> for Request<B>\nwhere\n    B: Send,\n    S: Send + Sync,\n{\n    type Rejection = Infallible;\n\n    async fn from_request(req: Request<B>, _: &S) -> Result<Self, Self::Rejection> {\n        Ok(req)\n    }\n}\n\n#[async_trait]\nimpl<S> FromRequestParts<S> for Method\nwhere\n    S: Send + Sync,\n{\n    type Rejection = Infallible;\n\n    async fn from_request_parts(parts: &mut Parts, _: &S) -> Result<Self, Self::Rejection> {\n        Ok(parts.method.clone())\n    }\n}\n\n#[async_trait]\nimpl<S> FromRequestParts<S> for Uri\nwhere\n    S: Send + Sync,\n{\n    type Rejection = Infallible;\n\n    async fn from_request_parts(parts: &mut Parts, _: &S) -> Result<Self, Self::Rejection> {\n        Ok(parts.uri.clone())\n    }\n}\n\n#[async_trait]\nimpl<S> FromRequestParts<S> for Version\nwhere\n    S: Send + Sync,\n{\n    type Rejection = Infallible;\n\n    async fn from_request_parts(parts: &mut Parts, _: &S) -> Result<Self, Self::Rejection> {\n        Ok(parts.version)\n    }\n}\n\n/// Clone the headers from the request.\n///\n/// Prefer using [`TypedHeader`] to extract only the headers you need.\n///\n/// [`TypedHeader`]: https://docs.rs/axum/latest/axum/extract/struct.TypedHeader.html\n#[async_trait]\nimpl<S> FromRequestParts<S> for HeaderMap\nwhere\n    S: Send + Sync,\n{\n    type Rejection = Infallible;\n\n    async fn from_request_parts(parts: &mut Parts, _: &S) -> Result<Self, Self::Rejection> {\n        Ok(parts.headers.clone())\n    }\n}\n\n#[async_trait]\nimpl<S, B> FromRequest<S, B> for Bytes\nwhere\n    B: http_body::Body + Send + 'static,\n    B::Data: Send,\n    B::Error: Into<BoxError>,\n    S: Send + Sync,\n{\n    type Rejection = BytesRejection;\n\n    async fn from_request(req: Request<B>, _: &S) -> Result<Self, Self::Rejection> {\n        let bytes = match req.into_limited_body() {\n            Ok(limited_body) => crate::body::to_bytes(limited_body)\n                .await\n                .map_err(FailedToBufferBody::from_err)?,\n            Err(unlimited_body) => crate::body::to_bytes(unlimited_body)\n                .await\n                .map_err(FailedToBufferBody::from_err)?,\n        };\n\n        Ok(bytes)\n    }\n}\n\n#[async_trait]\n"
+          },
+          {
+            "path": "axum/src/routing/tests/mod.rs",
+            "start_line": 572,
+            "end_line": 770,
+            "file_sha256": "6026e847383f5d07b48dfca3afad1004c6ec106367c6904e4a9b1ed3c6b76568",
+            "score": 0.81,
+            "code": "async fn head_with_middleware_applied() {\n    use tower_http::compression::{predicate::SizeAbove, CompressionLayer};\n\n    let app = Router::new()\n        .route(\"/\", get(|| async { \"Hello, World!\" }))\n        .layer(CompressionLayer::new().compress_when(SizeAbove::new(0)));\n\n    let client = TestClient::new(app);\n\n    // send GET request\n    let res = client\n        .get(\"/\")\n        .header(\"accept-encoding\", \"gzip\")\n        .send()\n        .await;\n    assert_eq!(res.headers()[\"transfer-encoding\"], \"chunked\");\n    // cannot have `transfer-encoding: chunked` and `content-length`\n    assert!(!res.headers().contains_key(\"content-length\"));\n\n    // send HEAD request\n    let res = client\n        .head(\"/\")\n        .header(\"accept-encoding\", \"gzip\")\n        .send()\n        .await;\n    // no response body so no `transfer-encoding`\n    assert!(!res.headers().contains_key(\"transfer-encoding\"));\n    // no content-length since we cannot know it since the response\n    // is compressed\n    assert!(!res.headers().contains_key(\"content-length\"));\n}\n\n#[crate::test]\n#[should_panic(expected = \"Paths must start with a `/`\")]\nasync fn routes_must_start_with_slash() {\n    let app = Router::new().route(\":foo\", get(|| async {}));\n    TestClient::new(app);\n}\n\n#[crate::test]\nasync fn body_limited_by_default() {\n    let app = Router::new()\n        .route(\"/bytes\", post(|_: Bytes| async {}))\n        .route(\"/string\", post(|_: String| async {}))\n        .route(\"/json\", post(|_: Json<serde_json::Value>| async {}));\n\n    let client = TestClient::new(app);\n\n    for uri in [\"/bytes\", \"/string\", \"/json\"] {\n        println!(\"calling {uri}\");\n\n        let stream = futures_util::stream::repeat(\"a\".repeat(1000)).map(Ok::<_, hyper::Error>);\n        let body = Body::wrap_stream(stream);\n\n        let res_future = client\n            .post(uri)\n            .header(\"content-type\", \"application/json\")\n            .body(body)\n            .send();\n        let res = tokio::time::timeout(Duration::from_secs(3), res_future)\n            .await\n            .expect(\"never got response\");\n\n        assert_eq!(res.status(), StatusCode::PAYLOAD_TOO_LARGE);\n    }\n}\n\n#[crate::test]\nasync fn disabling_the_default_limit() {\n    let app = Router::new()\n        .route(\"/\", post(|_: Bytes| async {}))\n        .layer(DefaultBodyLimit::disable());\n\n    let client = TestClient::new(app);\n\n    // `DEFAULT_LIMIT` is 2mb so make a body larger than that\n    let body = Body::from(\"a\".repeat(3_000_000));\n\n    let res = client.post(\"/\").body(body).send().await;\n\n    assert_eq!(res.status(), StatusCode::OK);\n}\n\n#[crate::test]\nasync fn limited_body_with_content_length() {\n    const LIMIT: usize = 3;\n\n    let app = Router::new()\n        .route(\n            \"/\",\n            post(|headers: HeaderMap, _body: Bytes| async move {\n                assert!(headers.get(CONTENT_LENGTH).is_some());\n            }),\n        )\n        .layer(RequestBodyLimitLayer::new(LIMIT));\n\n    let client = TestClient::new(app);\n\n    let res = client.post(\"/\").body(\"a\".repeat(LIMIT)).send().await;\n    assert_eq!(res.status(), StatusCode::OK);\n\n    let res = client.post(\"/\").body(\"a\".repeat(LIMIT * 2)).send().await;\n    assert_eq!(res.status(), StatusCode::PAYLOAD_TOO_LARGE);\n}\n\n#[crate::test]\nasync fn changing_the_default_limit() {\n    let new_limit = 2;\n\n    let app = Router::new()\n        .route(\"/\", post(|_: Bytes| async {}))\n        .layer(DefaultBodyLimit::max(new_limit));\n\n    let client = TestClient::new(app);\n\n    let res = client\n        .post(\"/\")\n        .body(Body::from(\"a\".repeat(new_limit)))\n        .send()\n        .await;\n    assert_eq!(res.status(), StatusCode::OK);\n\n    let res = client\n        .post(\"/\")\n        .body(Body::from(\"a\".repeat(new_limit + 1)))\n        .send()\n        .await;\n    assert_eq!(res.status(), StatusCode::PAYLOAD_TOO_LARGE);\n}\n\n#[crate::test]\nasync fn limited_body_with_streaming_body() {\n    const LIMIT: usize = 3;\n\n    let app = Router::new()\n        .route(\n            \"/\",\n            post(|headers: HeaderMap, _body: Bytes| async move {\n                assert!(headers.get(CONTENT_LENGTH).is_none());\n            }),\n        )\n        .layer(RequestBodyLimitLayer::new(LIMIT));\n\n    let client = TestClient::new(app);\n\n    let stream = futures_util::stream::iter(vec![Ok::<_, hyper::Error>(\"a\".repeat(LIMIT))]);\n    let res = client\n        .post(\"/\")\n        .body(Body::wrap_stream(stream))\n        .send()\n        .await;\n    assert_eq!(res.status(), StatusCode::OK);\n\n    let stream = futures_util::stream::iter(vec![Ok::<_, hyper::Error>(\"a\".repeat(LIMIT * 2))]);\n    let res = client\n        .post(\"/\")\n        .body(Body::wrap_stream(stream))\n        .send()\n        .await;\n    assert_eq!(res.status(), StatusCode::PAYLOAD_TOO_LARGE);\n}\n\n#[crate::test]\nasync fn extract_state() {\n    #[derive(Clone)]\n    struct AppState {\n        value: i32,\n        inner: InnerState,\n    }\n\n    #[derive(Clone)]\n    struct InnerState {\n        value: i32,\n    }\n\n    impl FromRef<AppState> for InnerState {\n        fn from_ref(state: &AppState) -> Self {\n            state.inner.clone()\n        }\n    }\n\n    async fn handler(State(outer): State<AppState>, State(inner): State<InnerState>) {\n        assert_eq!(outer.value, 1);\n        assert_eq!(inner.value, 2);\n    }\n\n    let state = AppState {\n        value: 1,\n        inner: InnerState { value: 2 },\n    };\n\n    let app = Router::new().route(\"/\", get(handler)).with_state(state);\n    let client = TestClient::new(app);\n\n    let res = client.get(\"/\").send().await;\n    assert_eq!(res.status(), StatusCode::OK);\n}\n\n#[crate::test]\n"
+          },
+          {
+            "path": "axum-core/src/extract/default_body_limit.rs",
+            "start_line": 1,
+            "end_line": 201,
+            "file_sha256": "b902e5a21f8427e67e0eb9f3ab4066a7494e2722e431c4003a05847cda7b1754",
+            "score": 0.73,
+            "code": "use self::private::DefaultBodyLimitService;\nuse tower_layer::Layer;\n\n/// Layer for configuring the default request body limit.\n///\n/// For security reasons, [`Bytes`] will, by default, not accept bodies larger than 2MB. This also\n/// applies to extractors that uses [`Bytes`] internally such as `String`, [`Json`], and [`Form`].\n///\n/// This middleware provides ways to configure that.\n///\n/// Note that if an extractor consumes the body directly with [`Body::data`], or similar, the\n/// default limit is _not_ applied.\n///\n/// # Difference between `DefaultBodyLimit` and [`RequestBodyLimit`]\n///\n/// `DefaultBodyLimit` and [`RequestBodyLimit`] serve similar functions but in different ways.\n///\n/// `DefaultBodyLimit` is local in that it only applies to [`FromRequest`] implementations that\n/// explicitly apply it (or call another extractor that does). You can apply the limit with\n/// [`RequestExt::with_limited_body`] or [`RequestExt::into_limited_body`]\n///\n/// [`RequestBodyLimit`] is applied globally to all requests, regardless of which extractors are\n/// used or how the body is consumed.\n///\n/// `DefaultBodyLimit` is also easier to integrate into an existing setup since it doesn't change\n/// the request body type:\n///\n/// ```\n/// use axum::{\n///     Router,\n///     routing::post,\n///     body::Body,\n///     extract::{DefaultBodyLimit, RawBody},\n///     http::Request,\n/// };\n///\n/// let app = Router::new()\n///     .route(\n///         \"/\",\n///         // even with `DefaultBodyLimit` the request body is still just `Body`\n///         post(|request: Request<Body>| async {}),\n///     )\n///     .layer(DefaultBodyLimit::max(1024));\n/// # let _: Router<(), _> = app;\n/// ```\n///\n/// ```\n/// use axum::{Router, routing::post, body::Body, extract::RawBody, http::Request};\n/// use tower_http::limit::RequestBodyLimitLayer;\n/// use http_body::Limited;\n///\n/// let app = Router::new()\n///     .route(\n///         \"/\",\n///         // `RequestBodyLimitLayer` changes the request body type to `Limited<Body>`\n///         // extracting a different body type wont work\n///         post(|request: Request<Limited<Body>>| async {}),\n///     )\n///     .layer(RequestBodyLimitLayer::new(1024));\n/// # let _: Router<(), _> = app;\n/// ```\n///\n/// In general using `DefaultBodyLimit` is recommended but if you need to use third party\n/// extractors and want to sure a limit is also applied there then [`RequestBodyLimit`] should be\n/// used.\n///\n/// [`Body::data`]: http_body::Body::data\n/// [`Bytes`]: bytes::Bytes\n/// [`Json`]: https://docs.rs/axum/0.6.0/axum/struct.Json.html\n/// [`Form`]: https://docs.rs/axum/0.6.0/axum/struct.Form.html\n/// [`FromRequest`]: crate::extract::FromRequest\n/// [`RequestBodyLimit`]: https://docs.rs/tower-http/latest/tower_http/limit/struct.RequestBodyLimit.html\n/// [`RequestExt::with_limited_body`]: crate::RequestExt::with_limited_body\n/// [`RequestExt::into_limited_body`]: crate::RequestExt::into_limited_body\n#[derive(Debug, Clone)]\npub struct DefaultBodyLimit {\n    kind: DefaultBodyLimitKind,\n}\n\n#[derive(Debug, Clone, Copy)]\npub(crate) enum DefaultBodyLimitKind {\n    Disable,\n    Limit(usize),\n}\n\nimpl DefaultBodyLimit {\n    /// Disable the default request body limit.\n    ///\n    /// This must be used to receive bodies larger than the default limit of 2MB using [`Bytes`] or\n    /// an extractor built on it such as `String`, [`Json`], [`Form`].\n    ///\n    /// Note that if you're accepting data from untrusted remotes it is recommend to add your own\n    /// limit such as [`tower_http::limit`].\n    ///\n    /// # Example\n    ///\n    /// ```\n    /// use axum::{\n    ///     Router,\n    ///     routing::get,\n    ///     body::{Bytes, Body},\n    ///     extract::DefaultBodyLimit,\n    /// };\n    /// use tower_http::limit::RequestBodyLimitLayer;\n    /// use http_body::Limited;\n    ///\n    /// let app: Router<(), Limited<Body>> = Router::new()\n    ///     .route(\"/\", get(|body: Bytes| async {}))\n    ///     // Disable the default limit\n    ///     .layer(DefaultBodyLimit::disable())\n    ///     // Set a different limit\n    ///     .layer(RequestBodyLimitLayer::new(10 * 1000 * 1000));\n    /// ```\n    ///\n    /// [`tower_http::limit`]: https://docs.rs/tower-http/0.3.4/tower_http/limit/index.html\n    /// [`Bytes`]: bytes::Bytes\n    /// [`Json`]: https://docs.rs/axum/0.6.0/axum/struct.Json.html\n    /// [`Form`]: https://docs.rs/axum/0.6.0/axum/struct.Form.html\n    pub fn disable() -> Self {\n        Self {\n            kind: DefaultBodyLimitKind::Disable,\n        }\n    }\n\n    /// Set the default request body limit.\n    ///\n    /// By default the limit of request body sizes that [`Bytes::from_request`] (and other\n    /// extractors built on top of it such as `String`, [`Json`], and [`Form`]) is 2MB. This method\n    /// can be used to change that limit.\n    ///\n    /// # Example\n    ///\n    /// ```\n    /// use axum::{\n    ///     Router,\n    ///     routing::get,\n    ///     body::{Bytes, Body},\n    ///     extract::DefaultBodyLimit,\n    /// };\n    /// use tower_http::limit::RequestBodyLimitLayer;\n    /// use http_body::Limited;\n    ///\n    /// let app: Router<(), Limited<Body>> = Router::new()\n    ///     .route(\"/\", get(|body: Bytes| async {}))\n    ///     // Replace the default of 2MB with 1024 bytes.\n    ///     .layer(DefaultBodyLimit::max(1024));\n    /// ```\n    ///\n    /// [`Bytes::from_request`]: bytes::Bytes\n    /// [`Json`]: https://docs.rs/axum/0.6.0/axum/struct.Json.html\n    /// [`Form`]: https://docs.rs/axum/0.6.0/axum/struct.Form.html\n    pub fn max(limit: usize) -> Self {\n        Self {\n            kind: DefaultBodyLimitKind::Limit(limit),\n        }\n    }\n}\n\nimpl<S> Layer<S> for DefaultBodyLimit {\n    type Service = DefaultBodyLimitService<S>;\n\n    fn layer(&self, inner: S) -> Self::Service {\n        DefaultBodyLimitService {\n            inner,\n            kind: self.kind,\n        }\n    }\n}\n\nmod private {\n    use super::DefaultBodyLimitKind;\n    use http::Request;\n    use std::task::Context;\n    use tower_service::Service;\n\n    #[derive(Debug, Clone, Copy)]\n    pub struct DefaultBodyLimitService<S> {\n        pub(super) inner: S,\n        pub(super) kind: DefaultBodyLimitKind,\n    }\n\n    impl<B, S> Service<Request<B>> for DefaultBodyLimitService<S>\n    where\n        S: Service<Request<B>>,\n    {\n        type Response = S::Response;\n        type Error = S::Error;\n        type Future = S::Future;\n\n        #[inline]\n        fn poll_ready(&mut self, cx: &mut Context<'_>) -> std::task::Poll<Result<(), Self::Error>> {\n            self.inner.poll_ready(cx)\n        }\n\n        #[inline]\n        fn call(&mut self, mut req: Request<B>) -> Self::Future {\n            req.extensions_mut().insert(self.kind);\n            self.inner.call(req)\n        }\n    }\n}\n"
+          },
+          {
+            "path": "axum-core/src/ext_traits/request.rs",
+            "start_line": 188,
+            "end_line": 348,
+            "file_sha256": "265cd31f92c93294e4f39c40a1d7edd6dabfd9e6affad0908ccdbcce25ba92ae",
+            "score": 0.69,
+            "code": "    /// Apply a parts extractor that requires some state to this `Request`.\n    ///\n    /// This is just a convenience for `E::from_request_parts(parts, state)`.\n    ///\n    /// # Example\n    ///\n    /// ```\n    /// use axum::{\n    ///     async_trait,\n    ///     extract::{FromRef, FromRequest, FromRequestParts},\n    ///     http::{request::Parts, Request},\n    ///     response::{IntoResponse, Response},\n    ///     Json, RequestExt,\n    /// };\n    ///\n    /// struct MyExtractor<T> {\n    ///     requires_state: RequiresState,\n    ///     payload: T,\n    /// }\n    ///\n    /// #[async_trait]\n    /// impl<S, B, T> FromRequest<S, B> for MyExtractor<T>\n    /// where\n    ///     String: FromRef<S>,\n    ///     Json<T>: FromRequest<(), B>,\n    ///     T: 'static,\n    ///     S: Send + Sync,\n    ///     B: Send + 'static,\n    /// {\n    ///     type Rejection = Response;\n    ///\n    ///     async fn from_request(mut req: Request<B>, state: &S) -> Result<Self, Self::Rejection> {\n    ///         let requires_state = req\n    ///             .extract_parts_with_state::<RequiresState, _>(state)\n    ///             .await\n    ///             .map_err(|err| err.into_response())?;\n    ///\n    ///         let Json(payload) = req\n    ///             .extract::<Json<T>, _>()\n    ///             .await\n    ///             .map_err(|err| err.into_response())?;\n    ///\n    ///         Ok(Self {\n    ///             requires_state,\n    ///             payload,\n    ///         })\n    ///     }\n    /// }\n    ///\n    /// struct RequiresState {}\n    ///\n    /// #[async_trait]\n    /// impl<S> FromRequestParts<S> for RequiresState\n    /// where\n    ///     String: FromRef<S>,\n    ///     S: Send + Sync,\n    /// {\n    ///     // ...\n    ///     # type Rejection = std::convert::Infallible;\n    ///     # async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {\n    ///     #     todo!()\n    ///     # }\n    /// }\n    /// ```\n    fn extract_parts_with_state<'a, E, S>(\n        &'a mut self,\n        state: &'a S,\n    ) -> BoxFuture<'a, Result<E, E::Rejection>>\n    where\n        E: FromRequestParts<S> + 'static,\n        S: Send + Sync;\n\n    /// Apply the [default body limit](crate::extract::DefaultBodyLimit).\n    ///\n    /// If it is disabled, return the request as-is in `Err`.\n    fn with_limited_body(self) -> Result<Request<Limited<B>>, Request<B>>;\n\n    /// Consumes the request, returning the body wrapped in [`Limited`] if a\n    /// [default limit](crate::extract::DefaultBodyLimit) is in place, or not wrapped if the\n    /// default limit is disabled.\n    fn into_limited_body(self) -> Result<Limited<B>, B>;\n}\n\nimpl<B> RequestExt<B> for Request<B>\nwhere\n    B: Send + 'static,\n{\n    fn extract<E, M>(self) -> BoxFuture<'static, Result<E, E::Rejection>>\n    where\n        E: FromRequest<(), B, M> + 'static,\n        M: 'static,\n    {\n        self.extract_with_state(&())\n    }\n\n    fn extract_with_state<E, S, M>(self, state: &S) -> BoxFuture<'_, Result<E, E::Rejection>>\n    where\n        E: FromRequest<S, B, M> + 'static,\n        S: Send + Sync,\n    {\n        E::from_request(self, state)\n    }\n\n    fn extract_parts<E>(&mut self) -> BoxFuture<'_, Result<E, E::Rejection>>\n    where\n        E: FromRequestParts<()> + 'static,\n    {\n        self.extract_parts_with_state(&())\n    }\n\n    fn extract_parts_with_state<'a, E, S>(\n        &'a mut self,\n        state: &'a S,\n    ) -> BoxFuture<'a, Result<E, E::Rejection>>\n    where\n        E: FromRequestParts<S> + 'static,\n        S: Send + Sync,\n    {\n        let mut req = Request::new(());\n        *req.version_mut() = self.version();\n        *req.method_mut() = self.method().clone();\n        *req.uri_mut() = self.uri().clone();\n        *req.headers_mut() = std::mem::take(self.headers_mut());\n        *req.extensions_mut() = std::mem::take(self.extensions_mut());\n        let (mut parts, _) = req.into_parts();\n\n        Box::pin(async move {\n            let result = E::from_request_parts(&mut parts, state).await;\n\n            *self.version_mut() = parts.version;\n            *self.method_mut() = parts.method.clone();\n            *self.uri_mut() = parts.uri.clone();\n            *self.headers_mut() = std::mem::take(&mut parts.headers);\n            *self.extensions_mut() = std::mem::take(&mut parts.extensions);\n\n            result\n        })\n    }\n\n    fn with_limited_body(self) -> Result<Request<Limited<B>>, Request<B>> {\n        // update docs in `axum-core/src/extract/default_body_limit.rs` and\n        // `axum/src/docs/extract.md` if this changes\n        const DEFAULT_LIMIT: usize = 2_097_152; // 2 mb\n\n        match self.extensions().get::<DefaultBodyLimitKind>().copied() {\n            Some(DefaultBodyLimitKind::Disable) => Err(self),\n            Some(DefaultBodyLimitKind::Limit(limit)) => {\n                Ok(self.map(|b| http_body::Limited::new(b, limit)))\n            }\n            None => Ok(self.map(|b| http_body::Limited::new(b, DEFAULT_LIMIT))),\n        }\n    }\n\n    fn into_limited_body(self) -> Result<Limited<B>, B> {\n        self.with_limited_body()\n            .map(Request::into_body)\n            .map_err(Request::into_body)\n    }\n}\n\n#[cfg(test)]\n"
+          },
+          {
+            "path": "axum/src/json.rs",
+            "start_line": 103,
+            "end_line": 191,
+            "file_sha256": "175d984b42ba91c52beab62fafb9f6cfd12de5c59831e1d4197dbb0ffd86e800",
+            "score": 0.68,
+            "code": "impl<T, S, B> FromRequest<S, B> for Json<T>\nwhere\n    T: DeserializeOwned,\n    B: HttpBody + Send + 'static,\n    B::Data: Send,\n    B::Error: Into<BoxError>,\n    S: Send + Sync,\n{\n    type Rejection = JsonRejection;\n\n    async fn from_request(req: Request<B>, state: &S) -> Result<Self, Self::Rejection> {\n        if json_content_type(req.headers()) {\n            let bytes = Bytes::from_request(req, state).await?;\n            let deserializer = &mut serde_json::Deserializer::from_slice(&bytes);\n\n            let value = match serde_path_to_error::deserialize(deserializer) {\n                Ok(value) => value,\n                Err(err) => {\n                    let rejection = match err.inner().classify() {\n                        serde_json::error::Category::Data => JsonDataError::from_err(err).into(),\n                        serde_json::error::Category::Syntax | serde_json::error::Category::Eof => {\n                            JsonSyntaxError::from_err(err).into()\n                        }\n                        serde_json::error::Category::Io => {\n                            if cfg!(debug_assertions) {\n                                // we don't use `serde_json::from_reader` and instead always buffer\n                                // bodies first, so we shouldn't encounter any IO errors\n                                unreachable!()\n                            } else {\n                                JsonSyntaxError::from_err(err).into()\n                            }\n                        }\n                    };\n                    return Err(rejection);\n                }\n            };\n\n            Ok(Json(value))\n        } else {\n            Err(MissingJsonContentType.into())\n        }\n    }\n}\n\nfn json_content_type(headers: &HeaderMap) -> bool {\n    let content_type = if let Some(content_type) = headers.get(header::CONTENT_TYPE) {\n        content_type\n    } else {\n        return false;\n    };\n\n    let content_type = if let Ok(content_type) = content_type.to_str() {\n        content_type\n    } else {\n        return false;\n    };\n\n    let mime = if let Ok(mime) = content_type.parse::<mime::Mime>() {\n        mime\n    } else {\n        return false;\n    };\n\n    let is_json_content_type = mime.type_() == \"application\"\n        && (mime.subtype() == \"json\" || mime.suffix().map_or(false, |name| name == \"json\"));\n\n    is_json_content_type\n}\n\nimpl<T> Deref for Json<T> {\n    type Target = T;\n\n    fn deref(&self) -> &Self::Target {\n        &self.0\n    }\n}\n\nimpl<T> DerefMut for Json<T> {\n    fn deref_mut(&mut self) -> &mut Self::Target {\n        &mut self.0\n    }\n}\n\nimpl<T> From<T> for Json<T> {\n    fn from(inner: T) -> Self {\n        Self(inner)\n    }\n}\n\n"
+          }
+        ],
+        "report": {
+          "scope": [
+            "."
+          ],
+          "inventory_complete": true,
+          "scope_fully_scanned": true,
+          "files": {
+            "discovered": 94,
+            "eligible": 94,
+            "excluded_by_reason": {},
+            "unreadable": 0,
+            "changed_before_return": 0
+          },
+          "fragments": {
+            "total": 312,
+            "remote_evaluated": 312,
+            "cache_reused": 0,
+            "not_evaluated": 0,
+            "below_threshold": 300,
+            "above_threshold": 12,
+            "represented_in_response": 9,
+            "omitted_by_response_budget": 3,
+            "omitted_stale": 0
+          },
+          "selection": {
+            "outcome": "selected",
+            "threshold": 0.5,
+            "ranges_returned": 5,
+            "duplicate_ranges_collapsed": 0
+          },
+          "usage": {
+            "provider_request_attempts": 6,
+            "provider_input_tokens_reported": 219978,
+            "provider_input_tokens_known_subtotal": 219978,
+            "provider_input_tokens_estimated": 219978,
+            "estimated_cost_usd": 0.009239076,
+            "reported_cost_usd": null,
+            "attempts_with_unknown_usage": 0,
+            "transmitted_bytes": 883165,
+            "elapsed_ms": 5992
+          },
+          "response_budget": {
+            "requested_tokens": 8000,
+            "counter": "tiktoken@1.0.22/cl100k_base",
+            "accounting": "reference_tokenizer"
+          },
+          "preflight": {
+            "planned_remote_fragments": 312,
+            "planned_cache_hits": 0,
+            "estimated_first_attempt_tokens": 234488,
+            "estimated_first_attempt_cost_usd": 0.009848496,
+            "estimated_first_attempt_requests": 6,
+            "enabled_caps": {
+              "estimated_input_tokens": 3680306,
+              "request_attempts": 390
+            },
+            "estimated_required_caps": {
+              "estimated_input_tokens": 234488,
+              "request_attempts": 6
+            }
+          },
+          "stop_reasons": [],
+          "diagnostics_truncated": false
+        }
+      },
+      "profile": {
+        "stages": {
+          "tokenization": {
+            "calls": 24742,
+            "durationMs": 5243.816349999954
+          },
+          "rendering": {
+            "calls": 2,
+            "durationMs": 6.507835999998861
+          },
+          "inventory": {
+            "calls": 1,
+            "durationMs": 25.53566599999067
+          },
+          "source_read": {
+            "calls": 94,
+            "durationMs": 17.406784000002517
+          },
+          "decode": {
+            "calls": 94,
+            "durationMs": 0.28576899998915906
+          },
+          "hash": {
+            "calls": 94,
+            "durationMs": 2.3869330000015907
+          },
+          "snapshot": {
+            "calls": 94,
+            "durationMs": 6.21189999998569
+          },
+          "secret_scan": {
+            "calls": 94,
+            "durationMs": 2.8217400000085036
+          },
+          "parsing": {
+            "calls": 94,
+            "durationMs": 116.22067599999173
+          },
+          "chunking": {
+            "calls": 94,
+            "durationMs": 423.23237399999744
+          },
+          "preparation": {
+            "calls": 1,
+            "durationMs": 481.7952929999992
+          },
+          "serialization": {
+            "calls": 623,
+            "durationMs": 84.28995899999427
+          },
+          "cache_lookup": {
+            "calls": 312,
+            "durationMs": 342.1761239999814
+          },
+          "batching": {
+            "calls": 1,
+            "durationMs": 4662.479427
+          },
+          "planning": {
+            "calls": 1,
+            "durationMs": 0.09016700000029232
+          },
+          "provider": {
+            "calls": 6,
+            "durationMs": 2065.612246999999
+          },
+          "evaluation": {
+            "calls": 1,
+            "durationMs": 489.44060399999944
+          },
+          "selection": {
+            "calls": 1,
+            "durationMs": 13.030666999999085
+          },
+          "freshness": {
+            "calls": 5,
+            "durationMs": 1.2679800000023533
+          },
+          "search": {
+            "calls": 1,
+            "durationMs": 5997.625992000001
+          }
+        },
+        "counters": {
+          "tokenizerInputUtf16": 30510451,
+          "referenceTokensCounted": 8057824,
+          "serializedQuestions": 9631,
+          "serializedBytes": 27452034
+        },
+        "memory": {
+          "start": {
+            "rssBytes": 291966976,
+            "heapUsedBytes": 53184424,
+            "externalBytes": 90562017
+          },
+          "end": {
+            "rssBytes": 335347712,
+            "heapUsedBytes": 80135576,
+            "externalBytes": 98416497
+          },
+          "sampledMax": {
+            "rssBytes": 340328448,
+            "heapUsedBytes": 90529680,
+            "externalBytes": 99319568
+          },
+          "samples": 227
+        }
+      }
+    },
+    {
+      "id": "hand-axum-fp-02",
+      "task": "hand__axum-reliability-1",
+      "repository": "tokio-rs/axum",
+      "split": "heldout",
+      "category": "false-premise",
+      "label": "audit",
+      "latencyMs": 6016.200919999999,
+      "metrics": {
+        "recallAt1": 1,
+        "recallAt5": 1,
+        "reciprocalRank": 1,
+        "evidenceCoverage": 1,
+        "negativeCorrect": null,
+        "fileRecall": 1,
+        "firstOverlapRank": 1,
+        "complementaryCoverage": 1
+      },
+      "responseTokens": 7400,
+      "outcome": {
+        "schema_version": "1",
+        "search_id": "hand-axum-fp-02",
+        "status": "complete",
+        "excerpts": [
+          {
+            "path": "axum-extra/src/extract/cookie/mod.rs",
+            "start_line": 1,
+            "end_line": 344,
+            "file_sha256": "462612ea93bb35c701f2a11c1c885779a0d8233dd401e5e7eed04274fadf12a4",
+            "score": 0.8,
+            "code": "//! Cookie parsing and cookie jar management.\n//!\n//! See [`CookieJar`], [`SignedCookieJar`], and [`PrivateCookieJar`] for more details.\n\nuse axum::{\n    async_trait,\n    extract::FromRequestParts,\n    response::{IntoResponse, IntoResponseParts, Response, ResponseParts},\n};\nuse http::{\n    header::{COOKIE, SET_COOKIE},\n    request::Parts,\n    HeaderMap,\n};\nuse std::convert::Infallible;\n\n#[cfg(feature = \"cookie-private\")]\nmod private;\n#[cfg(feature = \"cookie-signed\")]\nmod signed;\n\n#[cfg(feature = \"cookie-private\")]\npub use self::private::PrivateCookieJar;\n#[cfg(feature = \"cookie-signed\")]\npub use self::signed::SignedCookieJar;\n\npub use cookie::{Cookie, Expiration, SameSite};\n\n#[cfg(any(feature = \"cookie-signed\", feature = \"cookie-private\"))]\npub use cookie::Key;\n\n/// Extractor that grabs cookies from the request and manages the jar.\n///\n/// Note that methods like [`CookieJar::add`], [`CookieJar::remove`], etc updates the [`CookieJar`]\n/// and returns it. This value _must_ be returned from the handler as part of the response for the\n/// changes to be propagated.\n///\n/// # Example\n///\n/// ```rust\n/// use axum::{\n///     Router,\n///     routing::{post, get},\n///     extract::TypedHeader,\n///     response::{IntoResponse, Redirect},\n///     headers::authorization::{Authorization, Bearer},\n///     http::StatusCode,\n/// };\n/// use axum_extra::extract::cookie::{CookieJar, Cookie};\n///\n/// async fn create_session(\n///     TypedHeader(auth): TypedHeader<Authorization<Bearer>>,\n///     jar: CookieJar,\n/// ) -> Result<(CookieJar, Redirect), StatusCode> {\n///     if let Some(session_id) = authorize_and_create_session(auth.token()).await {\n///         Ok((\n///             // the updated jar must be returned for the changes\n///             // to be included in the response\n///             jar.add(Cookie::new(\"session_id\", session_id)),\n///             Redirect::to(\"/me\"),\n///         ))\n///     } else {\n///         Err(StatusCode::UNAUTHORIZED)\n///     }\n/// }\n///\n/// async fn me(jar: CookieJar) -> Result<(), StatusCode> {\n///     if let Some(session_id) = jar.get(\"session_id\") {\n///         // fetch and render user...\n///         # Ok(())\n///     } else {\n///         Err(StatusCode::UNAUTHORIZED)\n///     }\n/// }\n///\n/// async fn authorize_and_create_session(token: &str) -> Option<String> {\n///     // authorize the user and create a session...\n///     # todo!()\n/// }\n///\n/// let app = Router::new()\n///     .route(\"/sessions\", post(create_session))\n///     .route(\"/me\", get(me));\n/// # let app: Router = app;\n/// ```\n#[derive(Debug, Default)]\npub struct CookieJar {\n    jar: cookie::CookieJar,\n}\n\n#[async_trait]\nimpl<S> FromRequestParts<S> for CookieJar\nwhere\n    S: Send + Sync,\n{\n    type Rejection = Infallible;\n\n    async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {\n        Ok(Self::from_headers(&parts.headers))\n    }\n}\n\nfn cookies_from_request(headers: &HeaderMap) -> impl Iterator<Item = Cookie<'static>> + '_ {\n    headers\n        .get_all(COOKIE)\n        .into_iter()\n        .filter_map(|value| value.to_str().ok())\n        .flat_map(|value| value.split(';'))\n        .filter_map(|cookie| Cookie::parse_encoded(cookie.to_owned()).ok())\n}\n\nimpl CookieJar {\n    /// Create a new `CookieJar` from a map of request headers.\n    ///\n    /// The cookies in `headers` will be added to the jar.\n    ///\n    /// This is intended to be used in middleware and other places where it might be difficult to\n    /// run extractors. Normally you should create `CookieJar`s through [`FromRequestParts`].\n    ///\n    /// [`FromRequestParts`]: axum::extract::FromRequestParts\n    pub fn from_headers(headers: &HeaderMap) -> Self {\n        let mut jar = cookie::CookieJar::new();\n        for cookie in cookies_from_request(headers) {\n            jar.add_original(cookie);\n        }\n        Self { jar }\n    }\n\n    /// Create a new empty `CookieJar`.\n    ///\n    /// This is inteded to be used in middleware and other places where it might be difficult to\n    /// run extractors. Normally you should create `CookieJar`s through [`FromRequestParts`].\n    ///\n    /// If you need a jar that contains the headers from a request use `impl From<&HeaderMap> for\n    /// CookieJar`.\n    ///\n    /// [`FromRequestParts`]: axum::extract::FromRequestParts\n    pub fn new() -> Self {\n        Self::default()\n    }\n\n    /// Get a cookie from the jar.\n    ///\n    /// # Example\n    ///\n    /// ```rust\n    /// use axum_extra::extract::cookie::CookieJar;\n    /// use axum::response::IntoResponse;\n    ///\n    /// async fn handle(jar: CookieJar) {\n    ///     let value: Option<String> = jar\n    ///         .get(\"foo\")\n    ///         .map(|cookie| cookie.value().to_owned());\n    /// }\n    /// ```\n    pub fn get(&self, name: &str) -> Option<&Cookie<'static>> {\n        self.jar.get(name)\n    }\n\n    /// Remove a cookie from the jar.\n    ///\n    /// # Example\n    ///\n    /// ```rust\n    /// use axum_extra::extract::cookie::{CookieJar, Cookie};\n    /// use axum::response::IntoResponse;\n    ///\n    /// async fn handle(jar: CookieJar) -> CookieJar {\n    ///     jar.remove(Cookie::named(\"foo\"))\n    /// }\n    /// ```\n    #[must_use]\n    pub fn remove(mut self, cookie: Cookie<'static>) -> Self {\n        self.jar.remove(cookie);\n        self\n    }\n\n    /// Add a cookie to the jar.\n    ///\n    /// The value will automatically be percent-encoded.\n    ///\n    /// # Example\n    ///\n    /// ```rust\n    /// use axum_extra::extract::cookie::{CookieJar, Cookie};\n    /// use axum::response::IntoResponse;\n    ///\n    /// async fn handle(jar: CookieJar) -> CookieJar {\n    ///     jar.add(Cookie::new(\"foo\", \"bar\"))\n    /// }\n    /// ```\n    #[must_use]\n    #[allow(clippy::should_implement_trait)]\n    pub fn add(mut self, cookie: Cookie<'static>) -> Self {\n        self.jar.add(cookie);\n        self\n    }\n\n    /// Get an iterator over all cookies in the jar.\n    pub fn iter(&self) -> impl Iterator<Item = &'_ Cookie<'static>> {\n        self.jar.iter()\n    }\n}\n\nimpl IntoResponseParts for CookieJar {\n    type Error = Infallible;\n\n    fn into_response_parts(self, mut res: ResponseParts) -> Result<ResponseParts, Self::Error> {\n        set_cookies(self.jar, res.headers_mut());\n        Ok(res)\n    }\n}\n\nimpl IntoResponse for CookieJar {\n    fn into_response(self) -> Response {\n        (self, ()).into_response()\n    }\n}\n\nfn set_cookies(jar: cookie::CookieJar, headers: &mut HeaderMap) {\n    for cookie in jar.delta() {\n        if let Ok(header_value) = cookie.encoded().to_string().parse() {\n            headers.append(SET_COOKIE, header_value);\n        }\n    }\n\n    // we don't need to call `jar.reset_delta()` because `into_response_parts` consumes the cookie\n    // jar so it cannot be called multiple times.\n}\n\n#[cfg(test)]\nmod tests {\n    use super::*;\n    use axum::{body::Body, extract::FromRef, http::Request, routing::get, Router};\n    use tower::ServiceExt;\n\n    macro_rules! cookie_test {\n        ($name:ident, $jar:ty) => {\n            #[tokio::test]\n            async fn $name() {\n                async fn set_cookie(jar: $jar) -> impl IntoResponse {\n                    jar.add(Cookie::new(\"key\", \"value\"))\n                }\n\n                async fn get_cookie(jar: $jar) -> impl IntoResponse {\n                    jar.get(\"key\").unwrap().value().to_owned()\n                }\n\n                async fn remove_cookie(jar: $jar) -> impl IntoResponse {\n                    jar.remove(Cookie::named(\"key\"))\n                }\n\n                let state = AppState {\n                    key: Key::generate(),\n                    custom_key: CustomKey(Key::generate()),\n                };\n\n                let app = Router::<_, Body>::new()\n                    .route(\"/set\", get(set_cookie))\n                    .route(\"/get\", get(get_cookie))\n                    .route(\"/remove\", get(remove_cookie))\n                    .with_state(state);\n\n                let res = app\n                    .clone()\n                    .oneshot(Request::builder().uri(\"/set\").body(Body::empty()).unwrap())\n                    .await\n                    .unwrap();\n                let cookie_value = res.headers()[\"set-cookie\"].to_str().unwrap();\n\n                let res = app\n                    .clone()\n                    .oneshot(\n                        Request::builder()\n                            .uri(\"/get\")\n                            .header(\"cookie\", cookie_value)\n                            .body(Body::empty())\n                            .unwrap(),\n                    )\n                    .await\n                    .unwrap();\n                let body = body_text(res).await;\n                assert_eq!(body, \"value\");\n\n                let res = app\n                    .clone()\n                    .oneshot(\n                        Request::builder()\n                            .uri(\"/remove\")\n                            .header(\"cookie\", cookie_value)\n                            .body(Body::empty())\n                            .unwrap(),\n                    )\n                    .await\n                    .unwrap();\n                assert!(res.headers()[\"set-cookie\"]\n                    .to_str()\n                    .unwrap()\n                    .contains(\"key=;\"));\n            }\n        };\n    }\n\n    cookie_test!(plaintext_cookies, CookieJar);\n\n    #[cfg(feature = \"cookie-signed\")]\n    cookie_test!(signed_cookies, SignedCookieJar);\n    #[cfg(feature = \"cookie-signed\")]\n    cookie_test!(signed_cookies_with_custom_key, SignedCookieJar<CustomKey>);\n\n    #[cfg(feature = \"cookie-private\")]\n    cookie_test!(private_cookies, PrivateCookieJar);\n    #[cfg(feature = \"cookie-private\")]\n    cookie_test!(private_cookies_with_custom_key, PrivateCookieJar<CustomKey>);\n\n    #[derive(Clone)]\n    struct AppState {\n        key: Key,\n        custom_key: CustomKey,\n    }\n\n    impl FromRef<AppState> for Key {\n        fn from_ref(state: &AppState) -> Key {\n            state.key.clone()\n        }\n    }\n\n    impl FromRef<AppState> for CustomKey {\n        fn from_ref(state: &AppState) -> CustomKey {\n            state.custom_key.clone()\n        }\n    }\n\n    #[derive(Clone)]\n    struct CustomKey(Key);\n\n    impl From<CustomKey> for Key {\n        fn from(custom: CustomKey) -> Self {\n            custom.0\n        }\n    }\n\n    #[cfg(feature = \"cookie-signed\")]\n    #[tokio::test]\n"
+          },
+          {
+            "path": "axum-extra/src/extract/cookie/private.rs",
+            "start_line": 186,
+            "end_line": 303,
+            "file_sha256": "a0596940fd3c9e8d257a2056e07a8b65024dea0a4ec65c757fd60be945238f52",
+            "score": 0.74,
+            "code": "impl<K> PrivateCookieJar<K> {\n    /// Get a cookie from the jar.\n    ///\n    /// If the cookie exists and can be decrypted then it is returned in plaintext.\n    ///\n    /// # Example\n    ///\n    /// ```rust\n    /// use axum_extra::extract::cookie::PrivateCookieJar;\n    /// use axum::response::IntoResponse;\n    ///\n    /// async fn handle(jar: PrivateCookieJar) {\n    ///     let value: Option<String> = jar\n    ///         .get(\"foo\")\n    ///         .map(|cookie| cookie.value().to_owned());\n    /// }\n    /// ```\n    pub fn get(&self, name: &str) -> Option<Cookie<'static>> {\n        self.private_jar().get(name)\n    }\n\n    /// Remove a cookie from the jar.\n    ///\n    /// # Example\n    ///\n    /// ```rust\n    /// use axum_extra::extract::cookie::{PrivateCookieJar, Cookie};\n    /// use axum::response::IntoResponse;\n    ///\n    /// async fn handle(jar: PrivateCookieJar) -> PrivateCookieJar {\n    ///     jar.remove(Cookie::named(\"foo\"))\n    /// }\n    /// ```\n    #[must_use]\n    pub fn remove(mut self, cookie: Cookie<'static>) -> Self {\n        self.private_jar_mut().remove(cookie);\n        self\n    }\n\n    /// Add a cookie to the jar.\n    ///\n    /// The value will automatically be percent-encoded.\n    ///\n    /// # Example\n    ///\n    /// ```rust\n    /// use axum_extra::extract::cookie::{PrivateCookieJar, Cookie};\n    /// use axum::response::IntoResponse;\n    ///\n    /// async fn handle(jar: PrivateCookieJar) -> PrivateCookieJar {\n    ///     jar.add(Cookie::new(\"foo\", \"bar\"))\n    /// }\n    /// ```\n    #[must_use]\n    #[allow(clippy::should_implement_trait)]\n    pub fn add(mut self, cookie: Cookie<'static>) -> Self {\n        self.private_jar_mut().add(cookie);\n        self\n    }\n\n    /// Authenticates and decrypts `cookie`, returning the plaintext version if decryption succeeds\n    /// or `None` otherwise.\n    pub fn decrypt(&self, cookie: Cookie<'static>) -> Option<Cookie<'static>> {\n        self.private_jar().decrypt(cookie)\n    }\n\n    /// Get an iterator over all cookies in the jar.\n    ///\n    /// Only cookies with valid authenticity and integrity are yielded by the iterator.\n    pub fn iter(&self) -> impl Iterator<Item = Cookie<'static>> + '_ {\n        PrivateCookieJarIter {\n            jar: self,\n            iter: self.jar.iter(),\n        }\n    }\n\n    fn private_jar(&self) -> PrivateJar<&'_ cookie::CookieJar> {\n        self.jar.private(&self.key)\n    }\n\n    fn private_jar_mut(&mut self) -> PrivateJar<&'_ mut cookie::CookieJar> {\n        self.jar.private_mut(&self.key)\n    }\n}\n\nimpl<K> IntoResponseParts for PrivateCookieJar<K> {\n    type Error = Infallible;\n\n    fn into_response_parts(self, mut res: ResponseParts) -> Result<ResponseParts, Self::Error> {\n        set_cookies(self.jar, res.headers_mut());\n        Ok(res)\n    }\n}\n\nimpl<K> IntoResponse for PrivateCookieJar<K> {\n    fn into_response(self) -> Response {\n        (self, ()).into_response()\n    }\n}\n\nstruct PrivateCookieJarIter<'a, K> {\n    jar: &'a PrivateCookieJar<K>,\n    iter: cookie::Iter<'a>,\n}\n\nimpl<'a, K> Iterator for PrivateCookieJarIter<'a, K> {\n    type Item = Cookie<'static>;\n\n    fn next(&mut self) -> Option<Self::Item> {\n        loop {\n            let cookie = self.iter.next()?;\n\n            if let Some(cookie) = self.jar.get(cookie.name()) {\n                return Some(cookie);\n            }\n        }\n    }\n}\n"
+          },
+          {
+            "path": "axum-extra/src/extract/cookie/signed.rs",
+            "start_line": 203,
+            "end_line": 321,
+            "file_sha256": "3210a4622ed71a5c99217959c8f7dced9b679075d9aeb774b9aa54f23ea6d967",
+            "score": 0.69,
+            "code": "impl<K> SignedCookieJar<K> {\n    /// Get a cookie from the jar.\n    ///\n    /// If the cookie exists and its authenticity and integrity can be verified then it is returned\n    /// in plaintext.\n    ///\n    /// # Example\n    ///\n    /// ```rust\n    /// use axum_extra::extract::cookie::SignedCookieJar;\n    /// use axum::response::IntoResponse;\n    ///\n    /// async fn handle(jar: SignedCookieJar) {\n    ///     let value: Option<String> = jar\n    ///         .get(\"foo\")\n    ///         .map(|cookie| cookie.value().to_owned());\n    /// }\n    /// ```\n    pub fn get(&self, name: &str) -> Option<Cookie<'static>> {\n        self.signed_jar().get(name)\n    }\n\n    /// Remove a cookie from the jar.\n    ///\n    /// # Example\n    ///\n    /// ```rust\n    /// use axum_extra::extract::cookie::{SignedCookieJar, Cookie};\n    /// use axum::response::IntoResponse;\n    ///\n    /// async fn handle(jar: SignedCookieJar) -> SignedCookieJar {\n    ///     jar.remove(Cookie::named(\"foo\"))\n    /// }\n    /// ```\n    #[must_use]\n    pub fn remove(mut self, cookie: Cookie<'static>) -> Self {\n        self.signed_jar_mut().remove(cookie);\n        self\n    }\n\n    /// Add a cookie to the jar.\n    ///\n    /// The value will automatically be percent-encoded.\n    ///\n    /// # Example\n    ///\n    /// ```rust\n    /// use axum_extra::extract::cookie::{SignedCookieJar, Cookie};\n    /// use axum::response::IntoResponse;\n    ///\n    /// async fn handle(jar: SignedCookieJar) -> SignedCookieJar {\n    ///     jar.add(Cookie::new(\"foo\", \"bar\"))\n    /// }\n    /// ```\n    #[must_use]\n    #[allow(clippy::should_implement_trait)]\n    pub fn add(mut self, cookie: Cookie<'static>) -> Self {\n        self.signed_jar_mut().add(cookie);\n        self\n    }\n\n    /// Verifies the authenticity and integrity of `cookie`, returning the plaintext version if\n    /// verification succeeds or `None` otherwise.\n    pub fn verify(&self, cookie: Cookie<'static>) -> Option<Cookie<'static>> {\n        self.signed_jar().verify(cookie)\n    }\n\n    /// Get an iterator over all cookies in the jar.\n    ///\n    /// Only cookies with valid authenticity and integrity are yielded by the iterator.\n    pub fn iter(&self) -> impl Iterator<Item = Cookie<'static>> + '_ {\n        SignedCookieJarIter {\n            jar: self,\n            iter: self.jar.iter(),\n        }\n    }\n\n    fn signed_jar(&self) -> SignedJar<&'_ cookie::CookieJar> {\n        self.jar.signed(&self.key)\n    }\n\n    fn signed_jar_mut(&mut self) -> SignedJar<&'_ mut cookie::CookieJar> {\n        self.jar.signed_mut(&self.key)\n    }\n}\n\nimpl<K> IntoResponseParts for SignedCookieJar<K> {\n    type Error = Infallible;\n\n    fn into_response_parts(self, mut res: ResponseParts) -> Result<ResponseParts, Self::Error> {\n        set_cookies(self.jar, res.headers_mut());\n        Ok(res)\n    }\n}\n\nimpl<K> IntoResponse for SignedCookieJar<K> {\n    fn into_response(self) -> Response {\n        (self, ()).into_response()\n    }\n}\n\nstruct SignedCookieJarIter<'a, K> {\n    jar: &'a SignedCookieJar<K>,\n    iter: cookie::Iter<'a>,\n}\n\nimpl<'a, K> Iterator for SignedCookieJarIter<'a, K> {\n    type Item = Cookie<'static>;\n\n    fn next(&mut self) -> Option<Self::Item> {\n        loop {\n            let cookie = self.iter.next()?;\n\n            if let Some(cookie) = self.jar.get(cookie.name()) {\n                return Some(cookie);\n            }\n        }\n    }\n}\n"
+          },
+          {
+            "path": "axum-extra/src/extract/cookie/private.rs",
+            "start_line": 11,
+            "end_line": 112,
+            "file_sha256": "a0596940fd3c9e8d257a2056e07a8b65024dea0a4ec65c757fd60be945238f52",
+            "score": 0.58,
+            "code": "/// Extractor that grabs private cookies from the request and manages the jar.\n///\n/// All cookies will be private and encrypted with a [`Key`]. This makes it suitable for storing\n/// private data.\n///\n/// Note that methods like [`PrivateCookieJar::add`], [`PrivateCookieJar::remove`], etc updates the\n/// [`PrivateCookieJar`] and returns it. This value _must_ be returned from the handler as part of\n/// the response for the changes to be propagated.\n///\n/// # Example\n///\n/// ```rust\n/// use axum::{\n///     Router,\n///     routing::{post, get},\n///     extract::{TypedHeader, FromRef},\n///     response::{IntoResponse, Redirect},\n///     headers::authorization::{Authorization, Bearer},\n///     http::StatusCode,\n/// };\n/// use axum_extra::extract::cookie::{PrivateCookieJar, Cookie, Key};\n///\n/// async fn set_secret(\n///     jar: PrivateCookieJar,\n/// ) -> (PrivateCookieJar, Redirect) {\n///     let updated_jar = jar.add(Cookie::new(\"secret\", \"secret-data\"));\n///     (updated_jar, Redirect::to(\"/get\"))\n/// }\n///\n/// async fn get_secret(jar: PrivateCookieJar) {\n///     if let Some(data) = jar.get(\"secret\") {\n///         // ...\n///     }\n/// }\n///\n/// // our application state\n/// #[derive(Clone)]\n/// struct AppState {\n///     // that holds the key used to sign cookies\n///     key: Key,\n/// }\n///\n/// // this impl tells `SignedCookieJar` how to access the key from our state\n/// impl FromRef<AppState> for Key {\n///     fn from_ref(state: &AppState) -> Self {\n///         state.key.clone()\n///     }\n/// }\n///\n/// let state = AppState {\n///     // Generate a secure key\n///     //\n///     // You probably don't wanna generate a new one each time the app starts though\n///     key: Key::generate(),\n/// };\n///\n/// let app = Router::new()\n///     .route(\"/set\", post(set_secret))\n///     .route(\"/get\", get(get_secret))\n///     .with_state(state);\n/// # let _: axum::Router = app;\n/// ```\n///\n/// If you have been using `Arc<AppState>` you cannot implement `FromRef<Arc<AppState>> for Key`.\n/// You can use a new type instead:\n///\n/// ```rust\n/// # use axum::extract::FromRef;\n/// # use axum_extra::extract::cookie::{PrivateCookieJar, Cookie, Key};\n/// use std::sync::Arc;\n/// use std::ops::Deref;\n///\n/// #[derive(Clone)]\n/// struct AppState(Arc<InnerState>);\n///\n/// // deref so you can still access the inner fields easily\n/// impl Deref for AppState {\n///     type Target = InnerState;\n///\n///     fn deref(&self) -> &Self::Target {\n///         &*self.0\n///     }\n/// }\n///\n/// struct InnerState {\n///     key: Key\n/// }\n///\n/// impl FromRef<AppState> for Key {\n///     fn from_ref(state: &AppState) -> Self {\n///         state.0.key.clone()\n///     }\n/// }\n/// ```\npub struct PrivateCookieJar<K = Key> {\n    jar: cookie::CookieJar,\n    key: Key,\n    // The key used to extract the key. Allows users to use multiple keys for different\n    // jars. Maybe a library wants its own key.\n    _marker: PhantomData<K>,\n}\n\n"
+          },
+          {
+            "path": "axum-extra/src/extract/cookie/signed.rs",
+            "start_line": 12,
+            "end_line": 129,
+            "file_sha256": "3210a4622ed71a5c99217959c8f7dced9b679075d9aeb774b9aa54f23ea6d967",
+            "score": 0.57,
+            "code": "/// Extractor that grabs signed cookies from the request and manages the jar.\n///\n/// All cookies will be signed and verified with a [`Key`]. Do not use this to store private data\n/// as the values are still transmitted in plaintext.\n///\n/// Note that methods like [`SignedCookieJar::add`], [`SignedCookieJar::remove`], etc updates the\n/// [`SignedCookieJar`] and returns it. This value _must_ be returned from the handler as part of\n/// the response for the changes to be propagated.\n///\n/// # Example\n///\n/// ```rust\n/// use axum::{\n///     Router,\n///     routing::{post, get},\n///     extract::{TypedHeader, FromRef},\n///     response::{IntoResponse, Redirect},\n///     headers::authorization::{Authorization, Bearer},\n///     http::StatusCode,\n/// };\n/// use axum_extra::extract::cookie::{SignedCookieJar, Cookie, Key};\n///\n/// async fn create_session(\n///     TypedHeader(auth): TypedHeader<Authorization<Bearer>>,\n///     jar: SignedCookieJar,\n/// ) -> Result<(SignedCookieJar, Redirect), StatusCode> {\n///     if let Some(session_id) = authorize_and_create_session(auth.token()).await {\n///         Ok((\n///             // the updated jar must be returned for the changes\n///             // to be included in the response\n///             jar.add(Cookie::new(\"session_id\", session_id)),\n///             Redirect::to(\"/me\"),\n///         ))\n///     } else {\n///         Err(StatusCode::UNAUTHORIZED)\n///     }\n/// }\n///\n/// async fn me(jar: SignedCookieJar) -> Result<(), StatusCode> {\n///     if let Some(session_id) = jar.get(\"session_id\") {\n///         // fetch and render user...\n///         # Ok(())\n///     } else {\n///         Err(StatusCode::UNAUTHORIZED)\n///     }\n/// }\n///\n/// async fn authorize_and_create_session(token: &str) -> Option<String> {\n///     // authorize the user and create a session...\n///     # todo!()\n/// }\n///\n/// // our application state\n/// #[derive(Clone)]\n/// struct AppState {\n///     // that holds the key used to sign cookies\n///     key: Key,\n/// }\n///\n/// // this impl tells `SignedCookieJar` how to access the key from our state\n/// impl FromRef<AppState> for Key {\n///     fn from_ref(state: &AppState) -> Self {\n///         state.key.clone()\n///     }\n/// }\n///\n/// let state = AppState {\n///     // Generate a secure key\n///     //\n///     // You probably don't wanna generate a new one each time the app starts though\n///     key: Key::generate(),\n/// };\n///\n/// let app = Router::new()\n///     .route(\"/sessions\", post(create_session))\n///     .route(\"/me\", get(me))\n///     .with_state(state);\n/// # let _: axum::Router = app;\n/// ```\n/// If you have been using `Arc<AppState>` you cannot implement `FromRef<Arc<AppState>> for Key`.\n/// You can use a new type instead:\n///\n/// ```rust\n/// # use axum::extract::FromRef;\n/// # use axum_extra::extract::cookie::{PrivateCookieJar, Cookie, Key};\n/// use std::sync::Arc;\n/// use std::ops::Deref;\n///\n/// #[derive(Clone)]\n/// struct AppState(Arc<InnerState>);\n///\n/// // deref so you can still access the inner fields easily\n/// impl Deref for AppState {\n///     type Target = InnerState;\n///\n///     fn deref(&self) -> &Self::Target {\n///         &*self.0\n///     }\n/// }\n///\n/// struct InnerState {\n///     key: Key\n/// }\n///\n/// impl FromRef<AppState> for Key {\n///     fn from_ref(state: &AppState) -> Self {\n///         state.0.key.clone()\n///     }\n/// }\n/// ```\npub struct SignedCookieJar<K = Key> {\n    jar: cookie::CookieJar,\n    key: Key,\n    // The key used to extract the key. Allows users to use multiple keys for different\n    // jars. Maybe a library wants its own key.\n    _marker: PhantomData<K>,\n}\n\n"
+          }
+        ],
+        "report": {
+          "scope": [
+            "."
+          ],
+          "inventory_complete": true,
+          "scope_fully_scanned": true,
+          "files": {
+            "discovered": 94,
+            "eligible": 94,
+            "excluded_by_reason": {},
+            "unreadable": 0,
+            "changed_before_return": 0
+          },
+          "fragments": {
+            "total": 312,
+            "remote_evaluated": 312,
+            "cache_reused": 0,
+            "not_evaluated": 0,
+            "below_threshold": 302,
+            "above_threshold": 10,
+            "represented_in_response": 10,
+            "omitted_by_response_budget": 0,
+            "omitted_stale": 0
+          },
+          "selection": {
+            "outcome": "selected",
+            "threshold": 0.5,
+            "ranges_returned": 5,
+            "duplicate_ranges_collapsed": 0
+          },
+          "usage": {
+            "provider_request_attempts": 6,
+            "provider_input_tokens_reported": 220020,
+            "provider_input_tokens_known_subtotal": 220020,
+            "provider_input_tokens_estimated": 220020,
+            "estimated_cost_usd": 0.00924084,
+            "reported_cost_usd": null,
+            "attempts_with_unknown_usage": 0,
+            "transmitted_bytes": 883237,
+            "elapsed_ms": 6010
+          },
+          "response_budget": {
+            "requested_tokens": 8000,
+            "counter": "tiktoken@1.0.22/cl100k_base",
+            "accounting": "reference_tokenizer"
+          },
+          "preflight": {
+            "planned_remote_fragments": 312,
+            "planned_cache_hits": 0,
+            "estimated_first_attempt_tokens": 234512,
+            "estimated_first_attempt_cost_usd": 0.009849504,
+            "estimated_first_attempt_requests": 6,
+            "enabled_caps": {
+              "estimated_input_tokens": 3445818,
+              "request_attempts": 384
+            },
+            "estimated_required_caps": {
+              "estimated_input_tokens": 234512,
+              "request_attempts": 6
+            }
+          },
+          "stop_reasons": [],
+          "diagnostics_truncated": false
+        }
+      },
+      "profile": {
+        "stages": {
+          "tokenization": {
+            "calls": 24741,
+            "durationMs": 5308.055225999824
+          },
+          "rendering": {
+            "calls": 2,
+            "durationMs": 6.5164719999993395
+          },
+          "inventory": {
+            "calls": 1,
+            "durationMs": 18.884699000011096
+          },
+          "source_read": {
+            "calls": 94,
+            "durationMs": 17.532181999995373
+          },
+          "decode": {
+            "calls": 94,
+            "durationMs": 0.28778199999578646
+          },
+          "hash": {
+            "calls": 94,
+            "durationMs": 2.3954870000052324
+          },
+          "snapshot": {
+            "calls": 94,
+            "durationMs": 6.034329000003709
+          },
+          "secret_scan": {
+            "calls": 94,
+            "durationMs": 2.500170999994225
+          },
+          "parsing": {
+            "calls": 94,
+            "durationMs": 115.82878200000778
+          },
+          "chunking": {
+            "calls": 94,
+            "durationMs": 428.1519899999985
+          },
+          "preparation": {
+            "calls": 1,
+            "durationMs": 478.42215000000033
+          },
+          "serialization": {
+            "calls": 623,
+            "durationMs": 76.43802100001085
+          },
+          "cache_lookup": {
+            "calls": 312,
+            "durationMs": 320.6151310000241
+          },
+          "batching": {
+            "calls": 1,
+            "durationMs": 4723.814768999997
+          },
+          "planning": {
+            "calls": 1,
+            "durationMs": 0.04770300000018324
+          },
+          "provider": {
+            "calls": 6,
+            "durationMs": 1980.2087919999976
+          },
+          "evaluation": {
+            "calls": 1,
+            "durationMs": 472.30596499999956
+          },
+          "selection": {
+            "calls": 1,
+            "durationMs": 12.648542999999336
+          },
+          "freshness": {
+            "calls": 5,
+            "durationMs": 0.9248950000001059
+          },
+          "search": {
+            "calls": 1,
+            "durationMs": 6015.9268280000015
+          }
+        },
+        "counters": {
+          "tokenizerInputUtf16": 30518922,
+          "referenceTokensCounted": 8059634,
+          "serializedQuestions": 9631,
+          "serializedBytes": 27459510
+        },
+        "memory": {
+          "start": {
+            "rssBytes": 335347712,
+            "heapUsedBytes": 80710424,
+            "externalBytes": 98547569
+          },
+          "end": {
+            "rssBytes": 329392128,
+            "heapUsedBytes": 40827160,
+            "externalBytes": 85422318
+          },
+          "sampledMax": {
+            "rssBytes": 346353664,
+            "heapUsedBytes": 97177616,
+            "externalBytes": 100884273
+          },
+          "samples": 224
+        }
+      }
+    },
+    {
+      "id": "hand-axum-na-01",
+      "task": "hand__axum-reliability-1",
+      "repository": "tokio-rs/axum",
+      "split": "heldout",
+      "category": "no-answer",
+      "label": "audit",
+      "latencyMs": 7153.3979249999975,
+      "metrics": {
+        "recallAt1": null,
+        "recallAt5": null,
+        "reciprocalRank": null,
+        "evidenceCoverage": null,
+        "negativeCorrect": true,
+        "fileRecall": null,
+        "firstOverlapRank": null,
+        "complementaryCoverage": null
+      },
+      "responseTokens": 356,
+      "outcome": {
+        "schema_version": "1",
+        "search_id": "hand-axum-na-01",
+        "status": "complete",
+        "excerpts": [],
+        "report": {
+          "scope": [
+            "."
+          ],
+          "inventory_complete": true,
+          "scope_fully_scanned": true,
+          "files": {
+            "discovered": 94,
+            "eligible": 94,
+            "excluded_by_reason": {},
+            "unreadable": 0,
+            "changed_before_return": 0
+          },
+          "fragments": {
+            "total": 312,
+            "remote_evaluated": 312,
+            "cache_reused": 0,
+            "not_evaluated": 0,
+            "below_threshold": 312,
+            "above_threshold": 0,
+            "represented_in_response": 0,
+            "omitted_by_response_budget": 0,
+            "omitted_stale": 0
+          },
+          "selection": {
+            "outcome": "no_score_above_threshold",
+            "threshold": 0.5,
+            "ranges_returned": 0,
+            "duplicate_ranges_collapsed": 0
+          },
+          "usage": {
+            "provider_request_attempts": 6,
+            "provider_input_tokens_reported": 219954,
+            "provider_input_tokens_known_subtotal": 219954,
+            "provider_input_tokens_estimated": 219954,
+            "estimated_cost_usd": 0.009238068,
+            "reported_cost_usd": null,
+            "attempts_with_unknown_usage": 0,
+            "transmitted_bytes": 883051,
+            "elapsed_ms": 7152
+          },
+          "response_budget": {
+            "requested_tokens": 8000,
+            "counter": "tiktoken@1.0.22/cl100k_base",
+            "accounting": "reference_tokenizer"
+          },
+          "preflight": {
+            "planned_remote_fragments": 312,
+            "planned_cache_hits": 0,
+            "estimated_first_attempt_tokens": 234482,
+            "estimated_first_attempt_cost_usd": 0.009848244,
+            "estimated_first_attempt_requests": 6,
+            "enabled_caps": {
+              "estimated_input_tokens": 3211306,
+              "request_attempts": 378
+            },
+            "estimated_required_caps": {
+              "estimated_input_tokens": 234482,
+              "request_attempts": 6
+            }
+          },
+          "stop_reasons": [],
+          "diagnostics_truncated": false
+        }
+      },
+      "profile": {
+        "stages": {
+          "tokenization": {
+            "calls": 24726,
+            "durationMs": 6244.840762999942
+          },
+          "rendering": {
+            "calls": 2,
+            "durationMs": 1.4690059999957157
+          },
+          "inventory": {
+            "calls": 1,
+            "durationMs": 20.151045999988128
+          },
+          "source_read": {
+            "calls": 94,
+            "durationMs": 15.37846699999136
+          },
+          "decode": {
+            "calls": 94,
+            "durationMs": 0.316233999983524
+          },
+          "hash": {
+            "calls": 94,
+            "durationMs": 2.191557999994984
+          },
+          "snapshot": {
+            "calls": 94,
+            "durationMs": 5.933378999994602
+          },
+          "secret_scan": {
+            "calls": 94,
+            "durationMs": 2.435213000004296
+          },
+          "parsing": {
+            "calls": 94,
+            "durationMs": 116.7698180000225
+          },
+          "chunking": {
+            "calls": 94,
+            "durationMs": 407.8019200000199
+          },
+          "preparation": {
+            "calls": 1,
+            "durationMs": 458.7175559999996
+          },
+          "serialization": {
+            "calls": 623,
+            "durationMs": 95.14064100005999
+          },
+          "cache_lookup": {
+            "calls": 312,
+            "durationMs": 332.2232870000189
+          },
+          "batching": {
+            "calls": 1,
+            "durationMs": 5721.387602999999
+          },
+          "planning": {
+            "calls": 1,
+            "durationMs": 0.07771099999808939
+          },
+          "provider": {
+            "calls": 6,
+            "durationMs": 2195.250237
+          },
+          "evaluation": {
+            "calls": 1,
+            "durationMs": 638.4472970000024
+          },
+          "selection": {
+            "calls": 1,
+            "durationMs": 0.03607700000065961
+          },
+          "search": {
+            "calls": 1,
+            "durationMs": 7153.122776
+          }
+        },
+        "counters": {
+          "tokenizerInputUtf16": 30411161,
+          "referenceTokensCounted": 8032097,
+          "serializedQuestions": 9631,
+          "serializedBytes": 27440197
+        },
+        "memory": {
+          "start": {
+            "rssBytes": 329392128,
+            "heapUsedBytes": 41442240,
+            "externalBytes": 85553390
+          },
+          "end": {
+            "rssBytes": 329797632,
+            "heapUsedBytes": 40771880,
+            "externalBytes": 84996695
+          },
+          "sampledMax": {
+            "rssBytes": 337903616,
+            "heapUsedBytes": 81206544,
+            "externalBytes": 93440882
+          },
+          "samples": 243
+        }
+      }
+    },
+    {
+      "id": "hand-axum-na-02",
+      "task": "hand__axum-reliability-1",
+      "repository": "tokio-rs/axum",
+      "split": "heldout",
+      "category": "no-answer",
+      "label": "audit",
+      "latencyMs": 6049.986660999999,
+      "metrics": {
+        "recallAt1": null,
+        "recallAt5": null,
+        "reciprocalRank": null,
+        "evidenceCoverage": null,
+        "negativeCorrect": true,
+        "fileRecall": null,
+        "firstOverlapRank": null,
+        "complementaryCoverage": null
+      },
+      "responseTokens": 356,
+      "outcome": {
+        "schema_version": "1",
+        "search_id": "hand-axum-na-02",
+        "status": "complete",
+        "excerpts": [],
+        "report": {
+          "scope": [
+            "."
+          ],
+          "inventory_complete": true,
+          "scope_fully_scanned": true,
+          "files": {
+            "discovered": 94,
+            "eligible": 94,
+            "excluded_by_reason": {},
+            "unreadable": 0,
+            "changed_before_return": 0
+          },
+          "fragments": {
+            "total": 312,
+            "remote_evaluated": 312,
+            "cache_reused": 0,
+            "not_evaluated": 0,
+            "below_threshold": 312,
+            "above_threshold": 0,
+            "represented_in_response": 0,
+            "omitted_by_response_budget": 0,
+            "omitted_stale": 0
+          },
+          "selection": {
+            "outcome": "no_score_above_threshold",
+            "threshold": 0.5,
+            "ranges_returned": 0,
+            "duplicate_ranges_collapsed": 0
+          },
+          "usage": {
+            "provider_request_attempts": 6,
+            "provider_input_tokens_reported": 219948,
+            "provider_input_tokens_known_subtotal": 219948,
+            "provider_input_tokens_estimated": 219948,
+            "estimated_cost_usd": 0.009237816,
+            "reported_cost_usd": null,
+            "attempts_with_unknown_usage": 0,
+            "transmitted_bytes": 883075,
+            "elapsed_ms": 6049
+          },
+          "response_budget": {
+            "requested_tokens": 8000,
+            "counter": "tiktoken@1.0.22/cl100k_base",
+            "accounting": "reference_tokenizer"
+          },
+          "preflight": {
+            "planned_remote_fragments": 312,
+            "planned_cache_hits": 0,
+            "estimated_first_attempt_tokens": 234464,
+            "estimated_first_attempt_cost_usd": 0.009847488,
+            "estimated_first_attempt_requests": 6,
+            "enabled_caps": {
+              "estimated_input_tokens": 2976824,
+              "request_attempts": 372
+            },
+            "estimated_required_caps": {
+              "estimated_input_tokens": 234464,
+              "request_attempts": 6
+            }
+          },
+          "stop_reasons": [],
+          "diagnostics_truncated": false
+        }
+      },
+      "profile": {
+        "stages": {
+          "tokenization": {
+            "calls": 24726,
+            "durationMs": 5302.0028339995915
+          },
+          "rendering": {
+            "calls": 2,
+            "durationMs": 1.3943830000025628
+          },
+          "inventory": {
+            "calls": 1,
+            "durationMs": 19.168140000016137
+          },
+          "source_read": {
+            "calls": 94,
+            "durationMs": 14.85480099999404
+          },
+          "decode": {
+            "calls": 94,
+            "durationMs": 0.27103199997145566
+          },
+          "hash": {
+            "calls": 94,
+            "durationMs": 2.1659509999881266
+          },
+          "snapshot": {
+            "calls": 94,
+            "durationMs": 6.57416000000012
+          },
+          "secret_scan": {
+            "calls": 94,
+            "durationMs": 2.4251689999982773
+          },
+          "parsing": {
+            "calls": 94,
+            "durationMs": 101.95453999996971
+          },
+          "chunking": {
+            "calls": 94,
+            "durationMs": 387.3976399999883
+          },
+          "preparation": {
+            "calls": 1,
+            "durationMs": 438.36061999999947
+          },
+          "serialization": {
+            "calls": 623,
+            "durationMs": 83.80830799995601
+          },
+          "cache_lookup": {
+            "calls": 312,
+            "durationMs": 384.6726799999633
+          },
+          "batching": {
+            "calls": 1,
+            "durationMs": 4725.859967
+          },
+          "planning": {
+            "calls": 1,
+            "durationMs": 0.06946800000150688
+          },
+          "provider": {
+            "calls": 6,
+            "durationMs": 2028.7072429999898
+          },
+          "evaluation": {
+            "calls": 1,
+            "durationMs": 498.4974779999975
+          },
+          "selection": {
+            "calls": 1,
+            "durationMs": 0.04093099999590777
+          },
+          "search": {
+            "calls": 1,
+            "durationMs": 6049.696782999996
+          }
+        },
+        "counters": {
+          "tokenizerInputUtf16": 30413677,
+          "referenceTokensCounted": 8030210,
+          "serializedQuestions": 9631,
+          "serializedBytes": 27442689
+        },
+        "memory": {
+          "start": {
+            "rssBytes": 329797632,
+            "heapUsedBytes": 41373432,
+            "externalBytes": 85127767
+          },
+          "end": {
+            "rssBytes": 325570560,
+            "heapUsedBytes": 34876240,
+            "externalBytes": 84927555
+          },
+          "sampledMax": {
+            "rssBytes": 334143488,
+            "heapUsedBytes": 76339344,
+            "externalBytes": 93132806
+          },
+          "samples": 230
+        }
+      }
+    }
+  ]
+}
