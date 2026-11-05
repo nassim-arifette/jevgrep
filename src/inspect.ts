@@ -14,12 +14,11 @@ import { exclusionCounts, prepareScope } from './source/prepare.ts';
 import type { PreparedScope } from './source/prepare.ts';
 import type { LoadedConfiguration } from './config.ts';
 import type { ScanCap } from './contracts.ts';
-import { buildBatches, enabledCapsOf, planScan } from './planning.ts';
+import { batchCost, buildBatches, enabledCapsOf, planScan, type BatchCost } from './planning.ts';
 import type { EvaluationBatch } from './evaluation/contracts.ts';
 import { batchLimits } from './evaluation/policy.ts';
 import { estimateInputCostUsd } from './pricing.ts';
 import { configuredAdapter, serializeConfiguredBatch } from './evaluation/provider.ts';
-import { countReferenceTokens } from './response/token-counter.ts';
 
 export type InspectionReport = {
   readonly repository_root: string;
@@ -98,13 +97,18 @@ export function inspectScope(configuration: LoadedConfiguration, options: Inspec
   const adapter = configuredAdapter(config);
   const limits = batchLimits(adapter);
   const serialize = (batch: EvaluationBatch): string => serializeConfiguredBatch(config, batch);
-  const batches = buildBatches(prepared.fragments, query, { limits, serialize });
-  const estimatedInputTokens = batches.reduce((total, batch) => total + countReferenceTokens(serialize(batch)), 0);
+  const measured = new WeakMap<EvaluationBatch, BatchCost>();
+  const batches = buildBatches(prepared.fragments, query, {
+    limits, serialize,
+    onBatchMeasure: (batch, measure) => { if (measure.tokens !== null) measured.set(batch, { tokens: measure.tokens, bytes: measure.bytes }); },
+  });
+  const costOf = (batch: EvaluationBatch): BatchCost => measured.get(batch) ?? batchCost(batch, config.provider.model, serialize);
+  const estimatedInputTokens = batches.reduce((total, batch) => total + costOf(batch).tokens, 0);
   const pricing = config.provider.pricing;
   const estimatedCost = estimateInputCostUsd(estimatedInputTokens, pricing?.input_usd_per_million_tokens ?? null);
   const enabledCaps = enabledCapsOf(config.scan_caps);
   const plan = planScan(prepared.fragments, query, {
-    model: config.provider.model, batches, serialize, enabledCaps,
+    model: config.provider.model, batches, serialize, batchCost: costOf, enabledCaps,
     allowPartial: false, requireFit: true,
     preparedBytes: prepared.preparedBytes, candidateFiles: prepared.files.length,
     preparedFragments: prepared.fragments.length,
