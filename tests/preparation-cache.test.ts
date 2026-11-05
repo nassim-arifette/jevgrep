@@ -278,3 +278,28 @@ test('entries pending while another writer holds the lock are retried on the nex
   rmSync(lock, { recursive: true, force: true });
   assert.equal(cache.flush(), 1);
 });
+
+const longGo = `package main\n\nfunc long() []int {\n\treturn []int{\n${Array.from({ length: 1200 }, (_, n) => `\t\t${String(n * 7919)},\n`).join('')}\t}\n}\n`;
+const poolInventory = { respectGitignore: true, maxFileBytes: 1_000_000, extraDenyGlobs: [] };
+
+test('the preparation pool reproduces sequential preparation, declarations included', () => {
+  const space = workspace({ ...files, 'src/long.go': longGo, 'src/other.go': longGo.replace('long', 'other') });
+  const root = AuthorizedRoot.open(space.repositoryRoot);
+  const sequential = prepareScope(root, ['.'], { inventory: poolInventory, threads: 0 });
+  const pooled = prepareScope(root, ['.'], { inventory: poolInventory, threads: 2 });
+  assert.deepEqual(pooled.fragments, sequential.fragments);
+  assert.deepEqual(pooled.excluded, sequential.excluded);
+  assert.equal(pooled.complete, sequential.complete);
+  assert.ok(sequential.fragments.some((fragment) => fragment.path === 'src/long.go' && fragment.declaration != null));
+});
+
+test('a pool worker seeds the preparation cache and a cache hit keeps declarations', () => {
+  const space = workspace({ ...files, 'src/long.go': longGo });
+  const root = AuthorizedRoot.open(space.repositoryRoot);
+  const cache = new PreparationCache({ directory: cacheDirectory(), enabled: true, maxBytes: 50_000_000 });
+  const first = prepareScope(root, ['.'], { inventory: poolInventory, threads: 2, cache });
+  const again = prepareScope(root, ['.'], { inventory: poolInventory, threads: 0, cache });
+  assert.deepEqual(again.fragments, first.fragments);
+  assert.ok(again.fragments.some((fragment) => fragment.path === 'src/long.go' && fragment.declaration != null));
+  assert.ok(cache.stats.hits > 0);
+});

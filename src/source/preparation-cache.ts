@@ -30,14 +30,17 @@ import { REFERENCE_COUNTER_ID } from '../response/token-counter.ts';
 import type { ChunkResult, PreparedFragment, WindowLimits } from './chunker.ts';
 import type { SourceSnapshot } from './snapshot.ts';
 
-export const PREPARATION_CACHE_SCHEMA_VERSION = 1;
+export const PREPARATION_CACHE_SCHEMA_VERSION = 2;
 const MAX_ENTRY_BYTES = 4 * 1024 * 1024;
 const MAX_MEMORY_ENTRIES = 50_000;
 
 export type ScanVerdict = 'ok' | 'binary' | 'unsupported_encoding' | 'empty' | 'whitespace_only' | 'credential_pattern';
 
-/** Fragment reference: start line, end line, token count and, for syntax ranges, the label. */
-type FragmentRef = readonly [number, number, number, (string | null)?];
+/**
+ * Fragment reference: start line, end line, token count and, for syntax ranges, the
+ * label, then the declaration a split window was cut from (its start and end line).
+ */
+type FragmentRef = readonly [number, number, number, (string | null)?, number?, number?];
 
 type ChunkRecord =
   | {
@@ -85,9 +88,11 @@ function isChunkRecord(value: unknown): value is ChunkRecord {
     && typeof record['chunker'] === 'string'
     && (record['classification'] === 'line-window' || record['classification'] === 'syntax-range')
     && Array.isArray(record['fragments'])
-    && (record['fragments'] as unknown[]).every((ref) => Array.isArray(ref) && (ref.length === 3 || ref.length === 4)
+    && (record['fragments'] as unknown[]).every((ref) => Array.isArray(ref) && (ref.length === 3 || ref.length === 4 || ref.length === 6)
       && isLine(ref[0]) && isLine(ref[1]) && (ref[0] as number) <= (ref[1] as number) && isCount(ref[2])
-      && (ref.length === 3 || ref[3] === null || typeof ref[3] === 'string'));
+      && (ref.length === 3 || ref[3] === null || typeof ref[3] === 'string')
+      && (ref.length !== 6 || (isLine(ref[4]) && isLine(ref[5]) && (ref[4] as number) <= (ref[0] as number)
+        && (ref[1] as number) <= (ref[5] as number))));
 }
 
 export function isPreparationEntry(value: unknown, sha256: string, byteLength: number): value is PreparationEntry {
@@ -136,9 +141,11 @@ export function recordOf(result: ChunkResult): ChunkRecord {
   return {
     kind: 'fragments', strategy: result.strategy, fallback: result.fallback,
     chunker: first?.chunker ?? '', classification: first?.classification ?? 'line-window',
-    fragments: result.fragments.map((fragment): FragmentRef => fragment.classification === 'syntax-range'
-      ? [fragment.startLine, fragment.endLine, fragment.tokenCount, fragment.label ?? null]
-      : [fragment.startLine, fragment.endLine, fragment.tokenCount]),
+    fragments: result.fragments.map((fragment): FragmentRef => fragment.declaration != null
+      ? [fragment.startLine, fragment.endLine, fragment.tokenCount, fragment.label ?? null, fragment.declaration.startLine, fragment.declaration.endLine]
+      : fragment.classification === 'syntax-range'
+        ? [fragment.startLine, fragment.endLine, fragment.tokenCount, fragment.label ?? null]
+        : [fragment.startLine, fragment.endLine, fragment.tokenCount]),
   };
 }
 
@@ -160,8 +167,9 @@ export function resultOf(record: ChunkRecord, snapshot: SourceSnapshot): ChunkRe
       : null;
   }
   const fragments: PreparedFragment[] = [];
-  for (const [startLine, endLine, tokenCount, label] of record.fragments) {
+  for (const [startLine, endLine, tokenCount, label, declarationStart, declarationEnd] of record.fragments) {
     if (endLine > snapshot.lineCount) return null;
+    if (declarationEnd !== undefined && declarationEnd > snapshot.lineCount) return null;
     const slice = snapshot.sliceLines(startLine, endLine);
     if (slice.byteLength > 0 ? tokenCount < 1 || tokenCount > slice.byteLength : tokenCount !== 0) return null;
     fragments.push({
@@ -170,6 +178,8 @@ export function resultOf(record: ChunkRecord, snapshot: SourceSnapshot): ChunkRe
       byteStart: slice.startByte, byteEnd: slice.endByte, text: slice.text,
       byteCount: slice.byteLength, tokenCount, chunker: record.chunker, classification: record.classification,
       ...(record.classification === 'syntax-range' ? { label: label ?? null } : {}),
+      ...(declarationStart !== undefined && declarationEnd !== undefined
+        ? { declaration: { startLine: declarationStart, endLine: declarationEnd } } : {}),
     });
   }
   return { kind: 'fragments', strategy: record.strategy, fallback: record.fallback, fragments };

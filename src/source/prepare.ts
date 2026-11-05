@@ -23,9 +23,10 @@ import type { ChunkResult, PreparedFragment, WindowLimits } from './chunker.ts';
 import { inventorySteps } from './inventory.ts';
 import type { InventoryOptions, InventoryResult } from './inventory.ts';
 import {
-  chunkKey, decodeLineTokens, encodeLineTokens, isRecordable, recordOf, resultOf,
+  PREPARATION_CACHE_SCHEMA_VERSION, chunkKey, decodeLineTokens, encodeLineTokens, isRecordable, recordOf, resultOf,
   type PreparationCache, type PreparationEntry, type ScanVerdict,
 } from './preparation-cache.ts';
+import { PREPARE_POOL_MIN_BYTES, PreparePool, defaultPrepareThreads } from './prepare-pool.ts';
 import { SnapshotError, createSnapshot, hashBytes } from './snapshot.ts';
 import type { SourceSnapshot } from './snapshot.ts';
 
@@ -116,6 +117,11 @@ export type PrepareOptions = {
   readonly cache?: PreparationCache;
   /** Order in which inventoried files are prepared; only matters when a limit stops preparation early. */
   readonly fileOrder?: <T extends { readonly relativePath: string }>(files: readonly T[]) => readonly T[];
+  /**
+   * Worker threads that scan and chunk files in parallel; 0 keeps everything on the
+   * calling thread. Default: the other cores. Results are identical either way.
+   */
+  readonly threads?: number;
 };
 
 /**
@@ -184,35 +190,57 @@ function* preparationSteps(
   let parseFallbacks = 0;
   let complete = inventory.complete;
 
-  for (const entry of options.fileOrder?.(inventory.files) ?? inventory.files) {
-    yield;
-    if (options.shouldStop?.() === true) {
-      complete = false;
-      break;
+  const ordered = options.fileOrder?.(inventory.files) ?? inventory.files;
+  const pool = openPool(ordered, options);
+  // Files are read in order and handed to the pool ahead of their turn; limits, stops
+  // and exclusions are still applied in order, when each file's turn comes.
+  const ahead: { entry: InventoryResult['files'][number]; read: EntryRead; ticket: number | null; sha256: string | undefined }[] = [];
+  let cursor = 0;
+  const readAhead = (): void => {
+    const depth = pool === null ? 1 : pool.size * 2;
+    while (ahead.length < depth && cursor < ordered.length) {
+      const entry = ordered[cursor]!;
+      cursor += 1;
+      const read = readEntry(root, entry.absolutePath, options.inventory.maxFileBytes);
+      const job = pool !== null && read.kind === 'read' ? submitToPool(pool, entry, read.bytes, options) : null;
+      ahead.push({ entry, read, ticket: job?.ticket ?? null, sha256: job?.sha256 });
     }
-    if (limits.candidateFiles !== null && files.length >= limits.candidateFiles) {
-      complete = false;
-      break;
-    }
+  };
 
-    const read = readEntry(root, entry.absolutePath, options.inventory.maxFileBytes);
-    if (read.kind === 'unreadable') {
-      unreadable += 1;
-      complete = false;
-      continue;
-    }
-    if (read.kind === 'excluded') {
-      excluded.push({ relativePath: entry.relativePath, reason: read.reason });
-      continue;
-    }
-    const { bytes } = read;
+  try {
+    for (;;) {
+      readAhead();
+      const next = ahead.shift();
+      if (next === undefined) break;
+      yield;
+      if (options.shouldStop?.() === true) {
+        complete = false;
+        break;
+      }
+      if (limits.candidateFiles !== null && files.length >= limits.candidateFiles) {
+        complete = false;
+        break;
+      }
+      const { entry, read } = next;
+      if (read.kind === 'unreadable') {
+        unreadable += 1;
+        complete = false;
+        continue;
+      }
+      if (read.kind === 'excluded') {
+        excluded.push({ relativePath: entry.relativePath, reason: read.reason });
+        continue;
+      }
+      const { bytes } = read;
 
-    if (limits.preparedSourceBytes !== null && preparedBytes + bytes.length > limits.preparedSourceBytes) {
-      complete = false;
-      break;
-    }
+      if (limits.preparedSourceBytes !== null && preparedBytes + bytes.length > limits.preparedSourceBytes) {
+        complete = false;
+        break;
+      }
 
-    const outcome = prepareWithCache(entry.relativePath, entry.absolutePath, bytes, options);
+      const computed = next.ticket === null || pool === null ? undefined : pool.collect(next.ticket);
+      const outcome = prepareWithCache(entry.relativePath, entry.absolutePath, bytes, options,
+        computed !== undefined && 'entry' in computed ? { entry: computed.entry, sha256: next.sha256! } : undefined);
     if (outcome.kind === 'excluded') {
       excluded.push({ relativePath: entry.relativePath, reason: outcome.reason, ...(outcome.detail === null ? {} : { detail: outcome.detail }) });
       continue;
@@ -233,12 +261,15 @@ function* preparationSteps(
     if (chunked.fallback === 'parse_failure') {
       parseFallbacks += 1;
     }
-    files.push({
-      snapshot, fragments: chunked.fragments, strategy: chunked.strategy,
-      parseFallback: chunked.fallback === 'parse_failure',
-    });
-    fragments.push(...chunked.fragments);
-    preparedBytes += bytes.length;
+      files.push({
+        snapshot, fragments: chunked.fragments, strategy: chunked.strategy,
+        parseFallback: chunked.fallback === 'parse_failure',
+      });
+      fragments.push(...chunked.fragments);
+      preparedBytes += bytes.length;
+    }
+  } finally {
+    pool?.close();
   }
 
   if (options.cache?.enabled === true) {
@@ -278,14 +309,75 @@ function readEntry(root: AuthorizedRoot, absolutePath: string, maxFileBytes: num
   }
 }
 
-/** Chunk the bytes, reusing a verified preparation-cache entry when one exists. */
-function prepareWithCache(relativePath: string, absolutePath: string, bytes: Buffer, options: PrepareOptions): ContentOutcome {
+/** A pool when the scope is large enough and the production chunker is in use. */
+function openPool(files: readonly { readonly sizeBytes: number }[], options: PrepareOptions): PreparePool | null {
+  if (options.chunker !== undefined && options.chunker !== DEFAULT_CHUNKER) return null;
+  const threads = options.threads ?? defaultPrepareThreads();
+  if (threads < 1 || files.length < 2) return null;
+  const bytes = files.reduce((total, file) => total + file.sizeBytes, 0);
+  if (options.threads === undefined && bytes < PREPARE_POOL_MIN_BYTES) return null;
+  try {
+    return new PreparePool(threads);
+  } catch {
+    return null;
+  }
+}
+
+/** Hand a file to the pool unless a cache entry already holds its chunks. */
+function submitToPool(
+  pool: PreparePool, entry: { readonly relativePath: string; readonly absolutePath: string }, bytes: Buffer, options: PrepareOptions,
+): { ticket: number; sha256: string } | null {
+  const sha256 = measureSync('hash', () => hashBytes(bytes));
   const cache = options.cache?.enabled === true ? options.cache : undefined;
-  const sha256 = cache === undefined ? undefined : measureSync('hash', () => hashBytes(bytes));
-  const cached = cache === undefined || sha256 === undefined ? undefined : measureSync('cache_lookup', () => cache.get(sha256, bytes.length));
+  if (cache !== undefined) {
+    const known = measureSync('cache_lookup', () => cache.get(sha256, bytes.length));
+    const key = chunkKey((options.chunker ?? DEFAULT_CHUNKER).identity(entry.relativePath), options.windowLimits ?? DEFAULT_WINDOW_LIMITS);
+    if (known.chunks[key] !== undefined || (known.scan !== null && known.scan.verdict !== 'ok' && known.scan.version === SCANNER_VERSION)) return null;
+  }
+  const ticket = pool.submit({ relativePath: entry.relativePath, absolutePath: entry.absolutePath, bytes, sha256, windowLimits: options.windowLimits ?? DEFAULT_WINDOW_LIMITS });
+  return { ticket, sha256 };
+}
+
+/**
+ * The content stage of one file on its own: a fresh preparation entry holding the
+ * verdict, per-line tokens and fragment boundaries for these bytes. Pool workers run it.
+ */
+export function prepareEntry(relativePath: string, absolutePath: string, bytes: Buffer, sha256: string, windowLimits: WindowLimits): PreparationEntry {
+  const entry: PreparationEntry = { schema_version: PREPARATION_CACHE_SCHEMA_VERSION, sha256, byte_length: bytes.length, scan: null, tokens: null, chunks: {} };
+  prepareContent(relativePath, absolutePath, bytes, windowLimits, DEFAULT_CHUNKER, entry, sha256);
+  return entry;
+}
+
+/**
+ * Chunk the bytes, reusing a verified preparation-cache entry when one exists, or the
+ * entry a pool worker computed for these exact bytes.
+ */
+function prepareWithCache(
+  relativePath: string, absolutePath: string, bytes: Buffer, options: PrepareOptions,
+  computed?: { readonly entry: PreparationEntry; readonly sha256: string },
+): ContentOutcome {
+  const cache = options.cache?.enabled === true ? options.cache : undefined;
+  const sha256 = computed?.sha256 ?? (cache === undefined ? undefined : measureSync('hash', () => hashBytes(bytes)));
+  let cached = cache === undefined || sha256 === undefined ? undefined : measureSync('cache_lookup', () => cache.get(sha256, bytes.length));
+  if (computed !== undefined) {
+    if (cached === undefined) {
+      cached = computed.entry;
+    } else {
+      // The worker's result seeds the cache entry; `prepareContent` records the change.
+      if (cached.scan === null) cached.scan = computed.entry.scan;
+      if (cached.tokens === null) cached.tokens = computed.entry.tokens;
+      for (const [key, record] of Object.entries(computed.entry.chunks)) cached.chunks[key] ??= record;
+      countProfile('preparation_pool_files');
+    }
+  }
   const windowLimits = options.windowLimits ?? DEFAULT_WINDOW_LIMITS;
   const chunker = options.chunker ?? DEFAULT_CHUNKER;
   let outcome = prepareContent(relativePath, absolutePath, bytes, windowLimits, chunker, cached, sha256);
+  if (computed !== undefined && cache === undefined && (outcome.rejected || outcome.changed)) {
+    // A worker entry that does not reproduce from the bytes is not trusted: start over here.
+    countProfile('preparation_pool_rebuilt');
+    outcome = prepareContent(relativePath, absolutePath, bytes, windowLimits, chunker, undefined, sha256);
+  }
   if (cache !== undefined && cached !== undefined && sha256 !== undefined) {
     if (outcome.rejected) {
       // An entry that does not fit its verified bytes is dropped and rebuilt from scratch.
