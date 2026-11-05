@@ -187,6 +187,11 @@ export function planScan(
 /**
  * Deterministic batches bounded by the provider's own limits: path and offset order,
  * or the caller's order when `preserveOrder` is set (a prioritized partial scan).
+ *
+ * Growing a batch is bounded by an upper estimate (the sum of its singleton measures,
+ * state counted once) so the wire body is tokenized once per batch, not once per
+ * question added. The exact measure still decides near the limits and at flush time,
+ * and a batch whose exact measure does not fit sheds its tail into the next batch.
  */
 export function buildBatches(fragments: readonly PreparedFragment[], query: string, options: {
   readonly model?: string; readonly limits?: BatchLimits; readonly serialize?: (batch: EvaluationBatch) => string;
@@ -204,18 +209,50 @@ export function buildBatches(fragments: readonly PreparedFragment[], query: stri
   };
   const ordered = options.preserveOrder === true ? fragments : [...fragments].sort((left, right) => (left.path < right.path ? -1 : left.path > right.path ? 1 : 0)
     || (left.startLine - right.startLine) || (left.endLine - right.endLine));
+  const tokenBudget = limits.totalTokens * limits.headroomRatio;
   const batches: EvaluationBatch[] = [];
   let items: BatchItem[] = [];
-  let lastFit: { result: SerializedBatchMeasure; body?: string } | null = null;
+  let singletons: SerializedBatchMeasure[] = [];
+  let state: { tokens: number; bytes: number } | null = null;
 
-  const flush = (): void => {
-    if (items.length > 0) {
-      const batch = { query, items };
-      batches.push(batch);
-      if (lastFit !== null) options.onBatchMeasure?.(batch, lastFit.result, lastFit.body ?? serialize(batch));
-      items = [];
-      lastFit = null;
+  const stateOf = (item: BatchItem): { tokens: number; bytes: number } => {
+    const payload = JSON.parse(serialize({ query, items: [item] })) as { state: unknown };
+    const text = JSON.stringify(payload.state);
+    return { tokens: countQuestionTokens(text), bytes: Buffer.byteLength(text, 'utf8') };
+  };
+  const estimate = (): { tokens: number; bytes: number } => {
+    const shared = state ?? { tokens: 0, bytes: 0 };
+    let tokens = shared.tokens;
+    let bytes = shared.bytes;
+    for (const single of singletons) {
+      tokens += (single.tokens ?? tokenBudget) - shared.tokens;
+      bytes += single.bytes - shared.bytes;
     }
+    return { tokens, bytes };
+  };
+  const surelyFits = (): boolean => {
+    if (items.length > limits.maxItems) return false;
+    const upper = estimate();
+    return upper.tokens <= tokenBudget && upper.bytes <= limits.maxRequestBytes;
+  };
+
+  /** Emit the current batch from its exact measure; a tail the estimate let through starts the next batch. */
+  const flush = (drain: boolean): void => {
+    do {
+      const carried: { item: BatchItem; single: SerializedBatchMeasure }[] = [];
+      while (items.length > 0) {
+        const batch = { query, items };
+        const exact = measure(batch);
+        if (exact.result.fits || items.length === 1) {
+          batches.push(batch);
+          options.onBatchMeasure?.(batch, exact.result, exact.body);
+          break;
+        }
+        carried.unshift({ item: items.pop()!, single: singletons.pop()! });
+      }
+      items = carried.map((entry) => entry.item);
+      singletons = carried.map((entry) => entry.single);
+    } while (drain && items.length > 0);
   };
 
   for (const fragment of ordered) {
@@ -224,20 +261,21 @@ export function buildBatches(fragments: readonly PreparedFragment[], query: stri
       startLine: fragment.startLine, endLine: fragment.endLine,
       text: fragment.text, label: fragment.label ?? null,
     };
-    const premeasured = options.singletonMeasures?.get(item.id);
-    const singleton = premeasured === undefined ? measure({ query, items: [item] })
-      : { result: premeasured };
-    if (!singleton.result.fits) {
+    const single = options.singletonMeasures?.get(item.id) ?? measure({ query, items: [item] }).result;
+    if (!single.fits) {
       throw new ConfigurationError('INVALID_REQUEST', 'one question exceeds the provider context estimate');
     }
-    if (items.length > 0) {
-      const candidate = measure({ query, items: [...items, item] });
-      if (!candidate.result.fits) flush();
-      else lastFit = candidate;
-    }
-    if (items.length === 0) lastFit = singleton;
+    state ??= stateOf(item);
     items.push(item);
+    singletons.push(single);
+    while (items.length > 1 && !surelyFits() && !measure({ query, items }).result.fits) {
+      items.pop();
+      singletons.pop();
+      flush(false);
+      items.push(item);
+      singletons.push(single);
+    }
   }
-  flush();
+  flush(true);
   return batches;
 }

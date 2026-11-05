@@ -60,9 +60,27 @@ test('premeasured singleton questions and final batch costs keep exact payload l
     onBatchMeasure: (_batch, cost) => measurements.push(cost),
   });
   assert.deepEqual(batches.map((batch) => batch.items.length), [4]);
-  assert.equal(serializations, 3, 'only the three growing batch candidates are serialized');
+  assert.equal(serializations, 2, 'one serialization reads the shared state, one measures the final batch exactly');
   const body = serializeDirect(batches[0]!);
   assert.deepEqual(measurements, [{ tokens: countReferenceTokens(body), bytes: Buffer.byteLength(body), fits: true }]);
+});
+
+test('batching tokenizes the wire body once per batch, not once per added question', () => {
+  const fragments = Array.from({ length: 400 }, (_, i) => fragment(i, `const value${i} = ${'x'.repeat(200)};`));
+  const query = 'Find value';
+  const limits = batchLimits();
+  let serializations = 0;
+  let measured = 0;
+  const batches = buildBatches(fragments, query, {
+    serialize: (batch) => { serializations++; return serializeDirect(batch); }, limits,
+    onBatchMeasure: (batch, measure) => { measured++; assert.ok(measure.fits); assert.equal(measure.tokens, countReferenceTokens(serializeDirect(batch))); },
+  });
+  assert.ok(batches.length >= 7 && batches.length <= 8, `${batches.length} batches`);
+  assert.equal(measured, batches.length);
+  assert.ok(batches.every((batch) => fitsSerializedBatch(serializeDirect(batch), limits)));
+  assert.deepEqual(batches.flatMap((batch) => batch.items.map((item) => item.id)), fragments.map((item) => item.id));
+  // singletons (400) + state (1) + final measure per batch + a few exact checks near each limit
+  assert.ok(serializations < 400 + 1 + batches.length * 6, `${serializations} serializations`);
 });
 
 test('new direct profiles are pinned; rolling reuse is bounded, optional and adapter-specific', () => {
