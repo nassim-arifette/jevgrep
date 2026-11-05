@@ -189,9 +189,11 @@ export function planScan(
  * or the caller's order when `preserveOrder` is set (a prioritized partial scan).
  *
  * Growing a batch is bounded by an upper estimate (the sum of its singleton measures,
- * state counted once) so the wire body is tokenized once per batch, not once per
- * question added. The exact measure still decides near the limits and at flush time,
- * and a batch whose exact measure does not fit sheds its tail into the next batch.
+ * state counted once), and a batch closes when the next question would push that
+ * estimate over a limit, so the wire body is tokenized once per batch: at flush, where
+ * the exact measure decides and a batch that does not fit sheds its tail into the next
+ * batch. Closing on the estimate rather than probing the exact measure at each
+ * boundary leaves batches about one percent smaller for one tokenization less per batch.
  */
 export function buildBatches(fragments: readonly PreparedFragment[], query: string, options: {
   readonly model?: string; readonly limits?: BatchLimits; readonly serialize?: (batch: EvaluationBatch) => string;
@@ -203,9 +205,17 @@ export function buildBatches(fragments: readonly PreparedFragment[], query: stri
   const limits = options.limits ?? batchLimits();
   const serialize = options.serialize ?? ((batch) => JSON.stringify(buildRequestPayload(batch, options.model ?? 'estimate')));
   const countQuestionTokens = options.countQuestionTokens ?? questionTokenMemo();
+  // The body a boundary check just measured is the one `flush` emits next; keep the
+  // last two exact measures so the same wire body is not tokenized twice.
+  const recent: { body: string; result: SerializedBatchMeasure }[] = [];
   const measure = (batch: EvaluationBatch): { result: SerializedBatchMeasure; body: string } => {
     const body = serialize(batch);
-    return { result: measureSerializedBatch(body, limits, countQuestionTokens), body };
+    const hit = recent.find((entry) => entry.body === body);
+    if (hit !== undefined) return { result: hit.result, body };
+    const result = measureSerializedBatch(body, limits, countQuestionTokens);
+    recent.push({ body, result });
+    if (recent.length > 2) recent.shift();
+    return { result, body };
   };
   const ordered = options.preserveOrder === true ? fragments : [...fragments].sort((left, right) => (left.path < right.path ? -1 : left.path > right.path ? 1 : 0)
     || (left.startLine - right.startLine) || (left.endLine - right.endLine));
@@ -268,7 +278,7 @@ export function buildBatches(fragments: readonly PreparedFragment[], query: stri
     state ??= stateOf(item);
     items.push(item);
     singletons.push(single);
-    while (items.length > 1 && !surelyFits() && !measure({ query, items }).result.fits) {
+    while (items.length > 1 && !surelyFits()) {
       items.pop();
       singletons.pop();
       flush(false);

@@ -43,9 +43,18 @@ export function measureSerializedBatch(
   if (questions.length > limits.maxItems) return { fits: false, bytes, tokens: null };
   const tokens = countReferenceTokens(body);
   if (tokens > limits.totalTokens * limits.headroomRatio) return { fits: false, bytes, tokens };
-  const stateTokens = countQuestionTokens(JSON.stringify(payload.state));
-  return { fits: questions.every((question) => stateTokens + countQuestionTokens(JSON.stringify(question))
-    <= limits.perQuestionTokens * limits.headroomRatio), bytes, tokens };
+  // A BPE token covers at least one byte, so a question whose state and text fit the
+  // per-question limit in bytes fits in tokens; only a question near the limit is counted.
+  const perQuestion = limits.perQuestionTokens * limits.headroomRatio;
+  const stateText = JSON.stringify(payload.state);
+  const stateBytes = Buffer.byteLength(stateText, 'utf8');
+  let stateTokens: number | null = null;
+  return { fits: questions.every((question) => {
+    const questionText = JSON.stringify(question);
+    if (stateBytes + Buffer.byteLength(questionText, 'utf8') <= perQuestion) return true;
+    stateTokens ??= countQuestionTokens(stateText);
+    return stateTokens + countQuestionTokens(questionText) <= perQuestion;
+  }), bytes, tokens };
 }
 
 export function isPinnedModelRevision(model: string): boolean {
