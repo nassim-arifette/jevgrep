@@ -40,6 +40,7 @@ type OptionState = {
   readonly scope: readonly string[];
   readonly maxContextTokens: string | undefined;
   readonly continuation: string | undefined;
+  readonly budget: { maxInputTokens?: number; maxCostUsd?: number; maxSearchMs?: number };
   readonly moreQueries: readonly string[];
   readonly allowPartial: boolean;
   readonly json: boolean;
@@ -51,7 +52,8 @@ type OptionState = {
 /** Options each command accepts, so a misplaced flag is refused instead of ignored. */
 const ALLOWED_OPTIONS: Record<string, readonly string[]> = {
   init: ['--root', '--provider', '--global'],
-  search: ['--config', '--query', '--query-file', '--scope', '--max-context-tokens', '--allow-partial', '--continuation', '--json'],
+  search: ['--config', '--query', '--query-file', '--scope', '--max-context-tokens', '--allow-partial', '--continuation', '--json',
+    '--max-input-tokens', '--max-cost-usd', '--max-search-ms'],
   inspect: ['--config', '--scope', '--json'],
   doctor: ['--config'],
   mcp: ['--config'],
@@ -117,7 +119,7 @@ function readOptions(
   argv: readonly string[],
   allowed: readonly string[],
 ): { readonly state: OptionState; readonly error: string | undefined } {
-  const mutable: MutableOptions = { config: undefined, query: undefined, queryFile: undefined, scope: [], maxContextTokens: undefined, continuation: undefined, moreQueries: [], allowPartial: false, json: false, root: undefined, provider: undefined, global: false };
+  const mutable: MutableOptions = { config: undefined, query: undefined, queryFile: undefined, scope: [], maxContextTokens: undefined, continuation: undefined, budget: {}, moreQueries: [], allowPartial: false, json: false, root: undefined, provider: undefined, global: false };
   const state = mutable;
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -164,6 +166,7 @@ type MutableOptions = {
   scope: string[];
   maxContextTokens: string | undefined;
   continuation: string | undefined;
+  budget: { maxInputTokens?: number; maxCostUsd?: number; maxSearchMs?: number };
   moreQueries: string[];
   allowPartial: boolean;
   json: boolean;
@@ -229,6 +232,19 @@ function applyValueOption(state: MutableOptions, option: string, value: string):
       }
       state.maxContextTokens = value;
       return undefined;
+    case '--max-input-tokens':
+    case '--max-search-ms': {
+      const key = option === '--max-input-tokens' ? 'maxInputTokens' : 'maxSearchMs';
+      if (state.budget[key] !== undefined) return `option '${option}' was given twice`;
+      if (!/^[1-9][0-9]*$/.test(value)) return `option '${option}' needs a positive integer, got '${value}'`;
+      state.budget[key] = Number(value);
+      return undefined;
+    }
+    case '--max-cost-usd':
+      if (state.budget.maxCostUsd !== undefined) return "option '--max-cost-usd' was given twice";
+      if (!/^[0-9]+(\.[0-9]+)?$/.test(value)) return `option '--max-cost-usd' needs a non-negative number, got '${value}'`;
+      state.budget.maxCostUsd = Number(value);
+      return undefined;
     default:
       return `option '${option}' is not accepted here`;
   }
@@ -268,6 +284,9 @@ function searchCommand(
   if (state.maxContextTokens !== undefined) {
     raw['max_context_tokens'] = Number(state.maxContextTokens);
   }
+  if (state.budget.maxInputTokens !== undefined) raw['max_input_tokens'] = state.budget.maxInputTokens;
+  if (state.budget.maxCostUsd !== undefined) raw['max_cost_usd'] = state.budget.maxCostUsd;
+  if (state.budget.maxSearchMs !== undefined) raw['max_search_ms'] = state.budget.maxSearchMs;
   try {
     // The engine applies operator limits after loading trusted configuration.
     const { max_context_tokens, ...normalized } = parseSearchRequest(raw, {

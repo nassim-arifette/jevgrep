@@ -200,7 +200,7 @@ export class SearchEngine {
       ...(invocation.searchId === undefined ? {} : { searchId: invocation.searchId }),
       clock: this.clock,
       ...(invocation.startedAtMs === undefined ? {} : { startedAtMs: invocation.startedAtMs }),
-      deadlineMs: config.search.deadline_ms,
+      deadlineMs: requestedDeadline(request, config.search.deadline_ms),
       ...(invocation.signal === undefined ? {} : { clientSignal: invocation.signal }),
       ...(this.#options.logger === undefined ? {} : { logger: this.#options.logger }),
     });
@@ -270,8 +270,11 @@ export class SearchEngine {
         { count: this.#cache.stats.corrupt + this.#cache.stats.failures });
     }
 
-    const enabledCaps = enabledCapsOf(config.scan_caps);
     const pricePerMillion = config.provider.pricing?.input_usd_per_million_tokens ?? null;
+    if (request.max_cost_usd !== undefined && pricePerMillion === null) {
+      throw new RequestValidationError(new ContractValidationError('$.max_cost_usd', 'a cost budget needs a pricing record for the configured model'));
+    }
+    const enabledCaps = withRequestBudget(enabledCapsOf(config.scan_caps), request);
     const planOf = (batches: readonly EvaluationBatch[]): ScanPlan => measureSync('planning', () => planScan(pending, request.query, {
       model,
       batches,
@@ -614,6 +617,22 @@ type Continuation = { readonly binding: Buffer; readonly state: ContinuationStat
  * Continuation state of a request, or null when scores are not cached: without the
  * cache a continued search would evaluate everything again, so none is offered.
  */
+/** The operator's caps, lowered to the budgets of this call; a budget never raises a cap. */
+function withRequestBudget(
+  caps: Partial<Record<ScanCap, number>>, request: { readonly max_input_tokens?: number; readonly max_cost_usd?: number },
+): Partial<Record<ScanCap, number>> {
+  const lowered = { ...caps };
+  if (request.max_input_tokens !== undefined) lowered.estimated_input_tokens = Math.min(caps.estimated_input_tokens ?? Infinity, request.max_input_tokens);
+  if (request.max_cost_usd !== undefined) lowered.estimated_cost_usd = Math.min(caps.estimated_cost_usd ?? Infinity, request.max_cost_usd);
+  return lowered;
+}
+
+/** The search deadline, shortened to the call's `max_search_ms` when it names one; the request is validated later. */
+function requestedDeadline(request: unknown, configuredMs: number): number {
+  const hinted = typeof request === 'object' && request !== null ? (request as { max_search_ms?: unknown }).max_search_ms : undefined;
+  return typeof hinted === 'number' && Number.isFinite(hinted) && hinted >= 1 ? Math.min(configuredMs, Math.floor(hinted)) : configuredMs;
+}
+
 function continuationOf(
   request: ReturnType<typeof parseCallerRequest>, model: string, config: LoadedConfiguration['config'],
 ): Continuation | null {

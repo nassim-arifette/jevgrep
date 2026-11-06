@@ -139,21 +139,32 @@ export function createSearchRequestSchema(limits: ResponseLimits = defaultRespon
     max_context_tokens: numberValue(CONTRACT_LIMITS.min_response_tokens, limits.max_response_tokens),
     allow_partial_scan: booleanValue,
     continuation: textValue(MAX_CONTINUATION_TOKEN_LENGTH),
+    // Search budgets of one call: each one implies a partial scan when it is reached,
+    // reported as such with a continuation. They never raise an operator's cap.
+    max_input_tokens: positiveCount,
+    max_cost_usd: usd,
+    max_search_ms: positiveCount,
   });
 }
 export const searchRequestSchema = createSearchRequestSchema();
 export type SearchRequest = Infer<typeof searchRequestSchema>;
-export type ResolvedSearchRequest = Required<Omit<SearchRequest, 'continuation'>> & Pick<SearchRequest, 'continuation'>;
+export type SearchBudgetField = 'max_input_tokens' | 'max_cost_usd' | 'max_search_ms';
+export type ResolvedSearchRequest = Required<Omit<SearchRequest, 'continuation' | SearchBudgetField>> & Pick<SearchRequest, 'continuation' | SearchBudgetField>;
 
 /** Pure lexical validation. Filesystem authorization remains the source reader's job. */
 export function parseSearchRequest(input: unknown, limits: ResponseLimits = defaultResponseLimits): ResolvedSearchRequest {
   const request = createSearchRequestSchema(limits).parse(input);
+  const budgeted = request.max_input_tokens !== undefined || request.max_cost_usd !== undefined || request.max_search_ms !== undefined;
   return {
     query: request.query,
     scope: normalizeScope(request.scope ?? ['.']),
     max_context_tokens: request.max_context_tokens ?? limits.default_response_tokens,
-    allow_partial_scan: request.allow_partial_scan ?? false,
+    // A caller who names a budget accepts the partial result it may produce.
+    allow_partial_scan: request.allow_partial_scan ?? budgeted,
     ...(request.continuation === undefined ? {} : { continuation: request.continuation }),
+    ...(request.max_input_tokens === undefined ? {} : { max_input_tokens: request.max_input_tokens }),
+    ...(request.max_cost_usd === undefined ? {} : { max_cost_usd: request.max_cost_usd }),
+    ...(request.max_search_ms === undefined ? {} : { max_search_ms: request.max_search_ms }),
   };
 }
 

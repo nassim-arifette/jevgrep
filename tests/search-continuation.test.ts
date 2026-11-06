@@ -129,3 +129,38 @@ test('the token stays bounded and the human view prints how to continue', async 
     assert.ok(view.includes(`continue: --continuation ${result.continuation!.next!}`));
   } finally { space.cleanup(); }
 });
+
+test('a per-call input-token budget yields a partial result with a continuation, under the operator cap', async () => {
+  const space = createWorkspace({ files });
+  const provider = countingProvider();
+  try {
+    const engine = createSearchEngine({ configuration: space.loaded, provider });
+    const first = asResult((await engine.search({ query: 'Where is invalidation?', max_input_tokens: 1_200 })).outcome);
+    assert.equal(first.status, 'partial');
+    assert.ok(first.report.stop_reasons.includes('SCAN_CAP_REACHED'));
+    assert.ok(first.report.fragments.remote_evaluated > 0 && first.report.fragments.remote_evaluated < 70);
+    assert.ok(first.report.usage.provider_input_tokens_estimated <= 1_200);
+    assert.ok(typeof first.continuation?.next === 'string', 'a budgeted call can be continued');
+    const full = asResult((await engine.search({ query: 'Where is invalidation?' })).outcome);
+    assert.equal(full.status, 'complete');
+    const rejected = asError((await engine.search({ query: 'Where is invalidation?', max_cost_usd: 0.01 })).outcome);
+    assert.equal(rejected.error.code, 'INVALID_REQUEST', 'a cost budget needs a pricing record');
+  } finally { space.cleanup(); }
+});
+
+test('a per-call deadline budget shortens the search deadline, never lengthens it', async () => {
+  const space = createWorkspace({ files });
+  const provider: ProviderClient = {
+    model: 'jev-1.13.0',
+    async evaluateBatch(batch) {
+      await new Promise((resolve) => setTimeout(resolve, 400));
+      return { scores: new Map(batch.items.map((item) => [item.id, 0.9])), invalid: [],
+        usage: { inputTokens: 10, outputTokens: 0 }, requestedModel: this.model, returnedModel: this.model, transmittedBytes: 0, requestId: null };
+    },
+  };
+  try {
+    const engine = createSearchEngine({ configuration: space.loaded, provider });
+    const outcome = (await engine.search({ query: 'Where is invalidation?', max_search_ms: 50 })).outcome;
+    assert.ok('report' in outcome && outcome.report.stop_reasons.includes('DEADLINE'), JSON.stringify(outcome).slice(0, 300));
+  } finally { space.cleanup(); }
+});

@@ -172,6 +172,15 @@ in a local lexical priority order (question terms in the fragment text, file nam
 symbol label), so the evaluated share holds the most likely fragments first; it is
 still reported as partial.
 
+A call can also name its own search budget: `--max-input-tokens <n>` (provider input
+tokens), `--max-cost-usd <usd>` (from the configured pricing) or `--max-search-ms <n>`
+(wall-clock). The MCP tools take the same fields (`max_input_tokens`, `max_cost_usd`,
+`max_search_ms`). A budget never raises an operator cap; when the scope needs more,
+the highest-priority fragments are evaluated first and the result is explicitly
+`partial`, with the coverage counts and a `continuation` token to evaluate the rest.
+An agent can so ask a short question first and continue only when the evidence is
+insufficient.
+
 When fragments were left unevaluated or relevant evidence did not fit the response
 budget, the result carries a continuation token (`continuation.next` in JSON, a
 `continue: --continuation <token>` line in the human view). Run the same query and

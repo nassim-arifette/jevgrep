@@ -27,6 +27,9 @@ const OPTION_TEXT: Record<string, string> = {
   '--max-context-tokens': '--max-context-tokens <n>   response budget in reference tokens (min 1024; configured default/max: initially 8000/16000)',
   '--allow-partial': '--allow-partial            allow a partial scan explicitly (default: refuse)',
   '--continuation': '--continuation <token>     continue a partial search with the token it printed (same query and scope)',
+  '--max-input-tokens': '--max-input-tokens <n>     search budget in provider input tokens; past it the result is partial, with a continuation',
+  '--max-cost-usd': '--max-cost-usd <usd>       search budget in USD from the configured pricing; same partial semantics',
+  '--max-search-ms': '--max-search-ms <n>        search budget in milliseconds; what was not evaluated in time can be continued',
   '--json': '--json                     canonical JSON on stdout instead of the human view',
 };
 
@@ -34,7 +37,7 @@ const OPTION_TEXT: Record<string, string> = {
 const COMMAND_USAGE: Record<string, string> = {
   init: 'jevgrep init [--global] [--root <path>] [--provider typesafe|vercel|openrouter]',
   search:
-    'jevgrep search [--config <path>] (--query <text> | --query-file <path>) [--scope <path>]... [--max-context-tokens <n>] [--json] [--allow-partial] [--continuation <token>]',
+    'jevgrep search [--config <path>] (--query <text> | --query-file <path>) [--scope <path>]... [--max-context-tokens <n>] [--json] [--allow-partial] [--continuation <token>] [--max-input-tokens <n>] [--max-cost-usd <usd>] [--max-search-ms <n>]',
   inspect: 'jevgrep inspect [--config <path>] [--scope <path>]... [--json]',
   doctor: 'jevgrep doctor [--config <path>]',
   mcp: 'jevgrep mcp [--config <path>]',

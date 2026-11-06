@@ -72,6 +72,18 @@ export const TOOL_INPUT_SCHEMA = Object.freeze({
       type: 'string',
       description: 'Token from continuation.next of a partial result, to evaluate what that search left out without repeating delivered excerpts. Repeat the same query and scope. Continue only when the evidence so far is insufficient.',
     },
+    max_input_tokens: {
+      type: 'integer', minimum: 1,
+      description: 'Search budget: provider input tokens this call may spend. When the scope needs more, the highest-priority fragments are evaluated first and the result is partial with a continuation. Never raises the operator cap.',
+    },
+    max_cost_usd: {
+      type: 'number', minimum: 0,
+      description: 'Search budget in USD for this call, from the configured pricing; same partial-result semantics as max_input_tokens.',
+    },
+    max_search_ms: {
+      type: 'integer', minimum: 1,
+      description: 'Search budget in wall-clock milliseconds for this call; what was not evaluated in time is reported and can be continued.',
+    },
   },
   required: ['query'],
   additionalProperties: false,
