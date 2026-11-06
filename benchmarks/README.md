@@ -370,3 +370,12 @@ Large repositories (1–7M tokens), Java, and a hand-written Go/Rust reliability
 four real local cache scenarios, annotation consistency, evidence metrics and shared
 dispatch limits. Existing Windows/Linux CI runs these offline. It does not enforce
 machine-dependent timing thresholds or issue paid provider requests.
+
+## Second-stage re-ranking (not measured)
+
+`scripts/bench-rerank.ts` (branch `bench/rerank`) hands the fragments JevGrep scored
+above the threshold, from captured candidate pools, to a stronger model (default
+`gpt-6.1-terra`, reasoning effort medium) and measures the top five of its order
+against the relevance order replayed on the same pools. `--dry-run` prints the prompt
+tokens (1.4M for the 50 hard-set searches, about 80 fragments per question at most).
+No figures are published: the run was not made.
