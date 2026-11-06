@@ -261,6 +261,38 @@ test('one call waits, the third is BUSY, and a queued cancellation frees its slo
   assert.equal(outcome.error.code, 'BUSY');
 });
 
+test('closing the input drops the queued call and lets the running one finish', async () => {
+  let calls = 0;
+  let release: () => void = () => {};
+  const blocked = new Promise<void>((resolve) => { release = resolve; });
+  const provider: ProviderClient = {
+    model: 'jev-1.13.0',
+    async evaluateBatch(batch) {
+      calls += 1;
+      await blocked;
+      return {
+        scores: new Map(batch.items.map((item) => [item.id, 0.9])), invalid: [],
+        usage: { inputTokens: 100, outputTokens: 0 }, requestedModel: this.model,
+        returnedModel: this.model, transmittedBytes: 500, requestId: null,
+      };
+    },
+  };
+  const active = session(provider);
+  const send = (id: number, query: string): void => active.send({
+    jsonrpc: '2.0', id, method: 'tools/call', params: { name: TOOL_NAME, arguments: { query } },
+  });
+  send(1, 'running when the client leaves');
+  send(2, 'queued when the client leaves');
+  await until(() => calls === 1);
+  const closing = active.responses();
+  await new Promise((resolve) => setTimeout(resolve, 50));
+  release();
+  const messages = await closing;
+  assert.equal(calls, 1, 'the queued search never reached the provider');
+  assert.ok(messages.some((message) => message['id'] === 1), 'the running call still answered');
+  assert.ok(!messages.some((message) => message['id'] === 2));
+});
+
 test('a cancelled call never produces a later result', async () => {
   let release: (() => void) | undefined;
   const blocked = new Promise<void>((resolve) => {

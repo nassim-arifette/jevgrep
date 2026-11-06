@@ -876,6 +876,7 @@ function candidatePool(
     candidates: scored.map(({ fragment, score }) => ({
       id: fragment.id, path: fragment.path, sha256: fragment.sha256, startLine: fragment.startLine, endLine: fragment.endLine,
       score, chunker: fragment.chunker, classification: fragment.classification, label: fragment.label ?? null,
+      declaration: fragment.declaration ?? null,
     })),
     inputs,
   };

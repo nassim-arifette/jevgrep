@@ -21,6 +21,8 @@ export type PooledCandidate = {
   readonly chunker: string;
   readonly classification: 'line-window' | 'syntax-range';
   readonly label: string | null;
+  /** The declaration a split window was cut from; selection may return it whole. Absent in pools captured before it was recorded. */
+  readonly declaration?: { readonly startLine: number; readonly endLine: number } | null;
 };
 
 export type CandidatePool = {

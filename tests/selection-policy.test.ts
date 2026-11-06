@@ -30,6 +30,8 @@ const body = (name: string, variant: string): string[] => [
 const FILES: Record<string, string> = {
   'src/auth.ts': [...body('checkAdmin', "'admin'"), ...body('checkAdminCopy', "'admin'"), ...body('checkUser', "'user'")].join('\n') + '\n',
   'src/billing.ts': ['export function invoiceTotal(lines: Line[]): number {', '  return lines.reduce((sum, line) => sum + line.amount, 0);', '}'].join('\n') + '\n',
+  // One declaration longer than a window: the engine returns it whole when it fits, and a replay must do the same.
+  'src/admin_table.go': `package auth\n\nfunc adminTable() []int {\n\treturn []int{\n${Array.from({ length: 400 }, (_, n) => `\t\t${String(n * 7919)},\n`).join('')}\t}\n}\n`,
 };
 
 function sliceLines(path: string, startLine: number, endLine: number): string | null {
@@ -104,7 +106,9 @@ class FixedScores implements ProviderClient {
 
   evaluateBatch(batch: EvaluationBatch): Promise<BatchEvaluation> {
     this.calls += 1;
-    const scores = new Map(batch.items.map((item) => [item.id, item.path === 'src/billing.ts' ? 0.6 : 0.9]));
+    // Only the head window of the long Go declaration qualifies, so a whole-declaration return is visible.
+    const scores = new Map(batch.items.map((item) => [item.id, item.path === 'src/billing.ts' ? 0.6
+      : item.path === 'src/admin_table.go' ? (item.startLine <= 3 ? 0.9 : 0.4) : 0.9]));
     return Promise.resolve({
       scores, invalid: [], usage: { inputTokens: 1_000, outputTokens: 0 }, requestedModel: this.model,
       returnedModel: this.model, transmittedBytes: 4_096, requestId: 'req-test',
@@ -125,8 +129,10 @@ test('a captured pool replays offline to the identical live response, and other 
   const pool = pools[0]!;
   assert.ok(pool.candidates.length > 0);
   assert.ok(!('text' in pool.candidates[0]!), 'pools carry ranges and scores, never source text');
+  assert.ok(pool.candidates.some((candidate) => candidate.path === 'src/admin_table.go' && candidate.declaration != null), 'split windows keep their declaration');
   const calls = provider.calls;
   assert.deepEqual(replayPool(pool, FILES, { policy: 'relevance' }).result, live.outcome);
+  assert.notDeepEqual(replayPool(pool, FILES, { policy: 'relevance', wholeDeclarations: false }).result.excerpts, live.outcome.status === 'complete' ? live.outcome.excerpts : []);
   for (const policy of SELECTION_POLICIES) {
     for (const requestedTokens of [1_200, 2_000, 4_000]) {
       const { result, measuredTokens } = replayPool(pool, FILES, { policy, requestedTokens });

@@ -76,6 +76,8 @@ export const TOOL_INPUT_SCHEMA = Object.freeze({
 export const MAX_MESSAGE_LENGTH = 1_048_576;
 /** Unread output, in bytes, after which the client is treated as gone. */
 export const MAX_PENDING_OUTPUT_BYTES = 16_777_216;
+/** How long a search still running when the client closes its input may finish before it is cancelled. */
+export const MCP_CLOSE_GRACE_MS = 2_000;
 
 export type McpServerOptions = {
   readonly engine: SearchEngine;
@@ -199,8 +201,16 @@ export function runMcpServer(options: McpServerOptions): Promise<void> {
       closed = true;
       const rest = framer.flush();
       if (rest !== null && !abandoned) consume(rest);
-      // Let pending calls settle so the process never exits mid-response.
+      // A closed input is the client's shutdown request (MCP lifecycle): nothing new
+      // is admitted and a queued search never starts, so no provider work is bought
+      // for a client that is leaving. The running call may still finish within a
+      // grace period, since its response can still be delivered; past it, it is
+      // cancelled so the process exits.
+      calls.drain();
+      const grace = setTimeout(() => { calls.cancelAll(); }, MCP_CLOSE_GRACE_MS);
+      grace.unref();
       void Promise.allSettled(inFlight).then(() => {
+        clearTimeout(grace);
         options.onClose?.();
         resolve();
       });

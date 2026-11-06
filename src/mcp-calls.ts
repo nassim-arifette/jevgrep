@@ -21,6 +21,8 @@ export type CallScheduler = {
   /** Abort a call; a queued call is also removed and settled without running. */
   cancel(id: JsonRpcId): void;
   cancelAll(): void;
+  /** Stop admitting: the queued call is dropped unrun and later submissions settle at once; the running call continues. */
+  drain(): void;
 };
 
 const callKey = (id: JsonRpcId): string => JSON.stringify(id);
@@ -30,6 +32,7 @@ export function createCallScheduler(run: (call: ToolCall) => Promise<void>): Cal
   const active = new Map<string, ToolCall>();
   let running: ToolCall | null = null;
   let queued: ToolCall | null = null;
+  let draining = false;
 
   const dropQueued = (): void => {
     if (queued === null) return;
@@ -59,6 +62,7 @@ export function createCallScheduler(run: (call: ToolCall) => Promise<void>): Cal
     has: (id) => active.has(callKey(id)),
     isFull: () => running !== null && queued !== null,
     submit(call) {
+      if (draining) { call.resolve(); return; }
       active.set(callKey(call.id), call);
       if (running === null) void execute(call);
       else queued = call;
@@ -71,6 +75,10 @@ export function createCallScheduler(run: (call: ToolCall) => Promise<void>): Cal
     },
     cancelAll() {
       for (const call of active.values()) call.controller.abort();
+      dropQueued();
+    },
+    drain() {
+      draining = true;
       dropQueued();
     },
   };

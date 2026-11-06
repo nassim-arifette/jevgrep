@@ -55,6 +55,8 @@ export function readCapture(path: string): CaptureFile {
 export type ReplayArm = {
   readonly policy: SelectionPolicy;
   readonly tuning?: Partial<SelectionTuning>;
+  /** Whole-declaration return of split windows, as the engine does; false replays windows only. */
+  readonly wholeDeclarations?: boolean;
   /** Response budget; the excerpt budget is derived exactly as in a live search. */
   readonly requestedTokens?: number;
   readonly threshold?: number;
@@ -102,6 +104,7 @@ export function replayPool(pool: CandidatePool, files: Readonly<Record<string, s
       id: entry.id, path: entry.path, sha256: entry.sha256, startLine: entry.startLine, endLine: entry.endLine,
       byteStart: 0, byteEnd: Buffer.byteLength(text), text, byteCount: Buffer.byteLength(text), tokenCount: 0,
       chunker: entry.chunker, classification: entry.classification, label: entry.label,
+      ...(entry.declaration == null ? {} : { declaration: entry.declaration }),
     };
     return { fragment, score: entry.score };
   });
@@ -118,6 +121,7 @@ export function replayPool(pool: CandidatePool, files: Readonly<Record<string, s
       return text === undefined ? null : slice(indexes.get(path) ?? lineIndex(text), startLine, endLine);
     },
     policy: arm.policy, ...(arm.tuning === undefined ? {} : { tuning: arm.tuning }),
+    wholeDeclarations: arm.wholeDeclarations ?? true,
   });
   const ranges = arm.topK === undefined ? selection.ranges : topRanges(selection.ranges, arm.topK);
   const inputs: ReportInputs = {
