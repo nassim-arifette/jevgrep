@@ -272,7 +272,7 @@ export function createDefaultConfiguration(repositoryRoot: string, model: string
       adapter: 'typesafe-direct', base_url: 'https://api.typesafe.ai',
       api_key_env: 'TYPESAFE_API_KEY', model,
     },
-    search: { deadline_ms: 300_000, concurrency: 4, require_fit: true, ...defaultResponseLimits, threshold: 0.5 },
+    search: { deadline_ms: 300_000, concurrency: 16, require_fit: true, ...defaultResponseLimits, threshold: 0.5 },
     scan_caps: Object.fromEntries(SCAN_CAP_KEYS.map((key) => [key, null])),
     source: { respect_gitignore: true, follow_links: false, max_file_bytes: 1_048_576, extra_deny_globs: [] },
     cache: { enabled: true, ttl_seconds: 604_800, max_bytes: 104_857_600 },

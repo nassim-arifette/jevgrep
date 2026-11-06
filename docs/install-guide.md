@@ -127,7 +127,7 @@ apply to disclosed content; JevGrep does not promise zero retention.
 | --- | --- | --- |
 | `scan_caps.*` | `null` | optional caps disabled; `0` is a real zero allowance |
 | `search.deadline_ms` | `300000` | five minutes, including preparation and queue wait |
-| `search.concurrency` | `4` | concurrent provider work |
+| `search.concurrency` | `16` | concurrent provider requests; a large repository scans about 25 % faster at 32 through the Vercel AI Gateway, slower keys may need less |
 | `search.default_response_tokens` | `8000` | default response budget; 4000 returned about three excerpts and left well-scored evidence out (see the [response budget report](../benchmarks/baselines/2026-11-04-response-budget.md)) |
 | `search.max_response_tokens` | `16000` | maximum response budget |
 | `search.threshold` | `0.5` | score threshold for selection |
