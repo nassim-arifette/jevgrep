@@ -36,7 +36,7 @@ import { batchLimits, isOpenRouterModelRevision, scoreCachePolicy, MAX_ROLLING_T
 import { runEvaluations } from './evaluation/scheduler.ts';
 import { SearchContext, SearchLogger, isAbortError, runPhase, systemClock } from './lifecycle.ts';
 import type { Clock } from './lifecycle.ts';
-import { batchCost, buildBatches, enabledCapsOf, measureSerializedBodies, planScan, questionTokenMemo } from './planning.ts';
+import { batchCost, buildBatchesAsync, enabledCapsOf, measureSerializedBodiesAsync, planScan, questionTokenMemo } from './planning.ts';
 import type { BatchCost, ScanPlan } from './planning.ts';
 import { PARTIAL_SCAN_ORDER, prioritizeFiles, prioritizeFragments, type CandidateOrder } from './priority.ts';
 import { estimateInputCostUsd } from './pricing.ts';
@@ -235,15 +235,15 @@ export class SearchEngine {
     const { costOf, onBatchMeasure } = batchCostMemo(model, serialize);
     const limits = batchLimits(adapter);
     const countQuestionTokens = questionTokenMemo();
-    const { cached, pending, identities, singletonMeasures } = this.#lookupCachedScores(prepared.fragments, {
-      query: request.query, serialize, limits, countQuestionTokens,
+    const { cached, pending, identities, singletonMeasures } = await this.#lookupCachedScores(prepared.fragments, {
+      query: request.query, serialize, limits, countQuestionTokens, signal: context.signal,
       identity: { endpoint: config.provider.base_url, model, adapter, cacheMode: cachePolicy.mode },
     });
-    const batchesOf = (fragments: readonly PreparedFragment[], preserveOrder: boolean): EvaluationBatch[] =>
-      measureSync('batching', () => buildBatches(fragments, request.query, {
-        model, serialize, limits, countQuestionTokens, singletonMeasures, onBatchMeasure, preserveOrder,
+    const batchesOf = (fragments: readonly PreparedFragment[], preserveOrder: boolean): Promise<EvaluationBatch[]> =>
+      measureAsync('batching', () => buildBatchesAsync(fragments, request.query, {
+        model, serialize, limits, countQuestionTokens, singletonMeasures, onBatchMeasure, preserveOrder, signal: context.signal,
       }));
-    const pendingBatches = batchesOf(pending, false);
+    const pendingBatches = await batchesOf(pending, false);
     if (this.#cache.stats.corrupt > 0 || this.#cache.stats.failures > 0) {
       context.diagnostics.record('CACHE_UNAVAILABLE', context.elapsedMs,
         { count: this.#cache.stats.corrupt + this.#cache.stats.failures });
@@ -268,7 +268,7 @@ export class SearchEngine {
     // An allowed partial scan evaluates the highest-priority prefix instead of a path
     // prefix. The strict preflight already ran on the complete plan.
     if (plan.capReached && !plan.rejected && partialOrder !== null) {
-      plan = planOf(batchesOf(prioritizeFragments(pending, request.query, partialOrder), true));
+      plan = planOf(await batchesOf(prioritizeFragments(pending, request.query, partialOrder), true));
     }
 
     const usage: UsageAccount = {
@@ -351,18 +351,19 @@ export class SearchEngine {
    * Both evaluation APIs judge each question independently against shared state.
    * Hash its exact envelope and regroup only misses; neighbors cannot invalidate it.
    */
-  #lookupCachedScores(fragments: readonly PreparedFragment[], options: {
+  async #lookupCachedScores(fragments: readonly PreparedFragment[], options: {
     readonly query: string;
     readonly serialize: (batch: EvaluationBatch) => string;
     readonly limits: ReturnType<typeof batchLimits>;
     readonly countQuestionTokens: ReturnType<typeof questionTokenMemo>;
     readonly identity: IdentityScope;
-  }): {
+    readonly signal?: AbortSignal;
+  }): Promise<{
     cached: Map<string, number>;
     pending: PreparedFragment[];
     identities: Map<string, string>;
     singletonMeasures: Map<string, SerializedBatchMeasure>;
-  } {
+  }> {
     const { query, serialize, limits, countQuestionTokens } = options;
     const cached = new Map<string, number>();
     const pending: PreparedFragment[] = [];
@@ -382,7 +383,7 @@ export class SearchEngine {
       if (hit !== null) cached.set(fragment.id, hit);
       else pending.push(fragment);
     }
-    const measures = measureSync('batching', () => measureSerializedBodies(bodies, limits, countQuestionTokens));
+    const measures = await measureAsync('batching', () => measureSerializedBodiesAsync(bodies, limits, countQuestionTokens, options.signal === undefined ? {} : { signal: options.signal }));
     pending.forEach((fragment, index) => { singletonMeasures.set(fragment.id, measures[index]!); });
     return { cached, pending, identities, singletonMeasures };
   }

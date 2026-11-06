@@ -46,6 +46,32 @@ test('cooperative preparation returns exactly what synchronous preparation retur
   assert.equal(cooperative.complete, true);
 });
 
+test('cooperative preparation on the worker pool returns what synchronous preparation returns and keeps the event loop live', async () => {
+  const root = repository(200);
+  const strip = (prepared: ReturnType<typeof prepareScope>): unknown => ({
+    complete: prepared.complete,
+    fragments: prepared.fragments.map((fragment) => [fragment.id, fragment.text, fragment.tokenCount, fragment.declaration ?? null]),
+  });
+  const sync = prepareScope(AuthorizedRoot.open(root), ['.'], { inventory, threads: 0 });
+  let ticks = 0;
+  let running = true;
+  const tick = (): void => { if (running) { ticks += 1; setImmediate(tick); } };
+  setImmediate(tick);
+  const cooperative = await prepareScopeCooperatively(AuthorizedRoot.open(root), ['.'], { inventory, threads: 2 }, 0);
+  running = false;
+  assert.deepEqual(strip(cooperative), strip(sync));
+  assert.ok(ticks > 10, `the event loop ran ${String(ticks)} times while the pool prepared 200 files`);
+});
+
+test('a stop requested from the event loop interrupts cooperative preparation on the worker pool', async () => {
+  const root = repository(200);
+  let stop = false;
+  setImmediate(() => { stop = true; });
+  const prepared = await prepareScopeCooperatively(AuthorizedRoot.open(root), ['.'], { inventory, threads: 2, shouldStop: () => stop }, 0);
+  assert.equal(prepared.complete, false);
+  assert.ok(prepared.files.length < 200);
+});
+
 test('a stop requested from the event loop interrupts cooperative inventory and preparation', async () => {
   const root = repository(200);
   for (const stage of ['inventory', 'preparation'] as const) {

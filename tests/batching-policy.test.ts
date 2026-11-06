@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { buildBatches } from '../src/planning.ts';
+import { buildBatches, buildBatchesAsync } from '../src/planning.ts';
 import type { EvaluationBatch } from '../src/evaluation/contracts.ts';
 import { buildRequestPayload } from '../src/evaluation/jev.ts';
 import { batchLimits, fitsSerializedBatch, measureSerializedBatch, scoreCachePolicy } from '../src/evaluation/policy.ts';
@@ -103,4 +103,16 @@ test('batches built with pool workers are the batches built on the calling threa
   assert.deepEqual(pooled.map((batch) => batch.items.map((item) => item.id)), sequential.map((batch) => batch.items.map((item) => item.id)));
   assert.ok(sequential.length > 5);
   assert.ok(sequential.every((batch) => fitsSerializedBatch(serializeDirect(batch), limits)));
+});
+
+test('batches built asynchronously on the pool are the batches built synchronously, and an abort stops the wait', async () => {
+  const fragments = Array.from({ length: 600 }, (_, i) => fragment(i, `const value${i} = "${'word '.repeat(60 + (i % 37))}";`));
+  const query = 'Find value';
+  const limits = batchLimits();
+  const sequential = buildBatches(fragments, query, { serialize: serializeDirect, limits, threads: 0 });
+  const asynchronous = await buildBatchesAsync(fragments, query, { serialize: serializeDirect, limits, threads: 2 });
+  assert.deepEqual(asynchronous.map((batch) => batch.items.map((item) => item.id)), sequential.map((batch) => batch.items.map((item) => item.id)));
+  const controller = new AbortController();
+  controller.abort();
+  await assert.rejects(buildBatchesAsync(fragments, query, { serialize: serializeDirect, limits, threads: 2, signal: controller.signal }), /aborted/);
 });

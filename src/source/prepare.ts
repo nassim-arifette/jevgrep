@@ -26,7 +26,7 @@ import {
   PREPARATION_CACHE_SCHEMA_VERSION, chunkKey, decodeLineTokens, encodeLineTokens, isRecordable, recordOf, resultOf,
   type PreparationCache, type PreparationEntry, type ScanVerdict,
 } from './preparation-cache.ts';
-import { PREPARE_POOL_MIN_BYTES, type PreparePool, acquirePool } from './prepare-pool.ts';
+import { PREPARE_POOL_MIN_BYTES, type PoolLease, type PoolMode, type PoolResult, acquirePool } from './prepare-pool.ts';
 import { SnapshotError, createSnapshot, hashBytes } from './snapshot.ts';
 import type { SourceSnapshot } from './snapshot.ts';
 
@@ -135,7 +135,7 @@ export function prepareScope(
   scope: readonly string[],
   options: PrepareOptions,
 ): PreparedScope {
-  const steps = preparationSteps(root, scope, options);
+  const steps = preparationSteps(root, scope, options, 'sync');
   for (;;) {
     const step = steps.next();
     if (step.done === true) return step.value;
@@ -150,8 +150,9 @@ export const PREPARATION_SLICE_MS = 10;
  *
  * Preparation is synchronous CPU and file work; without yielding, a stdio MCP server
  * cannot read a cancellation, a ping or a second request until it ends. Yields happen
- * between files, so the longest single file bounds the pause. The result is identical
- * to `prepareScope`.
+ * between files, so the longest single file bounds the pause; with a worker pool the
+ * files are prepared off this thread and awaited, so the pause is shorter still. The
+ * result is identical to `prepareScope`.
  */
 export async function prepareScopeCooperatively(
   root: AuthorizedRoot,
@@ -159,11 +160,16 @@ export async function prepareScopeCooperatively(
   options: PrepareOptions,
   sliceMs: number = PREPARATION_SLICE_MS,
 ): Promise<PreparedScope> {
-  const steps = preparationSteps(root, scope, options);
+  const steps = preparationSteps(root, scope, options, 'async');
   let sliceStart = performance.now();
   for (;;) {
     const step = steps.next();
     if (step.done === true) return step.value;
+    if (step.value !== undefined) {
+      await step.value;
+      sliceStart = performance.now();
+      continue;
+    }
     if (performance.now() - sliceStart >= sliceMs) {
       await new Promise<void>((resolve) => {
         setImmediate(resolve);
@@ -173,12 +179,17 @@ export async function prepareScopeCooperatively(
   }
 }
 
-/** The preparation loop, suspended before each file so a caller can interleave other work. */
+/**
+ * The preparation loop, suspended before each file so a caller can interleave other
+ * work. With an async pool it also yields the promise of a worker result it needs
+ * next, which the cooperative caller awaits; the synchronous caller never sees one.
+ */
 function* preparationSteps(
   root: AuthorizedRoot,
   scope: readonly string[],
   options: PrepareOptions,
-): Generator<undefined, PreparedScope, undefined> {
+  poolMode: PoolMode,
+): Generator<Promise<unknown> | undefined, PreparedScope, undefined> {
   const inventory = yield* measureSteps('inventory', inventorySteps(root, scope, options.inventory));
   const limits = options.limits ?? NO_PREPARATION_LIMITS;
 
@@ -191,7 +202,7 @@ function* preparationSteps(
   let complete = inventory.complete;
 
   const ordered = options.fileOrder?.(inventory.files) ?? inventory.files;
-  const lease = openPool(ordered, options);
+  const lease = openPool(ordered, options, poolMode);
   const pool = lease?.pool ?? null;
   // Files are read in order and handed to the pool ahead of their turn; limits, stops
   // and exclusions are still applied in order, when each file's turn comes.
@@ -239,7 +250,16 @@ function* preparationSteps(
         break;
       }
 
-      const computed = next.job === null || pool === null ? undefined : pool.collect(next.job.ticket);
+      let computed: PoolResult | undefined;
+      if (next.job !== null && pool !== null) {
+        if (pool.mode === 'async') {
+          const waited = pool.wait(next.job.ticket).then((result) => { settled.set(waited, result); return result; });
+          yield waited;
+          computed = awaited(waited);
+        } else {
+          computed = pool.collect(next.job.ticket);
+        }
+      }
       const outcome = prepareWithCache(entry.relativePath, entry.absolutePath, bytes, options,
         computed !== undefined && 'entry' in computed && next.job !== null
           ? { entry: computed.entry, sha256: next.job.sha256, cached: next.job.cached } : undefined);
@@ -271,6 +291,7 @@ function* preparationSteps(
       preparedBytes += bytes.length;
     }
   } finally {
+    for (const entry of ahead) if (entry.job !== null) pool?.forget(entry.job.ticket);
     lease?.release();
   }
 
@@ -311,20 +332,32 @@ function readEntry(root: AuthorizedRoot, absolutePath: string, maxFileBytes: num
   }
 }
 
+/**
+ * A yielded promise is awaited by the cooperative caller before the generator resumes,
+ * so its value is already settled here; it is read synchronously from a side channel.
+ */
+const settled = new WeakMap<Promise<unknown>, unknown>();
+function awaited<T>(promise: Promise<T>): T {
+  const value = settled.get(promise);
+  if (value === undefined) throw new Error('a pool result was resumed before it settled');
+  settled.delete(promise);
+  return value as T;
+}
+
 /** A pool when the scope is large enough and the production chunker is in use. */
-function openPool(files: readonly { readonly sizeBytes: number }[], options: PrepareOptions): { pool: PreparePool; release: () => void } | null {
+function openPool(files: readonly { readonly sizeBytes: number }[], options: PrepareOptions, mode: PoolMode): PoolLease | null {
   if (options.chunker !== undefined && options.chunker !== DEFAULT_CHUNKER) return null;
   if (files.length < 2) return null;
   const bytes = files.reduce((total, file) => total + file.sizeBytes, 0);
   if (options.threads === undefined && bytes < PREPARE_POOL_MIN_BYTES) return null;
-  return acquirePool(options.threads);
+  return acquirePool(options.threads, mode);
 }
 
 type PoolJob = { readonly ticket: number; readonly sha256: string; readonly cached: PreparationEntry | undefined };
 
 /** Hand a file to the pool unless a cache entry already holds its chunks. */
 function submitToPool(
-  pool: PreparePool, entry: { readonly relativePath: string; readonly absolutePath: string }, bytes: Buffer, options: PrepareOptions,
+  pool: PoolLease['pool'], entry: { readonly relativePath: string; readonly absolutePath: string }, bytes: Buffer, options: PrepareOptions,
 ): PoolJob | null {
   const sha256 = measureSync('hash', () => hashBytes(bytes));
   const cache = options.cache?.enabled === true ? options.cache : undefined;

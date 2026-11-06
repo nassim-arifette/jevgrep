@@ -10,7 +10,7 @@ import { ConfigurationError } from './config.ts';
 import { buildRequestPayload } from './evaluation/jev.ts';
 import type { BatchItem, EvaluationBatch } from './evaluation/contracts.ts';
 import { batchLimits, measureSerializedBatch, type BatchLimits, type SerializedBatchMeasure } from './evaluation/policy.ts';
-import { PREPARE_POOL_MIN_BYTES, acquirePool, countTokensWith } from './source/prepare-pool.ts';
+import { PREPARE_POOL_MIN_BYTES, acquirePool, countTokensWith, countTokensWithAsync } from './source/prepare-pool.ts';
 import { estimateInputCostUsd } from './pricing.ts';
 import type { ReportInputs } from './response/render.ts';
 import { countReferenceTokens } from './response/token-counter.ts';
@@ -193,9 +193,24 @@ export function measureSerializedBodies(
   bodies: readonly string[], limits: BatchLimits, countQuestionTokens: (text: string) => number, threads?: number,
 ): SerializedBatchMeasure[] {
   const chars = bodies.reduce((total, body) => total + body.length, 0);
-  const lease = threads === undefined && chars < PREPARE_POOL_MIN_BYTES ? null : acquirePool(threads);
+  const lease = threads === undefined && chars < PREPARE_POOL_MIN_BYTES ? null : acquirePool(threads, 'sync');
   try {
     const counts = countTokensWith(lease?.pool ?? null, bodies, countReferenceTokens);
+    return bodies.map((body, index) => measureSerializedBatch(body, limits, countQuestionTokens, counts[index]));
+  } finally {
+    lease?.release();
+  }
+}
+
+/** `measureSerializedBodies` without blocking the event loop: the counts are awaited from an async pool. */
+export async function measureSerializedBodiesAsync(
+  bodies: readonly string[], limits: BatchLimits, countQuestionTokens: (text: string) => number,
+  options: { readonly threads?: number; readonly signal?: AbortSignal } = {},
+): Promise<SerializedBatchMeasure[]> {
+  const chars = bodies.reduce((total, body) => total + body.length, 0);
+  const lease = options.threads === undefined && chars < PREPARE_POOL_MIN_BYTES ? null : acquirePool(options.threads, 'async');
+  try {
+    const counts = await countTokensWithAsync(lease?.pool ?? null, bodies, countReferenceTokens, options.signal);
     return bodies.map((body, index) => measureSerializedBatch(body, limits, countQuestionTokens, counts[index]));
   } finally {
     lease?.release();
@@ -215,7 +230,7 @@ export function measureSerializedBodies(
  * rather than probing the exact measure at each boundary leaves batches about one
  * percent smaller for one tokenization less per batch.
  */
-export function buildBatches(fragments: readonly PreparedFragment[], query: string, options: {
+export type BuildBatchesOptions = {
   readonly model?: string; readonly limits?: BatchLimits; readonly serialize?: (batch: EvaluationBatch) => string;
   readonly preserveOrder?: boolean;
   readonly countQuestionTokens?: (text: string) => number;
@@ -223,11 +238,40 @@ export function buildBatches(fragments: readonly PreparedFragment[], query: stri
   readonly onBatchMeasure?: (batch: EvaluationBatch, measure: SerializedBatchMeasure, body: string) => void;
   /** Worker threads for the token counts; default: the other cores when the scan is large. */
   readonly threads?: number;
-} = {}): EvaluationBatch[] {
+};
+
+export function buildBatches(fragments: readonly PreparedFragment[], query: string, options: BuildBatchesOptions = {}): EvaluationBatch[] {
   const limits = options.limits ?? batchLimits();
-  const serialize = options.serialize ?? ((batch) => JSON.stringify(buildRequestPayload(batch, options.model ?? 'estimate')));
   const countQuestionTokens = options.countQuestionTokens ?? questionTokenMemo();
-  const measureAll = (bodies: readonly string[]): SerializedBatchMeasure[] => measureSerializedBodies(bodies, limits, countQuestionTokens, options.threads);
+  const steps = batchingSteps(fragments, query, { ...options, limits, countQuestionTokens });
+  let step = steps.next();
+  while (step.done !== true) step = steps.next(measureSerializedBodies(step.value, limits, countQuestionTokens, options.threads));
+  return step.value;
+}
+
+/** `buildBatches` with the token counts awaited from an async pool; `signal` aborts the wait. */
+export async function buildBatchesAsync(
+  fragments: readonly PreparedFragment[], query: string, options: BuildBatchesOptions & { readonly signal?: AbortSignal } = {},
+): Promise<EvaluationBatch[]> {
+  const limits = options.limits ?? batchLimits();
+  const countQuestionTokens = options.countQuestionTokens ?? questionTokenMemo();
+  const steps = batchingSteps(fragments, query, { ...options, limits, countQuestionTokens });
+  let step = steps.next();
+  while (step.done !== true) {
+    step = steps.next(await measureSerializedBodiesAsync(step.value, limits, countQuestionTokens, {
+      ...(options.threads === undefined ? {} : { threads: options.threads }), ...(options.signal === undefined ? {} : { signal: options.signal }),
+    }));
+  }
+  return step.value;
+}
+
+/** The batching algorithm; every exact measure is requested by yielding the bodies and resumed with their measures. */
+function* batchingSteps(
+  fragments: readonly PreparedFragment[], query: string,
+  options: BuildBatchesOptions & { readonly limits: BatchLimits; readonly countQuestionTokens: (text: string) => number },
+): Generator<string[], EvaluationBatch[], SerializedBatchMeasure[]> {
+  const { limits, countQuestionTokens } = options;
+  const serialize = options.serialize ?? ((batch) => JSON.stringify(buildRequestPayload(batch, options.model ?? 'estimate')));
   const ordered = options.preserveOrder === true ? fragments : [...fragments].sort((left, right) => (left.path < right.path ? -1 : left.path > right.path ? 1 : 0)
     || (left.startLine - right.startLine) || (left.endLine - right.endLine));
   const tokenBudget = limits.totalTokens * limits.headroomRatio;
@@ -238,7 +282,7 @@ export function buildBatches(fragments: readonly PreparedFragment[], query: stri
     text: fragment.text, label: fragment.label ?? null,
   }));
   const unmeasured = items.filter((item) => options.singletonMeasures?.get(item.id) === undefined);
-  const measured = measureAll(unmeasured.map((item) => serialize({ query, items: [item] })));
+  const measured = unmeasured.length === 0 ? [] : yield unmeasured.map((item) => serialize({ query, items: [item] }));
   const singles = new Map<string, SerializedBatchMeasure>(unmeasured.map((item, index) => [item.id, measured[index]!]));
   const singleOf = (item: BatchItem): SerializedBatchMeasure => options.singletonMeasures?.get(item.id) ?? singles.get(item.id)!;
   for (const item of items) {
@@ -286,7 +330,7 @@ export function buildBatches(fragments: readonly PreparedFragment[], query: stri
   let pending = closeFrom([], 0);
   while (pending.length > 0) {
     const bodies = pending.map((closed) => serialize({ query, items: closed.items }));
-    const measures = measureAll(bodies);
+    const measures = yield bodies;
     let restart: Closed[] | null = null;
     for (let index = 0; index < pending.length; index += 1) {
       const closed = pending[index]!;
