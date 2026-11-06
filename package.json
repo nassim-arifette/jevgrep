@@ -1,6 +1,6 @@
 {
   "name": "@nassim-arifette/jevgrep",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Semantic code search for coding agents: evaluates authorized repository fragments with Jev and returns original excerpts under a response budget.",
   "type": "module",
   "license": "MIT",
