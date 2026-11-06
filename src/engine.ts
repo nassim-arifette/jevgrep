@@ -85,9 +85,22 @@ export type EngineOptions = {
   readonly env?: NodeJS.ProcessEnv;
 };
 
+/** A step of one search a caller may show while it waits; counts are local facts, never estimates of quality. */
+export type SearchProgress = {
+  readonly phase: 'preparation' | 'evaluation' | 'selection';
+  /** Fragments whose score is known (remote or cache) over the fragments to evaluate; null before planning. */
+  readonly evaluated: number;
+  readonly total: number | null;
+  readonly cacheReused: number;
+  readonly files: number;
+  readonly message: string;
+};
+
 export type SearchInvocation = {
   /** Optional local measurements; never serialized into the search response. */
   readonly profile?: SearchProfiler;
+  /** Progress of a search, phase by phase and batch by batch; for a client's progress notifications. */
+  readonly onProgress?: (progress: SearchProgress) => void;
   /** Client cancellation: after it, no new result is emitted for this call. */
   readonly signal?: AbortSignal;
   readonly searchId?: string;
@@ -165,12 +178,18 @@ export class SearchEngine {
    * inventory and preparation of an identical scope are shared.
    */
   async searchMany(
-    requests: readonly unknown[], invocation: Pick<SearchInvocation, 'profile' | 'signal'> = {},
+    requests: readonly unknown[], invocation: Pick<SearchInvocation, 'profile' | 'signal' | 'onProgress'> = {},
   ): Promise<SearchOutcomeWithDiagnostics[]> {
     const preparations = new Map<string, PreparedScope>();
     const outcomes: SearchOutcomeWithDiagnostics[] = [];
-    for (const request of requests) {
-      outcomes.push(await this.search(request, { ...invocation, preparations }));
+    for (const [index, request] of requests.entries()) {
+      const onProgress = invocation.onProgress;
+      outcomes.push(await this.search(request, {
+        ...invocation, preparations,
+        ...(onProgress === undefined ? {} : { onProgress: (progress: SearchProgress) => {
+          onProgress({ ...progress, message: `question ${String(index + 1)} of ${String(requests.length)}: ${progress.message}` });
+        } }),
+      }));
     }
     return outcomes;
   }
@@ -187,7 +206,7 @@ export class SearchEngine {
     });
 
     try {
-      return await this.#run(request, context, invocation.onCandidatePool, invocation.preparations);
+      return await this.#run(request, context, invocation);
     } catch (cause) {
       const code = errorCodeOf(cause);
       if (code === null) {
@@ -199,10 +218,8 @@ export class SearchEngine {
     }
   }
 
-  async #run(
-    rawRequest: unknown, context: SearchContext, capture?: (pool: CandidatePool) => void,
-    preparations?: Map<string, PreparedScope>,
-  ): Promise<SearchOutcomeWithDiagnostics> {
+  async #run(rawRequest: unknown, context: SearchContext, invocation: SearchInvocation): Promise<SearchOutcomeWithDiagnostics> {
+    const { onCandidatePool: capture, preparations } = invocation;
     const { config, sourceRoot } = this.#options.configuration;
     const request = parseCallerRequest(rawRequest, config);
 
@@ -239,6 +256,10 @@ export class SearchEngine {
       query: request.query, serialize, limits, countQuestionTokens, signal: context.signal,
       identity: { endpoint: config.provider.base_url, model, adapter, cacheMode: cachePolicy.mode },
     });
+    const progress = (phase: SearchProgress['phase'], evaluated: number, message: string): void => {
+      invocation.onProgress?.({ phase, evaluated, total: prepared.fragments.length, cacheReused: cached.size, files: prepared.files.length, message });
+    };
+    progress('preparation', cached.size, `${String(prepared.files.length)} files prepared, ${String(prepared.fragments.length)} fragments, ${String(cached.size)} scores from cache`);
     const batchesOf = (fragments: readonly PreparedFragment[], preserveOrder: boolean): Promise<EvaluationBatch[]> =>
       measureAsync('batching', () => buildBatchesAsync(fragments, request.query, {
         model, serialize, limits, countQuestionTokens, singletonMeasures, onBatchMeasure, preserveOrder, signal: context.signal,
@@ -291,11 +312,18 @@ export class SearchEngine {
     if (plan.capReached) context.addStopReason('SCAN_CAP_REACHED');
 
     if (plan.batches.length > 0) {
+      const planned = plan.batches.reduce((total, batch) => total + batch.items.length, 0);
+      let evaluated = 0;
       await this.#evaluate(provider, plan.batches, context, {
         root, usage, enabledCaps, pricePerMillion, costOf, byId, scored, identities, model,
         cacheMode: cachePolicy.mode, adapter,
+        onBatch: (batch) => {
+          evaluated += batch.items.length;
+          progress('evaluation', cached.size + evaluated, `${String(evaluated)} of ${String(planned)} fragments evaluated`);
+        },
       });
     }
+    progress('selection', scored.length, `selecting excerpts among ${String(scored.length)} scored fragments`);
 
     return this.#render(context, request, prepared, scored, usage, plan, available, false, continuation, capture === undefined ? undefined : (inputs) => {
       capture(candidatePool(request, inputs, scored, available, config.search.threshold, { adapter, model }));
@@ -315,6 +343,7 @@ export class SearchEngine {
     readonly model: string;
     readonly adapter: string;
     readonly cacheMode: string;
+    readonly onBatch?: (batch: EvaluationBatch) => void;
   }): Promise<void> {
     const { config } = this.#options.configuration;
     const { root, usage, enabledCaps, pricePerMillion, costOf, byId, scored, identities, model, adapter, cacheMode } = state;
@@ -336,6 +365,7 @@ export class SearchEngine {
           context.addStopReason('INVALID_PROVIDER_RESPONSE');
           context.diagnostics.record('INVALID_PROVIDER_RESPONSE', context.elapsedMs, { count: evaluation.invalid.length });
         }
+        state.onBatch?.(batch);
       },
       onFailure: (batch, failure, willRetry) => {
         usage.unknownUsageAttempts += 1;

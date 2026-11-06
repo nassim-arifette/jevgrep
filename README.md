@@ -203,9 +203,11 @@ If you already know the function name or the exact string, `rg` will be quicker.
 
 ## Connect your coding agent
 
-JevGrep includes a local [MCP](https://modelcontextprotocol.io/) server with one tool,
-`semantic_search_code`. The agent sends a question and gets the same excerpts the CLI
-would print.
+JevGrep includes a local [MCP](https://modelcontextprotocol.io/) server with two tools:
+`semantic_search_code` for one question and `semantic_search_code_many` for several
+questions that share one preparation of the repository. The agent gets the same
+excerpts the CLI would print, as text and as `structuredContent`, with progress
+notifications while a large repository is being scanned.
 
 Authorize the repository with `jevgrep init` first. It prints the absolute path of the
 project profile, which goes in the commands below. Each server handles one repository.

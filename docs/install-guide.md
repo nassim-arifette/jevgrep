@@ -204,7 +204,7 @@ Set up the provider and repository first. Start the server with an explicit prof
 jevgrep mcp --config "/absolute/path/to/config.json"
 ```
 
-It exposes one tool, `semantic_search_code`, and exits when stdin closes. Startup
+It exposes two tools, `semantic_search_code` (one question) and `semantic_search_code_many` (several questions sharing one preparation), returns each payload as text and as `structuredContent`, sends `notifications/progress` when the call carries a `_meta.progressToken`, and exits when stdin closes. Startup
 does not scan or contact a provider. A tool call uses the same engine and authorization
 as CLI search. Each process serves one repository; use separate server names/profiles
 if configuring several repositories.

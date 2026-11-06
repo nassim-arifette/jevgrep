@@ -1,8 +1,10 @@
 /**
  * Local stdio MCP server (JG-024).
  *
- * A thin adapter over the shared engine: it validates protocol framing, exposes one
- * tool, and maps outcomes onto MCP results. It contains no search logic (requirement
+ * A thin adapter over the shared engine: it validates protocol framing, exposes two
+ * tools (one question, or several sharing one preparation), and maps outcomes onto
+ * MCP results: a text block and `structuredContent` with the same validated payload,
+ * plus `notifications/progress` when the client sent a progress token. It contains no search logic (requirement
  * R10) and it cannot widen authorization — the tool schema has no root, credential,
  * endpoint, model or cap field, and a client root hint is a hint, not a grant
  * (specification sections 4.1 and 5.1).
@@ -27,7 +29,7 @@ import type { Readable, Writable } from 'node:stream';
 
 import { createSearchError } from './contracts.ts';
 import type { SearchOutcome } from './contracts.ts';
-import type { SearchEngine } from './engine.ts';
+import type { SearchEngine, SearchProgress } from './engine.ts';
 import { createCallScheduler } from './mcp-calls.ts';
 import type { CallScheduler } from './mcp-calls.ts';
 import { createLineFramer } from './mcp-framing.ts';
@@ -39,6 +41,9 @@ import type { JsonRpcId, JsonRpcRequest } from './mcp-jsonrpc.ts';
 export const MCP_PROTOCOL_VERSION = '2025-06-18';
 export const SUPPORTED_PROTOCOL_VERSIONS: readonly string[] = ['2025-06-18', '2025-03-26', '2024-11-05'];
 export const TOOL_NAME = 'semantic_search_code';
+export const MANY_TOOL_NAME = 'semantic_search_code_many';
+/** Progress notifications are spaced at least this far apart; the first and the last always go out. */
+export const PROGRESS_INTERVAL_MS = 250;
 
 export const TOOL_DESCRIPTION =
   'Search authorized repository code by behavior, responsibility, or concept when exact identifiers are '
@@ -72,6 +77,66 @@ export const TOOL_INPUT_SCHEMA = Object.freeze({
   additionalProperties: false,
 });
 
+export const MANY_TOOL_DESCRIPTION =
+  'Ask several related questions about the same authorized code in one call. The repository is inventoried and '
+  + 'prepared once and every question is evaluated separately, each with its own budget, result and coverage report. '
+  + 'Same semantics as semantic_search_code; results come back in the order of the questions.';
+
+/** One question of a multiquestion call: the single tool's arguments, minus the continuation. */
+const QUESTION_SCHEMA = Object.freeze({
+  type: 'object',
+  properties: Object.fromEntries(Object.entries(TOOL_INPUT_SCHEMA.properties).filter(([key]) => key !== 'continuation')),
+  required: ['query'],
+  additionalProperties: false,
+});
+
+export const MANY_TOOL_INPUT_SCHEMA = Object.freeze({
+  type: 'object',
+  properties: {
+    questions: { type: 'array', items: QUESTION_SCHEMA, minItems: 1, maxItems: 16, description: 'Questions sharing one preparation of the scope.' },
+  },
+  required: ['questions'],
+  additionalProperties: false,
+});
+
+const EXCERPT_SCHEMA = Object.freeze({
+  type: 'object',
+  properties: {
+    path: { type: 'string' }, start_line: { type: 'integer' }, end_line: { type: 'integer' },
+    text: { type: 'string' }, score: { type: 'number' }, file_sha256: { type: 'string' },
+  },
+  required: ['path', 'start_line', 'end_line', 'text', 'score', 'file_sha256'],
+});
+
+/**
+ * The search payload as the client receives it in `structuredContent`: a result or an
+ * error, both versioned. Nested report objects are described by the documented
+ * contract; the schema names what every client needs to branch on.
+ */
+export const TOOL_OUTPUT_SCHEMA = Object.freeze({
+  type: 'object',
+  properties: {
+    schema_version: { type: 'string' },
+    search_id: { type: 'string' },
+    status: { type: 'string', enum: ['complete', 'partial', 'rejected', 'error'] },
+    excerpts: { type: 'array', items: EXCERPT_SCHEMA },
+    report: { type: 'object', description: 'Scope, coverage, fragment counts, selection, usage, stop reasons and preflight of the search.' },
+    continuation: { type: 'object', description: 'Present on a partial result: the token to evaluate what this search left out.' },
+    error: {
+      type: 'object',
+      properties: { code: { type: 'string' }, message: { type: 'string' }, retryable: { type: 'boolean' } },
+      required: ['code', 'message', 'retryable'],
+    },
+  },
+  required: ['schema_version', 'search_id', 'status'],
+});
+
+export const MANY_TOOL_OUTPUT_SCHEMA = Object.freeze({
+  type: 'object',
+  properties: { results: { type: 'array', items: TOOL_OUTPUT_SCHEMA, description: 'One payload per question, in order.' } },
+  required: ['results'],
+});
+
 /** Longest accepted JSON-RPC line, in UTF-16 code units (an upper bound on its bytes / 3). */
 export const MAX_MESSAGE_LENGTH = 1_048_576;
 /** Unread output, in bytes, after which the client is treated as gone. */
@@ -94,7 +159,14 @@ const TOOL_LIST = Object.freeze({
     name: TOOL_NAME,
     description: TOOL_DESCRIPTION,
     inputSchema: TOOL_INPUT_SCHEMA,
+    outputSchema: TOOL_OUTPUT_SCHEMA,
     annotations: { readOnlyHint: true, openWorldHint: true, title: 'Semantic code search' },
+  }, {
+    name: MANY_TOOL_NAME,
+    description: MANY_TOOL_DESCRIPTION,
+    inputSchema: MANY_TOOL_INPUT_SCHEMA,
+    outputSchema: MANY_TOOL_OUTPUT_SCHEMA,
+    annotations: { readOnlyHint: true, openWorldHint: true, title: 'Semantic code search, several questions' },
   }],
 });
 
@@ -106,7 +178,8 @@ function initializeResult(params: unknown, serverVersion: string): Record<string
     protocolVersion,
     capabilities: { tools: { listChanged: false } },
     serverInfo: { name: 'jevgrep', version: serverVersion },
-    instructions: 'One tool: semantic_search_code. Evidence is returned as original excerpts under a response budget.',
+    instructions: 'Tools: semantic_search_code (one question) and semantic_search_code_many (several questions, one preparation). '
+      + 'Evidence is returned as original excerpts under a response budget, as text and as structuredContent.',
   };
 }
 
@@ -138,8 +211,19 @@ export function runMcpServer(options: McpServerOptions): Promise<void> {
 
   const calls = createCallScheduler(async (call) => {
     try {
+      const onProgress = call.progressToken === undefined ? undefined : progressNotifier(call.progressToken, send, () => engine.clock.nowMs);
+      if (call.tool === 'search_many') {
+        const questions = ((call.arguments ?? {}) as { questions?: unknown }).questions;
+        const outcomes = await engine.searchMany(Array.isArray(questions) ? questions : [questions], {
+          signal: call.controller.signal, ...(onProgress === undefined ? {} : { onProgress }),
+        });
+        if (!call.controller.signal.aborted) {
+          send({ jsonrpc: '2.0', id: call.id, result: manyToolResult(outcomes.map((entry) => entry.outcome)) });
+        }
+        return;
+      }
       const { outcome } = await engine.search(call.arguments, {
-        signal: call.controller.signal, startedAtMs: call.startedAtMs,
+        signal: call.controller.signal, startedAtMs: call.startedAtMs, ...(onProgress === undefined ? {} : { onProgress }),
       });
       if (!call.controller.signal.aborted) {
         send({ jsonrpc: '2.0', id: call.id, result: toolResult(outcome) });
@@ -233,10 +317,13 @@ type RouterDeps = {
 function startToolCall(id: JsonRpcId, params: unknown, deps: RouterDeps): Promise<void> {
   const { send, sendError, calls } = deps;
   const record = (params ?? {}) as Record<string, unknown>;
-  if (record['name'] !== TOOL_NAME) {
+  const tool = record['name'] === TOOL_NAME ? 'search' : record['name'] === MANY_TOOL_NAME ? 'search_many' : null;
+  if (tool === null) {
     sendError(id, INVALID_PARAMS, 'unknown tool');
     return Promise.resolve();
   }
+  const token = ((record['_meta'] ?? {}) as { progressToken?: unknown }).progressToken;
+  const progressToken = typeof token === 'string' || typeof token === 'number' ? token : undefined;
   if (calls.has(id)) {
     sendError(id, INVALID_REQUEST, 'request id is already in use');
     return Promise.resolve();
@@ -247,7 +334,7 @@ function startToolCall(id: JsonRpcId, params: unknown, deps: RouterDeps): Promis
   }
   return new Promise<void>((resolve) => {
     calls.submit({
-      id, startedAtMs: deps.nowMs(), controller: new AbortController(),
+      id, tool, ...(progressToken === undefined ? {} : { progressToken }), startedAtMs: deps.nowMs(), controller: new AbortController(),
       arguments: record['arguments'] ?? {}, resolve,
     });
   });
@@ -286,10 +373,43 @@ function createRequestRouter(deps: RouterDeps): (message: JsonRpcRequest) => voi
   };
 }
 
-/** One text block holding the validated payload; `isError` follows the outcome status. */
-export function toolResult(outcome: SearchOutcome): { content: { type: 'text'; text: string }[]; isError: boolean } {
+/** One text block and `structuredContent` holding the validated payload; `isError` follows the outcome status. */
+export function toolResult(outcome: SearchOutcome): { content: { type: 'text'; text: string }[]; structuredContent: SearchOutcome; isError: boolean } {
   return {
     content: [{ type: 'text', text: JSON.stringify(outcome) }],
+    structuredContent: outcome,
     isError: outcome.status === 'rejected' || outcome.status === 'error',
+  };
+}
+
+/** The multiquestion payload: one text block per question and the results in order; `isError` when every question failed. */
+export function manyToolResult(outcomes: readonly SearchOutcome[]): {
+  content: { type: 'text'; text: string }[]; structuredContent: { results: readonly SearchOutcome[] }; isError: boolean;
+} {
+  return {
+    content: outcomes.map((outcome) => ({ type: 'text', text: JSON.stringify(outcome) })),
+    structuredContent: { results: outcomes },
+    isError: outcomes.length > 0 && outcomes.every((outcome) => outcome.status === 'rejected' || outcome.status === 'error'),
+  };
+}
+
+/**
+ * `notifications/progress` for one call: `progress` counts fragments with a known
+ * score, `total` the fragments to evaluate once known. Notifications are spaced by
+ * `PROGRESS_INTERVAL_MS`, except the first one and the one that reaches the total.
+ */
+export function progressNotifier(
+  progressToken: string | number, send: (message: unknown) => void, nowMs: () => number,
+): (progress: SearchProgress) => void {
+  let lastSentAt: number | null = null;
+  return (progress) => {
+    const now = nowMs();
+    const final = progress.total !== null && progress.evaluated >= progress.total;
+    if (lastSentAt !== null && !final && now - lastSentAt < PROGRESS_INTERVAL_MS) return;
+    lastSentAt = now;
+    send({
+      jsonrpc: '2.0', method: 'notifications/progress',
+      params: { progressToken, progress: progress.evaluated, ...(progress.total === null ? {} : { total: progress.total }), message: progress.message },
+    });
   };
 }

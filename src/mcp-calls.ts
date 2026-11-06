@@ -7,6 +7,10 @@ import type { JsonRpcId } from './mcp-jsonrpc.ts';
 
 export type ToolCall = {
   readonly id: JsonRpcId;
+  /** Which tool runs: one question, or several sharing their preparation. */
+  readonly tool: 'search' | 'search_many';
+  /** The client's `_meta.progressToken`, when it asked for progress notifications. */
+  readonly progressToken?: string | number;
   readonly startedAtMs: number;
   readonly controller: AbortController;
   readonly arguments: unknown;
