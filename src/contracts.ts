@@ -6,6 +6,7 @@ import type { Infer } from './contract-schema.ts';
 import { checkRelativePath } from './path-policy.ts';
 import type { RelativePathViolation } from './path-policy.ts';
 import { MAX_CONTINUATION_TOKEN_LENGTH } from './continuation.ts';
+import { ADAPTER_KINDS, CLOUDFLARE_BASE_PATTERN, CLOUDFLARE_JEV_MODEL, isLiteLLMBaseUrl, JEV_MODEL_PATTERN, PORTKEY_MODEL_PATTERN } from './provider-settings.ts';
 export { ContractValidationError } from './contract-schema.ts';
 
 export const SCHEMA_VERSION = '1';
@@ -84,6 +85,9 @@ const usd = refine(numberValue(0, Number.MAX_SAFE_INTEGER / 1_000_000_000, false
 });
 const identifier = refine(textValue(128), (value, path) => {
   requireContract(/^[A-Za-z0-9][A-Za-z0-9._:@/+-]*$/.test(value), path, 'expected a bounded identifier');
+});
+const modelIdentifier = refine(textValue(128), (value, path) => {
+  requireContract(/^[A-Za-z0-9@][A-Za-z0-9._:@/+-]*$/.test(value), path, 'expected a bounded model identifier');
 });
 const version = literal(SCHEMA_VERSION);
 const responseTokens = numberValue(CONTRACT_LIMITS.min_response_tokens, Number.MAX_SAFE_INTEGER);
@@ -185,7 +189,7 @@ const enabledCapsSchema = object({}, {
 const requiredCapsSchema = object({}, capValues);
 
 const pricingSchema = object({
-  model: identifier,
+  model: modelIdentifier,
   verified_at: refine(textValue(10), (value, path) => {
     const timestamp = Date.parse(value);
     requireContract(/^\d{4}-\d{2}-\d{2}$/.test(value) && Number.isFinite(timestamp)
@@ -206,16 +210,13 @@ export const configurationSchema = refine(object({
   }),
   remote_evaluation_enabled: booleanValue,
   provider: object({
-    base_url: refine(textValue(256), (value, path) => {
-      requireContract(/^https:\/\/(?:api\.typesafe\.ai|ai-gateway\.vercel\.sh|openrouter\.ai)\/?$/.test(value), path,
-        'unsupported provider endpoint');
-    }),
+    base_url: textValue(256),
     api_key_env: refine(textValue(128), (value, path) => {
       requireContract(/^[A-Za-z_][A-Za-z0-9_]*$/.test(value), path, 'expected an environment variable name');
     }),
-    model: identifier,
+    model: modelIdentifier,
   }, {
-    adapter: enumeration(['typesafe-direct', 'vercel-ai-gateway', 'openrouter']),
+    adapter: enumeration(ADAPTER_KINDS),
     pricing: nullable(pricingSchema),
   }),
   search: object({
@@ -264,11 +265,26 @@ export const configurationSchema = refine(object({
       'vercel-ai-gateway requires https://ai-gateway.vercel.sh');
     requireContract(value.provider.model === 'typesafe-ai/jev', `${path}.provider.model`,
       'vercel-ai-gateway requires the typesafe-ai/jev model id');
-  } else {
+  } else if (adapter === 'openrouter') {
     requireContract(/^https:\/\/openrouter\.ai\/?$/.test(value.provider.base_url), `${path}.provider.base_url`,
       'openrouter requires https://openrouter.ai');
     requireContract(value.provider.model === 'typesafe/jev-1.13', `${path}.provider.model`,
       'openrouter requires the typesafe/jev-1.13 model id');
+  } else if (adapter === 'cloudflare') {
+    requireContract(CLOUDFLARE_BASE_PATTERN.test(value.provider.base_url), `${path}.provider.base_url`,
+      'cloudflare requires https://api.cloudflare.com/client/v4/accounts/<32-hex-account-id>');
+    requireContract(value.provider.model === CLOUDFLARE_JEV_MODEL, `${path}.provider.model`,
+      'cloudflare requires the typesafe/jev model id');
+  } else if (adapter === 'litellm') {
+    requireContract(isLiteLLMBaseUrl(value.provider.base_url), `${path}.provider.base_url`,
+      'litellm requires an explicit HTTPS proxy URL, or HTTP on loopback, without credentials, query or fragment');
+    requireContract(JEV_MODEL_PATTERN.test(value.provider.model), `${path}.provider.model`,
+      'litellm requires a bare Jev model id');
+  } else {
+    requireContract(/^https:\/\/api\.portkey\.ai\/?$/.test(value.provider.base_url), `${path}.provider.base_url`,
+      'portkey requires https://api.portkey.ai');
+    requireContract(PORTKEY_MODEL_PATTERN.test(value.provider.model), `${path}.provider.model`,
+      'portkey requires @<typesafe-integration-slug>/jev-<version>, jev-latest or jev-preview');
   }
 });
 export type Configuration = Infer<typeof configurationSchema>;

@@ -1,7 +1,8 @@
 /** Provider limits and local safety policies; estimates are not billing tokens. */
 import { countReferenceTokens } from '../response/token-counter.ts';
+import { PORTKEY_MODEL_PATTERN, type AdapterKind } from '../provider-settings.ts';
+export type { AdapterKind } from '../provider-settings.ts';
 
-export type AdapterKind = 'typesafe-direct' | 'vercel-ai-gateway' | 'openrouter';
 export const DEFAULT_DIRECT_MODEL = 'jev-1.13.0';
 export const MAX_ROLLING_TTL_SECONDS = 900;
 
@@ -32,6 +33,12 @@ export function fitsSerializedBatch(body: string, limits: BatchLimits): boolean 
 
 export type SerializedBatchMeasure = { readonly fits: boolean; readonly bytes: number; readonly tokens: number | null };
 
+/** Cloudflare's REST envelope nests System One under `input`. */
+export function serializedDecisionInput(body: string): { state: unknown; questions: Record<string, unknown> } {
+  const payload = JSON.parse(body) as { state: unknown; questions: Record<string, unknown>; input?: { state: unknown; questions: Record<string, unknown> } };
+  return payload.input ?? payload;
+}
+
 /** Exact checks; the optional counter reuses only identical state/question JSON, `bodyTokens` a count of `body` made elsewhere. */
 export function measureSerializedBatch(
   body: string, limits: BatchLimits, countQuestionTokens: (text: string) => number = countReferenceTokens,
@@ -39,7 +46,7 @@ export function measureSerializedBatch(
 ): SerializedBatchMeasure {
   const bytes = Buffer.byteLength(body, 'utf8');
   if (bytes > limits.maxRequestBytes) return { fits: false, bytes, tokens: null };
-  const payload = JSON.parse(body) as { state: unknown; questions: Record<string, unknown> };
+  const payload = serializedDecisionInput(body);
   const questions = Object.values(payload.questions);
   if (questions.length > limits.maxItems) return { fits: false, bytes, tokens: null };
   const tokens = bodyTokens ?? countReferenceTokens(body);
@@ -68,7 +75,8 @@ export function isOpenRouterModelRevision(model: string): boolean {
 }
 
 export function isRollingModel(model: string): boolean {
-  return model === 'typesafe-ai/jev' || model === 'typesafe/jev-1.13' || model === 'jev-latest' || model === 'jev-preview';
+  return model === 'typesafe-ai/jev' || model === 'typesafe/jev-1.13' || model === 'typesafe/jev'
+    || PORTKEY_MODEL_PATTERN.test(model) || model === 'jev-latest' || model === 'jev-preview';
 }
 
 export function scoreCachePolicy(adapter: AdapterKind, model: string, cache: {
@@ -78,7 +86,10 @@ export function scoreCachePolicy(adapter: AdapterKind, model: string, cache: {
   if (adapter === 'typesafe-direct' && isPinnedModelRevision(model)) {
     return { mode: 'pinned', ttlSeconds: cache.ttl_seconds };
   }
-  const rolling = adapter === 'vercel-ai-gateway' ? model === 'typesafe-ai/jev'
+  const rolling = adapter === 'cloudflare' ? model === 'typesafe/jev'
+    : adapter === 'litellm' ? isPinnedModelRevision(model) || model === 'jev-latest' || model === 'jev-preview'
+    : adapter === 'portkey' ? PORTKEY_MODEL_PATTERN.test(model)
+    : adapter === 'vercel-ai-gateway' ? model === 'typesafe-ai/jev'
     : adapter === 'openrouter' ? model === 'typesafe/jev-1.13'
     : model === 'jev-latest' || model === 'jev-preview';
   const ttlSeconds = Math.min(cache.ttl_seconds, cache.rolling_ttl_seconds ?? MAX_ROLLING_TTL_SECONDS,

@@ -53,16 +53,76 @@ jevgrep init --global --provider openrouter
 Create your key on the [OpenRouter keys page](https://openrouter.ai/settings/keys).
 Credentials are stored in the user's JevGrep configuration directory, outside the
 repository. `TYPESAFE_API_KEY`, `AI_GATEWAY_API_KEY` and `OPENROUTER_API_KEY`
-override the corresponding stored credentials.
+override the corresponding stored credentials. Cloudflare, LiteLLM and Portkey use
+`CLOUDFLARE_API_TOKEN`, `LITELLM_API_KEY` and `PORTKEY_API_KEY`, respectively.
 Use environment variables in automated environments; do not commit keys in project files.
 
 New direct profiles use `jev-1.13.0`; Vercel profiles use `typesafe-ai/jev`;
 OpenRouter profiles use `typesafe/jev-1.13`.
 To switch an existing project, run the corresponding global setup, then
-`jevgrep init --provider openrouter` (or `--provider typesafe` / `--provider vercel`)
+`jevgrep init --provider <name>`
 inside that project.
 Existing limits are preserved. Interactive setup asks again for disclosure consent;
 non-interactive setup preserves the existing disclosure setting.
+
+### Cloudflare, LiteLLM and Portkey
+
+```bash
+jevgrep init --global --provider cloudflare
+jevgrep init --global --provider litellm
+jevgrep init --global --provider portkey
+```
+
+Choose one, then run `jevgrep init --provider <same-name>` in each project. The setup
+stores non-secret route settings alongside the selected global provider; project init
+reuses them without asking again. Credentials stay in the separate user `secrets.env`.
+Switching providers preserves existing project limits and asks for disclosure consent
+again interactively. To change a saved route for the same provider, edit its trusted
+project profile (and `provider_options` in the printed global settings for future projects).
+
+| Provider | Setup prompts / optional setup environment | Authentication |
+| --- | --- | --- |
+| Cloudflare | 32-hex-character account ID (`CLOUDFLARE_ACCOUNT_ID`) | `CLOUDFLARE_API_TOKEN`, with permission to run AI models on that account |
+| LiteLLM | Trusted proxy base URL (`LITELLM_BASE_URL`, default `http://localhost:4000`) | `LITELLM_API_KEY` virtual key allowed to call the bare Jev model |
+| Portkey | TypeSafe integration slug, without `@` or `/model` (`PORTKEY_TYPESAFE_SLUG`) | `PORTKEY_API_KEY` allowed to use that integration |
+
+For unattended setup, set the route variable and credential variable before running
+init. Route variables are read only during setup; edit the profile to change a route later.
+Setup and `doctor` do not make inference requests or validate remote account permissions.
+
+Cloudflare uses `adapter: "cloudflare"`, model `typesafe/jev`, and base URL
+`https://api.cloudflare.com/client/v4/accounts/<account-id>`. JevGrep adds `/ai/run`
+and sends `{ "model": "typesafe/jev", "input": { "state": ..., "questions": ... } }`.
+Responses can be direct Jev JSON or a successful Cloudflare `result` envelope.
+See the [official Cloudflare example](https://developers.cloudflare.com/ai/models/typesafe/jev/).
+
+LiteLLM uses `adapter: "litellm"` and adds `/typesafe/v1/systemone` to your proxy base
+URL (a reverse-proxy path prefix is allowed; do not include `/typesafe` yourself).
+Configure `TYPESAFE_API_KEY` on the LiteLLM server first. JevGrep sends only the proxy's
+virtual key with Bearer authentication, using `jev-1.13.0` by default. HTTPS is required
+except for HTTP on `localhost`, `127.0.0.1` or `[::1]`. URLs with embedded credentials,
+queries or fragments are refused. Only trust a proxy permitted to receive source code;
+JevGrep cannot verify its upstream configuration.
+See [LiteLLM's TypeSafe pass-through](https://docs.litellm.ai/docs/pass_through/typesafe).
+
+Portkey uses `adapter: "portkey"`, base URL `https://api.portkey.ai`, and adds
+`/v1/decisions`. Create a TypeSafe integration in Portkey's Model Catalog with your
+TypeSafe key. The model becomes `@<integration-slug>/jev-1.13.0` by default; the
+credential is sent only in `x-portkey-api-key`. Both LiteLLM and Portkey also accept
+`jev-latest`, `jev-preview`, or a full `jev-X.Y.Z` version (with the integration prefix
+for Portkey). See [Portkey's Jev integration](https://portkey.ai/docs/integrations/llms/typesafe).
+
+All three are access routes to Jev, not separate models. JevGrep makes one bounded
+HTTP exchange per adapter call, refuses redirects, and adds no hidden retries or
+automatic fallback. Gateway-side retries, caches, fallbacks, logging and retention
+remain controlled by your account/proxy configuration; disable them if strict
+per-attempt accounting or a single upstream is required. Review both the gateway's
+and TypeSafe's retention policies before disclosure. Cloudflare advertises zero data
+retention for this model, but that is not a guarantee about separately enabled gateway logs.
+TypeSafe upstream input-token pricing does not establish the final gateway bill: new
+profiles intentionally have no rate card or USD estimate. Add verified, matching
+`provider.pricing` before enabling a USD cap. These integrations are covered by offline
+tests and have not been validated against live provider accounts.
 
 OpenRouter configuration uses `adapter: "openrouter"` and
 `base_url: "https://openrouter.ai"`. The adapter adds `/api/alpha/decisions`;

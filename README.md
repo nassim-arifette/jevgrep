@@ -106,8 +106,9 @@ runs on a modest question set, so treat small gaps as noise.
 ## Getting started
 
 You need Node.js 24 and an API key from one of the supported providers:
-[TypeSafe AI](https://typesafe.ai), [Vercel AI Gateway](https://vercel.com/ai-gateway)
-or [OpenRouter](https://openrouter.ai/settings/keys).
+[TypeSafe AI](https://typesafe.ai), [Vercel AI Gateway](https://vercel.com/ai-gateway),
+[OpenRouter](https://openrouter.ai/settings/keys), [Cloudflare](https://developers.cloudflare.com/ai/models/typesafe/jev/),
+[LiteLLM](https://docs.litellm.ai/docs/pass_through/typesafe) or [Portkey](https://portkey.ai/docs/integrations/llms/typesafe).
 
 ### 1. Install
 
@@ -123,6 +124,9 @@ npm install -g @nassim-arifette/jevgrep
 jevgrep init --global                       # TypeSafe AI (default)
 jevgrep init --global --provider vercel     # or Vercel AI Gateway
 jevgrep init --global --provider openrouter # or OpenRouter
+jevgrep init --global --provider cloudflare # Cloudflare token + account ID
+jevgrep init --global --provider litellm    # trusted proxy URL + virtual key
+jevgrep init --global --provider portkey    # TypeSafe integration slug + Portkey key
 ```
 
 The key goes in your user configuration directory, never in a repository.
@@ -292,9 +296,15 @@ is covered by its own privacy and retention policies.
 | TypeSafe AI       | `jevgrep init --global --provider typesafe`   | `jev-1.13.0` (pinned) |
 | Vercel AI Gateway | `jevgrep init --global --provider vercel`     | `typesafe-ai/jev`     |
 | OpenRouter        | `jevgrep init --global --provider openrouter` | `typesafe/jev-1.13`   |
+| Cloudflare Workers AI | `jevgrep init --global --provider cloudflare` | `typesafe/jev` |
+| LiteLLM           | `jevgrep init --global --provider litellm` | `jev-1.13.0` |
+| Portkey           | `jevgrep init --global --provider portkey` | `@<integration-slug>/jev-1.13.0` |
 
 The environment variables `TYPESAFE_API_KEY`, `AI_GATEWAY_API_KEY` and
-`OPENROUTER_API_KEY` override saved keys, which is useful in CI. To move a project to
+`OPENROUTER_API_KEY`, plus `CLOUDFLARE_API_TOKEN`, `LITELLM_API_KEY` and
+`PORTKEY_API_KEY`, override saved keys, which is useful in CI.
+LiteLLM and Portkey require a TypeSafe key configured on the gateway, not in JevGrep.
+These are routes to Jev, not different scoring models. To move a project to
 another provider, run the global setup for that provider, then
 `jevgrep init --provider <name>` inside the project. The
 [reference](docs/reference.md#providers) lists each provider's validation status and

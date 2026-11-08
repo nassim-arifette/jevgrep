@@ -10,6 +10,9 @@ For installation, limits and troubleshooting, see the [installation guide](insta
 | TypeSafe AI       | `jevgrep init --global --provider typesafe` | `jev-1.13.0` (pinned) |
 | Vercel AI Gateway | `jevgrep init --global --provider vercel`   | `typesafe-ai/jev`     |
 | OpenRouter        | `jevgrep init --global --provider openrouter` | `typesafe/jev-1.13` |
+| Cloudflare Workers AI | `jevgrep init --global --provider cloudflare` | `typesafe/jev` |
+| LiteLLM           | `jevgrep init --global --provider litellm` | `jev-1.13.0` |
+| Portkey           | `jevgrep init --global --provider portkey` | `@<integration-slug>/jev-1.13.0` |
 
 The TypeSafe transport follows the documented System One HTTP contract and is covered
 with simulated responses. It has not been tested against a real account in this project.
@@ -35,6 +38,22 @@ jevgrep init --provider vercel
 ```
 
 Use `--provider openrouter` in both commands to switch to OpenRouter.
+The same applies to `cloudflare`, `litellm` and `portkey`. Their transports follow the
+official Jev contracts, with offline HTTP, configuration, init, batching and cache tests;
+no live inference request was made. See [setup, credentials and upstream prerequisites](install-guide.md#cloudflare-litellm-and-portkey).
+
+| Adapter | POST endpoint | Payload / credential |
+| --- | --- | --- |
+| `cloudflare` | `https://api.cloudflare.com/client/v4/accounts/<account-id>/ai/run` | `{ model, input: { state, questions } }`, Bearer Cloudflare token |
+| `litellm` | `<trusted-proxy-base>/typesafe/v1/systemone` | `{ model, state, questions }`, Bearer LiteLLM virtual key |
+| `portkey` | `https://api.portkey.ai/v1/decisions` | `{ model: "@<slug>/jev-1.13.0", state, questions }`, `x-portkey-api-key` |
+
+LiteLLM and Portkey require a TypeSafe key stored on the gateway. JevGrep does not
+configure gateway-side retention, retries, fallback or pricing; operators must review
+those settings. New profiles have no inferred rate card. All three adapters preserve
+unknown usage as unknown and reject malformed or duplicate answers without discarding
+valid neighbors. Cloudflare's optional `{ success, result }` response wrapper is checked
+before the common Jev response normalization, including duplicate keys inside `result`.
 
 ## Results and exit codes
 
@@ -65,6 +84,10 @@ use the conservative rolling policy: scores can be reused for up to 15 minutes.
 OpenRouter may resolve the requested model to a dated revision in its response;
 the version alias is not treated as an immutable cache identity. Existing direct profiles
 using `jev-latest` or `jev-preview` use the same short-lived policy.
+Cloudflare's `typesafe/jev`, LiteLLM and Portkey use that same maximum 15-minute policy,
+even for a versioned model on a gateway: the upstream configuration is operator-owned.
+The Cloudflare account URL, LiteLLM proxy URL and Portkey integration-prefixed model
+are part of the cache identity. A mismatched returned revision is never cached.
 
 Rolling reuse can briefly serve a score from an earlier model revision. `doctor`
 shows this policy and its effective TTL. Set `cache.rolling_ttl_seconds` to `0` to
@@ -96,10 +119,12 @@ and metadata.
 | TypeSafe direct   | 64,000 tokens                             | 44,800 reference tokens        |
 | Vercel AI Gateway | 32,000 tokens (conservative local policy) | 22,400 reference tokens        |
 | OpenRouter        | 32,000 tokens (conservative local policy) | 22,400 reference tokens        |
+| Cloudflare / LiteLLM / Portkey | 32,000 tokens (conservative local policy) | 22,400 reference tokens |
 
 TypeSafe documents 64k total and 32k for shared state plus one question. Gateway and
 OpenRouter advertise a 32k context; using it as an aggregate ceiling is conservative,
-not a claim that they document the same total-question limit. All three paths keep
+not a claim that they document the same total-question limit. The new routes use the
+same conservative ceiling, not a promise about gateway or upstream capacity. All paths keep
 30% headroom because the provider tokenizer is not public, and locally limit each
 request to 64 questions and 256 KiB. These last two limits are application safeguards.
 See [TypeSafe model limits](https://docs.typesafe.ai/models) and the

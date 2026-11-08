@@ -4,6 +4,8 @@ import { ConfigurationError } from '../config.ts';
 import type { Configuration } from '../contracts.ts';
 import type { EvaluationBatch, ProviderClient } from './contracts.ts';
 import { JevAdapter, buildRequestPayload, type JevAdapterOptions } from './jev.ts';
+import { DecisionGatewayAdapter, serializeDecisionGatewayBatch, type DecisionGatewayOptions } from './decision-gateway.ts';
+import type { AdapterKind } from '../provider-settings.ts';
 import {
   VERCEL_JEV_MODEL,
   VercelGatewayAdapter,
@@ -11,16 +13,18 @@ import {
   type VercelGatewayAdapterOptions,
 } from './vercel-gateway.ts';
 
-export type ProviderAdapterKind = 'typesafe-direct' | 'vercel-ai-gateway' | 'openrouter';
+export type ProviderAdapterKind = AdapterKind;
 
 export type ProviderFactories = {
   /** Optional to preserve existing callers that inject only the original adapters. */
   readonly openrouter?: (options: OpenRouterAdapterOptions) => ProviderClient;
+  readonly decisionGateway?: (options: DecisionGatewayOptions) => ProviderClient;
   readonly direct: (options: JevAdapterOptions) => ProviderClient;
   readonly gateway: (options: VercelGatewayAdapterOptions) => ProviderClient;
 };
 
 const defaultFactories = {
+  decisionGateway: (options: DecisionGatewayOptions) => new DecisionGatewayAdapter(options),
   openrouter: (options: OpenRouterAdapterOptions) => new OpenRouterAdapter(options),
   direct: (options: JevAdapterOptions) => new JevAdapter(options),
   gateway: (options: VercelGatewayAdapterOptions) => new VercelGatewayAdapter(options),
@@ -33,6 +37,10 @@ export function configuredAdapter(config: Configuration): ProviderAdapterKind {
 
 /** Offline planning uses exactly the same envelope as the selected transport. */
 export function serializeConfiguredBatch(config: Configuration, batch: EvaluationBatch): string {
+  const adapter = configuredAdapter(config);
+  if (adapter === 'cloudflare' || adapter === 'litellm' || adapter === 'portkey') {
+    return serializeDecisionGatewayBatch(adapter, config.provider.model, batch);
+  }
   if (configuredAdapter(config) === 'openrouter') return serializeOpenRouterBatch(batch);
   return configuredAdapter(config) === 'vercel-ai-gateway' ? serializeGatewayBatch(batch)
     : JSON.stringify(buildRequestPayload(batch, config.provider.model));
@@ -43,6 +51,12 @@ export function createConfiguredProvider(
   apiKey: string,
   factories: ProviderFactories = defaultFactories,
 ): ProviderClient {
+  const adapter = configuredAdapter(config);
+  if (adapter === 'cloudflare' || adapter === 'litellm' || adapter === 'portkey') {
+    return (factories.decisionGateway ?? defaultFactories.decisionGateway)({
+      adapter, baseUrl: config.provider.base_url, model: config.provider.model, apiKey,
+    });
+  }
   if (configuredAdapter(config) === 'typesafe-direct') {
     return factories.direct({
       baseUrl: config.provider.base_url,

@@ -218,11 +218,11 @@ function readUsageField(usage: unknown, key: string): number | null {
  * exactly one answer per question, so a repeated key makes that answer unusable
  * rather than silently resolved (JG-004 transport note, specification 6.3).
  */
-export function inspectResponseKeys(rawText: string, ids: readonly string[]): { answers: Set<string>; usageAmbiguous: boolean } {
+export function inspectResponseKeys(rawText: string, ids: readonly string[], wrapped = false): { answers: Set<string>; usageAmbiguous: boolean } {
   const duplicates = new Set<string>();
   let usageAmbiguous = false;
   const wanted = new Set(ids);
-  type Frame = { keys: Set<string>; pending: string | null; answers: boolean; answerId: string | null; root: boolean; usage: boolean };
+  type Frame = { keys: Set<string>; pending: string | null; answers: boolean; answerId: string | null; root: boolean; usage: boolean; envelope: boolean };
   const stack: Frame[] = [];
   // JSON has already been parsed successfully. String tokens are decoded so escaped
   // keys cannot bypass correlation, and nesting distinguishes data from answer keys.
@@ -234,11 +234,16 @@ export function inspectResponseKeys(rawText: string, ids: readonly string[]): { 
         answers: value === '{' && parent?.root === true && parent.pending === 'answers',
         answerId: parent?.answers === true && wanted.has(parent.pending ?? '') ? parent.pending : null,
         usage: parent?.usage === true || (parent?.root === true && parent.pending === 'usage'),
-        root: stack.length === 0 });
+        root: wrapped ? parent?.envelope === true && parent.pending === 'result' : stack.length === 0,
+        envelope: wrapped && stack.length === 0 });
     } else if (value === '}' || value === ']') stack.pop();
     else if (value.endsWith(':') && parent !== undefined) {
       const key = JSON.parse(value.slice(0, -1).trim()) as string;
       if (parent.keys.has(key)) {
+        if (parent.envelope && ['result', 'success'].includes(key)) {
+          for (const id of ids) duplicates.add(id);
+          usageAmbiguous = true;
+        }
         if (parent.root && ['answers', 'model'].includes(key)) for (const id of ids) duplicates.add(id);
         if (parent.usage || (parent.root && key === 'usage')) usageAmbiguous = true;
         if (parent.answers && wanted.has(key)) duplicates.add(key);
@@ -397,7 +402,7 @@ export class JevAdapter implements ProviderClient {
 /** Shared bounded HTTP exchange for the System One and OpenRouter Decisions contracts. */
 export async function evaluateDecisionRequest(
   request: TransportRequest, batch: EvaluationBatch, model: string,
-  transport: ProviderTransport, signal?: AbortSignal,
+  transport: ProviderTransport, signal?: AbortSignal, cloudflare = false,
 ): Promise<BatchEvaluation> {
   const transmittedBytes = Buffer.byteLength(request.body, 'utf8');
   let response: TransportResponse;
@@ -428,9 +433,19 @@ export async function evaluateDecisionRequest(
       retryable: false, ambiguous: true, transmittedBytes,
     });
   }
+  const wrapped = cloudflare && typeof parsed === 'object' && parsed !== null
+    && ('result' in parsed || 'success' in parsed);
+  if (wrapped) {
+    const envelope = parsed as Record<string, unknown>;
+    if (envelope['success'] !== true || typeof envelope['result'] !== 'object' || envelope['result'] === null || Array.isArray(envelope['result'])) {
+      throw new ProviderError({ code: 'INVALID_PROVIDER_RESPONSE', message: 'Cloudflare returned an unsuccessful or malformed result',
+        retryable: false, ambiguous: true, transmittedBytes });
+    }
+    parsed = envelope['result'];
+  }
   const responseId = typeof parsed === 'object' && parsed !== null && 'id' in parsed
     && typeof parsed.id === 'string' && parsed.id.length > 0 ? parsed.id : null;
-  const keys = inspectResponseKeys(response.text, questionKeys(batch));
+  const keys = inspectResponseKeys(response.text, questionKeys(batch), wrapped);
   return normalizeResponse(
     parsed, batch, model, transmittedBytes,
     response.headers['x-typesafe-request-id'] ?? responseId,

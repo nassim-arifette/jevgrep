@@ -30,9 +30,11 @@ import { ScoreCache } from './evaluation/cache.ts';
 import { PreparationCache, preparationCacheDirectory } from './source/preparation-cache.ts';
 import { inspectScope, renderInspection } from './inspect.ts';
 import {
-  configurationHome, configuredGlobalProvider, createGlobalProfile, createProfile, discoverProjectConfiguration,
+  buildInitialConfiguration, configurationHome, configuredGlobalProvider, createGlobalProfile, createProfile, discoverProjectConfiguration,
   environmentWithProfileSecrets, PROVIDER_KEY_VARIABLES, PROVIDER_LABELS, updateGlobalProfile, validateProfileLocation, type InitProvider,
 } from './init.ts';
+import { CLOUDFLARE_JEV_MODEL, INIT_PROVIDERS, isInitProvider, LITELLM_BASE_URL, PORTKEY_BASE_URL } from './provider-settings.ts';
+import type { ProviderSetup } from './init.ts';
 import { runMcpServer } from './mcp.ts';
 import { LocalDirectory } from './local-directory.ts';
 import { CLI_EXIT_CODES, toCliSearchResponse } from './search-response.ts';
@@ -121,20 +123,20 @@ async function runInit(command: Extract<CliCommand, { kind: 'init' }>, io: CliIo
     const root = command.global ? undefined : validateProfileLocation(resolve(deps.cwd ?? process.cwd(), command.root), environment);
     if (command.global) new LocalDirectory(configurationHome(environment));
     const savedProvider = configuredGlobalProvider(environment);
-    const answer = command.provider ?? savedProvider ?? (await prompt('Provider [1 TypeSafe AI, 2 Vercel AI Gateway, 3 OpenRouter] (1): ')).trim();
-    let provider: InitProvider;
-    if (answer === '' || answer === '1' || answer === 'typesafe') provider = 'typesafe';
-    else if (answer === '2' || answer === 'vercel') provider = 'vercel';
-    else if (answer === '3' || answer === 'openrouter') provider = 'openrouter';
-    else throw new Error('provider must be 1/typesafe, 2/vercel or 3/openrouter');
+    const answer = command.provider ?? savedProvider ?? (await prompt('Provider [1 TypeSafe AI, 2 Vercel AI Gateway, 3 OpenRouter, 4 Cloudflare, 5 LiteLLM, 6 Portkey] (1): ')).trim();
+    const selected = answer === '' ? 'typesafe' : /^[1-6]$/.test(answer) ? INIT_PROVIDERS[Number(answer) - 1] : answer;
+    if (!isInitProvider(selected)) throw new Error('provider must be 1/typesafe, 2/vercel, 3/openrouter, 4/cloudflare, 5/litellm or 6/portkey');
+    const provider: InitProvider = selected;
     const variable = PROVIDER_KEY_VARIABLES[provider];
     let globalCreated: ReturnType<typeof createGlobalProfile> | undefined;
     if (savedProvider === undefined || (command.provider !== undefined && savedProvider !== provider)) {
+      const providerSetup = await promptProviderSetup(provider, prompt, environment);
+      buildInitialConfiguration(root?.path ?? resolve(deps.cwd ?? process.cwd()), provider, providerSetup);
       const existing = environment[variable]?.trim();
       const apiKey = existing && existing.length > 0 ? existing : (await prompt(`${variable} (stored outside repositories): `)).trim();
       globalCreated = savedProvider === undefined
-        ? createGlobalProfile({ provider, apiKey, env: environment, ...(root === undefined ? {} : { repositoryRoot: root }) })
-        : updateGlobalProfile({ provider, apiKey, env: environment, ...(root === undefined ? {} : { repositoryRoot: root }) });
+        ? createGlobalProfile({ provider, apiKey, env: environment, ...(providerSetup === undefined ? {} : { providerSetup }), ...(root === undefined ? {} : { repositoryRoot: root }) })
+        : updateGlobalProfile({ provider, apiKey, env: environment, ...(providerSetup === undefined ? {} : { providerSetup }), ...(root === undefined ? {} : { repositoryRoot: root }) });
     }
     if (command.global) {
       io.out(`configured JevGrep globally\nsettings: ${globalCreated?.settingsPath ?? 'already configured'}\nsecrets: ${globalCreated?.secretsPath ?? 'already configured'}\nprovider: ${PROVIDER_LABELS[provider]}\nnext: run 'jevgrep init' inside a repository`);
@@ -162,6 +164,22 @@ async function runInit(command: Extract<CliCommand, { kind: 'init' }>, io: CliIo
     io.err(`jevgrep: init failed: ${cause instanceof Error ? cause.message : 'unknown failure'}`);
     return CLI_EXIT_CODES.rejected;
   }
+}
+
+async function promptProviderSetup(provider: InitProvider, prompt: (question: string) => Promise<string>, env: NodeJS.ProcessEnv): Promise<ProviderSetup | undefined> {
+  if (provider === 'cloudflare') {
+    const account = (env['CLOUDFLARE_ACCOUNT_ID'] ?? await prompt('Cloudflare account ID (32 hexadecimal characters): ')).trim();
+    return { base_url: `https://api.cloudflare.com/client/v4/accounts/${account}`, model: CLOUDFLARE_JEV_MODEL };
+  }
+  if (provider === 'litellm') {
+    const base = (env['LITELLM_BASE_URL'] ?? await prompt(`Trusted LiteLLM proxy base URL, without /typesafe (${LITELLM_BASE_URL}): `)).trim();
+    return { base_url: base || LITELLM_BASE_URL, model: 'jev-1.13.0' };
+  }
+  if (provider === 'portkey') {
+    const slug = (env['PORTKEY_TYPESAFE_SLUG'] ?? await prompt('Portkey TypeSafe integration slug (without @ or /model): ')).trim();
+    return { base_url: PORTKEY_BASE_URL, model: `@${slug}/jev-1.13.0` };
+  }
+  return undefined;
 }
 
 function runDoctor(command: Extract<CliCommand, { kind: 'doctor' }>, io: CliIo, deps: CommandDependencies): number {
