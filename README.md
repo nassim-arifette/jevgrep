@@ -45,7 +45,7 @@ results.
 | Rank | Tool | R@5 Python | R@5 Go/Rust | Cost per question | Time per question |
 |---:|---|---:|---:|---:|---:|
 | 1 | `gpt-6.1-terra` given the whole repository | 0.894 | 0.737 | $0.12–0.23 | 9–15 s |
-| 2 | **JevGrep** | 0.877 | 0.827 | **$0.005** | **4 s** |
+| 2 | **JevGrep** | 0.877 | **0.827** | **$0.005** | **4 s** |
 | 3 | `gpt-6-luna` given the whole repository | 0.803 | 0.688 | $0.01–0.02 | 3–4 s |
 | 4 | CodeGraph | 0.491 | 0.339 | free, needs an index | 1 s |
 | 5 | BM25 | 0.429 | 0.338 | free | < 0.1 s |
