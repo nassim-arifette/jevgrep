@@ -18,7 +18,7 @@ const COMMAND_SUMMARY: Record<string, string> = {
 
 const OPTION_TEXT: Record<string, string> = {
   '--root': '--root <path>              repository to authorize (default: current directory)',
-  '--provider': '--provider <name>         typesafe (default), vercel or openrouter',
+  '--provider': '--provider <name>         typesafe (default), vercel, openrouter, cloudflare, litellm or portkey',
   '--global': '--global                  configure provider credentials for this computer only',
   '--config': '--config <path>            override automatic project-profile discovery',
   '--query': '--query <text>             the search question, kept verbatim; repeat for up to 8 questions over one preparation',
@@ -35,7 +35,7 @@ const OPTION_TEXT: Record<string, string> = {
 
 /** Usage line of each command, written by hand so a choice is shown as a choice. */
 const COMMAND_USAGE: Record<string, string> = {
-  init: 'jevgrep init [--global] [--root <path>] [--provider typesafe|vercel|openrouter]',
+  init: 'jevgrep init [--global] [--root <path>] [--provider typesafe|vercel|openrouter|cloudflare|litellm|portkey]',
   search:
     'jevgrep search [--config <path>] (--query <text> | --query-file <path>) [--scope <path>]... [--max-context-tokens <n>] [--json] [--allow-partial] [--continuation <token>] [--max-input-tokens <n>] [--max-cost-usd <usd>] [--max-search-ms <n>]',
   inspect: 'jevgrep inspect [--config <path>] [--scope <path>]... [--json]',

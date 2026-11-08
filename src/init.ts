@@ -7,14 +7,18 @@ import { configurationSchema, createDefaultConfiguration, type Configuration } f
 import { LocalDirectory, isMissing } from './local-directory.ts';
 import { DEFAULT_DIRECT_MODEL } from './evaluation/policy.ts';
 import { AuthorizedRoot } from './source/authorization.ts';
+import { CLOUDFLARE_JEV_MODEL, isInitProvider, LITELLM_BASE_URL, PORTKEY_BASE_URL, type InitProvider } from './provider-settings.ts';
 
-export type InitProvider = 'typesafe' | 'vercel' | 'openrouter';
+export type { InitProvider } from './provider-settings.ts';
+export type ProviderSetup = Pick<Configuration['provider'], 'base_url' | 'model'>;
 
 export const PROVIDER_LABELS: Readonly<Record<InitProvider, string>> = {
   typesafe: 'TypeSafe AI', vercel: 'Vercel AI Gateway', openrouter: 'OpenRouter',
+  cloudflare: 'Cloudflare Workers AI', litellm: 'LiteLLM (TypeSafe upstream)', portkey: 'Portkey (TypeSafe integration)',
 };
 export const PROVIDER_KEY_VARIABLES: Readonly<Record<InitProvider, string>> = {
   typesafe: 'TYPESAFE_API_KEY', vercel: 'AI_GATEWAY_API_KEY', openrouter: 'OPENROUTER_API_KEY',
+  cloudflare: 'CLOUDFLARE_API_TOKEN', litellm: 'LITELLM_API_KEY', portkey: 'PORTKEY_API_KEY',
 };
 
 export const DEFAULT_JEVGREPIGNORE = `# JevGrep already respects .gitignore.
@@ -62,23 +66,36 @@ export function projectConfigurationPath(root: string, env: NodeJS.ProcessEnv = 
   return join(configurationHome(env), 'profiles', safeName(authorized.path), 'config.json');
 }
 
-type GlobalSettings = { readonly schema_version: 1; readonly provider: InitProvider };
+type GlobalSettings = { readonly schema_version: 1; readonly provider: InitProvider; readonly provider_options?: ProviderSetup };
 function readGlobalSettings(env: NodeJS.ProcessEnv): GlobalSettings | undefined {
   const text = readOptional(new LocalDirectory(configurationHome(env)), 'global.json', 16_384);
   if (text === undefined) return undefined;
   const parsed = parseJson(text, globalSettingsPath(env));
   if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) throw new Error('invalid global settings');
   const value = parsed as Record<string, unknown>;
-  if (value['schema_version'] !== 1 || (value['provider'] !== 'typesafe' && value['provider'] !== 'vercel' && value['provider'] !== 'openrouter')
-    || Object.keys(value).some((key) => !['schema_version', 'provider'].includes(key))) throw new Error('invalid global settings');
-  return { schema_version: 1, provider: value['provider'] };
+  if (value['schema_version'] !== 1 || !isInitProvider(value['provider'])
+    || Object.keys(value).some((key) => !['schema_version', 'provider', 'provider_options'].includes(key))) throw new Error('invalid global settings');
+  const setup = value['provider_options'];
+  if (setup !== undefined && (typeof setup !== 'object' || setup === null || Array.isArray(setup)
+    || Object.keys(setup).some((key) => !['base_url', 'model'].includes(key))
+    || !('base_url' in setup) || typeof setup.base_url !== 'string' || !('model' in setup) || typeof setup.model !== 'string')) {
+    throw new Error('invalid global provider options');
+  }
+  const providerOptions = setup as ProviderSetup | undefined;
+  buildInitialConfiguration(process.cwd(), value['provider'], providerOptions);
+  return { schema_version: 1, provider: value['provider'], ...(providerOptions === undefined ? {} : { provider_options: providerOptions }) };
 }
 
 export function configuredGlobalProvider(env: NodeJS.ProcessEnv = process.env): InitProvider | undefined { return readGlobalSettings(env)?.provider; }
+export function configuredGlobalProviderSetup(provider: InitProvider, env: NodeJS.ProcessEnv = process.env): ProviderSetup | undefined {
+  const settings = readGlobalSettings(env);
+  return settings?.provider === provider ? settings.provider_options : undefined;
+}
 
 type GlobalProfileOptions = {
   readonly provider: InitProvider; readonly apiKey: string; readonly env?: NodeJS.ProcessEnv;
   readonly repositoryRoot?: AuthorizedRoot;
+  readonly providerSetup?: ProviderSetup;
 };
 type GlobalProfile = { readonly settingsPath: string; readonly secretsPath: string; readonly variable: string };
 
@@ -99,6 +116,7 @@ function parseSecrets(text: string, path: string): Record<string, string> {
 
 function writeGlobalProfile(options: GlobalProfileOptions, replace: boolean): GlobalProfile {
   validateKey(options.apiKey);
+  buildInitialConfiguration(options.repositoryRoot?.path ?? process.cwd(), options.provider, options.providerSetup);
   const env = options.env ?? process.env;
   const root = options.repositoryRoot;
   root?.assertCurrent();
@@ -112,7 +130,8 @@ function writeGlobalProfile(options: GlobalProfileOptions, replace: boolean): Gl
   secrets[variable] = options.apiKey.trim();
   root?.assertCurrent();
   storage.write('secrets.env', Object.entries(secrets).map(([key, value]) => `${key}=${value}\n`).join(''), !replace);
-  try { storage.write('global.json', `${JSON.stringify({ schema_version: 1, provider: options.provider }, null, 2)}\n`, !replace); }
+  try { storage.write('global.json', `${JSON.stringify({ schema_version: 1, provider: options.provider,
+    ...(options.providerSetup === undefined ? {} : { provider_options: options.providerSetup }) }, null, 2)}\n`, !replace); }
   catch (cause) { if (!replace) storage.remove('secrets.env'); throw cause; }
   return { settingsPath: join(storage.path, 'global.json'), secretsPath: join(storage.path, 'secrets.env'), variable };
 }
@@ -133,7 +152,15 @@ export function discoverProjectConfiguration(cwd: string, env: NodeJS.ProcessEnv
   throw new Error(`no JevGrep project is configured for ${resolve(cwd)}; run 'jevgrep init' in the repository first`);
 }
 
-export function buildInitialConfiguration(root: string, provider: InitProvider): Configuration {
+export function buildInitialConfiguration(root: string, provider: InitProvider, setup?: ProviderSetup): Configuration {
+  if (provider === 'cloudflare' || provider === 'litellm' || provider === 'portkey') {
+    const config = createDefaultConfiguration(root, DEFAULT_DIRECT_MODEL);
+    return configurationSchema.parse({ ...config, provider: {
+      adapter: provider, api_key_env: PROVIDER_KEY_VARIABLES[provider],
+      base_url: setup?.base_url ?? (provider === 'litellm' ? LITELLM_BASE_URL : provider === 'portkey' ? PORTKEY_BASE_URL : ''),
+      model: setup?.model ?? (provider === 'cloudflare' ? CLOUDFLARE_JEV_MODEL : provider === 'litellm' ? DEFAULT_DIRECT_MODEL : ''),
+    } });
+  }
   const config = createDefaultConfiguration(root, provider === 'typesafe' ? DEFAULT_DIRECT_MODEL : provider === 'vercel' ? 'typesafe-ai/jev' : 'typesafe/jev-1.13');
   return configurationSchema.parse({
     ...config,
@@ -168,6 +195,7 @@ export function createProfile(options: {
   readonly root: string; readonly provider: InitProvider; readonly apiKey?: string; readonly env?: NodeJS.ProcessEnv;
   readonly replaceProvider?: boolean;
   readonly remoteEvaluationEnabled?: boolean;
+  readonly providerSetup?: ProviderSetup;
 }): CreatedProfile {
   if (options.apiKey !== undefined) validateKey(options.apiKey);
   const env = options.env ?? process.env;
@@ -176,7 +204,9 @@ export function createProfile(options: {
   const configPath = join(storage.path, 'config.json');
   const secretsPath = options.apiKey === undefined ? globalSecretsPath(env) : join(storage.path, 'secrets.env');
   const existing = readOptional(storage, 'config.json', 1_048_576);
-  const desired = { ...buildInitialConfiguration(root.path, options.provider), remote_evaluation_enabled: options.remoteEvaluationEnabled === true };
+  const setup = options.providerSetup ?? (['cloudflare', 'litellm', 'portkey'].includes(options.provider)
+    ? configuredGlobalProviderSetup(options.provider, env) : undefined);
+  const desired = { ...buildInitialConfiguration(root.path, options.provider, setup), remote_evaluation_enabled: options.remoteEvaluationEnabled === true };
   if (existing !== undefined) {
     if (options.replaceProvider !== true || options.apiKey !== undefined) throw new Error(`a profile already exists at ${storage.path}`);
     const current = configurationSchema.parse(parseJson(existing, configPath));

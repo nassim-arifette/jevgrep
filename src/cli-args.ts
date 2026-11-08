@@ -10,10 +10,11 @@
  * Exit code ownership stays with src/cli.ts (specification 4.5).
  */
 import { CONTRACT_LIMITS, parseSearchRequest, type SearchRequest } from './contracts.ts';
+import { isInitProvider, type InitProvider } from './provider-settings.ts';
 
 /** Commands of the documented CLI surface (specification 4.5). */
 export type CliCommand =
-  | { readonly kind: 'init'; readonly root: string; readonly provider?: 'typesafe' | 'vercel' | 'openrouter'; readonly global: boolean }
+  | { readonly kind: 'init'; readonly root: string; readonly provider?: InitProvider; readonly global: boolean }
   | {
     readonly kind: 'search'; readonly config?: string; readonly request: SearchRequest; readonly json: boolean;
     /** Further questions over the same scope and options, from a repeated --query. */
@@ -191,7 +192,7 @@ function applyValueOption(state: MutableOptions, option: string, value: string):
       return undefined;
     case '--provider':
       if (state.provider !== undefined) return "option '--provider' was given twice";
-      if (value !== 'typesafe' && value !== 'vercel' && value !== 'openrouter') return "option '--provider' must be 'typesafe', 'vercel' or 'openrouter'";
+      if (!isInitProvider(value)) return "option '--provider' must be 'typesafe', 'vercel', 'openrouter', 'cloudflare', 'litellm' or 'portkey'";
       state.provider = value;
       return undefined;
     case '--config':
@@ -356,7 +357,7 @@ export function parseCliArguments(
     return { kind: 'command', command: {
       kind: 'init', root: state.root ?? '.',
       global: state.global,
-      ...(state.provider === undefined ? {} : { provider: state.provider as 'typesafe' | 'vercel' | 'openrouter' }),
+      ...(state.provider === undefined ? {} : { provider: state.provider as InitProvider }),
     } };
   }
   const config = state.config;

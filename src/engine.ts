@@ -31,7 +31,7 @@ import type { ScoreCacheWrite } from './evaluation/cache.ts';
 import { ProviderError } from './evaluation/contracts.ts';
 import { CRITERION_VERSION, LAYOUT_VERSION, buildRequestPayload } from './evaluation/jev.ts';
 import type { BatchEvaluation, EvaluationBatch, ProviderClient } from './evaluation/contracts.ts';
-import { createConfiguredProvider } from './evaluation/provider.ts';
+import { configuredAdapter, createConfiguredProvider } from './evaluation/provider.ts';
 import { batchLimits, isOpenRouterModelRevision, scoreCachePolicy, MAX_ROLLING_TTL_SECONDS, type SerializedBatchMeasure } from './evaluation/policy.ts';
 import { runEvaluations } from './evaluation/scheduler.ts';
 import { SearchContext, SearchLogger, isAbortError, runPhase, systemClock } from './lifecycle.ts';
@@ -144,7 +144,7 @@ export class SearchEngine {
     this.#cache = options.cache ?? new ScoreCache({
       directory: cacheDirectory,
       enabled: config.cache.enabled,
-      ttlSeconds: config.cache.ttl_seconds,
+      ttlSeconds: scoreCachePolicy(configuredAdapter(config), config.provider.model, config.cache).ttlSeconds,
       rollingTtlSeconds: config.cache.rolling_ttl_seconds ?? MAX_ROLLING_TTL_SECONDS,
       maxBytes: config.cache.max_bytes,
     });
@@ -877,7 +877,13 @@ function isCacheableEvaluation(
 ): boolean {
   if (cacheMode === 'disabled' || evaluation.requestedModel !== model) return false;
   const returned = evaluation.returnedModel;
+  const gatewayModel = adapter === 'portkey' ? model.split('/')[1] : model;
+  const resolvedGateway = returned !== null && cacheMode === 'rolling'
+    && ((adapter === 'cloudflare' && isPinnedModelRevision(returned))
+      || ((adapter === 'litellm' || adapter === 'portkey')
+        && (returned === gatewayModel || ((gatewayModel === 'jev-latest' || gatewayModel === 'jev-preview') && isPinnedModelRevision(returned)))));
   return returned === null || returned === model
+    || resolvedGateway
     || (cacheMode === 'rolling' && adapter === 'typesafe-direct' && isPinnedModelRevision(returned))
     || (cacheMode === 'rolling' && adapter === 'openrouter' && isOpenRouterModelRevision(returned));
 }

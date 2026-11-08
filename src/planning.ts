@@ -9,7 +9,7 @@ import type { ScanCap } from './contracts.ts';
 import { ConfigurationError } from './config.ts';
 import { buildRequestPayload } from './evaluation/jev.ts';
 import type { BatchItem, EvaluationBatch } from './evaluation/contracts.ts';
-import { batchLimits, measureSerializedBatch, type BatchLimits, type SerializedBatchMeasure } from './evaluation/policy.ts';
+import { batchLimits, measureSerializedBatch, serializedDecisionInput, type BatchLimits, type SerializedBatchMeasure } from './evaluation/policy.ts';
 import { PREPARE_POOL_MIN_BYTES, acquirePool, countTokensWith, countTokensWithAsync } from './source/prepare-pool.ts';
 import { estimateInputCostUsd } from './pricing.ts';
 import type { ReportInputs } from './response/render.ts';
@@ -290,7 +290,7 @@ function* batchingSteps(
   }
   if (items.length === 0) return [];
   const first = items[0]!;
-  const statePayload = JSON.parse(serialize({ query, items: [first] })) as { state: unknown };
+  const statePayload = serializedDecisionInput(serialize({ query, items: [first] }));
   const stateText = JSON.stringify(statePayload.state);
   const state = { tokens: countQuestionTokens(stateText), bytes: Buffer.byteLength(stateText, 'utf8') };
 
