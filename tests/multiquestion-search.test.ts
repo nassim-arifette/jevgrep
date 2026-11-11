@@ -1,6 +1,9 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { createSearchEngine } from '../src/engine.ts';
+import { RequestValidationError } from '../src/engine.ts';
+import { countReferenceTokens } from '../src/response/token-counter.ts';
+import { ManualClock } from '../src/testing/manual-clock.ts';
 import type { ProviderClient } from '../src/evaluation/contracts.ts';
 import type { SearchResult } from '../src/contracts.ts';
 import { createWorkspace } from './helpers/search-workspace.ts';
@@ -89,5 +92,59 @@ test('a function that only moved in its file keeps its cached score', async () =
     // Adjacent selected units are delivered as one range; it must end at the real, shifted last line.
     assert.deepEqual(second.excerpts.map((excerpt) => [excerpt.start_line, excerpt.end_line]), [[1, 191]],
       'returned provenance keeps the real line numbers');
+  } finally { space.cleanup(); }
+});
+
+test('all multiquestion inputs are validated before any provider work', async () => {
+  const space = createWorkspace({ files: { 'a.ts': 'export const a = 1;\n' } });
+  try {
+    const client = provider();
+    const engine = createSearchEngine({ configuration: space.loaded, provider: client });
+    for (const questions of [[], Array.from({ length: 17 }, () => ({ query: 'q' })), [{ query: 'valid' }, { query: 1 }], [{ query: 'q', model: 'override' }]]) {
+      await assert.rejects(engine.searchMany(questions), RequestValidationError);
+    }
+    assert.equal(client.calls, 0);
+  } finally { space.cleanup(); }
+});
+
+test('aggregate input spending prevents a later question from dispatching', async () => {
+  const space = createWorkspace({ files: { 'a.ts': 'export const a = 1;\n' } });
+  try {
+    const client = provider();
+    const evaluate = client.evaluateBatch.bind(client);
+    client.evaluateBatch = async (...args) => ({ ...await evaluate(...args), usage: { inputTokens: 1_000, outputTokens: 0 } });
+    const engine = createSearchEngine({ configuration: space.loaded, provider: client });
+    const results = (await engine.searchMany([{ query: 'first' }, { query: 'second' }], { max_input_tokens: 1_000 })).map(({ outcome }) => asResult(outcome));
+    assert.equal(client.calls, 1);
+    assert.equal(results[1]?.report.usage.provider_request_attempts, 0);
+    assert.ok(results[1]?.report.stop_reasons.includes('SCAN_CAP_REACHED'));
+    assert.equal(results[1]?.status, 'partial');
+  } finally { space.cleanup(); }
+});
+
+test('aggregate deadline is shared across all questions', async () => {
+  const space = createWorkspace({ files: { 'a.ts': 'export const a = 1;\n' } });
+  try {
+    const clock = new ManualClock();
+    const client = provider();
+    const evaluate = client.evaluateBatch.bind(client);
+    client.evaluateBatch = async (...args) => { const result = await evaluate(...args); clock.advanceBy(11); return result; };
+    const results = (await createSearchEngine({ configuration: space.loaded, provider: client, clock }).searchMany(
+      [{ query: 'first' }, { query: 'second' }], { max_search_ms: 10 },
+    )).map(({ outcome }) => asResult(outcome));
+    assert.equal(client.calls, 1);
+    assert.ok(results[1]?.report.stop_reasons.includes('DEADLINE'));
+    assert.equal(results[1]?.report.usage.provider_request_attempts, 0);
+  } finally { space.cleanup(); }
+});
+
+test('aggregate response budget covers the serialized results wrapper', async () => {
+  const space = createWorkspace({ files: Object.fromEntries(Array.from({ length: 15 }, (_, index) => [`${index}.ts`, `export const a${index} = ${index};\n`])) });
+  try {
+    const results = await createSearchEngine({ configuration: space.loaded, provider: provider() }).searchMany(
+      [{ query: 'first' }, { query: 'second' }], { max_context_tokens: 3_000 },
+    );
+    assert.ok(results.every(({ outcome }) => 'report' in outcome));
+    assert.ok(countReferenceTokens(JSON.stringify({ results: results.map(({ outcome }) => outcome) })) <= 3_000);
   } finally { space.cleanup(); }
 });

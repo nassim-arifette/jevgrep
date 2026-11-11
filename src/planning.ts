@@ -172,7 +172,8 @@ export function planScan(
   return {
     batches: rejected ? [] : admitted,
     rejected,
-    capReached: admitted.length < batches.length,
+    capReached: admitted.reduce((sum, batch) => sum + batch.items.length, 0)
+      < batches.reduce((sum, batch) => sum + batch.items.length, 0),
     report: {
       plannedRemoteFragments: fragments.length,
       plannedCacheHits: options.preparedFragments - fragments.length,

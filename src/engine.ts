@@ -20,8 +20,9 @@
  *   fragment has a validated evaluation.
  */
 import { createHash } from 'node:crypto';
+import { setImmediate as yieldToLoop } from 'node:timers/promises';
 import {
-  ContractValidationError, createSearchError, parseSearchRequest,
+  ContractValidationError, createSearchError, createSearchManyRequestSchema, multiquestionResponseReserve, parseSearchRequest,
 } from './contracts.ts';
 import type { ErrorCode, ScanCap, SearchOutcome, StopReason } from './contracts.ts';
 import { ConfigurationError, resolveCredential } from './config.ts';
@@ -49,7 +50,7 @@ import type { Candidate, SelectedRange, SelectionResult } from './response/selec
 import {
   ContinuationError, bindingDigest, decodeContinuation, deliveredKey, encodeContinuation, type ContinuationState,
 } from './continuation.ts';
-import { REFERENCE_COUNTER_ID } from './response/token-counter.ts';
+import { countReferenceTokens, REFERENCE_COUNTER_ID } from './response/token-counter.ts';
 import { UnauthorizedPathError } from './source/authorization.ts';
 import type { AuthorizedRoot } from './source/authorization.ts';
 import type { PreparedFragment, SnapshotChunker } from './source/chunker.ts';
@@ -106,6 +107,9 @@ export type SearchInvocation = {
   readonly searchId?: string;
   /** Trusted local admission time; never taken from tool arguments. */
   readonly startedAtMs?: number;
+  /** Internal remaining call-wide budgets, which may reach zero between questions. */
+  readonly remainingBudget?: { readonly max_input_tokens?: number; readonly max_cost_usd?: number };
+  readonly deadlineAtMs?: number;
   /**
    * Prepared scopes shared by the questions of one multiquestion call, keyed by scope.
    * Preparation is local; every question still pays for its own remote evaluations.
@@ -113,6 +117,16 @@ export type SearchInvocation = {
   readonly preparations?: Map<string, PreparedScope>;
   /** Local benchmark capture of the evaluated candidates; never part of the response. */
   readonly onCandidatePool?: (pool: CandidatePool) => void;
+  /** Local settlement survives compact errors after an attempt was admitted. */
+  readonly onUsage?: (usage: { readonly inputTokens: number; readonly costUsd: number | null }) => void;
+};
+
+export type SearchManyInvocation = Pick<SearchInvocation, 'profile' | 'signal' | 'onProgress' | 'startedAtMs'> & {
+  readonly max_input_tokens?: number;
+  readonly max_cost_usd?: number;
+  /** Total serialized results budget, allocated across questions from remaining capacity. */
+  readonly max_context_tokens?: number;
+  readonly max_search_ms?: number;
 };
 
 export type SearchOutcomeWithDiagnostics = {
@@ -147,6 +161,7 @@ export class SearchEngine {
       ttlSeconds: config.cache.ttl_seconds,
       rollingTtlSeconds: config.cache.rolling_ttl_seconds ?? MAX_ROLLING_TTL_SECONDS,
       maxBytes: config.cache.max_bytes,
+      memoryMaxBytes: 16 * 1024 * 1024,
     });
     this.#preparationCache = options.preparationCache ?? new PreparationCache({
       directory: preparationCacheDirectory(cacheDirectory),
@@ -178,35 +193,84 @@ export class SearchEngine {
    * inventory and preparation of an identical scope are shared.
    */
   async searchMany(
-    requests: readonly unknown[], invocation: Pick<SearchInvocation, 'profile' | 'signal' | 'onProgress'> = {},
+    requests: readonly unknown[], invocation: SearchManyInvocation = {},
   ): Promise<SearchOutcomeWithDiagnostics[]> {
+    return withSearchProfile(invocation.profile, () => this.#searchMany(requests, invocation));
+  }
+
+  async #searchMany(requests: readonly unknown[], invocation: SearchManyInvocation): Promise<SearchOutcomeWithDiagnostics[]> {
+    const { config } = this.#options.configuration;
+    const limits = { default_response_tokens: config.search.default_response_tokens, max_response_tokens: config.search.max_response_tokens };
+    const { max_input_tokens, max_cost_usd, max_context_tokens, max_search_ms } = invocation;
+    try {
+      createSearchManyRequestSchema(limits).parse({ questions: requests,
+        ...(max_input_tokens === undefined ? {} : { max_input_tokens }),
+        ...(max_cost_usd === undefined ? {} : { max_cost_usd }),
+        ...(max_context_tokens === undefined ? {} : { max_context_tokens }),
+        ...(max_search_ms === undefined ? {} : { max_search_ms }),
+      });
+    } catch (cause) {
+      throw cause instanceof ContractValidationError ? new RequestValidationError(cause) : cause;
+    }
+    // Validate every question before the first can perform paid work.
+    const validated = requests.map((request) => parseCallerRequest(request, config));
+    requireCostPricing(max_cost_usd, config, '$.max_cost_usd');
+    validated.forEach((request, index) => {
+      requireCostPricing(request.max_cost_usd, config, `$.questions[${String(index)}].max_cost_usd`);
+    });
     const preparations = new Map<string, PreparedScope>();
     const outcomes: SearchOutcomeWithDiagnostics[] = [];
-    for (const [index, request] of requests.entries()) {
+    let tokensLeft = max_input_tokens;
+    let costLeft = max_cost_usd;
+    // Leave bounded room for the results wrapper and tokenization at JSON joins.
+    let responseLeft = max_context_tokens === undefined ? undefined : max_context_tokens - multiquestionResponseReserve(validated.length);
+    const deadlineAtMs = max_search_ms === undefined ? undefined : (invocation.startedAtMs ?? this.clock.nowMs) + max_search_ms;
+    for (const [index, original] of validated.entries()) {
       const onProgress = invocation.onProgress;
-      outcomes.push(await this.search(request, {
+      const allocation = responseLeft === undefined ? original.max_context_tokens
+        : Math.min(original.max_context_tokens, Math.floor(responseLeft / (validated.length - index)));
+      const request = { ...original, max_context_tokens: allocation,
+        allow_partial_scan: original.allow_partial_scan || tokensLeft !== undefined || costLeft !== undefined || deadlineAtMs !== undefined };
+      const answer = await this.#search(request, {
         ...invocation, preparations,
+        // A question's own deadline starts now; the call's deadline is absolute.
+        startedAtMs: this.clock.nowMs,
+        ...(deadlineAtMs === undefined ? {} : { deadlineAtMs }),
+        remainingBudget: {
+          ...(tokensLeft === undefined ? {} : { max_input_tokens: tokensLeft }),
+          ...(costLeft === undefined ? {} : { max_cost_usd: costLeft }),
+        },
+        onUsage: (usage) => {
+          if (tokensLeft !== undefined) tokensLeft = Math.max(0, tokensLeft - usage.inputTokens);
+          if (costLeft !== undefined) costLeft = Math.max(0, costLeft - (usage.costUsd ?? 0));
+        },
         ...(onProgress === undefined ? {} : { onProgress: (progress: SearchProgress) => {
           onProgress({ ...progress, message: `question ${String(index + 1)} of ${String(requests.length)}: ${progress.message}` });
         } }),
-      }));
+      });
+      outcomes.push(answer);
+      if (responseLeft !== undefined) responseLeft = Math.max(0, responseLeft - (answer.measuredTokens ?? countReferenceTokens(JSON.stringify(answer.outcome))));
     }
     return outcomes;
   }
 
   async #search(request: unknown, invocation: SearchInvocation): Promise<SearchOutcomeWithDiagnostics> {
     const { config } = this.#options.configuration;
+    const usage: UsageAccount = {
+      attempts: 0, knownInputTokens: 0, reservedInputTokens: 0, unknownUsageAttempts: 0, transmittedBytes: 0,
+    };
     const context = new SearchContext({
       ...(invocation.searchId === undefined ? {} : { searchId: invocation.searchId }),
       clock: this.clock,
       ...(invocation.startedAtMs === undefined ? {} : { startedAtMs: invocation.startedAtMs }),
-      deadlineMs: requestedDeadline(request, config.search.deadline_ms),
+      deadlineMs: Math.min(requestedDeadline(request, config.search.deadline_ms), invocation.deadlineAtMs === undefined
+        ? Infinity : Math.max(0, invocation.deadlineAtMs - (invocation.startedAtMs ?? this.clock.nowMs))),
       ...(invocation.signal === undefined ? {} : { clientSignal: invocation.signal }),
       ...(this.#options.logger === undefined ? {} : { logger: this.#options.logger }),
     });
 
     try {
-      return await this.#run(request, context, invocation);
+      return await this.#run(request, context, invocation, usage);
     } catch (cause) {
       const code = errorCodeOf(cause);
       if (code === null) {
@@ -215,13 +279,17 @@ export class SearchEngine {
       return { outcome: createSearchError(code, context.searchId), measuredTokens: null, searchId: context.searchId };
     } finally {
       await context.dispose();
+      const tokens = usage.knownInputTokens + usage.reservedInputTokens;
+      invocation.onUsage?.({ inputTokens: tokens,
+        costUsd: estimateInputCostUsd(tokens, config.provider.pricing?.input_usd_per_million_tokens ?? null) });
     }
   }
 
-  async #run(rawRequest: unknown, context: SearchContext, invocation: SearchInvocation): Promise<SearchOutcomeWithDiagnostics> {
+  async #run(rawRequest: unknown, context: SearchContext, invocation: SearchInvocation, usage: UsageAccount): Promise<SearchOutcomeWithDiagnostics> {
     const { onCandidatePool: capture, preparations } = invocation;
     const { config, sourceRoot } = this.#options.configuration;
     const request = parseCallerRequest(rawRequest, config);
+    requireCostPricing(request.max_cost_usd, config, '$.max_cost_usd');
 
     // The mandatory report envelope is reserved before any work that could cost money.
     const available = measureSync('rendering', () => excerptBudget(context.searchId, request.scope, REFERENCE_COUNTER_ID, request.max_context_tokens));
@@ -253,7 +321,7 @@ export class SearchEngine {
     const limits = batchLimits(adapter);
     const countQuestionTokens = questionTokenMemo();
     const { cached, pending, identities, singletonMeasures } = await this.#lookupCachedScores(prepared.fragments, {
-      query: request.query, serialize, limits, countQuestionTokens, signal: context.signal,
+      query: request.query, serialize, limits, countQuestionTokens, context,
       identity: { endpoint: config.provider.base_url, model, adapter, cacheMode: cachePolicy.mode },
     });
     const progress = (phase: SearchProgress['phase'], evaluated: number, message: string): void => {
@@ -264,18 +332,25 @@ export class SearchEngine {
       measureAsync('batching', () => buildBatchesAsync(fragments, request.query, {
         model, serialize, limits, countQuestionTokens, singletonMeasures, onBatchMeasure, preserveOrder, signal: context.signal,
       }));
-    const pendingBatches = await batchesOf(pending, false);
+    const beforeDeadline = async (body: () => Promise<EvaluationBatch[]>): Promise<EvaluationBatch[]> => {
+      if (!context.canStartWork()) return [];
+      try { return await body(); }
+      catch (cause) {
+        if (isAbortError(cause) && context.stop === 'deadline') return [];
+        throw cause;
+      }
+    };
+    const pendingBatches = await beforeDeadline(() => batchesOf(pending, false));
     if (this.#cache.stats.corrupt > 0 || this.#cache.stats.failures > 0) {
       context.diagnostics.record('CACHE_UNAVAILABLE', context.elapsedMs,
         { count: this.#cache.stats.corrupt + this.#cache.stats.failures });
     }
 
     const pricePerMillion = config.provider.pricing?.input_usd_per_million_tokens ?? null;
-    if (request.max_cost_usd !== undefined && pricePerMillion === null) {
-      throw new RequestValidationError(new ContractValidationError('$.max_cost_usd', 'a cost budget needs a pricing record for the configured model'));
-    }
-    const enabledCaps = withRequestBudget(enabledCapsOf(config.scan_caps), request);
-    const planOf = (batches: readonly EvaluationBatch[]): ScanPlan => measureSync('planning', () => planScan(pending, request.query, {
+    const enabledCaps = withRequestBudget(withRequestBudget(enabledCapsOf(config.scan_caps), request), invocation.remainingBudget ?? {});
+    const planOf = (batches: readonly EvaluationBatch[]): ScanPlan => context.stop === 'deadline'
+      ? interruptedPlan(pending.length, cached.size, enabledCaps)
+      : measureSync('planning', () => planScan(pending, request.query, {
       model,
       batches,
       serialize,
@@ -292,12 +367,9 @@ export class SearchEngine {
     // An allowed partial scan evaluates the highest-priority prefix instead of a path
     // prefix. The strict preflight already ran on the complete plan.
     if (plan.capReached && !plan.rejected && partialOrder !== null) {
-      plan = planOf(await batchesOf(prioritizeFragments(pending, request.query, partialOrder), true));
+      plan = planOf(await beforeDeadline(() => batchesOf(prioritizeFragments(pending, request.query, partialOrder), true)));
     }
 
-    const usage: UsageAccount = {
-      attempts: 0, knownInputTokens: 0, reservedInputTokens: 0, unknownUsageAttempts: 0, transmittedBytes: 0,
-    };
     const byId = new Map(prepared.fragments.map((fragment) => [fragment.id, fragment]));
     const scored: Scored[] = [];
     for (const [id, score] of cached) {
@@ -390,7 +462,7 @@ export class SearchEngine {
     readonly limits: ReturnType<typeof batchLimits>;
     readonly countQuestionTokens: ReturnType<typeof questionTokenMemo>;
     readonly identity: IdentityScope;
-    readonly signal?: AbortSignal;
+    readonly context: SearchContext;
   }): Promise<{
     cached: Map<string, number>;
     pending: PreparedFragment[];
@@ -402,22 +474,50 @@ export class SearchEngine {
     const pending: PreparedFragment[] = [];
     const identities = new Map<string, string>();
     const singletonMeasures = new Map<string, SerializedBatchMeasure>();
-    const bodies: string[] = [];
+    let bodies: string[] = [];
+    let bodyFragments: PreparedFragment[] = [];
+    let bodyBytes = 0;
+    let visited = 0;
+    const measurePending = async (): Promise<void> => {
+      if (bodies.length === 0 || !options.context.canStartWork()) return;
+      try {
+        const measures = await measureAsync('batching', () => measureSerializedBodiesAsync(bodies, limits, countQuestionTokens, { signal: options.context.signal }));
+        bodyFragments.forEach((fragment, index) => { singletonMeasures.set(fragment.id, measures[index]!); });
+      } catch (cause) {
+        if (!(isAbortError(cause) && options.context.stop === 'deadline')) throw cause;
+      }
+      bodies = [];
+      bodyFragments = [];
+      bodyBytes = 0;
+    };
     for (const fragment of fragments) {
+      if (!options.context.canStartWork()) break;
       const hit = measureSync('cache_lookup', () => {
         const body = serialize({ query, items: [fragment] });
         const inputHash = createHash('sha256').update(body).digest('hex');
         const identity = fragmentIdentity(query, fragment, inputHash, options.identity);
         identities.set(fragment.id, identity);
         const score = options.identity.cacheMode !== 'disabled' ? this.#cache.read(identity) : null;
-        if (score === null) bodies.push(body);
+        if (score === null) {
+          bodies.push(body);
+          bodyFragments.push(fragment);
+          bodyBytes += Buffer.byteLength(body);
+        }
         return score;
       });
       if (hit !== null) cached.set(fragment.id, hit);
       else pending.push(fragment);
+      visited += 1;
+      // Bound retained payloads and let MCP pings, deadlines and cancellation run
+      // even when every score is already on disk.
+      if (visited % 32 === 0 || bodyBytes >= 4 * 1024 * 1024) {
+        await measurePending();
+        await yieldToLoop();
+      }
     }
-    const measures = await measureAsync('batching', () => measureSerializedBodiesAsync(bodies, limits, countQuestionTokens, options.signal === undefined ? {} : { signal: options.signal }));
-    pending.forEach((fragment, index) => { singletonMeasures.set(fragment.id, measures[index]!); });
+    for (let index = visited; index < fragments.length; index += 1) pending.push(fragments[index]!);
+    await measurePending();
+    if (options.context.stop === 'client_cancelled') throw new DOMException('operation aborted', 'AbortError');
     return { cached, pending, identities, singletonMeasures };
   }
 
@@ -482,6 +582,7 @@ export class SearchEngine {
         fragments: config.scan_caps.fragments,
       },
       shouldStop: () => !context.canStartWork(),
+      signal: context.signal,
       cache: this.#preparationCache,
       ...(this.#options.chunker === undefined ? {} : { chunker: this.#options.chunker }),
       ...(fileOrder === undefined ? {} : { fileOrder }),
@@ -526,18 +627,19 @@ export class SearchEngine {
       return snapshot === undefined ? null : snapshot.sliceLines(startLine, endLine).text;
     };
 
+    let selectionTokens = availableTokens;
     const select = () => measureSync('selection', () => selectRanges(candidates, {
       threshold: config.search.threshold,
-      availableTokens,
+      availableTokens: selectionTokens,
       measure: excerptCost,
       sliceLines,
       unavailablePaths: freshness.unavailablePaths,
       policy: config.search.selection_policy ?? 'relevance',
       wholeDeclarations: true,
     }));
-    const selection = selectFresh(select, { freshness, snapshots, rounds: prepared.files.length + 1, context });
+    let selection = selectFresh(select, { freshness, snapshots, rounds: prepared.files.length + 1, context });
 
-    const inputs: ReportInputs = {
+    const inputsOf = (): ReportInputs => ({
       ...reportInputs({ context, request, prepared, scored, usage, plan, selection, freshness, rejected,
         threshold: config.search.threshold,
         pricePerMillion: config.provider.pricing?.input_usd_per_million_tokens ?? null,
@@ -548,11 +650,27 @@ export class SearchEngine {
         next: (ranges: readonly SelectedRange[]) => encodeContinuation(continuation.binding,
           deliveredAfter(delivered, candidates, ranges, config.search.threshold)),
       } }),
-    };
+    });
 
-    capture?.(inputs);
     const representedFor = (ranges: readonly SelectedRange[]): number => countRepresented(candidates, ranges, config.search.threshold, freshness.unavailablePaths);
-    const rendered: RenderedResponse = measureSync('rendering', () => renderSearchResult(inputs, rejected ? [] : selection.ranges, representedFor));
+    let inputs = inputsOf();
+    let rendered: RenderedResponse = measureSync('rendering', () => renderSearchResult(inputs, rejected ? [] : selection.ranges, representedFor));
+    // Preflight reserves a worst-case report before paid work. Once the actual
+    // report exists, spend its unused capacity on already-scored evidence. Each
+    // round still measures the entire payload, including updated continuation data.
+    for (let round = 0; !rejected && round < 3; round += 1) {
+      const spare = request.max_context_tokens - rendered.measuredTokens;
+      if (spare < 32 || rendered.result.report.fragments.omitted_by_response_budget === 0) break;
+      selectionTokens = Math.min(request.max_context_tokens, selectionTokens + spare);
+      selection = selectFresh(select, { freshness, snapshots, rounds: prepared.files.length + 1, context });
+      const nextInputs = inputsOf();
+      const next = measureSync('rendering', () => renderSearchResult(nextInputs, selection.ranges, representedFor));
+      if (next.result.report.fragments.represented_in_response <= rendered.result.report.fragments.represented_in_response
+        && freshness.unavailablePaths.size === rendered.result.report.files.changed_before_return) break;
+      inputs = nextInputs;
+      rendered = next;
+    }
+    capture?.(inputs);
     context.diagnostics.setResponseTokensMeasured(rendered.measuredTokens);
     context.logger.log('info', context.searchId, 'search.complete', {
       status: rendered.result.status,
@@ -596,6 +714,19 @@ type IdentityScope = {
   readonly cacheMode: string;
 };
 
+/** A deadline interrupted counting: keep the known corpus and cache coverage, but
+ * never present an uncomputed estimate as zero or as a provider failure. */
+function interruptedPlan(pending: number, cached: number, enabledCaps: Partial<Record<ScanCap, number>>): ScanPlan {
+  return {
+    batches: [], rejected: false, capReached: false,
+    report: {
+      plannedRemoteFragments: pending, plannedCacheHits: cached,
+      estimatedFirstAttemptTokens: null, estimatedFirstAttemptCostUsd: null, estimatedFirstAttemptRequests: null,
+      enabledCaps, estimatedRequiredCaps: Object.fromEntries(Object.keys(enabledCaps).map((cap) => [cap, null])),
+    },
+  };
+}
+
 function recordPreparation(prepared: PreparedScope, context: SearchContext): void {
   if (!prepared.inventory.complete) {
     context.addStopReason('INVENTORY_INCOMPLETE');
@@ -617,6 +748,13 @@ type Continuation = { readonly binding: Buffer; readonly state: ContinuationStat
  * Continuation state of a request, or null when scores are not cached: without the
  * cache a continued search would evaluate everything again, so none is offered.
  */
+/** A caller's USD budget needs a qualified rate before any preparation or paid work. */
+function requireCostPricing(value: number | undefined, config: LoadedConfiguration['config'], path: string): void {
+  if (value !== undefined && config.provider.pricing == null) {
+    throw new RequestValidationError(new ContractValidationError(path, 'a cost budget needs a pricing record for the configured model'));
+  }
+}
+
 /** The operator's caps, lowered to the budgets of this call; a budget never raises a cap. */
 function withRequestBudget(
   caps: Partial<Record<ScanCap, number>>, request: { readonly max_input_tokens?: number; readonly max_cost_usd?: number },

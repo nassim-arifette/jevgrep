@@ -90,7 +90,7 @@ export const MANY_TOOL_INPUT_SCHEMA = describeProperties(transportManyRequestSch
   questions: 'One to sixteen questions sharing preparation of identical scopes. Every question is validated before work starts.',
   max_input_tokens: 'Total provider input-token budget shared by all questions, allocated in question order.',
   max_cost_usd: 'Total provider spend budget in USD shared by all questions, allocated in question order.',
-  max_context_tokens: 'Total response-token budget shared by all results, with remaining space divided among pending questions; must allow at least 1024 tokens per question. Questions without enough remaining space return a compact error without provider work.',
+  max_context_tokens: 'Total response-token budget shared by all results, with remaining space divided among pending questions; must allow at least 1024 tokens per question plus 64 tokens per result and 64 for the wrapper.',
   max_search_ms: 'Overall wall-clock budget in milliseconds from call admission, including queued time and preparation.',
 });
 

@@ -64,6 +64,8 @@ export type ReplayArm = {
   readonly topK?: number;
   /** Ignore candidates scoring more than this below the best candidate (calibration). */
   readonly scoreGap?: number;
+  /** Disable the bounded actual-report refill to compare with conservative reservation. */
+  readonly refill?: boolean;
 };
 
 export type ReplayResult = { readonly result: SearchResult; readonly measuredTokens: number };
@@ -112,9 +114,9 @@ export function replayPool(pool: CandidatePool, files: Readonly<Record<string, s
   const best = Math.max(...candidates.map((entry) => entry.score), 0);
   const threshold = Math.max(arm.threshold ?? pool.threshold, arm.scoreGap === undefined ? 0 : best - arm.scoreGap);
   const requestedTokens = arm.requestedTokens ?? pool.requestedTokens;
-  const availableTokens = arm.requestedTokens === undefined ? pool.availableTokens
+  let availableTokens = arm.requestedTokens === undefined ? pool.availableTokens
     : excerptBudget(pool.searchId, pool.scope, pool.versions.counter, requestedTokens);
-  const selection = selectRanges(candidates, {
+  const select = () => selectRanges(candidates, {
     threshold, availableTokens, measure: excerptCost,
     sliceLines: (path, startLine, endLine) => {
       const text = files[path];
@@ -123,18 +125,28 @@ export function replayPool(pool: CandidatePool, files: Readonly<Record<string, s
     policy: arm.policy, ...(arm.tuning === undefined ? {} : { tuning: arm.tuning }),
     wholeDeclarations: arm.wholeDeclarations ?? true,
   });
-  const ranges = arm.topK === undefined ? selection.ranges : topRanges(selection.ranges, arm.topK);
-  const inputs: ReportInputs = {
+  let selection = select();
+  const rangesOf = () => arm.topK === undefined ? selection.ranges : topRanges(selection.ranges, arm.topK);
+  const inputsOf = (): ReportInputs => ({
     ...pool.inputs,
     fragments: {
       ...pool.inputs.fragments,
       belowThreshold: selection.belowThreshold, aboveThreshold: selection.aboveThreshold, omittedStale: selection.omittedUnavailable,
     },
     threshold, duplicateRangesCollapsed: selection.duplicateRangesCollapsed, requestedTokens,
-  };
+  });
   const representedFor = (kept: readonly SelectedRange[]): number => candidates.filter(({ fragment, score }) => score >= threshold
     && kept.some((range) => range.path === fragment.path && range.startLine <= fragment.startLine && range.endLine >= fragment.endLine)).length;
-  const rendered = renderSearchResult(inputs, ranges, representedFor);
+  let rendered = renderSearchResult(inputsOf(), rangesOf(), representedFor);
+  for (let round = 0; arm.refill !== false && pool.inputs.rejected !== true && round < 3; round += 1) {
+    const spare = requestedTokens - rendered.measuredTokens;
+    if (spare < 32 || rendered.result.report.fragments.omitted_by_response_budget === 0) break;
+    availableTokens = Math.min(requestedTokens, availableTokens + spare);
+    selection = select();
+    const next = renderSearchResult(inputsOf(), rangesOf(), representedFor);
+    if (next.result.report.fragments.represented_in_response <= rendered.result.report.fragments.represented_in_response) break;
+    rendered = next;
+  }
   return { result: rendered.result, measuredTokens: rendered.measuredTokens };
 }
 

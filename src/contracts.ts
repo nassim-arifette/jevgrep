@@ -152,6 +152,11 @@ export function createSearchRequestSchema(limits: ResponseLimits = defaultRespon
   });
 }
 
+/** Conservative room for the results wrapper and tokenizer boundaries between results. */
+export function multiquestionResponseReserve(questionCount: number): number {
+  return 64 * (questionCount + 1);
+}
+
 /** The entire multiquestion call is checked before any question is scheduled. */
 export function createSearchManyRequestSchema(limits: ResponseLimits = defaultResponseLimits) {
   const fields = searchRequestFields(limits);
@@ -164,8 +169,8 @@ export function createSearchManyRequestSchema(limits: ResponseLimits = defaultRe
     max_search_ms: positiveCount,
   }), (value, path) => {
     requireContract(value.max_context_tokens === undefined
-      || value.max_context_tokens >= CONTRACT_LIMITS.min_response_tokens * value.questions.length,
-    `${path}.max_context_tokens`, 'aggregate response budget must allow the minimum for every question');
+      || value.max_context_tokens >= CONTRACT_LIMITS.min_response_tokens * value.questions.length + multiquestionResponseReserve(value.questions.length),
+    `${path}.max_context_tokens`, 'aggregate response budget must allow 1024 tokens per question plus 64 tokens per result and 64 for the wrapper');
   });
 }
 export const searchManyRequestSchema = createSearchManyRequestSchema();
