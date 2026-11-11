@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { Ajv } from 'ajv';
 import { spawn } from 'node:child_process';
 import { PassThrough } from 'node:stream';
 import { fileURLToPath } from 'node:url';
@@ -8,7 +9,7 @@ import { createSearchEngine } from '../src/engine.ts';
 import type { SearchOutcome } from '../src/contracts.ts';
 import { searchOutcomeSchema } from '../src/contracts.ts';
 import type { BatchEvaluation, EvaluationBatch, ProviderClient } from '../src/evaluation/contracts.ts';
-import { MANY_TOOL_NAME, MCP_PROTOCOL_VERSION, TOOL_NAME, runMcpServer } from '../src/mcp.ts';
+import { MANY_TOOL_NAME, MCP_PROTOCOL_VERSION, TOOL_NAME, progressNotifier, runMcpServer } from '../src/mcp.ts';
 import type { Clock } from '../src/lifecycle.ts';
 import { ManualClock } from '../src/testing/manual-clock.ts';
 import { offlineEnv } from './helpers/cli-runner.ts';
@@ -165,8 +166,9 @@ test('a result carries structuredContent equal to its text block, and progress n
     .map((message) => message['params'] as { progressToken: string; progress: number; total?: number; message: string });
   assert.ok(progress.length >= 1, 'at least one progress notification');
   assert.ok(progress.every((entry) => entry.progressToken === 'tok-7' && typeof entry.message === 'string'));
-  const last = progress.at(-1)!;
-  assert.ok(last.total !== undefined && last.progress >= last.total, 'the final notification reaches the total');
+  assert.ok(progress.every((entry, index) => index === 0 || entry.progress > progress[index - 1]!.progress),
+    'progress increases on every notification');
+  assert.match(progress.at(-1)!.message, /selecting excerpts/);
   const result = messages.find((message) => message['id'] === 7)?.['result'] as { content: { text: string }[]; structuredContent: unknown; isError: boolean };
   assert.deepEqual(result.structuredContent, JSON.parse(result.content[0]!.text));
   assert.equal(result.isError, false);
@@ -188,6 +190,55 @@ test('the multiquestion tool answers every question in order, as text blocks and
   assert.equal(result.isError, false);
 });
 
+test('multiquestion arguments are rejected as a whole before provider work or scheduling', async () => {
+  const invalidArguments: unknown[] = [
+    undefined, null, [], {}, { questions: null }, { questions: 'question' }, { questions: [] },
+    { questions: Array.from({ length: 17 }, () => ({ query: 'cache' })) },
+    { questions: [{ query: 'cache' }, null] },
+    { questions: [{ query: 'cache' }, { query: '' }] },
+    { questions: [{ query: 'cache' }, { query: 'billing', extra: true }] },
+    { questions: [{ query: 'cache', continuation: 'unsupported' }] },
+    { questions: [{ query: 123 }] },
+    { questions: [{ scope: ['src'] }] },
+    { questions: [{ query: 'cache', scope: ['../private'] }] },
+    { questions: [{ query: 'cache' }], extra: true },
+    { questions: [{ query: 'cache' }], max_search_ms: 0 },
+    { questions: [{ query: 'cache' }], max_input_tokens: '100' },
+    { questions: [{ query: 'cache' }, { query: 'billing' }], max_context_tokens: 1_024 },
+  ];
+  for (const arguments_ of invalidArguments) {
+    const provider = new DeterministicProvider();
+    const active = session(provider);
+    active.send({ jsonrpc: '2.0', id: 8, method: 'tools/call', params: {
+      name: MANY_TOOL_NAME, arguments: arguments_,
+    } });
+    const messages = await active.responses();
+    const response = messages.find((message) => message['id'] === 8);
+    assert.ok(response !== undefined);
+    assert.equal((response['error'] as { code: number }).code, -32602);
+    assert.equal(provider.calls, 0, 'no earlier valid question may run before later arguments are checked');
+  }
+});
+
+test('progress stays strictly increasing across duplicate completion and next-question resets', () => {
+  const notifications: { params: { progress: number; total?: number } }[] = [];
+  let now = 0;
+  const notify = progressNotifier('multi', (message) => {
+    notifications.push(message as typeof notifications[number]);
+  }, () => now);
+  const facts = { total: 4, cacheReused: 0, files: 2, message: 'phase' };
+  for (const event of [
+    { phase: 'preparation', evaluated: 0 }, { phase: 'evaluation', evaluated: 4 },
+    { phase: 'selection', evaluated: 4 }, { phase: 'preparation', evaluated: 0 },
+    { phase: 'evaluation', evaluated: 1 }, { phase: 'selection', evaluated: 1 },
+  ] as const) {
+    notify({ ...facts, ...event });
+    now += 300;
+  }
+  assert.deepEqual(notifications.map((message) => message.params.progress), [1, 2, 3, 4, 5, 6]);
+  assert.ok(notifications.every((message) => message.params.total === undefined));
+});
+
 test('the tool schema cannot change the root, credential, endpoint, model or caps', async () => {
   const active = session();
   active.send({ jsonrpc: '2.0', id: 1, method: 'tools/list' });
@@ -203,6 +254,7 @@ test('the tool schema cannot change the root, credential, endpoint, model or cap
 test('a successful call returns one validated JSON payload with isError false', async () => {
   const provider = new DeterministicProvider();
   const active = session(provider);
+  active.send({ jsonrpc: '2.0', id: 6, method: 'tools/list' });
   active.send({
     jsonrpc: '2.0', id: 7, method: 'tools/call',
     params: { name: TOOL_NAME, arguments: { query: 'cache invalidation', scope: ['.'], max_context_tokens: 4_000 } },
@@ -220,6 +272,15 @@ test('a successful call returns one validated JSON payload with isError false', 
   assert.ok('report' in outcome && outcome.excerpts.length === 1);
   assert.deepEqual((call['result'] as { structuredContent: unknown }).structuredContent, outcome,
     'structured content is the same validated payload, under the declared output schema');
+  const toolList = messages.find((message) => message['id'] === 6);
+  assert.ok(toolList !== undefined);
+  const advertised = (toolList['result'] as {
+    tools: { name: string; outputSchema: object }[];
+  }).tools.find((tool) => tool.name === TOOL_NAME)!.outputSchema;
+  const validator = new Ajv({ strict: true, allErrors: true });
+  const validate = validator.compile(advertised);
+  assert.equal(validate((call['result'] as { structuredContent: unknown }).structuredContent), true,
+    validator.errorsText(validate.errors));
 });
 
 test('a rejected outcome uses isError true and stays a bounded payload', async () => {

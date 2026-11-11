@@ -27,8 +27,9 @@
 import { randomUUID } from 'node:crypto';
 import type { Readable, Writable } from 'node:stream';
 
-import { createSearchError } from './contracts.ts';
-import type { SearchOutcome } from './contracts.ts';
+import { createSearchError, createSearchManyRequestSchema, createSearchRequestSchema, searchOutcomeSchema } from './contracts.ts';
+import type { SearchManyRequest, SearchOutcome } from './contracts.ts';
+import type { JsonSchema } from './contract-schema.ts';
 import type { SearchEngine, SearchProgress } from './engine.ts';
 import { createCallScheduler } from './mcp-calls.ts';
 import type { CallScheduler } from './mcp-calls.ts';
@@ -51,102 +52,55 @@ export const TOOL_DESCRIPTION =
   + 'is remote when configured. Use normal exact search for a known symbol, path, or literal. Partial coverage '
   + 'and empty selections do not establish absence; inspect the report and continue investigation as needed.';
 
-/** Strict input schema: nothing here can change authorization or operator limits. */
-export const TOOL_INPUT_SCHEMA = Object.freeze({
-  type: 'object',
-  properties: {
-    query: { type: 'string', description: 'Behaviour-oriented search question.' },
-    scope: {
-      type: 'array', items: { type: 'string' }, minItems: 1, maxItems: 32,
-      description: 'Repository-relative files or directories. Defaults to the whole authorized root.',
-    },
-    max_context_tokens: {
-      type: 'integer', minimum: 1_024,
-      description: 'Response budget in reference tokens.',
-    },
-    allow_partial_scan: {
-      type: 'boolean',
-      description: 'Allow a deterministic partial scan instead of refusing a scope that exceeds an enabled cap.',
-    },
-    continuation: {
-      type: 'string',
-      description: 'Token from continuation.next of a partial result, to evaluate what that search left out without repeating delivered excerpts. Repeat the same query and scope. Continue only when the evidence so far is insufficient.',
-    },
-    max_input_tokens: {
-      type: 'integer', minimum: 1,
-      description: 'Search budget: provider input tokens this call may spend. When the scope needs more, the highest-priority fragments are evaluated first and the result is partial with a continuation. Never raises the operator cap.',
-    },
-    max_cost_usd: {
-      type: 'number', minimum: 0,
-      description: 'Search budget in USD for this call, from the configured pricing; same partial-result semantics as max_input_tokens.',
-    },
-    max_search_ms: {
-      type: 'integer', minimum: 1,
-      description: 'Search budget in wall-clock milliseconds for this call; what was not evaluated in time is reported and can be continued.',
-    },
-  },
-  required: ['query'],
-  additionalProperties: false,
+// The operator may tune response limits above the defaults. Transport validation is
+// structural; the engine enforces the configured ceiling before buying any work.
+const transportLimits = { default_response_tokens: 8_000, max_response_tokens: Number.MAX_SAFE_INTEGER };
+const transportRequestSchema = createSearchRequestSchema(transportLimits);
+const transportManyRequestSchema = createSearchManyRequestSchema(transportLimits);
+
+function describeProperties(base: JsonSchema, descriptions: Readonly<Record<string, string>>): JsonSchema {
+  const properties = base['properties'] as Readonly<Record<string, JsonSchema>>;
+  return Object.freeze({
+    ...base,
+    properties: Object.fromEntries(Object.entries(properties).map(([key, value]) => [key, {
+      ...value, ...(descriptions[key] === undefined ? {} : { description: descriptions[key] }),
+    }])),
+  });
+}
+
+/** Strict structural schemas generated from the runtime contracts. */
+export const TOOL_INPUT_SCHEMA = describeProperties(transportRequestSchema.jsonSchema, {
+  query: 'Behaviour-oriented search question.',
+  scope: 'Repository-relative files or directories. Defaults to the whole authorized root.',
+  max_context_tokens: 'Response budget in reference tokens.',
+  allow_partial_scan: 'Allow a deterministic partial scan instead of refusing a scope that exceeds an enabled cap.',
+  continuation: 'Token from continuation.next of a partial result. Repeat the same query and scope to evaluate what was left out without repeating delivered excerpts.',
+  max_input_tokens: 'Provider input-token budget for this question; never raises the operator cap. A capped scan returns partial coverage and a continuation.',
+  max_cost_usd: 'Provider spend budget in USD using the configured pricing, with partial-result semantics.',
+  max_search_ms: 'Wall-clock budget in milliseconds, including queued time; unfinished evaluation is reported with a continuation.',
 });
 
 export const MANY_TOOL_DESCRIPTION =
-  'Ask several related questions about the same authorized code in one call. The repository is inventoried and '
-  + 'prepared once and every question is evaluated separately, each with its own budget, result and coverage report. '
-  + 'Same semantics as semantic_search_code; results come back in the order of the questions.';
+  'Ask 1–16 related questions about the same authorized code in one call. The repository is inventoried and '
+  + 'prepared once and every question is evaluated separately. Optional outer budgets limit total input tokens, '
+  + 'spend, response tokens and wall-clock time across the call; per-question limits can further reduce them. '
+  + 'Results come back in the order of the questions, each with its own coverage report.';
 
-/** One question of a multiquestion call: the single tool's arguments, minus the continuation. */
-const QUESTION_SCHEMA = Object.freeze({
-  type: 'object',
-  properties: Object.fromEntries(Object.entries(TOOL_INPUT_SCHEMA.properties).filter(([key]) => key !== 'continuation')),
-  required: ['query'],
-  additionalProperties: false,
+export const MANY_TOOL_INPUT_SCHEMA = describeProperties(transportManyRequestSchema.jsonSchema, {
+  questions: 'One to sixteen questions sharing preparation of identical scopes. Every question is validated before work starts.',
+  max_input_tokens: 'Total provider input-token budget shared by all questions, allocated in question order.',
+  max_cost_usd: 'Total provider spend budget in USD shared by all questions, allocated in question order.',
+  max_context_tokens: 'Total response-token budget shared by all results, with remaining space divided among pending questions; must allow at least 1024 tokens per question. Questions without enough remaining space return a compact error without provider work.',
+  max_search_ms: 'Overall wall-clock budget in milliseconds from call admission, including queued time and preparation.',
 });
 
-export const MANY_TOOL_INPUT_SCHEMA = Object.freeze({
-  type: 'object',
-  properties: {
-    questions: { type: 'array', items: QUESTION_SCHEMA, minItems: 1, maxItems: 16, description: 'Questions sharing one preparation of the scope.' },
-  },
-  required: ['questions'],
-  additionalProperties: false,
-});
-
-const EXCERPT_SCHEMA = Object.freeze({
-  type: 'object',
-  properties: {
-    path: { type: 'string' }, start_line: { type: 'integer' }, end_line: { type: 'integer' },
-    text: { type: 'string' }, score: { type: 'number' }, file_sha256: { type: 'string' },
-  },
-  required: ['path', 'start_line', 'end_line', 'text', 'score', 'file_sha256'],
-});
-
-/**
- * The search payload as the client receives it in `structuredContent`: a result or an
- * error, both versioned. Nested report objects are described by the documented
- * contract; the schema names what every client needs to branch on.
- */
-export const TOOL_OUTPUT_SCHEMA = Object.freeze({
-  type: 'object',
-  properties: {
-    schema_version: { type: 'string' },
-    search_id: { type: 'string' },
-    status: { type: 'string', enum: ['complete', 'partial', 'rejected', 'error'] },
-    excerpts: { type: 'array', items: EXCERPT_SCHEMA },
-    report: { type: 'object', description: 'Scope, coverage, fragment counts, selection, usage, stop reasons and preflight of the search.' },
-    continuation: { type: 'object', description: 'Present on a partial result: the token to evaluate what this search left out.' },
-    error: {
-      type: 'object',
-      properties: { code: { type: 'string' }, message: { type: 'string' }, retryable: { type: 'boolean' } },
-      required: ['code', 'message', 'retryable'],
-    },
-  },
-  required: ['schema_version', 'search_id', 'status'],
-});
-
+/** Runtime contracts own every output field, including exact source excerpts under `code`. */
+export const TOOL_OUTPUT_SCHEMA = searchOutcomeSchema.jsonSchema;
 export const MANY_TOOL_OUTPUT_SCHEMA = Object.freeze({
   type: 'object',
-  properties: { results: { type: 'array', items: TOOL_OUTPUT_SCHEMA, description: 'One payload per question, in order.' } },
+  properties: { results: { type: 'array', items: TOOL_OUTPUT_SCHEMA, minItems: 1, maxItems: 16 } },
   required: ['results'],
+  additionalProperties: false,
 });
 
 /** Longest accepted JSON-RPC line, in UTF-16 code units (an upper bound on its bytes / 3). */
@@ -225,8 +179,9 @@ export function runMcpServer(options: McpServerOptions): Promise<void> {
     try {
       const onProgress = call.progressToken === undefined ? undefined : progressNotifier(call.progressToken, send, () => engine.clock.nowMs);
       if (call.tool === 'search_many') {
-        const questions = ((call.arguments ?? {}) as { questions?: unknown }).questions;
-        const outcomes = await engine.searchMany(Array.isArray(questions) ? questions : [questions], {
+        const { questions, ...budgets } = call.arguments as SearchManyRequest;
+        const outcomes = await engine.searchMany(questions, {
+          ...budgets, startedAtMs: call.startedAtMs,
           signal: call.controller.signal, ...(onProgress === undefined ? {} : { onProgress }),
         });
         if (!call.controller.signal.aborted) {
@@ -334,6 +289,15 @@ function startToolCall(id: JsonRpcId, params: unknown, deps: RouterDeps): Promis
     sendError(id, INVALID_PARAMS, 'unknown tool');
     return Promise.resolve();
   }
+  let arguments_ = record['arguments'] ?? {};
+  if (tool === 'search_many') {
+    const parsed = transportManyRequestSchema.safeParse(arguments_);
+    if (!parsed.success) {
+      sendError(id, INVALID_PARAMS, 'invalid multiquestion arguments');
+      return Promise.resolve();
+    }
+    arguments_ = parsed.data;
+  }
   const token = ((record['_meta'] ?? {}) as { progressToken?: unknown }).progressToken;
   const progressToken = typeof token === 'string' || typeof token === 'number' ? token : undefined;
   if (calls.has(id)) {
@@ -341,13 +305,14 @@ function startToolCall(id: JsonRpcId, params: unknown, deps: RouterDeps): Promis
     return Promise.resolve();
   }
   if (calls.isFull()) {
-    send({ jsonrpc: '2.0', id, result: toolResult(createSearchError('BUSY', randomUUID())) });
+    const busy = createSearchError('BUSY', randomUUID());
+    send({ jsonrpc: '2.0', id, result: tool === 'search_many' ? manyToolResult([busy]) : toolResult(busy) });
     return Promise.resolve();
   }
   return new Promise<void>((resolve) => {
     calls.submit({
       id, tool, ...(progressToken === undefined ? {} : { progressToken }), startedAtMs: deps.nowMs(), controller: new AbortController(),
-      arguments: record['arguments'] ?? {}, resolve,
+      arguments: arguments_, resolve,
     });
   });
 }
@@ -406,22 +371,25 @@ export function manyToolResult(outcomes: readonly SearchOutcome[]): {
 }
 
 /**
- * `notifications/progress` for one call: `progress` counts fragments with a known
- * score, `total` the fragments to evaluate once known. Notifications are spaced by
- * `PROGRESS_INTERVAL_MS`, except the first one and the one that reaches the total.
+ * MCP progress is a monotonically increasing notification sequence across the whole
+ * call. Fragment counts remain in the human-readable engine message: they can reset
+ * for the next question or repeat while selection runs, unlike protocol progress.
+ * Nonfinal events are throttled, and selection always emits the final phase.
  */
 export function progressNotifier(
   progressToken: string | number, send: (message: unknown) => void, nowMs: () => number,
 ): (progress: SearchProgress) => void {
   let lastSentAt: number | null = null;
+  let sequence = 0;
   return (progress) => {
     const now = nowMs();
-    const final = progress.total !== null && progress.evaluated >= progress.total;
+    const final = progress.phase === 'selection';
     if (lastSentAt !== null && !final && now - lastSentAt < PROGRESS_INTERVAL_MS) return;
     lastSentAt = now;
+    sequence += 1;
     send({
       jsonrpc: '2.0', method: 'notifications/progress',
-      params: { progressToken, progress: progress.evaluated, ...(progress.total === null ? {} : { total: progress.total }), message: progress.message },
+      params: { progressToken, progress: sequence, message: progress.message },
     });
   };
 }

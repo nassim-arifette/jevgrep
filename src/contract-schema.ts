@@ -14,7 +14,11 @@ export function requireContract(condition: boolean, path: string, rule: string):
   if (!condition) throw new ContractValidationError(path, rule);
 }
 
+/** JSON Schema describes structural constraints; refinements retain runtime-only invariants. */
+export type JsonSchema = Readonly<Record<string, unknown>>;
+
 export type Schema<T> = {
+  readonly jsonSchema: JsonSchema;
   parse: (input: unknown, path?: string) => T;
   safeParse: (input: unknown) =>
     | { success: true; data: T }
@@ -22,8 +26,9 @@ export type Schema<T> = {
 };
 export type Infer<S> = S extends Schema<infer T> ? T : never;
 
-export function schema<T>(parse: (input: unknown, path: string) => T): Schema<T> {
+export function schema<T>(parse: (input: unknown, path: string) => T, jsonSchema: JsonSchema = {}): Schema<T> {
   return {
+    jsonSchema: Object.freeze(jsonSchema),
     parse: (input, path = '$') => parse(input, path),
     safeParse(input) {
       try {
@@ -41,7 +46,7 @@ export function refine<T>(base: Schema<T>, check: (value: T, path: string) => vo
     const value = base.parse(input, path);
     check(value, path);
     return value;
-  });
+  }, base.jsonSchema);
 }
 
 export function textValue(maxBytes: number, nonblank = true): Schema<string> {
@@ -51,7 +56,7 @@ export function textValue(maxBytes: number, nonblank = true): Schema<string> {
     requireContract(!nonblank || input.trim().length > 0, path, 'must not be blank');
     requireContract(Buffer.byteLength(input, 'utf8') <= maxBytes, path, 'UTF-8 byte limit exceeded');
     return input;
-  });
+  }, { type: 'string', maxLength: maxBytes, ...(nonblank ? { minLength: 1 } : {}) });
 }
 
 export function numberValue(min: number, max: number, integer = true): Schema<number> {
@@ -60,30 +65,32 @@ export function numberValue(min: number, max: number, integer = true): Schema<nu
     requireContract(!integer || Number.isSafeInteger(input), path, 'expected a safe integer');
     requireContract(input >= min && input <= max, path, 'number outside the permitted range');
     return input;
-  });
+  }, { type: integer ? 'integer' : 'number', minimum: min, maximum: max });
 }
 
 export const booleanValue: Schema<boolean> = schema((input, path) => {
   requireContract(typeof input === 'boolean', path, 'expected a boolean');
   return input;
-});
+}, { type: 'boolean' });
 
 export function literal<const T extends string | number | boolean>(expected: T): Schema<T> {
   return schema((input, path) => {
     requireContract(input === expected, path, 'unsupported literal or schema version');
     return expected;
-  });
+  }, { type: typeof expected, const: expected });
 }
 
 export function enumeration<const T extends readonly string[]>(values: T): Schema<T[number]> {
   return schema((input, path) => {
     requireContract(typeof input === 'string' && values.includes(input), path, 'unknown code');
     return input as T[number];
-  });
+  }, { type: 'string', enum: [...values] });
 }
 
 export function nullable<T>(item: Schema<T>): Schema<T | null> {
-  return schema((input, path) => input === null ? null : item.parse(input, path));
+  return schema((input, path) => input === null ? null : item.parse(input, path), {
+    anyOf: [item.jsonSchema, { type: 'null' }],
+  });
 }
 
 export function array<T>(item: Schema<T>, min = 0, max = Number.MAX_SAFE_INTEGER): Schema<T[]> {
@@ -101,7 +108,7 @@ export function array<T>(item: Schema<T>, min = 0, max = Number.MAX_SAFE_INTEGER
     }
     // Array.from visits holes too; sparse arrays must not bypass validation.
     return Array.from(input, (value: unknown, index) => item.parse(value, `${path}[${index}]`));
-  });
+  }, { type: 'array', items: item.jsonSchema, minItems: min, maxItems: max });
 }
 
 function recordValue(input: unknown, path: string): Record<string, unknown> {
@@ -135,6 +142,11 @@ export function object<R extends Shape, O extends Shape = Record<never, never>>(
       if (Object.hasOwn(value, key)) result[key] = field.parse(value[key], `${path}.${key}`);
     }
     return result as Fields<R> & Partial<Fields<O>>;
+  }, {
+    type: 'object',
+    properties: Object.fromEntries(Object.entries({ ...required, ...optional }).map(([key, field]) => [key, field.jsonSchema])),
+    required: Object.keys(required),
+    additionalProperties: false,
   });
 }
 
@@ -150,5 +162,8 @@ export function codeMap<const K extends readonly string[], V>(
       result[key as K[number]] = value.parse(entries[key], `${path}.${key}`);
     }
     return result;
+  }, {
+    type: 'object', properties: Object.fromEntries(keys.map((key) => [key, value.jsonSchema])),
+    additionalProperties: false,
   });
 }

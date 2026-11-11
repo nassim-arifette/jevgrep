@@ -130,22 +130,46 @@ const defaultResponseLimits: ResponseLimits = {
   max_response_tokens: CONTRACT_LIMITS.max_response_tokens,
 };
 
-export function createSearchRequestSchema(limits: ResponseLimits = defaultResponseLimits) {
+function searchRequestFields(limits: ResponseLimits) {
   responseTokens.parse(limits.max_response_tokens, '$.max_response_tokens');
   responseTokens.parse(limits.default_response_tokens, '$.default_response_tokens');
   requireContract(limits.default_response_tokens <= limits.max_response_tokens, '$.default_response_tokens', 'default exceeds maximum');
-  return object({ query: textValue(CONTRACT_LIMITS.query_bytes) }, {
+  return {
     scope: scopeSchema,
     max_context_tokens: numberValue(CONTRACT_LIMITS.min_response_tokens, limits.max_response_tokens),
     allow_partial_scan: booleanValue,
-    continuation: textValue(MAX_CONTINUATION_TOKEN_LENGTH),
     // Search budgets of one call: each one implies a partial scan when it is reached,
     // reported as such with a continuation. They never raise an operator's cap.
     max_input_tokens: positiveCount,
     max_cost_usd: usd,
     max_search_ms: positiveCount,
+  };
+}
+
+export function createSearchRequestSchema(limits: ResponseLimits = defaultResponseLimits) {
+  return object({ query: textValue(CONTRACT_LIMITS.query_bytes) }, {
+    ...searchRequestFields(limits), continuation: textValue(MAX_CONTINUATION_TOKEN_LENGTH),
   });
 }
+
+/** The entire multiquestion call is checked before any question is scheduled. */
+export function createSearchManyRequestSchema(limits: ResponseLimits = defaultResponseLimits) {
+  const fields = searchRequestFields(limits);
+  return refine(object({
+    questions: array(object({ query: textValue(CONTRACT_LIMITS.query_bytes) }, fields), 1, 16),
+  }, {
+    max_input_tokens: positiveCount,
+    max_cost_usd: usd,
+    max_context_tokens: responseTokens,
+    max_search_ms: positiveCount,
+  }), (value, path) => {
+    requireContract(value.max_context_tokens === undefined
+      || value.max_context_tokens >= CONTRACT_LIMITS.min_response_tokens * value.questions.length,
+    `${path}.max_context_tokens`, 'aggregate response budget must allow the minimum for every question');
+  });
+}
+export const searchManyRequestSchema = createSearchManyRequestSchema();
+export type SearchManyRequest = Infer<typeof searchManyRequestSchema>;
 export const searchRequestSchema = createSearchRequestSchema();
 export type SearchRequest = Infer<typeof searchRequestSchema>;
 export type SearchBudgetField = 'max_input_tokens' | 'max_cost_usd' | 'max_search_ms';
@@ -494,8 +518,11 @@ function checkPreflight({ value, path, check, f, p, reasons }: ResultFacts): voi
   if (f.total !== null) {
     check(p.planned_remote_fragments !== null && sum([p.planned_remote_fragments, p.planned_cache_hits], path) === f.total,
       'preflight remote fragments and potential cache hits must partition the prepared total');
-    check(p.estimated_first_attempt_tokens !== null && p.estimated_first_attempt_requests !== null, 'finished preparation requires first-attempt estimates');
-    check(Object.values(p.estimated_required_caps).every((required) => required !== null), 'known preparation cannot have unknown cap requirements');
+    const planningInterrupted = reasons.includes('DEADLINE');
+    check(planningInterrupted || (p.estimated_first_attempt_tokens !== null && p.estimated_first_attempt_requests !== null),
+      'finished planning requires first-attempt estimates');
+    check(planningInterrupted || Object.values(p.estimated_required_caps).every((required) => required !== null),
+      'finished planning cannot have unknown cap requirements');
   } else {
     check(p.planned_remote_fragments === null, 'incomplete preparation cannot claim an exact full remote plan');
   }
@@ -537,7 +564,7 @@ export type SearchOutcome = SearchResult | SearchError;
 export const searchOutcomeSchema = schema<SearchOutcome>((input, path) => {
   return typeof input === 'object' && input !== null && Object.hasOwn(input, 'error')
     ? searchErrorSchema.parse(input, path) : searchResultSchema.parse(input, path);
-});
+}, { type: 'object', anyOf: [searchResultSchema.jsonSchema, searchErrorSchema.jsonSchema] });
 
 export function createSearchError(code: ErrorCode, searchId: string): SearchError {
   const [status, retryable, message] = ERROR_DEFINITIONS[code];
