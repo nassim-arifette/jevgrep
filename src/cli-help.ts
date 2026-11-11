@@ -8,7 +8,7 @@
 import { allowedOptionsFor } from './cli-args.ts';
 
 const COMMAND_SUMMARY: Record<string, string> = {
-  init: 'Create a trusted profile and secrets file outside the repository (TypeSafe AI is the default).',
+  init: 'Create or update project consent and provider settings outside the repository (TypeSafe AI is the default).',
   doctor: 'Validate the trusted configuration and report the local setup without any network call.',
   inspect: 'Report the eligible scope, exclusions and estimated work without contacting the provider.',
   search: 'Return original excerpts that answer a behavior question, inside the response budget.',
@@ -20,6 +20,7 @@ const OPTION_TEXT: Record<string, string> = {
   '--root': '--root <path>              repository to authorize (default: current directory)',
   '--provider': '--provider <name>         typesafe (default), vercel or openrouter',
   '--global': '--global                  configure provider credentials for this computer only',
+  '--replace-key': '--replace-key             with --global, prompt for and replace the selected provider key',
   '--config': '--config <path>            override automatic project-profile discovery',
   '--query': '--query <text>             the search question, kept verbatim; repeat for up to 8 questions over one preparation',
   '--query-file': '--query-file <path>        read the question from a file (multiline queries)',
@@ -35,7 +36,7 @@ const OPTION_TEXT: Record<string, string> = {
 
 /** Usage line of each command, written by hand so a choice is shown as a choice. */
 const COMMAND_USAGE: Record<string, string> = {
-  init: 'jevgrep init [--global] [--root <path>] [--provider typesafe|vercel|openrouter]',
+  init: 'jevgrep init [--global [--replace-key]] [--root <path>] [--provider typesafe|vercel|openrouter]',
   search:
     'jevgrep search [--config <path>] (--query <text> | --query-file <path>) [--scope <path>]... [--max-context-tokens <n>] [--json] [--allow-partial] [--continuation <token>] [--max-input-tokens <n>] [--max-cost-usd <usd>] [--max-search-ms <n>]',
   inspect: 'jevgrep inspect [--config <path>] [--scope <path>]... [--json]',
@@ -88,7 +89,8 @@ export function commandHelp(command: string): string | undefined {
     lines.push('request remote evaluation only when the trusted configuration allows it and a credential exists.');
   } else if (command === 'init') {
     lines.push('this command stores a supplied credential locally but never contacts the provider.');
-    lines.push('new project profiles disable remote evaluation; review the profile before enabling remote_evaluation_enabled.');
+    lines.push('interactive project setup asks for consent; a declined or noninteractive new profile keeps remote evaluation disabled.');
+    lines.push('rerun init after inspect to update consent while preserving tuned settings. Use init --global --replace-key to rotate credentials.');
   } else {
     lines.push('this command is local: it never needs a credential and never contacts the provider.');
   }

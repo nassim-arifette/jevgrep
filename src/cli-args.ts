@@ -13,7 +13,7 @@ import { CONTRACT_LIMITS, parseSearchRequest, type SearchRequest } from './contr
 
 /** Commands of the documented CLI surface (specification 4.5). */
 export type CliCommand =
-  | { readonly kind: 'init'; readonly root: string; readonly provider?: 'typesafe' | 'vercel' | 'openrouter'; readonly global: boolean }
+  | { readonly kind: 'init'; readonly root: string; readonly provider?: 'typesafe' | 'vercel' | 'openrouter'; readonly global: boolean; readonly replaceKey?: boolean }
   | {
     readonly kind: 'search'; readonly config?: string; readonly request: SearchRequest; readonly json: boolean;
     /** Further questions over the same scope and options, from a repeated --query. */
@@ -47,11 +47,12 @@ type OptionState = {
   readonly root: string | undefined;
   readonly provider: string | undefined;
   readonly global: boolean;
+  readonly replaceKey: boolean;
 };
 
 /** Options each command accepts, so a misplaced flag is refused instead of ignored. */
 const ALLOWED_OPTIONS: Record<string, readonly string[]> = {
-  init: ['--root', '--provider', '--global'],
+  init: ['--root', '--provider', '--global', '--replace-key'],
   search: ['--config', '--query', '--query-file', '--scope', '--max-context-tokens', '--allow-partial', '--continuation', '--json',
     '--max-input-tokens', '--max-cost-usd', '--max-search-ms'],
   inspect: ['--config', '--scope', '--json'],
@@ -119,7 +120,7 @@ function readOptions(
   argv: readonly string[],
   allowed: readonly string[],
 ): { readonly state: OptionState; readonly error: string | undefined } {
-  const mutable: MutableOptions = { config: undefined, query: undefined, queryFile: undefined, scope: [], maxContextTokens: undefined, continuation: undefined, budget: {}, moreQueries: [], allowPartial: false, json: false, root: undefined, provider: undefined, global: false };
+  const mutable: MutableOptions = { config: undefined, query: undefined, queryFile: undefined, scope: [], maxContextTokens: undefined, continuation: undefined, budget: {}, moreQueries: [], allowPartial: false, json: false, root: undefined, provider: undefined, global: false, replaceKey: false };
   const state = mutable;
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -143,6 +144,11 @@ function readOptions(
     }
     if (option === '--global') {
       state.global = true;
+      continue;
+    }
+    if (option === '--replace-key') {
+      if (state.replaceKey) return { state, error: "option '--replace-key' was given twice" };
+      state.replaceKey = true;
       continue;
     }
 
@@ -173,6 +179,7 @@ type MutableOptions = {
   root: string | undefined;
   provider: string | undefined;
   global: boolean;
+  replaceKey: boolean;
 };
 
 /** Questions one search command accepts through repeated --query options. */
@@ -353,9 +360,11 @@ export function parseCliArguments(
   }
   if (command === 'init') {
     if (state.global && state.root !== undefined) return refuse("option '--root' cannot be used with '--global'");
+    if (state.replaceKey && !state.global) return refuse("option '--replace-key' requires '--global'");
     return { kind: 'command', command: {
       kind: 'init', root: state.root ?? '.',
       global: state.global,
+      ...(state.replaceKey ? { replaceKey: true } : {}),
       ...(state.provider === undefined ? {} : { provider: state.provider as 'typesafe' | 'vercel' | 'openrouter' }),
     } };
   }

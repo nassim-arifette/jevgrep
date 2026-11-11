@@ -76,6 +76,21 @@ function readGlobalSettings(env: NodeJS.ProcessEnv): GlobalSettings | undefined 
 
 export function configuredGlobalProvider(env: NodeJS.ProcessEnv = process.env): InitProvider | undefined { return readGlobalSettings(env)?.provider; }
 
+function configurationProvider(config: Configuration): InitProvider {
+  return config.provider.base_url.includes('ai-gateway.vercel.sh') ? 'vercel'
+    : config.provider.base_url.includes('openrouter.ai') ? 'openrouter' : 'typesafe';
+}
+
+/** Existing project selection takes precedence over the computer's default on reauthorization. */
+export function configuredProjectProvider(root: AuthorizedRoot, env: NodeJS.ProcessEnv): InitProvider | undefined {
+  const storage = new LocalDirectory(join(configurationHome(env), 'profiles', safeName(root.path)), root);
+  const text = readOptional(storage, 'config.json', 1_048_576);
+  if (text === undefined) return undefined;
+  const current = configurationSchema.parse(parseJson(text, join(storage.path, 'config.json')));
+  if (AuthorizedRoot.open(current.repository_root).path !== root.path) throw new Error('the existing profile authorizes another repository');
+  return configurationProvider(current);
+}
+
 type GlobalProfileOptions = {
   readonly provider: InitProvider; readonly apiKey: string; readonly env?: NodeJS.ProcessEnv;
   readonly repositoryRoot?: AuthorizedRoot;
@@ -178,10 +193,11 @@ export function createProfile(options: {
   const existing = readOptional(storage, 'config.json', 1_048_576);
   const desired = { ...buildInitialConfiguration(root.path, options.provider), remote_evaluation_enabled: options.remoteEvaluationEnabled === true };
   if (existing !== undefined) {
-    if (options.replaceProvider !== true || options.apiKey !== undefined) throw new Error(`a profile already exists at ${storage.path}`);
+    if (options.apiKey !== undefined) throw new Error(`a profile already exists at ${storage.path}; replace credentials with 'jevgrep init --global --replace-key'`);
     const current = configurationSchema.parse(parseJson(existing, configPath));
     if (AuthorizedRoot.open(current.repository_root).path !== root.path) throw new Error('the existing profile authorizes another repository');
-    const updated = configurationSchema.parse({ ...current, provider: desired.provider,
+    const replaceProvider = options.replaceProvider === true && configurationProvider(current) !== options.provider;
+    const updated = configurationSchema.parse({ ...current, provider: replaceProvider ? desired.provider : current.provider,
       remote_evaluation_enabled: options.remoteEvaluationEnabled ?? current.remote_evaluation_enabled });
     root.assertCurrent(); storage.write('config.json', `${JSON.stringify(updated, null, 2)}\n`);
     return { configPath, secretsPath, variable: updated.provider.api_key_env, remoteEvaluationEnabled: updated.remote_evaluation_enabled };

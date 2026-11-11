@@ -17,7 +17,7 @@ import { readFileSync } from 'node:fs';
 import process from 'node:process';
 import { resolve } from 'node:path';
 import { createInterface } from 'node:readline/promises';
-import type { Readable, Writable } from 'node:stream';
+import { Writable, type Readable } from 'node:stream';
 
 import type { CliCommand } from './cli-args.ts';
 import { renderHumanOutcome } from './cli-render.ts';
@@ -30,7 +30,7 @@ import { ScoreCache } from './evaluation/cache.ts';
 import { PreparationCache, preparationCacheDirectory } from './source/preparation-cache.ts';
 import { inspectScope, renderInspection } from './inspect.ts';
 import {
-  configurationHome, configuredGlobalProvider, createGlobalProfile, createProfile, discoverProjectConfiguration,
+  configurationHome, configuredGlobalProvider, configuredProjectProvider, createGlobalProfile, createProfile, discoverProjectConfiguration,
   environmentWithProfileSecrets, PROVIDER_KEY_VARIABLES, PROVIDER_LABELS, updateGlobalProfile, validateProfileLocation, type InitProvider,
 } from './init.ts';
 import { runMcpServer } from './mcp.ts';
@@ -51,6 +51,7 @@ export type CommandDependencies = {
   /** Test seam: builds the engine, for example with a scripted provider. */
   readonly engineFactory?: (configuration: LoadedConfiguration) => SearchEngine;
   readonly prompt?: (question: string) => Promise<string>;
+  readonly promptSecret?: (question: string) => Promise<string>;
 };
 
 /** Load the trusted configuration, reporting a configuration problem as a rejection. */
@@ -112,16 +113,16 @@ export async function executeCommand(
 }
 
 async function runInit(command: Extract<CliCommand, { kind: 'init' }>, io: CliIo, deps: CommandDependencies): Promise<number> {
-  const prompt = deps.prompt ?? (async (question: string): Promise<string> => {
-    const terminal = createInterface({ input: deps.input ?? process.stdin, output: deps.output ?? process.stdout });
-    try { return await terminal.question(question); } finally { terminal.close(); }
-  });
+  const prompt = deps.prompt ?? ((question: string) => terminalQuestion(question, false, deps));
+  const promptSecret = deps.promptSecret ?? deps.prompt ?? ((question: string) => terminalQuestion(question, true, deps));
   try {
+    if (command.replaceKey === true && !command.global) throw new Error('--replace-key requires --global');
     const environment = deps.env ?? process.env;
     const root = command.global ? undefined : validateProfileLocation(resolve(deps.cwd ?? process.cwd(), command.root), environment);
     if (command.global) new LocalDirectory(configurationHome(environment));
     const savedProvider = configuredGlobalProvider(environment);
-    const answer = command.provider ?? savedProvider ?? (await prompt('Provider [1 TypeSafe AI, 2 Vercel AI Gateway, 3 OpenRouter] (1): ')).trim();
+    const projectProvider = root === undefined ? undefined : configuredProjectProvider(root, environment);
+    const answer = command.provider ?? projectProvider ?? savedProvider ?? (await prompt('Provider [1 TypeSafe AI, 2 Vercel AI Gateway, 3 OpenRouter] (1): ')).trim();
     let provider: InitProvider;
     if (answer === '' || answer === '1' || answer === 'typesafe') provider = 'typesafe';
     else if (answer === '2' || answer === 'vercel') provider = 'vercel';
@@ -129,15 +130,16 @@ async function runInit(command: Extract<CliCommand, { kind: 'init' }>, io: CliIo
     else throw new Error('provider must be 1/typesafe, 2/vercel or 3/openrouter');
     const variable = PROVIDER_KEY_VARIABLES[provider];
     let globalCreated: ReturnType<typeof createGlobalProfile> | undefined;
-    if (savedProvider === undefined || (command.provider !== undefined && savedProvider !== provider)) {
-      const existing = environment[variable]?.trim();
-      const apiKey = existing && existing.length > 0 ? existing : (await prompt(`${variable} (stored outside repositories): `)).trim();
+    if ((savedProvider === undefined && (command.global || projectProvider === undefined))
+      || (command.provider !== undefined && savedProvider !== provider) || command.replaceKey === true) {
+      const existing = command.replaceKey === true ? undefined : environment[variable]?.trim();
+      const apiKey = existing && existing.length > 0 ? existing : (await promptSecret(`${variable} (hidden; stored outside repositories): `)).trim();
       globalCreated = savedProvider === undefined
         ? createGlobalProfile({ provider, apiKey, env: environment, ...(root === undefined ? {} : { repositoryRoot: root }) })
         : updateGlobalProfile({ provider, apiKey, env: environment, ...(root === undefined ? {} : { repositoryRoot: root }) });
     }
     if (command.global) {
-      io.out(`configured JevGrep globally\nsettings: ${globalCreated?.settingsPath ?? 'already configured'}\nsecrets: ${globalCreated?.secretsPath ?? 'already configured'}\nprovider: ${PROVIDER_LABELS[provider]}\nnext: run 'jevgrep init' inside a repository`);
+      io.out(`configured JevGrep globally\nsettings: ${globalCreated?.settingsPath ?? 'already configured'}\nsecrets: ${globalCreated?.secretsPath ?? 'already configured; use --replace-key to replace the stored key'}\nprovider: ${PROVIDER_LABELS[provider]}\nnext: run 'jevgrep init' inside a repository`);
       return CLI_EXIT_CODES.complete;
     }
     if (root === undefined) throw new Error('project authorization is missing');
@@ -156,11 +158,34 @@ async function runInit(command: Extract<CliCommand, { kind: 'init' }>, io: CliIo
       replaceProvider: command.provider !== undefined,
       ...(remoteEvaluationEnabled === undefined ? {} : { remoteEvaluationEnabled }),
     });
-    io.out(`authorized JevGrep project\nconfiguration: ${profile.configPath}\nprovider: ${providerLabel}\nremote evaluation: ${profile.remoteEvaluationEnabled ? 'enabled' : 'disabled'}\n${profile.remoteEvaluationEnabled ? 'next: jevgrep search --query "your question"' : 'next: jevgrep inspect; review the configuration before enabling remote_evaluation_enabled'}`);
+    io.out(`authorized JevGrep project\nconfiguration: ${profile.configPath}\nprovider: ${providerLabel}\nremote evaluation: ${profile.remoteEvaluationEnabled ? 'enabled' : 'disabled'}\n${profile.remoteEvaluationEnabled ? 'next: jevgrep search --query "your question"' : "next: jevgrep inspect; then rerun 'jevgrep init' to enable remote evaluation"}`);
     return CLI_EXIT_CODES.complete;
   } catch (cause) {
+    if (cause instanceof Error && cause.name === 'AbortError') return CLI_EXIT_CODES.interrupted;
     io.err(`jevgrep: init failed: ${cause instanceof Error ? cause.message : 'unknown failure'}`);
     return CLI_EXIT_CODES.rejected;
+  }
+}
+
+/** Readline handles editing and interruption; its echo sink is muted for terminal credentials. */
+async function terminalQuestion(question: string, secret: boolean, deps: CommandDependencies): Promise<string> {
+  const input = deps.input ?? process.stdin;
+  const output = deps.output ?? process.stdout;
+  const hidden = secret && (input as Readable & { isTTY?: boolean }).isTTY === true;
+  const muted = hidden ? new Writable({ write(_chunk, _encoding, callback) { callback(); } }) : undefined;
+  if (hidden) output.write(question);
+  const terminal = createInterface({ input, output: muted ?? output, ...(hidden ? { terminal: true } : {}) });
+  const interruption = new AbortController();
+  terminal.once('SIGINT', () => interruption.abort());
+  terminal.once('close', () => interruption.abort());
+  try {
+    return await terminal.question(hidden ? '' : question, {
+      signal: deps.signal === undefined ? interruption.signal : AbortSignal.any([deps.signal, interruption.signal]),
+    });
+  } finally {
+    terminal.close();
+    muted?.destroy();
+    if (hidden) output.write('\n');
   }
 }
 

@@ -56,6 +56,17 @@ repository. `TYPESAFE_API_KEY`, `AI_GATEWAY_API_KEY` and `OPENROUTER_API_KEY`
 override the corresponding stored credentials.
 Use environment variables in automated environments; do not commit keys in project files.
 
+To replace the current provider's stored key, run:
+
+```bash
+jevgrep init --global --replace-key
+```
+
+Add `--provider typesafe`, `--provider vercel` or `--provider openrouter` to select a
+provider explicitly. Replacement always asks for a new key, even if the old key is
+present in the environment. Terminal input is hidden. Existing keys for other
+providers are retained, and environment variables still override stored keys.
+
 New direct profiles use `jev-1.13.0`; Vercel profiles use `typesafe-ai/jev`;
 OpenRouter profiles use `typesafe/jev-1.13`.
 To switch an existing project, run the corresponding global setup, then
@@ -94,7 +105,9 @@ selected provider. Answer `y` to enable remote evaluation; Enter or `n` leaves i
 disabled. New non-interactive profiles also keep it disabled. Both `doctor` and
 `inspect` work offline without a provider key. If you did not enable remote
 evaluation during `init`, review the eligible scope, exclusions and limits, then
-edit the printed profile and set:
+rerun `jevgrep init` and answer `y`. Repeating initialization preserves tuned
+settings and the project's provider. Noninteractive repetition preserves consent.
+You can also edit the printed profile and set:
 
 ```json
 "remote_evaluation_enabled": true
