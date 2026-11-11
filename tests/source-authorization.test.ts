@@ -269,6 +269,7 @@ test('case-sensitive directories keep distinct case-only names and sibling roots
   const lower = join(parent, 'repo');
   const upper = join(parent, 'REPO');
   fs.mkdirSync(lower);
+  if (fs.existsSync(upper)) { t.skip('host filesystem does not support distinct case-only directory names'); return; }
   fs.mkdirSync(upper);
   fs.writeFileSync(join(lower, 'a.ts'), 'lower');
   fs.writeFileSync(join(lower, 'A.ts'), 'upper');

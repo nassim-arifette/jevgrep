@@ -45,4 +45,6 @@ jobs:
         run: npm run verify
 
       - name: Publish with provenance
-        run: npm publish --provenance --access public
+        # The preceding step ran the same verification retained by prepublishOnly
+        # for manual publication; do not execute it a second time in this job.
+        run: npm publish --provenance --access public --ignore-scripts

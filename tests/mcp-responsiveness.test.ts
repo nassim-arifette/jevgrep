@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { PassThrough, Writable } from 'node:stream';
@@ -21,7 +21,7 @@ after(() => {
 });
 
 function repository(files: number): string {
-  const root = mkdtempSync(join(tmpdir(), 'jevgrep-responsive-'));
+  const root = realpathSync.native(mkdtempSync(join(tmpdir(), 'jevgrep-responsive-')));
   roots.push(root);
   for (let n = 0; n < files; n += 1) {
     const directory = join(root, 'src', `d${String(n % 10)}`);
