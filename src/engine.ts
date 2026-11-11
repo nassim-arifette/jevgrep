@@ -379,7 +379,7 @@ export class SearchEngine {
       }
     }
 
-    if (plan.rejected || (context.stopReasons().includes('PREPARATION_LIMIT')
+    if (plan.rejected || (context.stop === null && context.stopReasons().includes('PREPARATION_LIMIT')
       && config.search.require_fit && !request.allow_partial_scan)) {
       context.addStopReason('SCOPE_EXCEEDS_SCAN_BUDGET');
       return this.#render(context, request, prepared, [], usage, plan, available, true, continuation);
@@ -510,10 +510,8 @@ export class SearchEngine {
       visited += 1;
       // Bound retained payloads and let MCP pings, deadlines and cancellation run
       // even when every score is already on disk.
-      if (visited % 32 === 0 || bodyBytes >= 4 * 1024 * 1024) {
-        await measurePending();
-        await yieldToLoop();
-      }
+      if (bodyBytes >= 4 * 1024 * 1024) await measurePending();
+      if (visited % 32 === 0) await yieldToLoop();
     }
     for (let index = visited; index < fragments.length; index += 1) pending.push(fragments[index]!);
     await measurePending();
@@ -731,7 +729,7 @@ function recordPreparation(prepared: PreparedScope, context: SearchContext): voi
   if (!prepared.inventory.complete) {
     context.addStopReason('INVENTORY_INCOMPLETE');
   }
-  if (prepared.inventory.complete && !prepared.complete) {
+  if (prepared.inventory.complete && !prepared.complete && context.stop === null) {
     context.addStopReason('PREPARATION_LIMIT');
   }
   for (const directory of prepared.inventory.excludedDirectories) {

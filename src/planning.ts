@@ -283,8 +283,21 @@ function* batchingSteps(
     text: fragment.text, label: fragment.label ?? null,
   }));
   const unmeasured = items.filter((item) => options.singletonMeasures?.get(item.id) === undefined);
-  const measured = unmeasured.length === 0 ? [] : yield unmeasured.map((item) => serialize({ query, items: [item] }));
-  const singles = new Map<string, SerializedBatchMeasure>(unmeasured.map((item, index) => [item.id, measured[index]!]));
+  const maxOutstandingBodyBytes = 4 * 1024 * 1024;
+  const singles = new Map<string, SerializedBatchMeasure>();
+  for (let start = 0; start < unmeasured.length;) {
+    const bodies: string[] = [];
+    let bytes = 0;
+    for (let index = start; index < unmeasured.length; index += 1) {
+      const body = serialize({ query, items: [unmeasured[index]!] });
+      bodies.push(body);
+      bytes += Buffer.byteLength(body);
+      if (bytes >= maxOutstandingBodyBytes) break;
+    }
+    const measured = yield bodies;
+    measured.forEach((measure, index) => { singles.set(unmeasured[start + index]!.id, measure); });
+    start += bodies.length;
+  }
   const singleOf = (item: BatchItem): SerializedBatchMeasure => options.singletonMeasures?.get(item.id) ?? singles.get(item.id)!;
   for (const item of items) {
     if (!singleOf(item).fits) throw new ConfigurationError('INVALID_REQUEST', 'one question exceeds the provider context estimate');
@@ -330,10 +343,17 @@ function* batchingSteps(
   const batches: EvaluationBatch[] = [];
   let pending = closeFrom([], 0);
   while (pending.length > 0) {
-    const bodies = pending.map((closed) => serialize({ query, items: closed.items }));
+    const bodies: string[] = [];
+    let bytes = 0;
+    for (const closed of pending) {
+      const body = serialize({ query, items: closed.items });
+      bodies.push(body);
+      bytes += Buffer.byteLength(body);
+      if (bytes >= maxOutstandingBodyBytes) break;
+    }
     const measures = yield bodies;
     let restart: Closed[] | null = null;
-    for (let index = 0; index < pending.length; index += 1) {
+    for (let index = 0; index < bodies.length; index += 1) {
       const closed = pending[index]!;
       let batchItems = closed.items;
       let body = bodies[index]!;
@@ -359,7 +379,7 @@ function* batchingSteps(
       restart = closeFrom(carried, closed.end + 1);
       break;
     }
-    pending = restart ?? [];
+    pending = restart ?? pending.slice(bodies.length);
   }
   return batches;
 }
