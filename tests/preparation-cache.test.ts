@@ -303,3 +303,78 @@ test('a pool worker seeds the preparation cache and a cache hit keeps declaratio
   assert.ok(again.fragments.some((fragment) => fragment.path === 'src/long.go' && fragment.declaration != null));
   assert.ok(cache.stats.hits > 0);
 });
+
+test('preparation memory uses a byte-weighted LRU and rejects oversized entries', () => {
+  const cache = new PreparationCache({ directory: null, enabled: true, maxBytes: 10_000_000, memoryMaxBytes: 2_800 });
+  const remember = (digit: string) => {
+    const entry = cache.get(digit.repeat(64), 100);
+    entry.tokens = { counter: 'counter', lines: 'x'.repeat(100) };
+    cache.update(entry);
+    return entry;
+  };
+  remember('a'); remember('b');
+  assert.notEqual(cache.get('a'.repeat(64), 100).tokens, null, 'touch a before adding c');
+  remember('c');
+  assert.ok(cache.stats.resident_bytes <= 2_800);
+  assert.ok(cache.stats.memory_evicted > 0);
+  assert.equal(cache.get('b'.repeat(64), 100).tokens, null, 'least recently used entry was evicted');
+  assert.notEqual(cache.get('a'.repeat(64), 100).tokens, null);
+  const oversized = remember('d');
+  oversized.tokens = { counter: 'counter', lines: 'x'.repeat(10_000) };
+  cache.update(oversized);
+  assert.ok(cache.stats.resident_bytes <= 2_800);
+  assert.equal(cache.get('d'.repeat(64), 100).tokens, null, 'one large entry cannot consume the cache');
+});
+
+test('mutable preparation entries are reweighed on access as well as update', () => {
+  const cache = new PreparationCache({ directory: null, enabled: true, maxBytes: 10_000, memoryMaxBytes: 2_000 });
+  const hash = 'a'.repeat(64);
+  const entry = cache.get(hash, 100);
+  cache.update(entry);
+  assert.ok(cache.stats.resident_bytes > 0);
+  entry.tokens = { counter: 'counter', lines: 'x'.repeat(20_000) };
+  assert.equal(cache.get(hash, 100), entry);
+  assert.equal(cache.stats.resident_bytes, 0, 'the grown object is no longer retained');
+  assert.equal(cache.get(hash, 100).tokens, null);
+});
+
+test('dirty preparation bytes remain bounded while persistence is unavailable', () => {
+  const directory = cacheDirectory();
+  const lock = join(directory, '.write.lock');
+  mkdirSync(lock, { recursive: true });
+  writeFileSync(join(lock, 'a'), ''); writeFileSync(join(lock, 'b'), '');
+  const cache = new PreparationCache({
+    directory, enabled: true, maxBytes: 10_000_000, memoryMaxBytes: 0, dirtyMaxBytes: 2_800,
+  });
+  for (const digit of ['a', 'b', 'c', 'd', 'e']) {
+    const entry = cache.get(digit.repeat(64), 100);
+    entry.tokens = { counter: 'counter', lines: 'x'.repeat(100) };
+    cache.update(entry);
+    assert.equal(cache.stats.resident_bytes, 0);
+    assert.ok(cache.stats.dirty_bytes <= 2_800);
+  }
+  assert.ok(cache.stats.failures > 0);
+  assert.ok(cache.stats.dirty_dropped > 0);
+  rmSync(lock, { recursive: true });
+  assert.ok(cache.flush() > 0, 'remaining dirty entries can still be persisted');
+  assert.equal(cache.stats.dirty_bytes, 0);
+  cache.clear();
+  assert.equal(cache.stats.resident_bytes, 0);
+});
+
+test('dirty preparation pressure flushes earlier entries before accepting more', () => {
+  const cache = new PreparationCache({
+    directory: cacheDirectory(), enabled: true, maxBytes: 10_000_000, dirtyMaxBytes: 2_800,
+  });
+  for (const digit of ['a', 'b', 'c', 'd']) {
+    const entry = cache.get(digit.repeat(64), 100);
+    entry.tokens = { counter: 'counter', lines: 'x'.repeat(100) };
+    cache.update(entry);
+    assert.ok(cache.stats.dirty_bytes <= 2_800);
+  }
+  assert.ok(cache.stats.writes > 0, 'the dirty queue flushed before the final explicit flush');
+  cache.flush();
+  assert.equal(cache.stats.writes, 4);
+  assert.equal(cache.stats.dirty_dropped, 0);
+  assert.equal(cache.stats.dirty_bytes, 0);
+});

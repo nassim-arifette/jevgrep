@@ -25,6 +25,7 @@
 import { createHash } from 'node:crypto';
 import { lstatSync } from 'node:fs';
 import { basename, dirname, join } from 'node:path';
+import { memoryByteLimit, residentBytes } from '../cache-memory.ts';
 import { LocalDirectory, isMissing } from '../local-directory.ts';
 import { REFERENCE_COUNTER_ID } from '../response/token-counter.ts';
 import type { ChunkResult, PreparedFragment, WindowLimits } from './chunker.ts';
@@ -32,7 +33,8 @@ import type { SourceSnapshot } from './snapshot.ts';
 
 export const PREPARATION_CACHE_SCHEMA_VERSION = 2;
 const MAX_ENTRY_BYTES = 4 * 1024 * 1024;
-const MAX_MEMORY_ENTRIES = 50_000;
+const DEFAULT_MEMORY_MAX_BYTES = 64 * 1024 * 1024;
+const DEFAULT_DIRTY_MAX_BYTES = 16 * 1024 * 1024;
 
 export type ScanVerdict = 'ok' | 'binary' | 'unsupported_encoding' | 'empty' | 'whitespace_only' | 'credential_pattern';
 
@@ -58,13 +60,21 @@ export type PreparationEntry = {
   chunks: Record<string, ChunkRecord>;
 };
 
-export type PreparationCacheStats = { hits: number; misses: number; writes: number; corrupt: number; failures: number; evicted: number };
+export type PreparationCacheStats = {
+  hits: number; misses: number; writes: number; corrupt: number; failures: number; evicted: number;
+  /** Approximate retained heap bytes; dirty bytes may share objects with resident bytes. */
+  resident_bytes: number; dirty_bytes: number; memory_evicted: number; dirty_dropped: number;
+};
 
 export type PreparationCacheOptions = {
   /** Persistent location outside the repository; null keeps the cache in memory only. */
   readonly directory: string | null;
   readonly enabled: boolean;
   readonly maxBytes: number;
+  /** In-process LRU heap budget, independent of maxBytes on disk; default 64 MiB. */
+  readonly memoryMaxBytes?: number;
+  /** Pending-persistence heap budget; flush on pressure, then drop oldest on failure. Default 16 MiB. */
+  readonly dirtyMaxBytes?: number;
 };
 
 /** Preparation entries sit beside the score cache: `<home>/preparation/<key>` for `<home>/scores/<key>`. */
@@ -187,14 +197,21 @@ export function resultOf(record: ChunkRecord, snapshot: SourceSnapshot): ChunkRe
 
 /** Two tiers: an in-process map and, optionally, bounded per-entry files. */
 export class PreparationCache {
-  readonly stats: PreparationCacheStats = { hits: 0, misses: 0, writes: 0, corrupt: 0, failures: 0, evicted: 0 };
+  readonly stats: PreparationCacheStats = {
+    hits: 0, misses: 0, writes: 0, corrupt: 0, failures: 0, evicted: 0,
+    resident_bytes: 0, dirty_bytes: 0, memory_evicted: 0, dirty_dropped: 0,
+  };
   readonly #options: PreparationCacheOptions;
   readonly #storage: LocalDirectory | null;
-  readonly #memory = new Map<string, PreparationEntry>();
-  readonly #dirty = new Map<string, PreparationEntry>();
+  readonly #memory = new Map<string, { entry: PreparationEntry; bytes: number }>();
+  readonly #dirty = new Map<string, { entry: PreparationEntry; bytes: number }>();
+  readonly #memoryMaxBytes: number;
+  readonly #dirtyMaxBytes: number;
 
   constructor(options: PreparationCacheOptions) {
     this.#options = options;
+    this.#memoryMaxBytes = memoryByteLimit(options.memoryMaxBytes, DEFAULT_MEMORY_MAX_BYTES);
+    this.#dirtyMaxBytes = memoryByteLimit(options.dirtyMaxBytes, DEFAULT_DIRTY_MAX_BYTES);
     let storage: LocalDirectory | null = null;
     if (options.enabled && options.directory !== null) {
       try { storage = new LocalDirectory(options.directory); } catch { this.stats.failures += 1; }
@@ -212,12 +229,14 @@ export class PreparationCache {
       schema_version: PREPARATION_CACHE_SCHEMA_VERSION, sha256, byte_length: byteLength, scan: null, tokens: null, chunks: {},
     });
     if (!this.enabled || !/^[a-f0-9]{64}$/.test(sha256)) return empty();
-    const remembered = this.#memory.get(sha256);
-    if (remembered !== undefined && remembered.byte_length === byteLength) {
-      this.#memory.delete(sha256);
-      this.#memory.set(sha256, remembered);
+    const remembered = this.#memory.get(sha256) ?? this.#dirty.get(sha256);
+    if (remembered !== undefined && remembered.entry.byte_length === byteLength) {
+      // Entries are mutable between get and update. Recompute their weight at each
+      // access as well, so a caller cannot leave a grown entry at its old weight.
+      this.#remember(remembered.entry);
+      if (this.#dirty.has(sha256)) this.#queue(remembered.entry);
       this.stats.hits += 1;
-      return remembered;
+      return remembered.entry;
     }
     if (this.#storage !== null) {
       const name = this.#name(sha256);
@@ -243,31 +262,74 @@ export class PreparationCache {
   update(entry: PreparationEntry): void {
     if (!this.enabled) return;
     this.#remember(entry);
-    this.#dirty.set(entry.sha256, entry);
+    this.#queue(entry);
   }
 
   /** Forget an entry whose references did not fit its verified content. */
   reject(sha256: string): void {
     this.stats.corrupt += 1;
-    this.#memory.delete(sha256);
-    this.#dirty.delete(sha256);
+    this.#forgetMemory(sha256);
+    this.#forgetDirty(sha256);
     if (this.#storage !== null) this.#discard(this.#name(sha256));
   }
 
+  #forgetMemory(sha256: string): void {
+    this.stats.resident_bytes -= this.#memory.get(sha256)?.bytes ?? 0;
+    this.#memory.delete(sha256);
+  }
+
+  #forgetDirty(sha256: string): void {
+    this.stats.dirty_bytes -= this.#dirty.get(sha256)?.bytes ?? 0;
+    this.#dirty.delete(sha256);
+  }
+
   #remember(entry: PreparationEntry): void {
-    this.#memory.delete(entry.sha256);
-    this.#memory.set(entry.sha256, entry);
-    while (this.#memory.size > MAX_MEMORY_ENTRIES) this.#memory.delete(this.#memory.keys().next().value!);
+    this.#forgetMemory(entry.sha256);
+    const bytes = residentBytes(entry);
+    if (bytes > this.#memoryMaxBytes) return;
+    this.#memory.set(entry.sha256, { entry, bytes });
+    this.stats.resident_bytes += bytes;
+    while (this.stats.resident_bytes > this.#memoryMaxBytes) {
+      this.#forgetMemory(this.#memory.keys().next().value!);
+      this.stats.memory_evicted += 1;
+    }
+  }
+
+  #queue(entry: PreparationEntry): void {
+    this.#forgetDirty(entry.sha256);
+    if (this.#storage === null) return;
+    const bytes = residentBytes(entry);
+    if (bytes > this.#dirtyMaxBytes) { this.stats.dirty_dropped += 1; return; }
+    if (this.stats.dirty_bytes + bytes > this.#dirtyMaxBytes) this.flush();
+    this.#dirty.set(entry.sha256, { entry, bytes });
+    this.stats.dirty_bytes += bytes;
+    if (this.stats.dirty_bytes > this.#dirtyMaxBytes) this.#boundDirty();
+  }
+
+  #boundDirty(): void {
+    // Reweight pending mutable entries before taking a persistence snapshot.
+    this.stats.dirty_bytes = 0;
+    for (const remembered of this.#dirty.values()) {
+      remembered.bytes = residentBytes(remembered.entry);
+      this.stats.dirty_bytes += remembered.bytes;
+    }
+    while (this.stats.dirty_bytes > this.#dirtyMaxBytes) {
+      this.#forgetDirty(this.#dirty.keys().next().value!);
+      this.stats.dirty_dropped += 1;
+    }
   }
 
   /** Persist changed entries under one writer lock, then enforce the size bound. */
   flush(): number {
-    if (this.#storage === null || this.#dirty.size === 0) { this.#dirty.clear(); return 0; }
+    if (this.#storage === null || this.#dirty.size === 0) {
+      this.#dirty.clear(); this.stats.dirty_bytes = 0; return 0;
+    }
+    this.#boundDirty();
     const pending = [...this.#dirty.values()];
     let written = 0;
     try {
       this.#storage.withLock(() => {
-        for (const entry of pending) {
+        for (const { entry } of pending) {
           const raw = `${JSON.stringify(entry)}\n`;
           if (Buffer.byteLength(raw) > Math.min(MAX_ENTRY_BYTES, this.#options.maxBytes)) continue;
           this.#storage!.write(this.#name(entry.sha256), raw);
@@ -276,7 +338,8 @@ export class PreparationCache {
         this.#evict();
       });
       this.#dirty.clear();
-    } catch { this.stats.failures += 1; }
+      this.stats.dirty_bytes = 0;
+    } catch { this.stats.failures += 1; this.#boundDirty(); }
     this.stats.writes += written;
     return written;
   }
@@ -285,6 +348,8 @@ export class PreparationCache {
   clear(): number {
     this.#memory.clear();
     this.#dirty.clear();
+    this.stats.resident_bytes = 0;
+    this.stats.dirty_bytes = 0;
     if (this.#storage === null) return 0;
     try { this.#storage.root(); } catch (cause) {
       // Nothing was ever stored; taking the lock would create the directory.

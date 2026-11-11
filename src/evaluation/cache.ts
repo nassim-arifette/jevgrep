@@ -21,6 +21,7 @@
 import { createHash } from 'node:crypto';
 import { lstatSync } from 'node:fs';
 import { join } from 'node:path';
+import { memoryByteLimit, residentBytes } from '../cache-memory.ts';
 import { LocalDirectory, isMissing } from '../local-directory.ts';
 import { isPinnedModelRevision, isRollingModel, MAX_ROLLING_TTL_SECONDS } from './policy.ts';
 export { isPinnedModelRevision } from './policy.ts';
@@ -91,6 +92,8 @@ export type CacheOptions = {
   readonly enabled: boolean;
   readonly ttlSeconds: number;
   readonly maxBytes: number;
+  /** Optional in-process byte-weighted LRU; 0 (the standalone default) always reads disk. */
+  readonly memoryMaxBytes?: number;
   /** Explicit bounded-staleness reuse for known aliases; disabled for standalone caches. */
   readonly rollingTtlSeconds?: number;
   /** Injectable clock so TTL and eviction are testable without waiting. */
@@ -105,6 +108,10 @@ export type CacheStats = {
   failures: number;
   expired: number;
   corrupt: number;
+  memory_hits: number;
+  disk_reads: number;
+  resident_bytes: number;
+  memory_evicted: number;
 };
 
 export type ScoreCacheWrite = {
@@ -147,13 +154,19 @@ export class ScoreCache {
   readonly #options: CacheOptions;
   readonly #storage: LocalDirectory | null;
   readonly #now: () => number;
-  readonly stats: CacheStats = { hits: 0, misses: 0, writes: 0, failures: 0, expired: 0, corrupt: 0 };
+  readonly stats: CacheStats = {
+    hits: 0, misses: 0, writes: 0, failures: 0, expired: 0, corrupt: 0,
+    memory_hits: 0, disk_reads: 0, resident_bytes: 0, memory_evicted: 0,
+  };
+  readonly #memoryMaxBytes: number;
+  readonly #memory = new Map<string, { entry: CacheEntry; stamp: string; bytes: number }>();
   #sizes: Map<string, { size: number; created: number }> | null = null;
   #totalBytes = 0;
   readonly #shardStamps = new Map<string, string>();
 
   constructor(options: CacheOptions) {
     this.#options = options;
+    this.#memoryMaxBytes = memoryByteLimit(options.memoryMaxBytes, 0);
     this.#now = options.now ?? Date.now;
     try { this.#storage = new LocalDirectory(options.directory); }
     catch { this.#storage = null; this.stats.failures++; }
@@ -171,14 +184,38 @@ export class ScoreCache {
   read(identity: string): number | null {
     if (!this.enabled || !/^[a-f0-9]{64}$/.test(identity)) return null;
     const name = this.#name(identity);
-    let raw: string;
-    try { raw = this.#storage!.read(name, 16_384).toString('utf8'); }
-    catch (cause) {
-      if (!isMissing(cause)) this.stats.failures++;
-      this.stats.misses++; return null;
-    }
     let entry: unknown;
-    try { entry = JSON.parse(raw); } catch { entry = null; }
+    let memoryHit = false;
+    const remembered = this.#memory.get(identity);
+    if (remembered !== undefined) {
+      try {
+        // A resident entry never bypasses root authorization. Atomic writes and
+        // clears change the shard stamp, invalidating scores retained by peers.
+        this.#storage!.root().assertCurrent();
+        if (remembered.stamp === this.#stamp(identity.slice(0, 2))) {
+          entry = remembered.entry;
+          memoryHit = true;
+          this.#memory.delete(identity);
+          this.#memory.set(identity, remembered);
+        } else this.#forget(identity);
+      } catch (cause) {
+        this.#forget(identity);
+        if (!isMissing(cause)) this.stats.failures++;
+        this.stats.misses++;
+        return null;
+      }
+    }
+    if (!memoryHit) {
+      let raw: string;
+      try {
+        this.stats.disk_reads++;
+        raw = this.#storage!.read(name, 16_384).toString('utf8');
+      } catch (cause) {
+        if (!isMissing(cause)) this.stats.failures++;
+        this.stats.misses++; return null;
+      }
+      try { entry = JSON.parse(raw); } catch { entry = null; }
+    }
     if (!isCacheEntry(entry) || entry.identity !== identity || entry.created_at_ms > this.#now()) {
       this.stats.corrupt++; this.stats.misses++; this.#discard(name); return null;
     }
@@ -188,7 +225,29 @@ export class ScoreCache {
     if (ttl <= 0 || Math.min(entry.expires_at_ms, entry.created_at_ms + ttl * 1_000) <= this.#now()) {
       this.stats.expired++; this.stats.misses++; this.#discard(name); return null;
     }
+    if (memoryHit) this.stats.memory_hits++;
+    else if (this.#memoryMaxBytes > 0) {
+      try { this.#remember(entry, this.#stamp(identity.slice(0, 2))); } catch { /* no resident reuse if the shard disappeared */ }
+    }
     this.stats.hits++; return entry.score;
+  }
+
+  #forget(identity: string): void {
+    this.stats.resident_bytes -= this.#memory.get(identity)?.bytes ?? 0;
+    this.#memory.delete(identity);
+  }
+
+  #remember(entry: CacheEntry, stamp: string): void {
+    this.#forget(entry.identity);
+    if (this.#memoryMaxBytes === 0) return;
+    const bytes = residentBytes({ entry, stamp });
+    if (bytes > this.#memoryMaxBytes) return;
+    this.#memory.set(entry.identity, { entry, stamp, bytes });
+    this.stats.resident_bytes += bytes;
+    while (this.stats.resident_bytes > this.#memoryMaxBytes) {
+      this.#forget(this.#memory.keys().next().value!);
+      this.stats.memory_evicted++;
+    }
   }
 
   write(identity: string, score: number, meta: ScoreCacheWrite['meta']): boolean {
@@ -199,7 +258,7 @@ export class ScoreCache {
   writeMany(writes: readonly ScoreCacheWrite[]): number {
     if (!this.enabled || writes.length === 0) return 0;
     const now = this.#now();
-    const prepared: { identity: string; raw: string; size: number }[] = [];
+    const prepared: { identity: string; entry: CacheEntry; raw: string; size: number }[] = [];
     for (const { identity, score, meta } of writes) {
       if (!/^[a-f0-9]{64}$/.test(identity) || !Number.isFinite(score) || score < 0 || score > 1) continue;
       const ttl = this.#ttl(meta.modelRevision);
@@ -212,7 +271,7 @@ export class ScoreCache {
       const raw = `${JSON.stringify(entry)}\n`;
       const size = Buffer.byteLength(raw);
       if (isCacheEntry(entry) && size <= Math.min(16_384, this.#options.maxBytes)) {
-        prepared.push({ identity, raw, size });
+        prepared.push({ identity, entry, raw, size });
       }
     }
     if (prepared.length === 0) return 0;
@@ -239,6 +298,18 @@ export class ScoreCache {
         }
       });
     } catch { this.stats.failures++; this.#sizes = null; }
+    if (this.#memoryMaxBytes > 0 && this.#sizes !== null) {
+      const stamps = new Map<string, string>();
+      for (const { identity, entry } of prepared) {
+        if (!this.#sizes.has(this.#name(identity))) continue;
+        try {
+          const shard = identity.slice(0, 2);
+          const stamp = stamps.get(shard) ?? this.#stamp(shard);
+          stamps.set(shard, stamp);
+          this.#remember(entry, stamp);
+        } catch { /* persistence succeeded; residency is optional */ }
+      }
+    }
     return written;
   }
 
@@ -270,6 +341,8 @@ export class ScoreCache {
 
   /** Only valid entry names are removed; never traverse links or recursively delete a directory. */
   clear(): number {
+    this.#memory.clear();
+    this.stats.resident_bytes = 0;
     if (this.#storage === null) return 0;
     try {
       return this.#storage.withLock(() => {
@@ -320,6 +393,7 @@ export class ScoreCache {
   }
 
   #discard(name: string): boolean {
+    this.#forget(name.slice(3, -5));
     try {
       const removed = this.#storage!.remove(name);
       this.#totalBytes -= this.#sizes?.get(name)?.size ?? 0;

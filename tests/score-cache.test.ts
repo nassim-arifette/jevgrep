@@ -332,3 +332,89 @@ test('writers sharing a directory reconcile eviction and disabled caches can be 
   const disabled = newCache({ directory, enabled: false });
   assert.equal(disabled.clear(), 1);
 });
+
+test('resident score hits avoid payload reads and preserve TTL expiration', (t) => {
+  let now = 1_000;
+  const cache = newCache({ memoryMaxBytes: 1_000_000, ttlSeconds: 10, now: () => now });
+  const identity = evaluationIdentity(BASE);
+  assert.equal(cache.write(identity, 0.8, META), true);
+  const reads = t.mock.method(LocalDirectory.prototype, 'read');
+  for (let index = 0; index < 20; index += 1) assert.equal(cache.read(identity), 0.8);
+  assert.equal(cache.stats.memory_hits, 20);
+  assert.equal(cache.stats.disk_reads, 0);
+  assert.equal(reads.mock.callCount(), 0, 'warm hits read no score payload or JSON');
+  assert.ok(cache.stats.resident_bytes > 0 && cache.stats.resident_bytes <= 1_000_000);
+  now += 10_000;
+  assert.equal(cache.read(identity), null);
+  assert.equal(cache.stats.expired, 1);
+  assert.equal(cache.stats.resident_bytes, 0);
+});
+
+test('resident scores obey rolling-model policy changes', () => {
+  const options = { directory: cacheDirectory(), enabled: true, ttlSeconds: 600, rollingTtlSeconds: 60,
+    maxBytes: 1_000_000, memoryMaxBytes: 1_000_000, now: () => 1_000 };
+  const cache = new ScoreCache(options);
+  const identity = evaluationIdentity({ ...BASE, modelRevision: 'typesafe-ai/jev' });
+  assert.equal(cache.write(identity, 0.9, { ...META, modelRevision: 'typesafe-ai/jev' }), true);
+  assert.equal(cache.read(identity), 0.9);
+  options.rollingTtlSeconds = 0;
+  assert.equal(cache.read(identity), null, 'turning off alias reuse invalidates a resident score');
+  assert.equal(cache.stats.resident_bytes, 0);
+});
+
+test('resident scores use a byte-weighted LRU and cannot survive disk eviction or clear', () => {
+  const calibration = newCache({ memoryMaxBytes: 1_000_000 });
+  const first = evaluationIdentity(BASE);
+  calibration.write(first, 0.1, META);
+  const budget = calibration.stats.resident_bytes * 2 + 256;
+  const cache = newCache({ memoryMaxBytes: budget });
+  const second = evaluationIdentity({ ...BASE, query: 'second' });
+  const third = evaluationIdentity({ ...BASE, query: 'third' });
+  cache.write(first, 0.1, META); cache.write(second, 0.2, META);
+  assert.equal(cache.read(first), 0.1);
+  cache.write(third, 0.3, META);
+  assert.ok(cache.stats.memory_evicted > 0);
+  assert.ok(cache.stats.resident_bytes <= budget);
+  const diskReads = cache.stats.disk_reads;
+  assert.equal(cache.read(first), 0.1);
+  assert.equal(cache.stats.disk_reads, diskReads);
+  assert.equal(cache.read(second), 0.2);
+  assert.equal(cache.stats.disk_reads, diskReads + 1, 'the least recent resident entry was reloaded from disk');
+  cache.clear();
+  assert.equal(cache.stats.resident_bytes, 0);
+  assert.equal(cache.read(first), null);
+
+  let now = 1_000;
+  const limited = newCache({ memoryMaxBytes: 1_000_000, maxBytes: 400, now: () => now });
+  limited.write(first, 0.1, META);
+  now += 1_000;
+  limited.write(second, 0.2, META);
+  assert.equal(limited.read(first), null, 'disk eviction invalidates the resident entry too');
+});
+
+test('another writer replacing or clearing scores invalidates resident entries', () => {
+  const directory = cacheDirectory();
+  const cache = newCache({ directory, memoryMaxBytes: 1_000_000 });
+  const peer = newCache({ directory });
+  const identity = evaluationIdentity(BASE);
+  cache.write(identity, 0.1, META);
+  peer.write(identity, 0.9, META);
+  assert.equal(cache.read(identity), 0.9, 'atomic peer writes invalidate the shard stamp');
+  peer.clear();
+  assert.equal(cache.read(identity), null);
+  assert.equal(cache.stats.resident_bytes, 0);
+});
+
+test('resident score hits still refuse a replaced authorized cache root', () => {
+  const directory = cacheDirectory();
+  const cache = newCache({ directory, memoryMaxBytes: 1_000_000 });
+  const identity = evaluationIdentity(BASE);
+  cache.write(identity, 0.8, META);
+  assert.equal(cache.read(identity), 0.8);
+  const moved = `${directory}-original`;
+  renameSync(directory, moved); directories.push(moved);
+  mkdirSync(directory);
+  assert.equal(cache.read(identity), null);
+  assert.equal(cache.stats.resident_bytes, 0);
+  assert.ok(cache.stats.failures > 0);
+});
