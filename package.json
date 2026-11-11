@@ -38,7 +38,7 @@
     "build": "node node_modules/typescript/bin/tsc -p tsconfig.build.json && node scripts/make-executable.ts",
     "typecheck": "node node_modules/typescript/bin/tsc -p tsconfig.json",
     "lint": "oxlint --deny-warnings src scripts tests",
-    "test": "node --test \"tests/*.test.ts\" \"tests/contract/*.test.ts\"",
+    "test": "node --import ./tests/helpers/canonical-temp.ts --test \"tests/*.test.ts\" \"tests/contract/*.test.ts\"",
     "smoke": "node scripts/smoke.ts",
     "format:check": "node scripts/check-format.ts",
     "bench": "node scripts/bench.ts",
