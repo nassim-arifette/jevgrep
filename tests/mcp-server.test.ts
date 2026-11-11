@@ -204,6 +204,8 @@ test('multiquestion arguments are rejected as a whole before provider work or sc
     { questions: [{ query: 'cache' }], extra: true },
     { questions: [{ query: 'cache' }], max_search_ms: 0 },
     { questions: [{ query: 'cache' }], max_input_tokens: '100' },
+    { questions: [{ query: 'cache', max_context_tokens: 100_000 }] },
+    { questions: [{ query: 'cache' }], max_cost_usd: 1 },
     { questions: [{ query: 'cache' }, { query: 'billing' }], max_context_tokens: 1_024 },
   ];
   for (const arguments_ of invalidArguments) {

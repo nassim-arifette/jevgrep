@@ -30,6 +30,7 @@ import type { Readable, Writable } from 'node:stream';
 import { createSearchError, createSearchManyRequestSchema, createSearchRequestSchema, searchOutcomeSchema } from './contracts.ts';
 import type { SearchManyRequest, SearchOutcome } from './contracts.ts';
 import type { JsonSchema } from './contract-schema.ts';
+import { RequestValidationError } from './engine.ts';
 import type { SearchEngine, SearchProgress } from './engine.ts';
 import { createCallScheduler } from './mcp-calls.ts';
 import type { CallScheduler } from './mcp-calls.ts';
@@ -195,7 +196,11 @@ export function runMcpServer(options: McpServerOptions): Promise<void> {
       if (!call.controller.signal.aborted) {
         send({ jsonrpc: '2.0', id: call.id, result: toolResult(outcome) });
       }
-    } catch {
+    } catch (cause) {
+      if (cause instanceof RequestValidationError && !call.controller.signal.aborted) {
+        sendError(call.id, INVALID_PARAMS, 'invalid search arguments');
+        return;
+      }
       log('jevgrep mcp tool failure');
       if (!call.controller.signal.aborted) {
         sendError(call.id, INTERNAL_ERROR, 'the search failed before a report could be produced');
