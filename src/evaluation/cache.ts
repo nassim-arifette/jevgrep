@@ -186,6 +186,7 @@ export class ScoreCache {
     const name = this.#name(identity);
     let entry: unknown;
     let memoryHit = false;
+    let readStamp: string | undefined;
     const remembered = this.#memory.get(identity);
     if (remembered !== undefined) {
       try {
@@ -206,6 +207,9 @@ export class ScoreCache {
       }
     }
     if (!memoryHit) {
+      if (this.#memoryMaxBytes > 0) {
+        try { readStamp = this.#stamp(identity.slice(0, 2)); } catch { /* a missing shard is a normal cache miss */ }
+      }
       let raw: string;
       try {
         this.stats.disk_reads++;
@@ -226,8 +230,12 @@ export class ScoreCache {
       this.stats.expired++; this.stats.misses++; this.#discard(name); return null;
     }
     if (memoryHit) this.stats.memory_hits++;
-    else if (this.#memoryMaxBytes > 0) {
-      try { this.#remember(entry, this.#stamp(identity.slice(0, 2))); } catch { /* no resident reuse if the shard disappeared */ }
+    else if (readStamp !== undefined) {
+      // Reuse only the generation read: a peer may have cleared/replaced the file
+      // after read() returned, so attaching its old payload to a new stamp is unsafe.
+      try {
+        if (readStamp === this.#stamp(identity.slice(0, 2))) this.#remember(entry, readStamp);
+      } catch { /* no resident reuse if the shard disappeared */ }
     }
     this.stats.hits++; return entry.score;
   }
@@ -296,20 +304,22 @@ export class ScoreCache {
             for (const shard of changedShards) this.#shardStamps.set(shard, this.#stamp(shard));
           } finally { this.#evict(); }
         }
+        // Seed residency before releasing the lock. A peer clear immediately
+        // after unlock must invalidate this generation, never become its stamp.
+        if (this.#memoryMaxBytes > 0) {
+          const stamps = new Map<string, string>();
+          for (const { identity, entry } of prepared) {
+            if (!this.#sizes!.has(this.#name(identity))) continue;
+            try {
+              const shard = identity.slice(0, 2);
+              const stamp = stamps.get(shard) ?? this.#stamp(shard);
+              stamps.set(shard, stamp);
+              this.#remember(entry, stamp);
+            } catch { /* persistence succeeded; residency is optional */ }
+          }
+        }
       });
     } catch { this.stats.failures++; this.#sizes = null; }
-    if (this.#memoryMaxBytes > 0 && this.#sizes !== null) {
-      const stamps = new Map<string, string>();
-      for (const { identity, entry } of prepared) {
-        if (!this.#sizes.has(this.#name(identity))) continue;
-        try {
-          const shard = identity.slice(0, 2);
-          const stamp = stamps.get(shard) ?? this.#stamp(shard);
-          stamps.set(shard, stamp);
-          this.#remember(entry, stamp);
-        } catch { /* persistence succeeded; residency is optional */ }
-      }
-    }
     return written;
   }
 

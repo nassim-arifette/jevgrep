@@ -418,3 +418,44 @@ test('resident score hits still refuse a replaced authorized cache root', () => 
   assert.equal(cache.stats.resident_bytes, 0);
   assert.ok(cache.stats.failures > 0);
 });
+
+test('a peer clear between payload read and residency cannot revive the cleared score', (t) => {
+  const directory = cacheDirectory();
+  const peer = newCache({ directory });
+  const cache = newCache({ directory, memoryMaxBytes: 1_000_000 });
+  const identity = evaluationIdentity(BASE);
+  peer.write(identity, 0.8, META);
+  const originalRead = LocalDirectory.prototype.read;
+  let clearDuringRead = true;
+  t.mock.method(LocalDirectory.prototype, 'read', function (this: LocalDirectory, relative: string, maxBytes: number) {
+    const raw = originalRead.call(this, relative, maxBytes);
+    if (relative.endsWith(`${identity}.json`) && clearDuringRead) {
+      clearDuringRead = false;
+      peer.clear();
+    }
+    return raw;
+  });
+  assert.equal(cache.read(identity), 0.8, 'the first lookup completed its payload read before clear');
+  assert.equal(cache.stats.resident_bytes, 0, 'the changed shard generation was not retained');
+  assert.equal(cache.read(identity), null);
+});
+
+test('a peer clear immediately after a writer unlocks invalidates seeded residency', (t) => {
+  const directory = cacheDirectory();
+  const peer = newCache({ directory });
+  const cache = newCache({ directory, memoryMaxBytes: 1_000_000 });
+  const identity = evaluationIdentity(BASE);
+  const originalWithLock = LocalDirectory.prototype.withLock;
+  let clearAfterUnlock = true;
+  t.mock.method(LocalDirectory.prototype, 'withLock', function<T>(this: LocalDirectory, operation: () => T): T {
+    const result = originalWithLock.call(this, operation) as T;
+    if (clearAfterUnlock) {
+      clearAfterUnlock = false;
+      peer.clear();
+    }
+    return result;
+  });
+  assert.equal(cache.write(identity, 0.8, META), true);
+  assert.equal(cache.read(identity), null);
+  assert.equal(cache.stats.resident_bytes, 0);
+});
