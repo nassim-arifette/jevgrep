@@ -11,7 +11,7 @@ import { readFileSync } from 'node:fs';
 import type { SearchResult } from '../../src/contracts.ts';
 import { CANDIDATE_POOL_VERSION } from '../../src/response/candidate-pool.ts';
 import type { CandidatePool, PooledCandidate } from '../../src/response/candidate-pool.ts';
-import { excerptBudget, excerptCost, renderSearchResult } from '../../src/response/render.ts';
+import { createExcerptCostMemo, excerptBudget, matchesRenderedExcerpts, renderSearchResult } from '../../src/response/render.ts';
 import type { ReportInputs } from '../../src/response/render.ts';
 import { selectRanges } from '../../src/response/selection.ts';
 import type { SelectedRange, SelectionPolicy, SelectionTuning } from '../../src/response/selection.ts';
@@ -116,8 +116,9 @@ export function replayPool(pool: CandidatePool, files: Readonly<Record<string, s
   const requestedTokens = arm.requestedTokens ?? pool.requestedTokens;
   let availableTokens = arm.requestedTokens === undefined ? pool.availableTokens
     : excerptBudget(pool.searchId, pool.scope, pool.versions.counter, requestedTokens);
+  const measureExcerpt = createExcerptCostMemo();
   const select = () => selectRanges(candidates, {
-    threshold, availableTokens, measure: excerptCost,
+    threshold, availableTokens, measure: measureExcerpt,
     sliceLines: (path, startLine, endLine) => {
       const text = files[path];
       return text === undefined ? null : slice(indexes.get(path) ?? lineIndex(text), startLine, endLine);
@@ -143,6 +144,7 @@ export function replayPool(pool: CandidatePool, files: Readonly<Record<string, s
     if (spare < 32 || rendered.result.report.fragments.omitted_by_response_budget === 0) break;
     availableTokens = Math.min(requestedTokens, availableTokens + spare);
     selection = select();
+    if (matchesRenderedExcerpts(rangesOf(), rendered.result)) break;
     const next = renderSearchResult(inputsOf(), rangesOf(), representedFor);
     if (next.result.report.fragments.represented_in_response <= rendered.result.report.fragments.represented_in_response) break;
     rendered = next;

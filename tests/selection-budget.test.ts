@@ -2,10 +2,11 @@ import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { test } from 'node:test';
 
-import { excerptBudget, excerptCost, mandatoryEnvelopeTokens, renderSearchResult, ResponseBudgetError } from '../src/response/render.ts';
+import { createExcerptCostMemo, excerptBudget, excerptCost, mandatoryEnvelopeTokens, matchesRenderedExcerpts, renderSearchResult, ResponseBudgetError } from '../src/response/render.ts';
 import type { ReportInputs } from '../src/response/render.ts';
 import { selectRanges } from '../src/response/selection.ts';
 import type { Candidate, SelectedRange } from '../src/response/selection.ts';
+import { SearchProfiler } from '../src/profiling.ts';
 import { countReferenceTokens, REFERENCE_COUNTER_ID } from '../src/response/token-counter.ts';
 import type { PreparedFragment } from '../src/source/chunker.ts';
 
@@ -290,4 +291,51 @@ test('a qualifying window of a split declaration brings the whole declaration wh
   const headOnly = excerptCost({ path: 'src/cache.ts', sha256: digestFor('src/cache.ts'), startLine: 1, endLine: 12, score: 0.95, text: sliceLines('src/cache.ts', 1, 12)! });
   const tight = selectRanges(candidates, { threshold: 0.5, availableTokens: headOnly, measure: excerptCost, sliceLines, wholeDeclarations: true });
   assert.deepEqual(tight.ranges.map((range) => [range.startLine, range.endLine]), [[1, 12]]);
+});
+
+
+test('refill cost memo reuses exact serialized excerpt costs without retokenization', async () => {
+  const original = rangesFor([['src/cache.ts', 1, 5]])[0]!;
+  const variants = [
+    original, { ...original, text: `${original.text}an extra source line\n` },
+    { ...original, path: 'src/other.ts' }, { ...original, sha256: 'a'.repeat(64) },
+    { ...original, startLine: 2 }, { ...original, endLine: 6 }, { ...original, score: 0.75 },
+  ];
+  const expected = variants.map(excerptCost);
+  const profile = new SearchProfiler();
+  const measure = createExcerptCostMemo();
+  await profile.run(async () => {
+    variants.forEach((range, index) => {
+      assert.equal(measure(range), expected[index]);
+      assert.equal(measure({ ...range }), expected[index]);
+    });
+  });
+  assert.equal(profile.snapshot().stages.tokenization?.calls, variants.length);
+});
+
+test('refill cost memo retains neither oversized ranges nor unlimited distinct ranges', async () => {
+  const original = rangesFor([['src/cache.ts', 1, 5]])[0]!;
+  const uncached = createExcerptCostMemo(1);
+  const oversized = new SearchProfiler();
+  await oversized.run(async () => { uncached(original); uncached(original); });
+  assert.equal(oversized.snapshot().stages.tokenization?.calls, 2);
+
+  const measure = createExcerptCostMemo(1_800);
+  const first = { ...original, text: 'first'.repeat(100) };
+  const second = { ...original, path: 'src/other.ts', text: 'other'.repeat(100) };
+  const bounded = new SearchProfiler();
+  await bounded.run(async () => { measure(first); measure(second); measure(first); });
+  assert.equal(bounded.snapshot().stages.tokenization?.calls, 3, 'the least recent range is evicted by the byte bound');
+});
+
+test('refill detects an identical rendered selection without ignoring excerpt changes', () => {
+  const ranges = rangesFor([['src/cache.ts', 1, 5]]);
+  const rendered = renderSearchResult(reportInputs(), ranges, () => 1);
+  assert.equal(matchesRenderedExcerpts(ranges, rendered.result), true);
+  assert.equal(matchesRenderedExcerpts([], rendered.result), false);
+  const original = ranges[0]!;
+  for (const change of [
+    { path: 'src/other.ts' }, { sha256: 'a'.repeat(64) }, { startLine: 2 }, { endLine: 6 },
+    { score: 0.8 }, { text: 'different source text' },
+  ]) assert.equal(matchesRenderedExcerpts([{ ...original, ...change }], rendered.result), false);
 });

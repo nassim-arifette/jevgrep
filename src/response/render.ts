@@ -22,6 +22,7 @@ import type { ScanCap, SearchResult, StopReason } from '../contracts.ts';
 import type { SelectedRange } from './selection.ts';
 import { countReferenceTokens } from './token-counter.ts';
 import { CONTINUATION_PREFIX } from '../continuation.ts';
+import { memoryByteLimit } from '../cache-memory.ts';
 
 export type ReportUsage = {
   readonly providerRequestAttempts: number;
@@ -171,6 +172,53 @@ export function excerptCost(range: SelectedRange): number {
     score: range.score,
     code: range.text,
   }) + ',');
+}
+
+/**
+ * Search-local exact costs shared by bounded refill rounds. Keep at most 4096
+ * ranges and 4 MiB of approximate keys/text, so retries do not retokenize the same
+ * evidence or create an unbounded second source cache. Text is checked too: even a
+ * malformed caller reusing snapshot metadata cannot reuse a different payload cost.
+ */
+export function createExcerptCostMemo(maxBytes = 4 * 1024 * 1024): (range: SelectedRange) => number {
+  const limit = memoryByteLimit(maxBytes, 4 * 1024 * 1024);
+  const costs = new Map<string, { text: string; tokens: number; bytes: number }>();
+  let retained = 0;
+  return (range) => {
+    const key = JSON.stringify([range.path, range.sha256, range.startLine, range.endLine, range.score]);
+    const held = costs.get(key);
+    if (held !== undefined) {
+      costs.delete(key);
+      retained -= held.bytes;
+      if (held.text === range.text) {
+        costs.set(key, held);
+        retained += held.bytes;
+        return held.tokens;
+      }
+    }
+    const tokens = excerptCost(range);
+    const bytes = 96 + 2 * (key.length + range.text.length);
+    if (bytes <= limit) {
+      costs.set(key, { text: range.text, tokens, bytes });
+      retained += bytes;
+      while (retained > limit || costs.size > 4_096) {
+        const oldest = costs.keys().next().value!;
+        retained -= costs.get(oldest)!.bytes;
+        costs.delete(oldest);
+      }
+    }
+    return tokens;
+  };
+}
+
+/** Whether a new selection would serialize to exactly the excerpts already kept. */
+export function matchesRenderedExcerpts(ranges: readonly SelectedRange[], result: SearchResult): boolean {
+  return ranges.length === result.excerpts.length && ranges.every((range, index) => {
+    const excerpt = result.excerpts[index]!;
+    return range.path === excerpt.path && range.sha256 === excerpt.file_sha256
+      && range.startLine === excerpt.start_line && range.endLine === excerpt.end_line
+      && range.score === excerpt.score && range.text === excerpt.code;
+  });
 }
 
 type Excerpt = SearchResult['excerpts'][number];

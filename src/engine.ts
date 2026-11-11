@@ -41,7 +41,7 @@ import { batchCost, buildBatchesAsync, enabledCapsOf, measureSerializedBodiesAsy
 import type { BatchCost, ScanPlan } from './planning.ts';
 import { PARTIAL_SCAN_ORDER, prioritizeFiles, prioritizeFragments, type CandidateOrder } from './priority.ts';
 import { estimateInputCostUsd } from './pricing.ts';
-import { excerptBudget, excerptCost, renderSearchResult, ResponseBudgetError } from './response/render.ts';
+import { createExcerptCostMemo, excerptBudget, matchesRenderedExcerpts, renderSearchResult, ResponseBudgetError } from './response/render.ts';
 import type { ReportInputs, RenderedResponse } from './response/render.ts';
 import { CANDIDATE_POOL_VERSION } from './response/candidate-pool.ts';
 import type { CandidatePool } from './response/candidate-pool.ts';
@@ -626,10 +626,11 @@ export class SearchEngine {
     };
 
     let selectionTokens = availableTokens;
+    const measureExcerpt = createExcerptCostMemo();
     const select = () => measureSync('selection', () => selectRanges(candidates, {
       threshold: config.search.threshold,
       availableTokens: selectionTokens,
-      measure: excerptCost,
+      measure: measureExcerpt,
       sliceLines,
       unavailablePaths: freshness.unavailablePaths,
       policy: config.search.selection_policy ?? 'relevance',
@@ -661,6 +662,8 @@ export class SearchEngine {
       if (spare < 32 || rendered.result.report.fragments.omitted_by_response_budget === 0) break;
       selectionTokens = Math.min(request.max_context_tokens, selectionTokens + spare);
       selection = selectFresh(select, { freshness, snapshots, rounds: prepared.files.length + 1, context });
+      if (freshness.unavailablePaths.size === rendered.result.report.files.changed_before_return
+        && matchesRenderedExcerpts(selection.ranges, rendered.result)) break;
       const nextInputs = inputsOf();
       const next = measureSync('rendering', () => renderSearchResult(nextInputs, selection.ranges, representedFor));
       if (next.result.report.fragments.represented_in_response <= rendered.result.report.fragments.represented_in_response
