@@ -113,6 +113,8 @@ export type PrepareOptions = {
   readonly limits?: PreparationLimits;
   /** Interrupts preparation between files; the result is then explicitly incomplete. */
   readonly shouldStop?: () => boolean;
+  /** Releases pending worker waits when the search is cancelled or reaches its deadline. */
+  readonly signal?: AbortSignal;
   /** Reuses content-derived work for byte-identical files; eligibility is always recomputed. */
   readonly cache?: PreparationCache;
   /** Order in which inventoried files are prepared; only matters when a limit stops preparation early. */
@@ -207,14 +209,16 @@ function* preparationSteps(
   // Files are read in order and handed to the pool ahead of their turn; limits, stops
   // and exclusions are still applied in order, when each file's turn comes.
   const ahead: { entry: InventoryResult['files'][number]; read: EntryRead; job: PoolJob | null }[] = [];
+  const outstanding = new Set<number>();
   let cursor = 0;
   const readAhead = (): void => {
-    const depth = pool === null ? 1 : pool.size * 2;
+    const depth = pool === null ? 1 : Math.max(1, pool.size * 2);
     while (ahead.length < depth && cursor < ordered.length) {
       const entry = ordered[cursor]!;
       cursor += 1;
       const read = readEntry(root, entry.absolutePath, options.inventory.maxFileBytes);
       const job = pool !== null && read.kind === 'read' ? submitToPool(pool, entry, read.bytes, options) : null;
+      if (job !== null) outstanding.add(job.ticket);
       ahead.push({ entry, read, job });
     }
   };
@@ -225,7 +229,7 @@ function* preparationSteps(
       const next = ahead.shift();
       if (next === undefined) break;
       yield;
-      if (options.shouldStop?.() === true) {
+      if (options.signal?.aborted || options.shouldStop?.() === true) {
         complete = false;
         break;
       }
@@ -253,12 +257,17 @@ function* preparationSteps(
       let computed: PoolResult | undefined;
       if (next.job !== null && pool !== null) {
         if (pool.mode === 'async') {
-          const waited = pool.wait(next.job.ticket).then((result) => { settled.set(waited, result); return result; });
+          const waited = pool.wait(next.job.ticket, options.signal).then((result) => { settled.set(waited, result); return result; });
           yield waited;
           computed = awaited(waited);
+          if (options.signal?.aborted || options.shouldStop?.() === true) {
+            complete = false;
+            break;
+          }
         } else {
           computed = pool.collect(next.job.ticket);
         }
+        outstanding.delete(next.job.ticket);
       }
       const outcome = prepareWithCache(entry.relativePath, entry.absolutePath, bytes, options,
         computed !== undefined && 'entry' in computed && next.job !== null
@@ -291,7 +300,7 @@ function* preparationSteps(
       preparedBytes += bytes.length;
     }
   } finally {
-    for (const entry of ahead) if (entry.job !== null) pool?.forget(entry.job.ticket);
+    for (const ticket of outstanding) pool?.forget(ticket);
     lease?.release();
   }
 

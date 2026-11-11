@@ -35,7 +35,8 @@ type WorkerSlot = {
   readonly port: MessagePort;
   readonly counter: Int32Array;
   consumed: number;
-  queued: number;
+  readonly pending: Set<number>;
+  watchdog: NodeJS.Timeout | null;
   failed: boolean;
 };
 
@@ -73,17 +74,14 @@ export class PreparePool {
       const worker = new Worker(new URL(`./prepare-worker.${extension}`, import.meta.url), {
         execArgv: [], workerData: { port: channel.port2, counter: counter.buffer }, transferList: [channel.port2],
       });
-      const slot: WorkerSlot = { worker, port: channel.port1, counter, consumed: 0, queued: 0, failed: false };
-      const fail = (): void => {
-        slot.failed = true;
-        Atomics.notify(counter, 0);
-        for (const [ticket, slotOf] of this.#assigned) if (slotOf === slot) this.#settle(ticket, { failed: true });
-      };
+      const slot: WorkerSlot = { worker, port: channel.port1, counter, consumed: 0, pending: new Set(), watchdog: null, failed: false };
+      const fail = (): void => { this.#fail(slot); };
       worker.on('error', fail);
       worker.on('exit', fail);
       worker.unref();
       if (mode === 'async') {
         slot.port.on('message', (message: { ticket: number; entry?: PreparationEntry; counts?: number[] }) => {
+          if (!slot.pending.has(message.ticket)) return;
           slot.consumed += 1;
           this.#settle(message.ticket, message.entry !== undefined ? { entry: message.entry }
             : message.counts !== undefined ? { counts: message.counts } : { failed: true });
@@ -94,10 +92,40 @@ export class PreparePool {
     }
   }
 
-  get size(): number { return this.#slots.length; }
+  /** Healthy workers available for new work; a completely failed pool falls back locally. */
+  get size(): number { return this.#slots.filter((slot) => !slot.failed).length; }
+
+  #fail(slot: WorkerSlot): void {
+    if (slot.failed) return;
+    slot.failed = true;
+    Atomics.notify(slot.counter, 0);
+    for (const ticket of slot.pending) this.#settle(ticket, { failed: true });
+    slot.port.close();
+    void slot.worker.terminate();
+  }
+
+  /** Busy workers keep standalone searches alive; idle shared workers do not. */
+  #updateLifetime(slot: WorkerSlot): void {
+    if (slot.watchdog !== null) { clearTimeout(slot.watchdog); slot.watchdog = null; }
+    if (slot.pending.size === 0 || slot.failed) {
+      slot.worker.unref();
+      slot.port.unref();
+      return;
+    }
+    slot.worker.ref();
+    if (this.mode === 'async') {
+      slot.port.ref();
+      // A queue that makes no progress must hand all its jobs back to the caller.
+      // Reset on each reply, so queued jobs get their full processing allowance.
+      slot.watchdog = setTimeout(() => { this.#fail(slot); }, JOB_TIMEOUT_MS);
+      slot.watchdog.unref();
+    }
+  }
 
   #settle(ticket: number, result: PoolResult): void {
+    const slot = this.#assigned.get(ticket);
     this.#assigned.delete(ticket);
+    if (slot !== undefined) { slot.pending.delete(ticket); this.#updateLifetime(slot); }
     if (this.#forgotten.delete(ticket)) return;
     const waiter = this.#waiters.get(ticket);
     if (waiter !== undefined) { this.#waiters.delete(ticket); waiter(result); } else this.#results.set(ticket, result);
@@ -123,33 +151,48 @@ export class PreparePool {
   /** Drop a result nobody will collect, now or when it arrives. */
   forget(ticket: number): void {
     if (this.#results.delete(ticket)) return;
-    if (this.#assigned.has(ticket)) this.#forgotten.add(ticket);
+    const slot = this.#assigned.get(ticket);
+    if (slot === undefined) return;
+    this.#forgotten.add(ticket);
+    // Once every job on a worker is abandoned, stop the CPU work as well as the
+    // waits. Other searches sharing the slot keep their outstanding jobs alive.
+    if ([...slot.pending].every((pending) => this.#forgotten.has(pending))) this.#fail(slot);
   }
 
-  #leastLoaded(): { slot: WorkerSlot; ticket: number } {
+  #leastLoaded(): { slot: WorkerSlot | null; ticket: number } {
     const ticket = this.#next;
     this.#next += 1;
-    const slot = this.#slots.reduce((least, candidate) => (candidate.queued - candidate.consumed < least.queued - least.consumed ? candidate : least));
-    slot.queued += 1;
+    const healthy = this.#slots.filter((slot) => !slot.failed);
+    if (healthy.length === 0) {
+      this.#results.set(ticket, { failed: true });
+      return { slot: null, ticket };
+    }
+    const slot = healthy.reduce((least, candidate) => (candidate.pending.size < least.pending.size ? candidate : least));
+    slot.pending.add(ticket);
     this.#assigned.set(ticket, slot);
+    this.#updateLifetime(slot);
     return { slot, ticket };
   }
 
   /** Queue one file; the ticket collects its result in any order. */
   submit(job: PrepareJob): number {
     const { slot, ticket } = this.#leastLoaded();
+    if (slot === null) return ticket;
     const bytes = new Uint8Array(job.bytes.byteLength);
     bytes.set(job.bytes);
-    slot.worker.postMessage({
-      kind: 'prepare', ticket, relativePath: job.relativePath, absolutePath: job.absolutePath, bytes: bytes.buffer, sha256: job.sha256, windowLimits: job.windowLimits,
-    }, [bytes.buffer]);
+    try {
+      slot.worker.postMessage({
+        kind: 'prepare', ticket, relativePath: job.relativePath, absolutePath: job.absolutePath, bytes: bytes.buffer, sha256: job.sha256, windowLimits: job.windowLimits,
+      }, [bytes.buffer]);
+    } catch { this.#fail(slot); }
     return ticket;
   }
 
   /** Queue texts to count with the reference tokenizer; counts come back in the same order. */
   submitCount(texts: readonly string[]): number {
     const { slot, ticket } = this.#leastLoaded();
-    slot.worker.postMessage({ kind: 'count', ticket, texts });
+    if (slot === null) return ticket;
+    try { slot.worker.postMessage({ kind: 'count', ticket, texts }); } catch { this.#fail(slot); }
     return ticket;
   }
 
@@ -160,27 +203,26 @@ export class PreparePool {
     if (this.mode !== 'sync') throw new Error('collect() needs a sync pool; await wait() instead');
     const slot = this.#assigned.get(ticket);
     if (slot === undefined) return { failed: true };
-    this.#assigned.delete(ticket);
     for (;;) {
       const ready = this.#results.get(ticket);
       if (ready !== undefined) { this.#results.delete(ticket); return ready; }
       if (slot.failed) return { failed: true };
       if (Atomics.load(slot.counter, 0) <= slot.consumed) {
         const waited = Atomics.wait(slot.counter, 0, slot.consumed, JOB_TIMEOUT_MS);
-        if (waited === 'timed-out') { slot.failed = true; void slot.worker.terminate(); return { failed: true }; }
+        if (waited === 'timed-out') { this.#fail(slot); continue; }
         continue;
       }
       const received = receiveMessageOnPort(slot.port);
       if (received === undefined) { if (slot.failed) return { failed: true }; continue; }
       slot.consumed += 1;
       const message = received.message as { ticket: number; entry?: PreparationEntry; counts?: number[]; failed?: true };
-      this.#results.set(message.ticket, message.entry !== undefined ? { entry: message.entry }
+      this.#settle(message.ticket, message.entry !== undefined ? { entry: message.entry }
         : message.counts !== undefined ? { counts: message.counts } : { failed: true });
     }
   }
 
   close(): void {
-    for (const slot of this.#slots) void slot.worker.terminate();
+    for (const slot of this.#slots) this.#fail(slot);
     this.#slots.length = 0;
   }
 }
@@ -254,7 +296,7 @@ function placeCounts(counts: number[], chunk: CountChunk, result: PoolResult, te
  * megabyte; the calling thread counts when there is no pool or a worker failed.
  */
 export function countTokensWith(pool: PreparePool | null, texts: readonly string[], count: (text: string) => number): number[] {
-  if (pool === null || pool.mode !== 'sync' || texts.length < 2) return texts.map(count);
+  if (pool === null || pool.mode !== 'sync' || pool.size === 0 || texts.length < 2) return texts.map(count);
   const chunks = submitCounts(pool, texts);
   const counts = new Array<number>(texts.length);
   for (const chunk of chunks) placeCounts(counts, chunk, pool.collect(chunk.ticket), texts, count);
@@ -265,11 +307,12 @@ export function countTokensWith(pool: PreparePool | null, texts: readonly string
 export async function countTokensWithAsync(
   pool: PreparePool | null, texts: readonly string[], count: (text: string) => number, signal?: AbortSignal,
 ): Promise<number[]> {
-  if (pool === null || pool.mode !== 'async' || texts.length < 2) return texts.map(count);
+  if (signal?.aborted) throw new DOMException('token counting aborted', 'AbortError');
+  if (pool === null || pool.mode !== 'async' || pool.size === 0 || texts.length < 2) return texts.map(count);
   const chunks = submitCounts(pool, texts);
   const counts = new Array<number>(texts.length);
   const results = await Promise.all(chunks.map((chunk) => pool.wait(chunk.ticket, signal)));
-  if (signal?.aborted === true) throw new DOMException('token counting aborted', 'AbortError');
+  if (signal?.aborted) throw new DOMException('token counting aborted', 'AbortError');
   chunks.forEach((chunk, index) => { placeCounts(counts, chunk, results[index]!, texts, count); });
   return counts;
 }
