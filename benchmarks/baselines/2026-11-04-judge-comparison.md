@@ -32,7 +32,7 @@ improve? Only the judge changes; everything else is identical.
 
 ## Results
 
-| Judge | R@1 | R@5 | MRR | Counterevidence | No-answer correct | Input tokens | Output tokens (reasoning) | Cost / search | Time / search |
+| Judge | R@1 | R@5 | MRR | Counterevidence (14 planned) | No-answer correct (6 planned) | Input tokens | Output tokens (reasoning) | Cost / search | Time / search |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
 | Jev 1.13.0 | 0.759 | 0.916 | 0.911 | 1.000 | 1.000 | 3,158,760 | 0 | $0.0020 | 6.1 s |
 | Jev 1.14.0 | 0.781 | 0.913 | 0.922 | 1.000 | 1.000 | 3,158,760 | 0 | $0.0020 | 7.1 s |
@@ -59,8 +59,19 @@ run is [the cache-identity run](layout-judgments-2026-11-04-typesafe-layout-a-no
 
 ## Limits
 
-One run per judge. The reliability checks rest on 6 no-answer and 14 false-premise
-searches. The OpenAI prompts are reasonable but untuned, and the 0.5 threshold is
+One run per judge. R@5 and counterevidence coverage average recovered evidence
+units, rather than counting questions with any hit or complete evidence. The
+reliability checks rest on 6 no-answer and 14 false-premise searches. The OpenAI prompts are reasonable but untuned, and the 0.5 threshold is
 Jev's.
 
 Spend: about $6.50 on OpenAI and $0.13 on TypeSafe.
+
+Accounting clarification (2026-11-11): the historical OpenAI harness omitted some
+retryable failed attempts before recording and computed search time from recorded
+request durations. Failed attempts and backoff could therefore be absent, and
+unknown usage was not distinguished from zero in total cost. This does not show
+that every reported run retried. The numbers above are retained as historical
+recorded amounts; no missing attempts or exact totals have been reconstructed.
+The current harness records every attempt, actual backoff, per-case wall time,
+known subtotals and unknown usage, and returns unknown total USD when billable
+usage is missing.

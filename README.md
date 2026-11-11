@@ -37,33 +37,42 @@ repository and had the chance to check what would leave your computer.
 
 ## How it compares
 
-We asked the same 55 real questions about six open-source repositories (21 in
-Python, 34 in Go and Rust) to JevGrep and to the alternatives an agent could use
-instead. R@5 is the share of questions where the expected code is in the first five
-results.
+The recorded comparison used 55 real questions on six open-source repositories
+(21 in Python, 34 in Go and Rust). **Mean evidence recall@5** (R@5) averages the
+fraction of each question's required evidence units covered by its first five
+results. Finding one of three required units gives 1/3 recall. Hit rate@5 counts
+questions with any required unit; complete-evidence success counts questions with
+every required unit. Those are separate metrics in new benchmark reports.
 
-| Rank | Tool | R@5 Python | R@5 Go/Rust | Cost per question | Time per question |
-|---:|---|---:|---:|---:|---:|
-| 1 | `gpt-6.1-terra` given the whole repository | 0.894 | 0.737 | $0.12–0.23 | 9–15 s |
-| 2 | **JevGrep** | 0.877 | **0.827** | **$0.005** | **4 s** |
-| 3 | `gpt-6-luna` given the whole repository | 0.803 | 0.688 | $0.01–0.02 | 3–4 s |
-| 4 | CodeGraph | 0.491 | 0.339 | free, needs an index | 1 s |
-| 5 | BM25 | 0.429 | 0.338 | free | < 0.1 s |
-| 6 | ripgrep | 0.325 | 0.244 | free | 0.3 s |
+| Tool | Evidence R@5 Python (21) | Evidence R@5 Go/Rust (all 34) | Go/Rust completed | Recorded cost / question | Recorded time / question |
+|---|---:|---:|---:|---:|---:|
+| JevGrep, 8000 tokens + whole declarations | 0.877 | ≈0.778 | 32/34 (94.1%) | $0.005 | 4 s |
+| `gpt-6.1-terra` given the whole repository, medium | 0.894 | 0.694 | 34/34 | $0.12–0.23 | 12–15 s |
+| `gpt-6-luna` given the whole repository, no reasoning | 0.803 | 0.648 | 34/34 | $0.01–0.02 | 3–4 s |
+| CodeGraph `query` | 0.491 | 0.319 | 34/34 | free, needs an index | 1 s |
+| BM25 | 0.429 | 0.338 | 34/34 | free | < 0.1 s |
+| ripgrep | 0.325 | 0.244 | 34/34 | free | 0.3 s |
 
-JevGrep's row uses the current defaults: a response budget of 8000 tokens and whole
-declarations for split windows (0.851 and 0.687 before those two changes, see the
-[response budget](benchmarks/baselines/2026-11-04-response-budget.md) and
-[whole declarations](benchmarks/baselines/2026-11-04-whole-declarations.md) reports).
-Terra finds a little more, but it costs 25 to 50 times as much, takes three times as
-long and only works while the whole repository fits in its context window. JevGrep
-gives most of that quality at a fraction of the price on repositories of any size.
+All 21 Python searches completed. The Go/Rust column counts JevGrep's two capped
+searches as zero: ≈0.778 is derived from the rounded completed-search recall
+0.827 × 32/34, rather than a newly measured result. On the matching 32-question
+subset, Terra, Luna and JevGrep scored 0.737, 0.688 and 0.827 respectively.
 
-On repositories too large for any context window, JevGrep keeps the same recall. Six
-repositories of 1 to 7.6 million tokens, 50 questions from real issues, held-out half
-frozen before the run:
+JevGrep's row comes from the 2026-11-04 offline replay at 8000 response tokens with
+whole declarations; its original 4000-token live run scored 0.851/0.687 among
+completed Python/Go/Rust searches (Go/Rust 0.646 including the two failures).
+See the [response budget](benchmarks/baselines/2026-11-04-response-budget.md),
+[whole declarations](benchmarks/baselines/2026-11-04-whole-declarations.md),
+[CodeGraph](benchmarks/baselines/2026-11-04-codegraph-comparison.md) and
+[models alone](benchmarks/baselines/2026-11-04-models-alone.md) reports.
+Model-only arms returned up to ten ranges; returned context budgets were not
+matched. These historical quality figures have not been rerun for the current
+correctness, cache and response-refill changes.
 
-| Repository | Language | Tokens per scan | R@5 | Cost per question | Time per question |
+A separate recorded study searched six repositories of 1 to 7.6 million tokens
+using 50 questions from real issues, with the held-out half frozen before the run:
+
+| Repository | Language | Tokens per scan | Evidence R@5 | Recorded cost / question | Recorded time / question |
 |---|---|---:|---:|---:|---:|
 | prometheus | Go | 1.1M | 0.83 | $0.05 | 6 s |
 | hugo | Go | 1.0M | 0.86 | $0.04 | 20 s |
@@ -73,7 +82,7 @@ frozen before the run:
 | lucene | Java | 7.6M | 0.88 | $0.25 | 23 s |
 
 Times are through the Vercel AI Gateway at concurrency 16. prometheus, ruff and
-lucene are measured with the current code (before the local batching, windowing and
+lucene were measured with the code used in that report (before the local batching, windowing and
 worker-pool fixes they took 20 s, 3 min and 7 min); hugo and lombok are from before
 those fixes; nushell was measured on a slower route only.
 Method, every number and the misses are in the
@@ -81,10 +90,10 @@ Method, every number and the misses are in the
 
 We also kept JevGrep and swapped only the model that scores each fragment, on 65
 searches. "No answer" is the share of questions with no answer in the repository
-where nothing is returned; "False premise" is the share of questions built on a
-wrong assumption where the code that contradicts it is found.
+where nothing is returned; false-premise coverage is the mean fraction of required
+counterevidence recovered for questions built on a wrong assumption.
 
-| Judge inside JevGrep | R@5 | No answer | False premise | Cost per search | Time per search |
+| Judge inside JevGrep | Evidence R@5 | No answer (6 planned) | False-premise coverage (14 planned) | Recorded cost / search | Recorded time / search |
 |---|---:|---:|---:|---:|---:|
 | **Jev 1.13 / 1.14** | 0.91 | **100 %** | **100 %** | **$0.002** | 6–7 s |
 | Luna Decisions | 0.93 | 67 % | 75 % | $0.005 | 4.6 s |
@@ -95,7 +104,10 @@ wrong assumption where the code that contradicts it is found.
 
 The OpenAI judges find slightly more, but they return code when the repository has
 no answer. Jev is the only judge that passes both checks, at 2 to 20 times lower
-cost. Those two checks rest on 6 and 14 questions.
+recorded cost. These are small samples; incomplete searches were excluded from
+quality, including six searches with invalid JSON for Luna without reasoning.
+Historical request-time sums may omit retries and backoff; new benchmark reports
+record every attempt, wall time, and unknown usage separately.
 
 The methodology, every number and the scripts to rerun them are in
 [models alone](benchmarks/baselines/2026-11-04-models-alone.md),
@@ -125,7 +137,11 @@ jevgrep init --global --provider vercel     # or Vercel AI Gateway
 jevgrep init --global --provider openrouter # or OpenRouter
 ```
 
-The key goes in your user configuration directory, never in a repository.
+The key goes in your user configuration directory, never in a repository. Terminal
+key entry is hidden. To replace the stored key for the selected provider, run
+`jevgrep init --global --replace-key`; add `--provider <name>` to choose another
+provider. This prompts for a new key even when an old environment key exists.
+Environment variables still take precedence when searches run.
 
 ### 3. Authorize a project (once per repository)
 
@@ -142,7 +158,8 @@ Allow sending eligible source excerpts from this repository to Vercel AI Gateway
 
 Answer `y` to start searching. If you would rather check first, press Enter and run
 `jevgrep inspect` to see which files would be sent (more in
-[Privacy](#privacy-what-leaves-your-computer)).
+[Privacy](#privacy-what-leaves-your-computer)). Then rerun `jevgrep init` and
+answer `y`; tuned settings and the existing project provider are preserved.
 
 ### 4. Ask a question
 
@@ -198,6 +215,29 @@ jevgrep inspect
 You can run JevGrep from any folder inside an authorized project. Scores and file
 preparation are cached outside the repository, so repeated searches cost less and
 finish sooner; `jevgrep cache clear` resets the cache.
+
+Choose the scope and work budget to match the question:
+
+```bash
+# Exhaustive: require every eligible fragment in this scope to be evaluated
+jevgrep search --query "How are permissions checked?" --scope .
+
+# Progressive: prioritize likely evidence and stop at the supplied work budget
+jevgrep search --query "How are permissions checked?" --allow-partial --max-input-tokens 50000 --max-search-ms 10000 --json
+
+# Continue the same query and scope with the returned continuation token
+jevgrep search --query "How are permissions checked?" --allow-partial --max-input-tokens 50000 --max-search-ms 10000 --continuation '<token>' --json
+
+# Focused: evaluate only files supplied by the caller
+jevgrep search --query "How are permissions checked?" --scope src/auth.ts --scope tests/auth.test.ts
+```
+
+A focused search establishes coverage of the supplied files. Progressive results
+report what remains unevaluated; an empty partial answer does not establish absence.
+Operator caps still apply to exhaustive searches. Changing the question normally
+requires new provider evaluations, even when file preparation can be reused.
+Explicit scopes cannot reopen excluded files or directories, and Git negations
+cannot undo `.jevgrepignore` exclusions.
 
 If you already know the function name or the exact string, `rg` will be quicker.
 
@@ -307,7 +347,7 @@ API details.
 | `jevgrep: command not found` | check that npm's global `bin` folder is on your `PATH` |
 | `REMOTE_DISABLED` | you have not allowed remote evaluation yet: run `jevgrep inspect`, then rerun `jevgrep init` and answer `y` |
 | `CREDENTIAL_MISSING` | run `jevgrep init --global`, or set the provider's environment variable |
-| `PROVIDER_AUTH` | check the key and that it has access to the Jev model |
+| `PROVIDER_AUTH` | check model access; replace an expired key with `jevgrep init --global --replace-key` |
 | No result, `no_score_above_threshold` | rephrase the question or widen `--scope`; it does not prove the code is absent |
 | MCP tool times out | raise the client timeout to about 6 minutes |
 

@@ -24,6 +24,10 @@ answers a natural-language question, alone or as a candidate source for Jev?
   relation hop (`e7-hop1`). Only proposed fragments can be returned.
 - Baselines: `ripgrep` and BM25 over line windows.
 
+R@1 and R@5 are mean per-question evidence recall, not hit rates or the share
+of completely answered questions. These historical runs do not separately report
+hit rate and complete-evidence success. Python completed 21/21 for every arm.
+
 ## Python (21 questions)
 
 | Arm | R@1 | R@5 | MRR | File recall | Time / question | Index (cold, p50) | Jev tokens / question |
@@ -37,25 +41,31 @@ answers a natural-language question, alone or as a candidate source for Jev?
 | BM25 windows | 0.270 | 0.429 | 0.341 | 0.810 | 0.1 s | 0.1 s | – |
 | ripgrep | 0.159 | 0.325 | 0.271 | 0.675 | 0.3 s | none | – |
 
-## Go/Rust (34 questions)
+## Go/Rust (34 planned questions)
 
-| Arm | R@1 | R@5 | MRR | File recall | Time / question | Index (cold, p50) | Jev tokens / question |
-|---|---:|---:|---:|---:|---:|---:|---:|
-| JevGrep (exhaustive) | 0.573 | 0.687 | 0.690 | 0.906 | 3.6 s | none | 125 k |
-| CodeGraph `query` | 0.088 | 0.319 | 0.165 | 0.603 | 1.0 s | 4.1 s | – |
-| CodeGraph `context` | 0.118 | 0.265 | 0.164 | 0.529 | 1.3 s | 4.1 s | – |
-| CodeGraph `context` → Jev (16 fragments) | 0.435 | 0.482 | 0.510 | 0.719 | – | 4.1 s | 14 k |
-| Question words → Jev (16) | 0.466 | 0.521 | 0.542 | 0.734 | – | none | 14 k |
-| Question words + 1 graph hop → Jev (16) | 0.417 | 0.495 | 0.521 | 0.734 | – | 4.1 s | 13 k |
-| BM25 windows | 0.191 | 0.338 | 0.236 | 0.765 | 0.04 s | 0.04 s | – |
-| ripgrep | 0.118 | 0.244 | 0.181 | 0.618 | 0.3 s | none | – |
+| Arm | Completed | Evidence R@5, completed | Evidence R@5, all planned | R@1 | MRR | File recall | Time / question | Index (cold, p50) | Jev tokens / question |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| JevGrep (exhaustive) | 32/34 | 0.687 | 0.646 | 0.573 | 0.690 | 0.906 | 3.6 s | none | 125 k |
+| CodeGraph `query` | 34/34 | 0.319 | 0.319 | 0.088 | 0.165 | 0.603 | 1.0 s | 4.1 s | – |
+| CodeGraph `context` | 34/34 | 0.265 | 0.265 | 0.118 | 0.164 | 0.529 | 1.3 s | 4.1 s | – |
+| CodeGraph `context` → Jev (16 fragments) | 32/34 | 0.482 | 0.453 | 0.435 | 0.510 | 0.719 | – | 4.1 s | 14 k |
+| Question words → Jev (16) | 32/34 | 0.521 | 0.490 | 0.466 | 0.542 | 0.734 | – | none | 14 k |
+| Question words + 1 graph hop → Jev (16) | 32/34 | 0.495 | 0.466 | 0.417 | 0.521 | 0.734 | – | 4.1 s | 13 k |
+| BM25 windows | 34/34 | 0.338 | 0.338 | 0.191 | 0.236 | 0.765 | 0.04 s | 0.04 s | – |
+| ripgrep | 34/34 | 0.244 | 0.244 | 0.118 | 0.181 | 0.618 | 0.3 s | none | – |
 
-JevGrep completed 32 of the 34 Go/Rust questions (two hit a cap and are excluded);
-every other arm answered all 34. Raw reports: `codegraph-comparison-2026-11-04-*.json`.
+JevGrep completed 32/34 (94.1%); two searches hit a cap. Replayed combination
+arms inherit those gaps and also completed 32/34. Standalone CodeGraph, BM25 and
+ripgrep completed all 34. The all-planned column is the raw report's
+`recallAt5OverPlanned`, rounded to three decimals, with incomplete questions scored
+zero. It is not reconstructed from rounded completed-search numbers.
+Raw reports: [live Jev](codegraph-comparison-2026-11-04-gorust-jevgrep.json),
+[replays](codegraph-comparison-2026-11-04-gorust-replay.json), and
+[standalone tools](codegraph-comparison-2026-11-04-gorust-tools.json).
 
 ## Reading
 
-- CodeGraph alone finds the expected evidence 2 to 2.5 times less often than JevGrep.
+- CodeGraph alone has lower mean evidence recall than JevGrep in these runs; completion and the all-planned denominator are shown above.
 - As a candidate source for Jev, CodeGraph `context` adds nothing over the question's
   own words (Python) or does worse (Go/Rust).
 - One relationship hop helps on Python and hurts on Go/Rust, the same unstable sign

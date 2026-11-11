@@ -35,6 +35,12 @@ npm run bench:compare -- --arms jevgrep-replay --replay <pool> --response-tokens
 | Go/Rust (32) | windows | 0.573 | 0.757 | 0.716 | 16.5 k |
 | Go/Rust (32) | whole declarations | **0.667** | **0.827** | **0.802** | 17.3 k |
 
+R@5 is mean evidence recall, not hit rate. Go/Rust rows use only the 32 completed
+questions from 34 planned in the source live run (94.1% completion). Counting the
+two incomplete questions as zero gives approximately 0.712 for windows and 0.778
+for whole declarations, calculated from the rounded table values × 32/34. These
+are derived estimates, not newly rerun exact aggregates. Python completed 21/21.
+
 Python is unchanged: no evidence there spans a declaration longer than a window.
 Go/Rust gains three questions for 5 % more returned text.
 
@@ -44,4 +50,5 @@ Go/Rust gains three questions for 5 % more returned text.
   `understand` questions of the set.
 - The remaining Go/Rust misses are insertion points (a blank line or a constant
   block where the patch adds code), which no retriever scores from the question.
+- These are historical 2026-11-04 selection results; later actual-report refill changes have not been included in the table.
 - No provider spend.

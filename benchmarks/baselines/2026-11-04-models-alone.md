@@ -25,6 +25,11 @@ a general model and ask it where the answer is?
   input, $0.01 cached, $0.50 output; `gpt-6.1-terra` $1.00 input, $0.05 cached, $5.00
   output (Vercel AI Gateway model listing, 2026-11-04). Time is the median per question.
 
+R@1 and R@5 are mean evidence recall over required evidence units. They do not
+measure the fraction of questions with any hit or all required evidence recovered.
+The matching Go/Rust subset below intentionally contains the 32 questions JevGrep
+completed; the all-34 denominator is reported separately rather than mixed into it.
+
 ## Python (21 questions)
 
 | Arm | R@1 | R@5 | MRR | File recall | Input tokens / question | Cost / question | Time / question |
@@ -47,7 +52,11 @@ a general model and ask it where the answer is?
 
 On all 34 questions the models score R@5 0.648 (`gpt-6-luna`, no reasoning), 0.627
 (medium), 0.682 and 0.694 (`gpt-6.1-terra`). Raw rows:
-`models-alone-2026-11-04-*.json`.
+`models-alone-2026-11-04-*.json`. All model-only arms completed 34/34. The original
+JevGrep run completed 32/34 (94.1%) and its all-planned evidence R@5 was 0.646,
+from the [raw live report](codegraph-comparison-2026-11-04-gorust-jevgrep.json).
+The later 8000-token/whole-declaration replay's approximate all-planned 0.778 is a
+separate selection experiment, not the live result in this table.
 
 ## Reading
 

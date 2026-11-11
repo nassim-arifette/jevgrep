@@ -21,7 +21,7 @@ npm run bench:cache -- --pairs 5
 The default is 64 generated TS, Python and SQL files, three independent samples,
 one provider worker and a 4,000-reference-token response budget. File generation is
 deterministic; each report records its content hash. Each sample runs in a new child
-process with a fresh temporary repository and score cache. Network entry points in
+process with a fresh temporary repository, score cache and preparation cache. Network entry points in
 the child are blocked. There are no dependencies to download or credentials to set.
 
 Each sample executes these scenarios in order:
@@ -33,8 +33,10 @@ Each sample executes these scenarios in order:
 | `new_question` | B | Unchanged | All misses |
 | `small_edit` | A | One changed numeric literal in one file | Changed content misses; other files hit |
 
-The runner checks these conditions and fails if a search is incomplete. Preparation
-currently runs again in every scenario; there is no persistent preparation index.
+The runner checks these conditions and fails if a search is incomplete. Every
+scenario inventories, reads and hashes files; unchanged content reuses preparation
+checks, token counts and chunk boundaries through the preparation cache. There is
+no persistent repository index.
 Temporary files and caches are removed after each sample. The repository being
 developed and the user's real cache are not benchmark inputs.
 
@@ -56,6 +58,49 @@ Git revision and working-tree status, source and lockfile fingerprints, elapsed
 time, cache/fragment counts, response tokens and modeled transmission volume.
 Generated reports go under ignored `benchmark-results/`; retain a reviewed baseline
 under `benchmarks/baselines/` when a comparison needs to survive a checkout.
+
+## Reliability and performance matrix
+
+Run the fixed current-workload matrix without provider credentials:
+
+```sh
+npm run bench:matrix -- --files 64 --samples 3 --output benchmark-results/matrix.json
+```
+
+The runner uses [`bench-matrix.ts`](../scripts/bench-matrix.ts) and
+[`matrix.ts`](../scripts/bench/matrix.ts), with a fresh network-blocked child process
+per sample and owned synthetic fixtures. Each report records the revision,
+source/harness/lockfile hashes, workload hash and raw measurements. The matrix
+uses 4000 response tokens and concurrency 1; product defaults are 8000 tokens
+and concurrency 16. These benchmark settings are controlled comparison inputs.
+
+| Scenario | What it checks |
+|---|---|
+| First search | Cold preparation, tokenization, provider attempts and memory |
+| Identical query | Warm score reuse, disk reads, memory hits and event-loop delay |
+| New query | Preparation reuse with new per-question evaluation |
+| One edited file | Evaluation invalidation remains local to changed evidence |
+| Function shifted by an inserted declaration | Unchanged function scores survive line movement |
+| Continuation | The first 64 of 70 fragments are reused; only six need evaluation |
+| Multiple questions | Local preparation is shared; paid work remains per question |
+| Deadline in preparation, planning, evaluation and selection | Explicit partial coverage with `DEADLINE` |
+| Cancellation during warm lookup | Separate event-loop delivery and return latency |
+| MCP ping during warm lookup | Actual stdio ping responsiveness during a search |
+
+Summaries report p50 latency and p95 when at least 20 samples exist, sampled RSS,
+reference-tokenizer input, provider attempts, represented fragments, score disk
+reads/memory hits and completion rate. Raw profiles retain stage durations and
+response sizes. Fixed scores test evidence delivery and execution invariants;
+represented fragments are not a measure of semantic evidence quality. Use captured
+selection replay or a separate live retrieval run for that question. Interruption
+rows intentionally stop early, so their completion rates should be read with their
+expected stop reasons.
+
+Three samples are a pilot; OS filesystem caches are uncontrolled. Memory sampled
+at instrumented boundaries can miss brief peaks. Compare the same frozen workload
+on an otherwise idle host, retain raw runs, and use paired repeated measurements
+before claiming an improvement. No timing threshold in this matrix is a portable
+service-level guarantee.
 
 ## Interpreting profiles
 
@@ -133,7 +178,11 @@ Reports also fingerprint the questions, so wording changes remain visible.
 
 An evidence unit is a required inclusive line range. Recall@1 and Recall@5 measure
 the fraction of a question's required units fully covered by the first one/five
-returned excerpts. Adjacent excerpts can jointly cover a unit; overlaps and
+returned excerpts. The aggregate is **mean evidence recall**, not the fraction of
+questions with any hit. New summaries also expose `hitRateAt5`,
+`completeEvidenceSuccessRateAt5` and `completeEvidenceSuccessRate` (all returned
+excerpts). If one of three required units is found, recall is 1/3, hit rate is 1,
+and complete-evidence success is 0. Adjacent excerpts can jointly cover a unit; overlaps and
 duplicates do not create extra credit. MRR uses the first returned excerpt that
 fully covers at least one unit. Full-budget evidence coverage uses all returned
 excerpts. These are metrics on the actual delivered excerpts, after merging and
@@ -142,7 +191,10 @@ budget selection, not on the internal candidate ranking.
 Positive metrics are macro-averaged over complete positive searches. Negative
 accuracy counts complete, fully scanned results with no excerpt. Partial scans and
 provider errors are ineligible, never successful negatives; always read completion
-counts alongside quality scores. The labels specify required evidence rather than
+counts alongside quality scores. `bench:compare` also reports
+`recallAt5OverPlanned`, counting incomplete or failed searches as zero, so an arm
+cannot improve its headline by dropping hard questions. Report that value and
+`completionRate` beside recall among completed searches. The labels specify required evidence rather than
 an exhaustive set of every possibly useful excerpt, so this pilot does not report
 precision. Large excerpts can cover more evidence; retain the same output budget
 for comparisons.
@@ -177,7 +229,10 @@ envelope. Parameters are chosen on the tuning pools only; held-out pools are sco
 once with the chosen ones. The report also lists counterexamples, searches where an
 arm covers a different share of required evidence than `relevance`, and a calibration
 sweep of threshold, top-k and score gap including the negative questions. Replaying
-`relevance` at the captured budget reproduces the captured live responses exactly.
+`relevance` applies the current production selection and bounded refill policy.
+Replaying an older capture may therefore improve evidence delivery within the same
+budget. For historical conservative-reservation comparisons, the programmatic
+`ReplayArm.refill: false` option disables refill.
 The [2026-11-03 report](baselines/2026-11-03-selection-replay.md) records the first
 comparison; the captured pools are in [pools](pools/).
 
@@ -323,14 +378,30 @@ schema, then `compare` replays the default selection with each judge's scores ne
 to Jev runs from `bench:layouts`:
 
 ```sh
-npm run bench:judges -- judge --arm decisions --model gpt-6-luna --output benchmark-results/luna-decisions.json
-npm run bench:judges -- judge --arm chat --model gpt-6.1-terra --effort medium --output benchmark-results/terra-medium.json
+npm run bench:judges -- judge --chunk-config /absolute/path/to/trusted-config.json --arm decisions --model gpt-6-luna --output benchmark-results/luna-decisions.json
+npm run bench:judges -- judge --chunk-config /absolute/path/to/trusted-config.json --arm chat --model gpt-6.1-terra --effort medium --output benchmark-results/terra-medium.json
 npm run bench:judges -- compare --judgments jev.json,luna-decisions.json,terra-medium.json --labels jev,luna,terra \
   --prices "0.042,0.042,0;0.10,0.01,0;1.00,0.05,5.00"
 ```
 
-`judge` needs `OPENAI_API_KEY`; `--prices` is input, cached input and output USD per
-million tokens for each file. See the [2026-11-04 results](baselines/2026-11-04-judge-comparison.md).
+`judge` requires `OPENAI_API_KEY` and an explicit trusted `--chunk-config` for
+reproducible chunk boundaries; it has no machine-specific configuration fallback.
+`--prices` supplies input, cached input and output USD per million tokens for each
+file. Rates are experiment inputs, not current price recommendations.
+
+Every attempt is retained, including retryable HTTP failures and transport errors,
+with status, attempted request bytes, request duration, requested/actual backoff,
+usage when known, and error. Each case records total wall time including local
+planning, parsing and backoff; the run also records total wall time. Comparison
+reports keep known token/cost subtotals and per-dimension unknown-usage counts.
+Total USD is `null` whenever billable usage is unknown; a missing zero-priced
+dimension does not affect cost. Cached input must be known when cached and
+uncached rates differ. Attempt latency percentiles include failures.
+
+Older reports remain readable. Without case wall time, comparison explicitly labels
+the sum of recorded request/backoff durations as a lower bound. Missing historical
+attempts cannot be reconstructed. The [2026-11-04 results](baselines/2026-11-04-judge-comparison.md)
+retain their original numbers with that limitation; they are not fresh measurements.
 
 ## Models and tools alone
 
@@ -368,5 +439,16 @@ Large repositories (1–7M tokens), Java, and a hand-written Go/Rust reliability
 
 `npm run verify` includes tests for profile isolation and outcome equivalence, the
 four real local cache scenarios, annotation consistency, evidence metrics and shared
-dispatch limits. Existing Windows/Linux CI runs these offline. It does not enforce
+dispatch limits. Linux, Windows and macOS CI run these offline. It does not enforce
 machine-dependent timing thresholds or issue paid provider requests.
+
+## Requirements for new headline comparisons
+
+Use the same frozen repository snapshots and record the code revision and working
+tree state. Match output budgets and report actual returned tokens or characters,
+completion rate, failure-inclusive recall and quality among completed searches.
+Repeat each arm with paired uncertainty estimates; separate cold and warm latency
+and cost, and account for every provider attempt and unknown usage. Keep the number
+of no-answer and false-premise questions adjacent to their percentages. Broader
+reliability sets and end-to-end agent localization/fix success remain future live
+evaluation work; offline fixed-score performance runs cannot establish those claims.
