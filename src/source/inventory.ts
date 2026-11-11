@@ -263,34 +263,31 @@ export function* inventorySteps(
       throw cause;
     }
 
-    if (resolved.kind === 'file') {
-      const name = resolved.relativePath.slice(resolved.relativePath.lastIndexOf('/') + 1);
-      const parent = resolved.relativePath.includes('/')
-        ? resolved.relativePath.slice(0, resolved.relativePath.lastIndexOf('/')) : '';
-      let stack;
-      try {
-        stack = ignoreStackFor(root, parent, options);
-      } catch {
-        accumulator.complete = false;
-        accumulator.traversalErrors += 1;
-        continue;
-      }
-      considerFile(root, accumulator, rules, stack, {
-        name, relativePath: resolved.relativePath, absolutePath: resolved.absolutePath, sizeBytes: resolved.sizeBytes,
-      });
-      continue;
-    }
-
-    const relativeDirectory = resolved.relativePath === '.' ? '' : resolved.relativePath;
-    let inherited;
+    const relativeDirectory = resolved.kind === 'file'
+      ? resolved.relativePath.slice(0, Math.max(0, resolved.relativePath.lastIndexOf('/')))
+      : resolved.relativePath === '.' ? '' : resolved.relativePath;
+    let eligibility;
     try {
-      inherited = ignoreStackFor(root, relativeDirectory, options);
+      eligibility = ignoreStackFor(root, relativeDirectory, options, rules);
     } catch {
       accumulator.complete = false;
       accumulator.traversalErrors += 1;
       continue;
     }
-    yield* walkDirectory(root, accumulator, rules, inherited, options, resolved.absolutePath, relativeDirectory);
+    if (eligibility.excluded !== null) {
+      accumulator.excludedDirectories.push(eligibility.excluded);
+      continue;
+    }
+
+    if (resolved.kind === 'file') {
+      const name = resolved.relativePath.slice(resolved.relativePath.lastIndexOf('/') + 1);
+      considerFile(root, accumulator, rules, eligibility.stack, {
+        name, relativePath: resolved.relativePath, absolutePath: resolved.absolutePath, sizeBytes: resolved.sizeBytes,
+      });
+      continue;
+    }
+
+    yield* walkDirectory(root, accumulator, rules, eligibility.stack, options, resolved.absolutePath, relativeDirectory);
   }
 
   accumulator.files.sort((left, right) => (left.relativePath < right.relativePath ? -1 : left.relativePath > right.relativePath ? 1 : 0));
@@ -312,8 +309,13 @@ export function* inventorySteps(
   };
 }
 
-/** Ignore files from the root down to a directory, in Git's precedence order. */
-function ignoreStackFor(root: AuthorizedRoot, relativeDirectory: string, options: InventoryOptions): IgnoreFile[] {
+/** Check every scoped ancestor before reading its policy, just as the root walk does. */
+function ignoreStackFor(
+  root: AuthorizedRoot,
+  relativeDirectory: string,
+  options: InventoryOptions,
+  rules: EligibilityRules,
+): { stack: IgnoreFile[]; excluded: ExcludedEntry | null } {
   const stack: IgnoreFile[] = [];
   const segments = relativeDirectory === '' ? [] : relativeDirectory.split('/');
   let relative = '';
@@ -321,10 +323,27 @@ function ignoreStackFor(root: AuthorizedRoot, relativeDirectory: string, options
     if (index > 0) {
       const segment = segments[index - 1] ?? '';
       relative = joinRelative(relative, segment);
+      const reason = directoryExclusion(rules, stack, segment, relative);
+      if (reason !== null) {
+        return { stack, excluded: { relativePath: relative, reason, isDirectory: true } };
+      }
     }
     stack.push(...directoryIgnoreFiles(root, relative, options));
   }
-  return stack;
+  return { stack, excluded: null };
+}
+
+/** The same directory policy applies to root walks and every explicit scope ancestor. */
+function directoryExclusion(
+  rules: EligibilityRules,
+  stack: readonly IgnoreFile[],
+  name: string,
+  relativePath: string,
+): InventoryExclusion | null {
+  const named = rules.directoryExclusion(name, relativePath);
+  if (named !== null) return named;
+  const ignored = isIgnored(stack, relativePath, true);
+  return ignored.ignored ? ignored.narrowing ? 'jevgrepignored' : 'gitignored' : null;
 }
 
 function directoryIgnoreFiles(
@@ -391,7 +410,7 @@ function* walkDirectory(
   root: AuthorizedRoot,
   accumulator: Accumulator,
   rules: EligibilityRules,
-  inheritedStack: readonly IgnoreFile[],
+  stack: readonly IgnoreFile[],
   options: InventoryOptions,
   absoluteDirectory: string,
   relativeDirectory: string,
@@ -409,16 +428,6 @@ function* walkDirectory(
       accumulator.excludedDirectories.push({ relativePath: relativeDirectory, reason: 'link', isDirectory: true });
       return;
     }
-    accumulator.traversalErrors += 1;
-    accumulator.complete = false;
-    return;
-  }
-
-  let stack;
-  try {
-    stack = relativeDirectory === '' ? inheritedStack
-      : [...inheritedStack, ...directoryIgnoreFiles(root, relativeDirectory, options)];
-  } catch {
     accumulator.traversalErrors += 1;
     accumulator.complete = false;
     return;
@@ -443,19 +452,20 @@ function* walkDirectory(
       continue;
     }
     if (entry.isDirectory()) {
-      const excluded = rules.directoryExclusion(entry.name, relativePath);
+      const excluded = directoryExclusion(rules, stack, entry.name, relativePath);
       if (excluded !== null) {
         accumulator.excludedDirectories.push({ relativePath, reason: excluded, isDirectory: true });
         continue;
       }
-      const ignoredDirectory = isIgnored(stack, relativePath, true);
-      if (ignoredDirectory.ignored) {
-        accumulator.excludedDirectories.push({
-          relativePath, reason: ignoredDirectory.narrowing ? 'jevgrepignored' : 'gitignored', isDirectory: true,
-        });
+      let childStack;
+      try {
+        childStack = [...stack, ...directoryIgnoreFiles(root, relativePath, options)];
+      } catch {
+        accumulator.traversalErrors += 1;
+        accumulator.complete = false;
         continue;
       }
-      yield* walkDirectory(root, accumulator, rules, stack, options, absolutePath, relativePath);
+      yield* walkDirectory(root, accumulator, rules, childStack, options, absolutePath, relativePath);
       continue;
     }
     if (!entry.isFile()) {

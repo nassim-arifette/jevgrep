@@ -10,7 +10,8 @@
  * a leading or inner `/`, directory-only patterns with a trailing `/`, `*` and `?`
  * inside one path segment, `**` across segments, and `[...]` character classes.
  * Precedence follows Git: within one file the last matching pattern wins, and a file
- * deeper in the tree overrides a shallower one.
+ * deeper in the tree overrides a shallower one. Narrowing-only exclusions are
+ * combined separately, so Git negations cannot reopen `.jevgrepignore` paths.
  *
  * Not supported: `\` escapes of path separators, case-insensitive matching on
  * case-insensitive filesystems (matching is exact), and Git's own index state. A
@@ -141,6 +142,7 @@ export function isIgnored(
   isDirectory: boolean,
 ): IgnoreDecision {
   let decision: IgnoreDecision = { ignored: false, rule: null, narrowing: false };
+  let narrowingDecision: IgnoreDecision | null = null;
   for (const file of stack) {
     const prefix = file.baseDirectory === '' ? '' : `${file.baseDirectory}/`;
     if (prefix !== '' && !relativePath.startsWith(prefix)) {
@@ -152,9 +154,13 @@ export function isIgnored(
         continue;
       }
       if (rule.matcher.test(candidate)) {
-        decision = { ignored: !rule.negated, rule: rule.source, narrowing: file.narrowingOnly };
+        if (file.narrowingOnly) {
+          if (!rule.negated) narrowingDecision = { ignored: true, rule: rule.source, narrowing: true };
+        } else {
+          decision = { ignored: !rule.negated, rule: rule.source, narrowing: false };
+        }
       }
     }
   }
-  return decision;
+  return narrowingDecision ?? decision;
 }
