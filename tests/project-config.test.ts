@@ -71,7 +71,7 @@ test('the development scripts cover compile, type check, test and smoke', () => 
   // shared-contract tests in their dedicated directory (review nit N6).
   assert.equal(
     manifest.scripts['test'],
-    'node --test "tests/*.test.ts" "tests/contract/*.test.ts"',
+    'node --import ./tests/helpers/canonical-temp.ts --test "tests/*.test.ts" "tests/contract/*.test.ts"',
   );
   assert.match(manifest.scripts['smoke'] ?? '', /^node scripts\/smoke\.ts$/);
   const verify = manifest.scripts['verify'] ?? '';
