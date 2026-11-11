@@ -31,11 +31,15 @@ export function rangeMetrics(question: EvidenceQuestion, excerpts: readonly Rang
   const recall = (ranges: readonly Range[]): number =>
     question.evidence.filter((unit) => covered(unit, ranges)).length / question.evidence.length;
   if (question.evidence.length === 0) {
-    return { recallAt1: null, recallAt5: null, reciprocalRank: null, evidenceCoverage: null, negativeCorrect: excerpts.length === 0 };
+    return { recallAt1: null, recallAt5: null, hitAt5: null, completeEvidenceAt5: null,
+      completeEvidenceSuccess: null, reciprocalRank: null, evidenceCoverage: null, negativeCorrect: excerpts.length === 0 };
   }
   const first = excerpts.findIndex((excerpt) => question.evidence.some((unit) => covered(unit, [excerpt])));
   return {
     recallAt1: recall(excerpts.slice(0, 1)), recallAt5: recall(excerpts.slice(0, 5)),
+    hitAt5: recall(excerpts.slice(0, 5)) > 0,
+    completeEvidenceAt5: recall(excerpts.slice(0, 5)) === 1,
+    completeEvidenceSuccess: recall(excerpts) === 1,
     reciprocalRank: first === -1 ? 0 : 1 / (first + 1),
     evidenceCoverage: recall(excerpts), negativeCorrect: null,
   };
@@ -46,10 +50,14 @@ export function summarizeRetrieval(results: readonly ReturnType<typeof retrieval
   const mean = (values: number[]): number | null => values.length === 0 ? null : values.reduce((a, b) => a + b, 0) / values.length;
   return {
     total: results.length, complete: complete.length, incomplete: results.length - complete.length,
+    completionRate: results.length === 0 ? null : complete.length / results.length,
     positiveQuestions: complete.filter((row) => row.recallAt1 !== null).length,
     negativeQuestions: complete.filter((row) => row.negativeCorrect !== null).length,
     meanRecallAt1: mean(complete.flatMap((row) => row.recallAt1 === null ? [] : [row.recallAt1])),
     meanRecallAt5: mean(complete.flatMap((row) => row.recallAt5 === null ? [] : [row.recallAt5])),
+    hitRateAt5: mean(complete.flatMap((row) => row.hitAt5 === null ? [] : [Number(row.hitAt5)])),
+    completeEvidenceSuccessRateAt5: mean(complete.flatMap((row) => row.completeEvidenceAt5 === null ? [] : [Number(row.completeEvidenceAt5)])),
+    completeEvidenceSuccessRate: mean(complete.flatMap((row) => row.completeEvidenceSuccess === null ? [] : [Number(row.completeEvidenceSuccess)])),
     mrr: mean(complete.flatMap((row) => row.reciprocalRank === null ? [] : [row.reciprocalRank])),
     meanEvidenceCoverage: mean(complete.flatMap((row) => row.evidenceCoverage === null ? [] : [row.evidenceCoverage])),
     negativeAccuracy: mean(complete.flatMap((row) => row.negativeCorrect === null ? [] : [Number(row.negativeCorrect)])),

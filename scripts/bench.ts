@@ -43,7 +43,7 @@ if (values.help) {
       semantics: {
         provider: 'offline fixed scores; reported usage is a synthetic reference-token count; no billed requests',
         quality: 'not measured; use bench:retrieval for real provider judgments',
-        cache: 'new score cache and fresh process per sample; four ordered searches share one engine; no preparation cache exists',
+        cache: 'new score and preparation caches and fresh process per sample; four ordered searches share one engine and its bounded memory caches',
         cold: 'cold process/tokenizer/score cache; OS filesystem cache is uncontrolled; startup/imports and fixture setup excluded',
         timings: 'inclusive stages overlap; provider includes adapter work and waiting, not isolated network time',
         memory: 'sampled maxima at instrumented boundaries; process peak RSS covers the whole child including setup',

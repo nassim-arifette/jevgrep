@@ -53,6 +53,9 @@ test('metrics require complete evidence, discount duplicates and do not count fa
     const metrics = retrievalMetrics(question, result)!;
     assert.equal(metrics.recallAt1, 0);
     assert.equal(metrics.recallAt5, 0.5);
+    assert.equal(metrics.hitAt5, true);
+    assert.equal(metrics.completeEvidenceAt5, false);
+    assert.equal(metrics.completeEvidenceSuccess, false);
     assert.equal(metrics.evidenceCoverage, 0.5);
     assert.equal(metrics.reciprocalRank, 0.25);
     const negative: RetrievalQuestion = { ...question, kind: 'negative', evidence: [] };
@@ -65,6 +68,9 @@ test('metrics require complete evidence, discount duplicates and do not count fa
     assert.equal(summary.positiveQuestions, 1);
     assert.equal(summary.negativeQuestions, 1);
     assert.equal(summary.meanRecallAt5, 0.5);
+    assert.equal(summary.hitRateAt5, 1);
+    assert.equal(summary.completeEvidenceSuccessRateAt5, 0);
+    assert.equal(summary.completionRate, 2 / 3);
   } finally { space.cleanup(); }
 });
 

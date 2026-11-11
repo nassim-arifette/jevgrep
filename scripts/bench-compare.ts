@@ -463,6 +463,9 @@ function summarize(group: readonly Row[]) {
   return {
     planned: group.length, complete: done.length, completionRate: group.length === 0 ? null : done.length / group.length,
     recallAt1: pick('recallAt1'), recallAt5: pick('recallAt5'), mrr: pick('reciprocalRank'),
+    hitRateAt5: mean(done.flatMap((row) => row.metrics!.hitAt5 === null ? [] : [Number(row.metrics!.hitAt5)])),
+    completeEvidenceSuccessRateAt5: mean(done.flatMap((row) => row.metrics!.completeEvidenceAt5 === null ? [] : [Number(row.metrics!.completeEvidenceAt5)])),
+    completeEvidenceSuccessRate: mean(done.flatMap((row) => row.metrics!.completeEvidenceSuccess === null ? [] : [Number(row.metrics!.completeEvidenceSuccess)])),
     fileRecall: pick('fileRecall'), complementaryCoverage: pick('complementaryCoverage'),
     // Unanswered queries count as misses here, so incomplete arms cannot look better by skipping hard cases.
     recallAt5OverPlanned: group.length === 0 ? null : done.reduce((sum, row) => sum + (row.metrics!.recallAt5 ?? 0), 0) / group.length,
@@ -527,6 +530,10 @@ const report = {
   semantics: {
     ranking: 'each arm returns ranked line ranges; the same localization metrics score every arm',
     recallAt5OverPlanned: 'incomplete or failed queries count as zero',
+    recallAt5: 'mean per-question fraction of required evidence units fully covered by the first five ranges, among completed searches',
+    hitRateAt5: 'share of completed positive questions with any required evidence unit in the first five ranges',
+    completeEvidenceSuccessRateAt5: 'share of completed positive questions with all required evidence units in the first five ranges',
+    completeEvidenceSuccessRate: 'share of completed positive questions with all required evidence units anywhere in the response',
     returned: 'context size delivered to the caller: lines in the top 5 ranges and characters of all returned ranges',
     labels: 'patch sites and quoted-docstring functions; not exhaustive relevance',
     replay: 'captured Jev scores per fragment; candidate arms mask every other fragment, so Jev work is the candidate set only',
