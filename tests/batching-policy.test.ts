@@ -116,3 +116,13 @@ test('batches built asynchronously on the pool are the batches built synchronous
   controller.abort();
   await assert.rejects(buildBatchesAsync(fragments, query, { serialize: serializeDirect, limits, threads: 2, signal: controller.signal }), /aborted/);
 });
+
+test('payload groups spanning the retention bound preserve every fragment and exact batch limits', async () => {
+  const fragments = Array.from({ length: 900 }, (_, index) => fragment(index, 'word '.repeat(1_000)));
+  const options = { serialize: serializeDirect, limits: batchLimits() };
+  const sequential = buildBatches(fragments, 'Find value', { ...options, threads: 0 });
+  const asynchronous = await buildBatchesAsync(fragments, 'Find value', { ...options, threads: 2 });
+  assert.deepEqual(asynchronous.map((batch) => batch.items.map((item) => item.id)), sequential.map((batch) => batch.items.map((item) => item.id)));
+  assert.deepEqual(asynchronous.flatMap((batch) => batch.items.map((item) => item.id)), fragments.map((item) => item.id));
+  assert.ok(asynchronous.every((batch) => fitsSerializedBatch(serializeDirect(batch), options.limits)));
+});
