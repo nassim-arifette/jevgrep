@@ -213,6 +213,11 @@ ${body('\t\t')}
   assertExact(snapshot, fragments);
 });
 
+test('a comment opening a Go block does not hide the statements after it', () => {
+  const text = 'package x\n\nfunc f() {\n\t// Setup.\n\ta()\n\tb()\n}\n';
+  assert.deepEqual(labelsAt('go', text, 1).map(([line]) => line), [4, 6]);
+});
+
 test('small Go and Rust files pack into exact fragments with structural labels', () => {
   for (const [path, text, label] of [
     ['pkg/accounts.go', GO_MODULE, /^method:Account\.Deposit$/], ['src/point.rs', RUST_MODULE, /Point$/],
