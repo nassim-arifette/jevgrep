@@ -10,15 +10,24 @@ import type { Boundary, ParseOutcome } from './javascript-boundaries.ts';
 
 type MutableBoundary = { line: number; depth: number; label: string | null };
 
+/**
+ * What a block holds: the members of a type, the statements of a member, or anything
+ * deeper (`if` and loop bodies), whose statements get no boundary.
+ */
+type BlockRole = 'type' | 'member' | 'nested';
+
 /** An open bracket. `{` is a `block` when it holds statements or members, `init` for an array initializer. */
 type Frame =
   | { readonly char: '(' | '[' }
-  | { readonly char: '{'; readonly kind: 'block' | 'init'; readonly owner: Statement | null };
+  | { readonly char: '{'; readonly kind: 'init' }
+  | { readonly char: '{'; readonly kind: 'block'; readonly role: BlockRole; readonly owner: Statement | null };
 
 type Statement = {
   readonly boundary: MutableBoundary | null;
   readonly depth: number;
   readonly firstWord: string;
+  /** A member of a type body (or a top-level declaration), which may be labelled as a method. */
+  readonly member: boolean;
   /** Header tokens up to the first `{`, `;` or `=` outside parentheses, for the label. */
   readonly header: string[];
   collecting: boolean;
@@ -39,26 +48,74 @@ function isIdentifierCode(code: number): boolean {
     || code === 0x5f || code === 0x24 || code > 0x7f;
 }
 
+/** Index just past the bracket group opened at `start`, or the end of the header if it never closes. */
+function skipGroup(tokens: readonly string[], start: number, open: string, close: string): number {
+  let depth = 0;
+  for (let index = start; index < tokens.length; index += 1) {
+    if (tokens[index] === open) {
+      depth += 1;
+    } else if (tokens[index] === close) {
+      depth -= 1;
+      if (depth === 0) {
+        return index + 1;
+      }
+    }
+  }
+  return tokens.length;
+}
+
+/** Header tokens without annotations (`@A`, `@a.B(x = f(1))`) or type arguments (`<T>`). */
+function declarationTokens(tokens: readonly string[]): string[] {
+  const kept: string[] = [];
+  let index = 0;
+  while (index < tokens.length) {
+    const token = tokens[index]!;
+    if (token === '@' && tokens[index + 1] !== 'interface') {
+      index += 2;
+      while (tokens[index] === '.' && index + 1 < tokens.length) {
+        index += 2;
+      }
+      if (tokens[index] === '(') {
+        index = skipGroup(tokens, index, '(', ')');
+      }
+    } else if (token === '<') {
+      index = skipGroup(tokens, index, '<', '>');
+    } else {
+      kept.push(token);
+      index += 1;
+    }
+  }
+  return kept;
+}
+
+/**
+ * A type label for any declaration, a method label for a member whose name is the
+ * identifier before its parameter list. Fields, initializers and statements get none.
+ */
 function labelOf(statement: Statement): string | null {
-  const tokens = statement.header;
+  const tokens = declarationTokens(statement.header);
   for (let index = 0; index + 1 < tokens.length; index += 1) {
     const token = tokens[index]!;
     if (TYPE_KEYWORDS.has(token) && tokens[index - 1] !== '.' && isIdentifierCode(tokens[index + 1]!.charCodeAt(0))) {
       return `${tokens[index - 1] === '@' ? 'interface' : token}:${tokens[index + 1]!}`;
     }
   }
-  if (statement.depth !== 1) {
+  if (!statement.member) {
     return null;
   }
-  for (let index = 0; index + 1 < tokens.length; index += 1) {
-    const token = tokens[index]!;
-    const before = tokens[index - 1];
-    if (tokens[index + 1] === '(' && isIdentifierCode(token.charCodeAt(0)) && !/^[0-9]/.test(token)
-      && !NOT_METHOD_NAMES.has(token) && before !== '@' && before !== '.') {
-      return `method:${token}`;
-    }
+  const parameters = tokens.indexOf('(');
+  const name = tokens[parameters - 1];
+  const before = tokens[parameters - 2];
+  if (name !== undefined && isIdentifierCode(name.charCodeAt(0)) && !/^[0-9]/.test(name)
+    && !NOT_METHOD_NAMES.has(name) && before !== '.') {
+    return `method:${name}`;
   }
   return null;
+}
+
+/** True when a statement header declares a type, whose body holds members. */
+function declaresType(statement: Statement | null): boolean {
+  return statement !== null && labelOf({ ...statement, member: false }) !== null;
 }
 
 /** Offset just past the literal opened at `start` by `"`, `"""` or `'`. */
@@ -100,6 +157,16 @@ function scan(text: string, lineOfOffset: (offset: number) => number): MutableBo
     const top = frames[frames.length - 1];
     return parens === 0 && (top === undefined || (top.char === '{' && top.kind === 'block'));
   };
+  /** The role of the innermost block; the file itself holds declarations like a type body. */
+  const currentRole = (): BlockRole => {
+    for (let frame = frames.length - 1; frame >= 0; frame -= 1) {
+      const open = frames[frame]!;
+      if (open.char === '{' && open.kind === 'block') {
+        return open.role;
+      }
+    }
+    return 'type';
+  };
 
   const endStatement = (offset: number): void => {
     if (statement !== null && statement.boundary !== null) {
@@ -128,13 +195,14 @@ function scan(text: string, lineOfOffset: (offset: number) => number): MutableBo
     }
     if (expectStart && atStatementLevel() && value !== ';' && value !== '}') {
       const start = commentStart ?? offset;
-      const boundary: MutableBoundary | null = blockDepth <= 2
+      const role = currentRole();
+      const boundary: MutableBoundary | null = role !== 'nested'
         ? { line: lineOfOffset(start), depth: blockDepth, label: null }
         : null;
       if (boundary !== null) {
         boundaries.push(boundary);
       }
-      statement = { boundary, depth: blockDepth, firstWord: value, header: [], collecting: true };
+      statement = { boundary, depth: blockDepth, firstWord: value, member: role === 'type', header: [], collecting: true };
       expectStart = false;
       commentStart = null;
     }
@@ -142,7 +210,7 @@ function scan(text: string, lineOfOffset: (offset: number) => number): MutableBo
     if (current?.collecting === true && current.depth === blockDepth) {
       if (parens === 0 && (value === '{' || value === ';' || value === '=')) {
         current.collecting = false;
-      } else if (current.header.length < 64) {
+      } else if (current.header.length < 256) {
         current.header.push(value);
       }
     }
@@ -206,9 +274,11 @@ function scan(text: string, lineOfOffset: (offset: number) => number): MutableBo
       const initializer = parens === 0 && (previousToken === '=' || previousToken === ']' || previousToken === ','
         || (top?.char === '{' && top.kind === 'init'));
       if (initializer || !atStatementLevel()) {
-        frames.push({ char: '{', kind: 'init', owner: null });
+        frames.push({ char: '{', kind: 'init' });
       } else {
-        frames.push({ char: '{', kind: 'block', owner: statement });
+        const outer = currentRole();
+        const role: BlockRole = declaresType(statement) && outer !== 'nested' ? 'type' : outer === 'type' ? 'member' : 'nested';
+        frames.push({ char: '{', kind: 'block', role, owner: statement });
         blockDepth += 1;
         statement = null;
         expectStart = true;
@@ -254,8 +324,11 @@ function scan(text: string, lineOfOffset: (offset: number) => number): MutableBo
 
 /**
  * Package, import and type declarations are depth 0, members of top-level types depth
- * 1 and statements inside those members depth 2. Annotations and own-line comments
- * stay attached to the declaration they precede.
+ * 1 and statements inside those members depth 2. Nested, inner and local types repeat
+ * the pattern one block deeper: their members are boundaries at the depth of their body
+ * and the statements of those members one deeper still. Blocks inside statements (`if`,
+ * loops) get none. Annotations and own-line comments stay attached to the declaration
+ * they precede.
  */
 export function parseJavaBoundaries(text: string, lineOfOffset: (offset: number) => number): ParseOutcome {
   let found: MutableBoundary[];

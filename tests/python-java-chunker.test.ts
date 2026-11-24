@@ -237,3 +237,65 @@ test('Java documentation after a closing brace belongs to the next member, not t
     [[2, 'method:first'], [6, 'method:second']],
   );
 });
+
+test('Java method names skip annotation arguments, type parameters and array or varargs types', () => {
+  const text = 'class Jobs {\n    @Scheduled(fixedRate = compute(5)) public void tick() { run(); }\n    public <T> List<T> first(T... items) { return null; }\n    @Size(max = limit(3)) private int[] values = init();\n    public int[][] grid(String[] rows) { return null; }\n}\n';
+  const outcome = parseJavaBoundaries(text, lineOf(text));
+  assert.ok(outcome.ok);
+  assert.deepEqual(
+    outcome.boundaries.filter((boundary) => boundary.depth === 1).map(({ line, label }) => [line, label]),
+    [[2, 'method:tick'], [3, 'method:first'], [4, null], [5, 'method:grid']],
+  );
+});
+
+const JAVA_NESTED = `class Outer {
+    static class Inner {
+        void run() {
+            go();
+            if (ready) {
+                stop();
+            }
+        }
+    }
+
+    void local() {
+        class Helper {
+            int help() {
+                return 1;
+            }
+        }
+    }
+
+    interface Port { void send(); }
+    enum Mode { ON, OFF; boolean on() { return this == ON; } }
+    record Point(int x) { Point { check(x); } }
+}
+`;
+
+test('members of nested, local and inner types get labels and boundaries like top-level members', () => {
+  const outcome = parseJavaBoundaries(JAVA_NESTED, lineOf(JAVA_NESTED));
+  assert.ok(outcome.ok);
+  assert.deepEqual(
+    outcome.boundaries.filter((boundary) => boundary.line < 19).map(({ line, depth, label }) => [line, depth, label]),
+    [
+      [1, 0, 'class:Outer'], [2, 1, 'class:Inner'], [3, 2, 'method:run'], [4, 3, null], [5, 3, null],
+      [11, 1, 'method:local'], [12, 2, 'class:Helper'], [13, 3, 'method:help'], [14, 4, null],
+    ],
+  );
+  assert.deepEqual(
+    outcome.boundaries.filter((boundary) => boundary.line >= 19 && boundary.label !== null).map(({ line, label }) => [line, label]),
+    [[19, 'interface:Port'], [19, 'method:send'], [20, 'enum:Mode'], [21, 'record:Point']],
+  );
+});
+
+test('a nested type header is carried into the first fragment of its body', () => {
+  const members = Array.from({ length: 6 }, (_, n) => `        void step${String(n)}() {\n            work(${String(n)}, "${'x'.repeat(40)}");\n        }`).join('\n');
+  const text = `class Outer {\n    static class Inner {\n${members}\n    }\n}\n`;
+  const snapshot = snapshotOf('src/Outer.java', text);
+  const fragments = syntaxFragments(chunkSnapshot(snapshot, { ...DEFAULT_WINDOW_LIMITS, targetTokens: 40, maxTokens: 80 }));
+  assertExact(snapshot, fragments);
+  assert.ok(fragments.length > 2);
+  const header = fragments.find((f) => f.text.includes('static class Inner {'));
+  assert.ok(header?.text.includes('void step0() {'));
+  assert.ok(fragments.some((f) => f.label === 'method:step1' && f.text.trimStart().startsWith('void step1()')));
+});
