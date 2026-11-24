@@ -56,13 +56,20 @@ test('brackets and newlines inside attribute strings do not extend the attribute
   assert.equal(endsOnDetachedAttribute(python, '@setup({"a": """\n{% ( [\n"""})\ndef f():\n    pass\n', 10, 5), false);
   assert.equal(endsOnDetachedAttribute(python, '@setup({"a": "{% (\\n"})\ndef f():\n    pass\n', 10, 3), false);
   assert.equal(endsOnDetachedAttribute(python, 'x = 1\n\n@setup({"a": """\n(\n"""})\n', 10, 5), true);
+  assert.equal(endsOnDetachedAttribute(python, '@override(\n    a=1,  # don\'t\n)\nclass A:\n    pass\n', 10, 5), false);
+  assert.equal(endsOnDetachedAttribute(group('A.java'), '@SuppressWarnings("x") // we\'re\nint a;\n', 10, 2), false);
 });
 
-test('braces inside multi-line raw strings do not extend a Go function', () => {
+test('braces inside Go raw strings and Rust multi-line or raw strings do not extend a function', () => {
   assert.deepEqual(
     heuristicDeclarations(group('a.go'), 'func A() {\n\ts := `x {\n\ty`\n}\n\nfunc B() {}\n')
       .map((declaration) => `${declaration.name}:${String(declaration.startLine)}-${String(declaration.endLine)}`),
     ['A:1-4', 'B:6-6'],
+  );
+  assert.deepEqual(
+    heuristicDeclarations(group('a.rs'), 'fn a() {\n    f(r"\\\\?\\", "{\\\n    x");\n}\nfn b() {}\n')
+      .map((declaration) => `${declaration.name}:${String(declaration.startLine)}-${String(declaration.endLine)}`),
+    ['a:1-4', 'b:5-5'],
   );
 });
 

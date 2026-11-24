@@ -274,15 +274,16 @@ function braceEnd(group: LanguageGroup, lines: readonly string[], start: number)
   let block = false;
   const hashComments = group.id === 'php';
   const startIndent = indentOf(lines[start]!);
-  // Raw, template, text-block and Rust strings may span lines; other quotes close on theirs.
+  // Go raw strings, Rust strings and text blocks may span lines; other quotes are taken to
+  // close on theirs (JS/TS templates too: their `${..}` nesting is not tracked).
   let quote: string | null = null;
-  const escapes = (open: string) => open !== '`' || group.id !== 'go';
+  let quoteEscapes = true;
   for (let row = start; row < lines.length && row < start + 20_000; row += 1) {
     const line = lines[row]!;
     if (quote === null && !opened && row > start && parens === 0 && !isBlank(line) && indentOf(line) <= startIndent && !line.trim().startsWith('{')) return row - 1;
     for (let index = 0; index < line.length; index += 1) {
       if (quote !== null) {
-        const close = closingQuote(line, index, quote, escapes(quote));
+        const close = closingQuote(line, index, quote, quoteEscapes);
         if (close < 0) break;
         index = close + quote.length - 1;
         quote = null;
@@ -296,11 +297,14 @@ function braceEnd(group: LanguageGroup, lines: readonly string[], start: number)
       if (char === '/' && line[index + 1] === '/') break;
       if (hashComments && char === '#' && line[index + 1] !== '[') break;
       if (char === '/' && line[index + 1] === '*') { block = true; index += 1; continue; }
-      const open = line.startsWith('"""', index) ? '"""' : char;
-      if (open === '"""' || char === '`' || (char === '"' && group.id === 'rust')) {
-        const close = closingQuote(line, index + open.length, open, escapes(open));
-        if (close < 0) { quote = open; break; }
-        index = close + open.length - 1;
+      const raw = group.id === 'rust' && char === '"' ? /(?:^|\W)b?r(#*)$/.exec(line.slice(0, index)) : null;
+      const textBlock = TEXT_BLOCKS.has(group.id) && line.startsWith('"""', index);
+      if (raw !== null || textBlock || (char === '`' && group.id === 'go') || (char === '"' && group.id === 'rust')) {
+        const closing = raw !== null ? `"${raw[1]!}` : textBlock ? '"""' : char;
+        quoteEscapes = raw === null && char !== '`';
+        const close = closingQuote(line, index + (textBlock ? 3 : 1), closing, quoteEscapes);
+        if (close < 0) { quote = closing; break; }
+        index = close + closing.length - 1;
         continue;
       }
       if (char === '"' || char === '`' || (char === '\'' && (group.id !== 'rust' || /^'(?:\\.[^']*|[^\\'])'/.test(line.slice(index))))) {
@@ -320,6 +324,8 @@ function braceEnd(group: LanguageGroup, lines: readonly string[], start: number)
   }
   return opened ? lines.length - 1 : start;
 }
+
+const TEXT_BLOCKS: ReadonlySet<string> = new Set(['java', 'kotlin', 'swift', 'csharp']);
 
 /** Index of `quote` closing a string in `line` from `from`, or -1 when it continues on the next line. */
 function closingQuote(line: string, from: number, quote: string, escapes: boolean): number {
@@ -407,7 +413,7 @@ const ATTRIBUTE_OPENERS: Readonly<Record<string, RegExp>> = {
 };
 
 /** Bracket balance of `line`, outside strings; `state.quote` carries a string still open at its end. */
-function bracketBalance(line: string, state: { quote: string | null }, singleQuotes: boolean): number {
+function bracketBalance(line: string, state: { quote: string | null }, singleQuotes: boolean, comment: string): number {
   let balance = 0;
   for (let index = 0; index < line.length; index += 1) {
     if (state.quote !== null) {
@@ -417,6 +423,7 @@ function bracketBalance(line: string, state: { quote: string | null }, singleQuo
       state.quote = null;
       continue;
     }
+    if (line.startsWith(comment, index)) return balance;
     const char = line[index]!;
     const quote = line.startsWith('"""', index) || line.startsWith("'''", index) ? char.repeat(3) : char;
     if (char === '"' || (char === '\'' && singleQuotes)) {
@@ -442,17 +449,18 @@ export function endsOnDetachedAttribute(group: LanguageGroup, fragmentText: stri
   const state = { quote: null as string | null };
   // Rust `'a` is a lifetime, not a string.
   const singleQuotes = group.id !== 'rust';
+  const comment = group.id === 'python' ? '#' : '//';
   for (const line of fragmentText.split(/\r?\n/)) {
     const trimmed = line.trim();
     if (trimmed === '' && state.quote === null) continue;
     if (open > 0 || state.quote !== null) {
-      open += bracketBalance(trimmed, state, singleQuotes);
+      open += bracketBalance(trimmed, state, singleQuotes, comment);
       lastIsAttribute = true;
       continue;
     }
     const match = opener.exec(trimmed);
     if (match === null) { lastIsAttribute = false; continue; }
-    const balance = bracketBalance(trimmed, state, singleQuotes);
+    const balance = bracketBalance(trimmed, state, singleQuotes, comment);
     if (balance > 0 || state.quote !== null) { open = balance; lastIsAttribute = true; continue; }
     // Single-line: only attributes (and a trailing comment) on the line.
     const rest = group.id === 'rust' || group.id === 'php' || group.id === 'csharp'
