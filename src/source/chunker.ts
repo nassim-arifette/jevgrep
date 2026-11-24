@@ -128,6 +128,8 @@ type LineRange = {
   readonly label: string | null;
   /** The range starts at a labelled boundary of its own depth, so it is a declaration. */
   readonly declares?: boolean;
+  /** The declaration a range carrying a header holds, when it is not the range itself. */
+  readonly holds?: DeclarationRange;
 };
 
 function fragmentOf(snapshot: SourceSnapshot, range: LineRange, chunker: string): PreparedFragment {
@@ -294,7 +296,7 @@ function packUnits(
 
     if (tokens > limits.maxTokens || bytes > limits.maxBytes || lines > limits.maxLines) {
       flush();
-      const declaration = unit.declares === true ? unit : enclosing;
+      const declaration = unit.holds ?? (unit.declares === true ? unit : enclosing);
       const refined = refine(unit, declaration) ?? windowsOfRange(snapshot, unit, limits, chunker, false, declaration);
       if (!Array.isArray(refined)) {
         return refined as UnsupportedLongLine;
@@ -464,14 +466,16 @@ export function chunkWithBoundaries(
       const [head, next, ...rest] = inner as [LineRange, LineRange, ...LineRange[]];
       // A unit that fits on its own is never split just to take the header along.
       if (fits(head.startLine, next.endLine) || !fits(next.startLine, next.endLine)) {
+        // The declaration is the unit the header was carried into; fragments holding the header still cover it.
+        const holds = next.declares === true ? { startLine: next.startLine, endLine: next.endLine } : undefined;
         inner = [{
-          startLine: head.startLine, endLine: next.endLine, label: head.label ?? next.label,
-          declares: head.declares === true || next.declares === true,
+          startLine: head.startLine, endLine: next.endLine, label: head.label ?? next.label, declares: head.declares === true,
+          ...(holds === undefined ? {} : { holds }),
         }, ...rest];
       }
     }
     if (inner.length <= 1) {
-      return refineAt(depth + 1)(unit, declaration);
+      return refineAt(depth + 1)(unit, inner[0]?.holds ?? declaration);
     }
     return packUnits(snapshot, inner, limits, chunker, refineAt(depth + 1), declaration, !nestedLabels);
   };

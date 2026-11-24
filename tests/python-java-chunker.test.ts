@@ -196,12 +196,19 @@ test('every fragment cut from a Python or Java callable along its statements rec
   for (const [path, text, declaration] of [
     ['src/large.py', `def large():\n${pyBody}\n\ntail = 1\n`, { startLine: 1, endLine: 82 }],
     ['src/Large.java', `class Large {\n    void large() {\n${javaBody}\n    }\n}\n`, { startLine: 2, endLine: 84 }],
+    // A method of a nested type, refined at depth 2 with the type headers carried into its first fragment.
+    ['src/Outer.java', `class Outer {\n    static class Inner {\n        void large() {\n${javaBody}\n        }\n    }\n}\n`,
+      { startLine: 3, endLine: 86 }],
   ] as const) {
     const fragments = syntaxFragments(chunkSnapshot(snapshotOf(path, text), limits));
     const inside = fragments.filter((f) => f.startLine >= declaration.startLine && f.endLine <= declaration.endLine);
     assert.ok(inside.length > 1, `${path} is split along its statements`);
     for (const fragment of inside) {
       assert.deepEqual(fragment.declaration, declaration, `${path}:${String(fragment.startLine)}`);
+    }
+    for (const fragment of fragments.filter((f) => f.declaration != null)) {
+      assert.ok(fragment.declaration!.startLine <= fragment.startLine && fragment.declaration!.endLine >= fragment.endLine,
+        `${path}:${String(fragment.startLine)} returned whole keeps its own lines, carried headers included`);
     }
   }
 });

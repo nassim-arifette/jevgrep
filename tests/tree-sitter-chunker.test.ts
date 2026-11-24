@@ -209,7 +209,8 @@ ${body('\t\t')}
   const limits = { ...DEFAULT_WINDOW_LIMITS, targetTokens: 90, maxTokens: 150, maxBytes: 900 };
   const snapshot = snapshotOf('pkg/large.go', text);
   const fragments = syntaxFragments(chunkSnapshot(snapshot, limits));
-  assert.equal(fragments.filter((fragment) => fragment.declaration != null).length, 0, 'no line windows were needed');
+  const starts = new Set([1, ...outcome.boundaries.map((boundary) => boundary.line)]);
+  assert.ok(fragments.every((fragment) => starts.has(fragment.startLine)), 'no line windows were needed');
   assertExact(snapshot, fragments);
 });
 
