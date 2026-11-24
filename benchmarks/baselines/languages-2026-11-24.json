@@ -1,0 +1,856 @@
+{
+  "schemaVersion": 1,
+  "kind": "language-structure",
+  "createdAt": "2026-11-24T16:18:31.789Z",
+  "environment": {
+    "node": "v24.15.0",
+    "platform": "linux",
+    "architecture": "x64",
+    "cpu": "Intel(R) Xeon(R) Processor",
+    "logicalCpus": 8,
+    "totalMemoryBytes": 33655369728,
+    "revision": "b2ad5a09f9339b0fdc642e0352bc04fd5913d878",
+    "workingTree": "",
+    "sourceHash": "6676ac2f1f1eb8809ae1861d581db0ac30a1d0b4c1e753b6e89e9c50ea2d6d08",
+    "harnessHash": "3a868345be264d4303de66e57a6f56bdda1e0f4b64508254f4f6beef2911e375",
+    "packageLockHash": "165438e27843ab5d14c233169e2b9f978ee877ea447a96a0a7be6aa4efcae087"
+  },
+  "chunkers": {
+    "syntax": {
+      "javascript": "jevgrep-typescript-6.0.2-3",
+      "python": "jevgrep-python-scan-1",
+      "java": "jevgrep-java-scan-1",
+      "go": "jevgrep-tree-sitter-go-0.25.0-1",
+      "rust": "jevgrep-tree-sitter-rust-0.24.0-1"
+    },
+    "lineWindows": "jevgrep-line-windows-1"
+  },
+  "limits": {
+    "targetTokens": 800,
+    "maxTokens": 1600,
+    "maxBytes": 8192,
+    "targetLines": 80,
+    "maxLines": 120,
+    "overlapLines": 8
+  },
+  "corpus": {
+    "django/django": {
+      "commit": "f14af5a88472ca10e2e94b37d6c17ee48cbdeb4d",
+      "files": 2871
+    },
+    "spring-projects/spring-petclinic": {
+      "commit": "500158f732419217507c7656904b8e6aa1bcc0d6",
+      "files": 84
+    },
+    "google/gson": {
+      "commit": "d9b5079eaa4567219771bba6d04289cf45c7589b",
+      "files": 293
+    },
+    "caddyserver/caddy": {
+      "commit": "679806f92d49e5b494200f2e90a93f228203a418",
+      "files": 459
+    },
+    "sharkdp/bat": {
+      "commit": "4bd5c5b602950ea8fe62ea16d851d6a26eccfb76",
+      "files": 150
+    },
+    "tokio-rs/axum": {
+      "commit": "bfa66864176ffc03e508d8a8afd33c2e626ac38d",
+      "files": 430
+    },
+    "expressjs/express": {
+      "commit": "43fca52d28a422c8be48fd489cbd4f2d6152bab6",
+      "files": 166
+    },
+    "vuejs/core": {
+      "commit": "44234e82bf4fcb234968061d7a51e37ea9f39e71",
+      "files": 633
+    },
+    "redis/redis": {
+      "commit": "f7c38e3973d4018ba290a4793b08c11cb2f7372f",
+      "files": 881
+    },
+    "fmtlib/fmt": {
+      "commit": "3be6709f575a609620f5dd82a9ab2fa91bef6a5e",
+      "files": 107
+    },
+    "laravel/framework": {
+      "commit": "14b8b06051f11d919a549a400e7d4c6d8ed009af",
+      "files": 3342
+    },
+    "sinatra/sinatra": {
+      "commit": "2e3f79139154b8bfdaad7ad516f35dcb0e70446a",
+      "files": 175
+    },
+    "square/okio": {
+      "commit": "f0e3f479f83531332de076ed39bc001a5618d538",
+      "files": 381
+    },
+    "Alamofire/Alamofire": {
+      "commit": "dea4bab91767a971d6e112bc955c6a82295589b7",
+      "files": 480
+    },
+    "App-vNext/Polly": {
+      "commit": "ad7d87bf1c1cee65f4a90f1afb192094111df6eb",
+      "files": 916
+    }
+  },
+  "excluded": {
+    "credential_pattern": 16,
+    "blank": 2,
+    "unsupported_long_line": 10,
+    "unsupported_encoding": 2
+  },
+  "groups": {
+    "typescript": {
+      "files": 482,
+      "lines": 169047,
+      "fragments": 2204,
+      "profiled": true,
+      "labelledShare": 0.9342,
+      "smallFragmentShare": 0.0032,
+      "midBlockShare": 0.1411,
+      "detachedAttributeFragments": 0,
+      "declarations": 11239,
+      "declarationsHiddenShare": 0.7397,
+      "callables": 10285,
+      "splitCallables": 123,
+      "splitCallablesWithDeclarationShare": 0,
+      "continuations": 347,
+      "continuationsUnlabelledShare": 0.1499,
+      "parseFallbackFiles": 0,
+      "parseFallbackFileShare": 0,
+      "parseFallbackLineShare": 0,
+      "chunkingMsPer1000Lines": 14.4,
+      "uncoveredNonBlankLines": 0
+    },
+    "javascript": {
+      "files": 242,
+      "lines": 45064,
+      "fragments": 716,
+      "profiled": true,
+      "labelledShare": 0.845,
+      "smallFragmentShare": 0.0517,
+      "midBlockShare": 0.162,
+      "detachedAttributeFragments": 0,
+      "declarations": 2277,
+      "declarationsHiddenShare": 0.7756,
+      "callables": 2275,
+      "splitCallables": 49,
+      "splitCallablesWithDeclarationShare": 0,
+      "continuations": 90,
+      "continuationsUnlabelledShare": 0.1333,
+      "parseFallbackFiles": 2,
+      "parseFallbackFileShare": 0.0083,
+      "parseFallbackLineShare": 0,
+      "chunkingMsPer1000Lines": 17.73,
+      "uncoveredNonBlankLines": 0
+    },
+    "python": {
+      "files": 2388,
+      "lines": 546837,
+      "fragments": 8643,
+      "profiled": true,
+      "labelledShare": 0.8738,
+      "smallFragmentShare": 0.0126,
+      "midBlockShare": 0.0117,
+      "detachedAttributeFragments": 1,
+      "declarations": 45281,
+      "declarationsHiddenShare": 0.8332,
+      "callables": 33965,
+      "splitCallables": 104,
+      "splitCallablesWithDeclarationShare": 0,
+      "continuations": 195,
+      "continuationsUnlabelledShare": 0.8359,
+      "parseFallbackFiles": 0,
+      "parseFallbackFileShare": 0,
+      "parseFallbackLineShare": 0,
+      "chunkingMsPer1000Lines": 14,
+      "uncoveredNonBlankLines": 0
+    },
+    "java": {
+      "files": 346,
+      "lines": 65649,
+      "fragments": 998,
+      "profiled": true,
+      "labelledShare": 0.7675,
+      "smallFragmentShare": 0.001,
+      "midBlockShare": 0.1423,
+      "detachedAttributeFragments": 0,
+      "declarations": 5485,
+      "declarationsHiddenShare": 0.8321,
+      "callables": 4622,
+      "splitCallables": 5,
+      "splitCallablesWithDeclarationShare": 0,
+      "continuations": 8,
+      "continuationsUnlabelledShare": 1,
+      "parseFallbackFiles": 0,
+      "parseFallbackFileShare": 0,
+      "parseFallbackLineShare": 0,
+      "chunkingMsPer1000Lines": 15.39,
+      "uncoveredNonBlankLines": 0
+    },
+    "go": {
+      "files": 427,
+      "lines": 138087,
+      "fragments": 2107,
+      "profiled": true,
+      "labelledShare": 0.7869,
+      "smallFragmentShare": 0.0237,
+      "midBlockShare": 0.103,
+      "detachedAttributeFragments": 0,
+      "declarations": 4513,
+      "declarationsHiddenShare": 0.6308,
+      "callables": 3849,
+      "splitCallables": 113,
+      "splitCallablesWithDeclarationShare": 0,
+      "continuations": 307,
+      "continuationsUnlabelledShare": 0.9772,
+      "parseFallbackFiles": 0,
+      "parseFallbackFileShare": 0,
+      "parseFallbackLineShare": 0,
+      "chunkingMsPer1000Lines": 16.84,
+      "uncoveredNonBlankLines": 0
+    },
+    "rust": {
+      "files": 363,
+      "lines": 61617,
+      "fragments": 941,
+      "profiled": true,
+      "labelledShare": 0.8916,
+      "smallFragmentShare": 0.0085,
+      "midBlockShare": 0.0786,
+      "detachedAttributeFragments": 215,
+      "declarations": 5062,
+      "declarationsHiddenShare": 0.7859,
+      "callables": 2976,
+      "splitCallables": 12,
+      "splitCallablesWithDeclarationShare": 0,
+      "continuations": 32,
+      "continuationsUnlabelledShare": 1,
+      "parseFallbackFiles": 0,
+      "parseFallbackFileShare": 0,
+      "parseFallbackLineShare": 0,
+      "chunkingMsPer1000Lines": 16.08,
+      "uncoveredNonBlankLines": 0
+    },
+    "c": {
+      "files": 319,
+      "lines": 303768,
+      "fragments": 5220,
+      "profiled": false,
+      "labelledShare": 0,
+      "smallFragmentShare": 0.0006,
+      "midBlockShare": 0.5952,
+      "detachedAttributeFragments": 0,
+      "declarations": 11606,
+      "declarationsHiddenShare": 1,
+      "callables": 10245,
+      "splitCallables": 1445,
+      "splitCallablesWithDeclarationShare": 0,
+      "continuations": 2159,
+      "continuationsUnlabelledShare": 1,
+      "parseFallbackFiles": 0,
+      "parseFallbackFileShare": 0,
+      "parseFallbackLineShare": 0,
+      "chunkingMsPer1000Lines": 18.27,
+      "uncoveredNonBlankLines": 0
+    },
+    "cpp": {
+      "files": 48,
+      "lines": 27932,
+      "fragments": 437,
+      "profiled": false,
+      "labelledShare": 0,
+      "smallFragmentShare": 0,
+      "midBlockShare": 0.5995,
+      "detachedAttributeFragments": 0,
+      "declarations": 3281,
+      "declarationsHiddenShare": 1,
+      "callables": 2972,
+      "splitCallables": 127,
+      "splitCallablesWithDeclarationShare": 0,
+      "continuations": 134,
+      "continuationsUnlabelledShare": 1,
+      "parseFallbackFiles": 0,
+      "parseFallbackFileShare": 0,
+      "parseFallbackLineShare": 0,
+      "chunkingMsPer1000Lines": 19.58,
+      "uncoveredNonBlankLines": 0
+    },
+    "csharp": {
+      "files": 803,
+      "lines": 106815,
+      "fragments": 2000,
+      "profiled": false,
+      "labelledShare": 0,
+      "smallFragmentShare": 0.001,
+      "midBlockShare": 0.4475,
+      "detachedAttributeFragments": 47,
+      "declarations": 5996,
+      "declarationsHiddenShare": 1,
+      "callables": 5040,
+      "splitCallables": 463,
+      "splitCallablesWithDeclarationShare": 0,
+      "continuations": 482,
+      "continuationsUnlabelledShare": 1,
+      "parseFallbackFiles": 0,
+      "parseFallbackFileShare": 0,
+      "parseFallbackLineShare": 0,
+      "chunkingMsPer1000Lines": 15.65,
+      "uncoveredNonBlankLines": 0
+    },
+    "php": {
+      "files": 3182,
+      "lines": 583110,
+      "fragments": 10003,
+      "profiled": false,
+      "labelledShare": 0,
+      "smallFragmentShare": 0.0075,
+      "midBlockShare": 0.5301,
+      "detachedAttributeFragments": 12,
+      "declarations": 37845,
+      "declarationsHiddenShare": 1,
+      "callables": 33038,
+      "splitCallables": 1978,
+      "splitCallablesWithDeclarationShare": 0,
+      "continuations": 2137,
+      "continuationsUnlabelledShare": 1,
+      "parseFallbackFiles": 0,
+      "parseFallbackFileShare": 0,
+      "parseFallbackLineShare": 0,
+      "chunkingMsPer1000Lines": 14.12,
+      "uncoveredNonBlankLines": 0
+    },
+    "kotlin": {
+      "files": 326,
+      "lines": 54672,
+      "fragments": 916,
+      "profiled": false,
+      "labelledShare": 0,
+      "smallFragmentShare": 0,
+      "midBlockShare": 0.5076,
+      "detachedAttributeFragments": 20,
+      "declarations": 3809,
+      "declarationsHiddenShare": 1,
+      "callables": 3507,
+      "splitCallables": 141,
+      "splitCallablesWithDeclarationShare": 0,
+      "continuations": 143,
+      "continuationsUnlabelledShare": 1,
+      "parseFallbackFiles": 0,
+      "parseFallbackFileShare": 0,
+      "parseFallbackLineShare": 0,
+      "chunkingMsPer1000Lines": 14.52,
+      "uncoveredNonBlankLines": 0
+    },
+    "swift": {
+      "files": 101,
+      "lines": 43746,
+      "fragments": 666,
+      "profiled": false,
+      "labelledShare": 0,
+      "smallFragmentShare": 0,
+      "midBlockShare": 0.6682,
+      "detachedAttributeFragments": 7,
+      "declarations": 2251,
+      "declarationsHiddenShare": 1,
+      "callables": 1874,
+      "splitCallables": 203,
+      "splitCallablesWithDeclarationShare": 0,
+      "continuations": 204,
+      "continuationsUnlabelledShare": 1,
+      "parseFallbackFiles": 0,
+      "parseFallbackFileShare": 0,
+      "parseFallbackLineShare": 0,
+      "chunkingMsPer1000Lines": 17.3,
+      "uncoveredNonBlankLines": 0
+    },
+    "ruby": {
+      "files": 159,
+      "lines": 24964,
+      "fragments": 420,
+      "profiled": false,
+      "labelledShare": 0,
+      "smallFragmentShare": 0.0071,
+      "midBlockShare": 0.4952,
+      "detachedAttributeFragments": 0,
+      "declarations": 1013,
+      "declarationsHiddenShare": 1,
+      "callables": 883,
+      "splitCallables": 17,
+      "splitCallablesWithDeclarationShare": 0,
+      "continuations": 17,
+      "continuationsUnlabelledShare": 1,
+      "parseFallbackFiles": 0,
+      "parseFallbackFileShare": 0,
+      "parseFallbackLineShare": 0,
+      "chunkingMsPer1000Lines": 13.07,
+      "uncoveredNonBlankLines": 0
+    },
+    "shell": {
+      "files": 39,
+      "lines": 3760,
+      "fragments": 73,
+      "profiled": false,
+      "labelledShare": 0,
+      "smallFragmentShare": 0.0137,
+      "midBlockShare": 0.2466,
+      "detachedAttributeFragments": 0,
+      "declarations": 0,
+      "declarationsHiddenShare": null,
+      "callables": 0,
+      "splitCallables": 0,
+      "splitCallablesWithDeclarationShare": null,
+      "continuations": 0,
+      "continuationsUnlabelledShare": null,
+      "parseFallbackFiles": 0,
+      "parseFallbackFileShare": 0,
+      "parseFallbackLineShare": 0,
+      "chunkingMsPer1000Lines": 15.82,
+      "uncoveredNonBlankLines": 0
+    },
+    "html": {
+      "files": 749,
+      "lines": 312593,
+      "fragments": 6457,
+      "profiled": false,
+      "labelledShare": 0,
+      "smallFragmentShare": 0.0392,
+      "midBlockShare": 0.6724,
+      "detachedAttributeFragments": 0,
+      "declarations": 0,
+      "declarationsHiddenShare": null,
+      "callables": 0,
+      "splitCallables": 0,
+      "splitCallablesWithDeclarationShare": null,
+      "continuations": 0,
+      "continuationsUnlabelledShare": null,
+      "parseFallbackFiles": 0,
+      "parseFallbackFileShare": 0,
+      "parseFallbackLineShare": 0,
+      "chunkingMsPer1000Lines": 25.31,
+      "uncoveredNonBlankLines": 0
+    },
+    "css": {
+      "files": 65,
+      "lines": 19840,
+      "fragments": 330,
+      "profiled": false,
+      "labelledShare": 0,
+      "smallFragmentShare": 0.0758,
+      "midBlockShare": 0.497,
+      "detachedAttributeFragments": 0,
+      "declarations": 0,
+      "declarationsHiddenShare": null,
+      "callables": 0,
+      "splitCallables": 0,
+      "splitCallablesWithDeclarationShare": null,
+      "continuations": 0,
+      "continuationsUnlabelledShare": null,
+      "parseFallbackFiles": 0,
+      "parseFallbackFileShare": 0,
+      "parseFallbackLineShare": 0,
+      "chunkingMsPer1000Lines": 11.64,
+      "uncoveredNonBlankLines": 0
+    },
+    "yaml": {
+      "files": 221,
+      "lines": 15032,
+      "fragments": 355,
+      "profiled": false,
+      "labelledShare": 0,
+      "smallFragmentShare": 0.0282,
+      "midBlockShare": 0.3099,
+      "detachedAttributeFragments": 0,
+      "declarations": 0,
+      "declarationsHiddenShare": null,
+      "callables": 0,
+      "splitCallables": 0,
+      "splitCallablesWithDeclarationShare": null,
+      "continuations": 0,
+      "continuationsUnlabelledShare": null,
+      "parseFallbackFiles": 0,
+      "parseFallbackFileShare": 0,
+      "parseFallbackLineShare": 0,
+      "chunkingMsPer1000Lines": 16.43,
+      "uncoveredNonBlankLines": 0
+    },
+    "json": {
+      "files": 659,
+      "lines": 38759,
+      "fragments": 895,
+      "profiled": false,
+      "labelledShare": 0,
+      "smallFragmentShare": 0.0168,
+      "midBlockShare": 0.2279,
+      "detachedAttributeFragments": 0,
+      "declarations": 0,
+      "declarationsHiddenShare": null,
+      "callables": 0,
+      "splitCallables": 0,
+      "splitCallablesWithDeclarationShare": null,
+      "continuations": 0,
+      "continuationsUnlabelledShare": null,
+      "parseFallbackFiles": 0,
+      "parseFallbackFileShare": 0,
+      "parseFallbackLineShare": 0,
+      "chunkingMsPer1000Lines": 12.48,
+      "uncoveredNonBlankLines": 0
+    },
+    "markdown": {
+      "files": 305,
+      "lines": 70324,
+      "fragments": 2042,
+      "profiled": false,
+      "labelledShare": 0,
+      "smallFragmentShare": 0.0088,
+      "midBlockShare": 0.1665,
+      "detachedAttributeFragments": 0,
+      "declarations": 0,
+      "declarationsHiddenShare": null,
+      "callables": 0,
+      "splitCallables": 0,
+      "splitCallablesWithDeclarationShare": null,
+      "continuations": 0,
+      "continuationsUnlabelledShare": null,
+      "parseFallbackFiles": 0,
+      "parseFallbackFileShare": 0,
+      "parseFallbackLineShare": 0,
+      "chunkingMsPer1000Lines": 26.44,
+      "uncoveredNonBlankLines": 0
+    },
+    "sql": {
+      "files": 11,
+      "lines": 360,
+      "fragments": 16,
+      "profiled": false,
+      "labelledShare": 0,
+      "smallFragmentShare": 0.125,
+      "midBlockShare": 0,
+      "detachedAttributeFragments": 0,
+      "declarations": 0,
+      "declarationsHiddenShare": null,
+      "callables": 0,
+      "splitCallables": 0,
+      "splitCallablesWithDeclarationShare": null,
+      "continuations": 0,
+      "continuationsUnlabelledShare": null,
+      "parseFallbackFiles": 0,
+      "parseFallbackFileShare": 0,
+      "parseFallbackLineShare": 0,
+      "chunkingMsPer1000Lines": 21.67,
+      "uncoveredNonBlankLines": 0
+    },
+    "toml": {
+      "files": 121,
+      "lines": 2002,
+      "fragments": 127,
+      "profiled": false,
+      "labelledShare": 0,
+      "smallFragmentShare": 0.2913,
+      "midBlockShare": 0.0157,
+      "detachedAttributeFragments": 0,
+      "declarations": 0,
+      "declarationsHiddenShare": null,
+      "callables": 0,
+      "splitCallables": 0,
+      "splitCallablesWithDeclarationShare": null,
+      "continuations": 0,
+      "continuationsUnlabelledShare": null,
+      "parseFallbackFiles": 0,
+      "parseFallbackFileShare": 0,
+      "parseFallbackLineShare": 0,
+      "chunkingMsPer1000Lines": 12.95,
+      "uncoveredNonBlankLines": 0
+    },
+    "vue": {
+      "files": 12,
+      "lines": 838,
+      "fragments": 21,
+      "profiled": false,
+      "labelledShare": 0,
+      "smallFragmentShare": 0.0476,
+      "midBlockShare": 0.3333,
+      "detachedAttributeFragments": 0,
+      "declarations": 0,
+      "declarationsHiddenShare": null,
+      "callables": 0,
+      "splitCallables": 0,
+      "splitCallablesWithDeclarationShare": null,
+      "continuations": 0,
+      "continuationsUnlabelledShare": null,
+      "parseFallbackFiles": 0,
+      "parseFallbackFileShare": 0,
+      "parseFallbackLineShare": 0,
+      "chunkingMsPer1000Lines": 12.77,
+      "uncoveredNonBlankLines": 0
+    }
+  },
+  "gates": {
+    "typescript": [
+      {
+        "gate": "uncoveredNonBlankLines",
+        "value": 0,
+        "limit": "= 0",
+        "passed": true
+      },
+      {
+        "gate": "detachedAttributeFragments",
+        "value": 0,
+        "limit": "= 0",
+        "passed": true
+      },
+      {
+        "gate": "splitCallablesWithDeclarationShare",
+        "value": 0,
+        "limit": "= 1",
+        "passed": false
+      },
+      {
+        "gate": "midBlockShare",
+        "value": 0.1411,
+        "limit": "<= 0.15",
+        "passed": true
+      },
+      {
+        "gate": "continuationsUnlabelledShare",
+        "value": 0.1499,
+        "limit": "= 0",
+        "passed": false
+      },
+      {
+        "gate": "smallFragmentShare",
+        "value": 0.0032,
+        "limit": "<= 0.03",
+        "passed": true
+      },
+      {
+        "gate": "parseFallbackFileShare",
+        "value": 0,
+        "limit": "<= 0.01",
+        "passed": true
+      }
+    ],
+    "javascript": [
+      {
+        "gate": "uncoveredNonBlankLines",
+        "value": 0,
+        "limit": "= 0",
+        "passed": true
+      },
+      {
+        "gate": "detachedAttributeFragments",
+        "value": 0,
+        "limit": "= 0",
+        "passed": true
+      },
+      {
+        "gate": "splitCallablesWithDeclarationShare",
+        "value": 0,
+        "limit": "= 1",
+        "passed": false
+      },
+      {
+        "gate": "midBlockShare",
+        "value": 0.162,
+        "limit": "<= 0.15",
+        "passed": false
+      },
+      {
+        "gate": "continuationsUnlabelledShare",
+        "value": 0.1333,
+        "limit": "= 0",
+        "passed": false
+      },
+      {
+        "gate": "smallFragmentShare",
+        "value": 0.0517,
+        "limit": "<= 0.03",
+        "passed": false
+      },
+      {
+        "gate": "parseFallbackFileShare",
+        "value": 0.0083,
+        "limit": "<= 0.01",
+        "passed": true
+      }
+    ],
+    "python": [
+      {
+        "gate": "uncoveredNonBlankLines",
+        "value": 0,
+        "limit": "= 0",
+        "passed": true
+      },
+      {
+        "gate": "detachedAttributeFragments",
+        "value": 1,
+        "limit": "= 0",
+        "passed": false
+      },
+      {
+        "gate": "splitCallablesWithDeclarationShare",
+        "value": 0,
+        "limit": "= 1",
+        "passed": false
+      },
+      {
+        "gate": "midBlockShare",
+        "value": 0.0117,
+        "limit": "<= 0.15",
+        "passed": true
+      },
+      {
+        "gate": "continuationsUnlabelledShare",
+        "value": 0.8359,
+        "limit": "= 0",
+        "passed": false
+      },
+      {
+        "gate": "smallFragmentShare",
+        "value": 0.0126,
+        "limit": "<= 0.03",
+        "passed": true
+      },
+      {
+        "gate": "parseFallbackFileShare",
+        "value": 0,
+        "limit": "<= 0.01",
+        "passed": true
+      }
+    ],
+    "java": [
+      {
+        "gate": "uncoveredNonBlankLines",
+        "value": 0,
+        "limit": "= 0",
+        "passed": true
+      },
+      {
+        "gate": "detachedAttributeFragments",
+        "value": 0,
+        "limit": "= 0",
+        "passed": true
+      },
+      {
+        "gate": "splitCallablesWithDeclarationShare",
+        "value": 0,
+        "limit": "= 1",
+        "passed": false
+      },
+      {
+        "gate": "midBlockShare",
+        "value": 0.1423,
+        "limit": "<= 0.15",
+        "passed": true
+      },
+      {
+        "gate": "continuationsUnlabelledShare",
+        "value": 1,
+        "limit": "= 0",
+        "passed": false
+      },
+      {
+        "gate": "smallFragmentShare",
+        "value": 0.001,
+        "limit": "<= 0.03",
+        "passed": true
+      },
+      {
+        "gate": "parseFallbackFileShare",
+        "value": 0,
+        "limit": "<= 0.01",
+        "passed": true
+      }
+    ],
+    "go": [
+      {
+        "gate": "uncoveredNonBlankLines",
+        "value": 0,
+        "limit": "= 0",
+        "passed": true
+      },
+      {
+        "gate": "detachedAttributeFragments",
+        "value": 0,
+        "limit": "= 0",
+        "passed": true
+      },
+      {
+        "gate": "splitCallablesWithDeclarationShare",
+        "value": 0,
+        "limit": "= 1",
+        "passed": false
+      },
+      {
+        "gate": "midBlockShare",
+        "value": 0.103,
+        "limit": "<= 0.15",
+        "passed": true
+      },
+      {
+        "gate": "continuationsUnlabelledShare",
+        "value": 0.9772,
+        "limit": "= 0",
+        "passed": false
+      },
+      {
+        "gate": "smallFragmentShare",
+        "value": 0.0237,
+        "limit": "<= 0.03",
+        "passed": true
+      },
+      {
+        "gate": "parseFallbackFileShare",
+        "value": 0,
+        "limit": "<= 0.01",
+        "passed": true
+      }
+    ],
+    "rust": [
+      {
+        "gate": "uncoveredNonBlankLines",
+        "value": 0,
+        "limit": "= 0",
+        "passed": true
+      },
+      {
+        "gate": "detachedAttributeFragments",
+        "value": 215,
+        "limit": "= 0",
+        "passed": false
+      },
+      {
+        "gate": "splitCallablesWithDeclarationShare",
+        "value": 0,
+        "limit": "= 1",
+        "passed": false
+      },
+      {
+        "gate": "midBlockShare",
+        "value": 0.0786,
+        "limit": "<= 0.15",
+        "passed": true
+      },
+      {
+        "gate": "continuationsUnlabelledShare",
+        "value": 1,
+        "limit": "= 0",
+        "passed": false
+      },
+      {
+        "gate": "smallFragmentShare",
+        "value": 0.0085,
+        "limit": "<= 0.03",
+        "passed": true
+      },
+      {
+        "gate": "parseFallbackFileShare",
+        "value": 0,
+        "limit": "<= 0.01",
+        "passed": true
+      }
+    ]
+  }
+}
