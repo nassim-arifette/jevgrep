@@ -1,0 +1,32 @@
+{
+  "description": "A syntax error in one function (LS-8): that function becomes line windows, the other functions keep structural fragments and labels, and the result reports parse_failure.",
+  "limits": {
+    "targetTokens": 60,
+    "maxTokens": 120
+  },
+  "strategy": "syntax",
+  "fallback": "parse_failure",
+  "fragments": [
+    {
+      "lines": [
+        1,
+        11
+      ],
+      "label": "function:Total"
+    },
+    {
+      "lines": [
+        12,
+        16
+      ],
+      "label": null
+    },
+    {
+      "lines": [
+        17,
+        34
+      ],
+      "label": "function:Mean"
+    }
+  ]
+}

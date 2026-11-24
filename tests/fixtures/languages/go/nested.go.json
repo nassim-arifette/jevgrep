@@ -1,0 +1,58 @@
+{
+  "description": "A //go:build line, a cgo preamble, an import block, a documented var, a struct, an oversized method split along nested if/switch/for statements with its header carried into the first fragment, a function literal held by a var and a one-line method.",
+  "limits": {
+    "targetTokens": 60,
+    "maxTokens": 120
+  },
+  "strategy": "syntax",
+  "fallback": null,
+  "fragments": [
+    {
+      "lines": [
+        1,
+        23
+      ],
+      "label": "var:ErrClosed"
+    },
+    {
+      "lines": [
+        24,
+        31
+      ],
+      "label": "method:Ledger.Post",
+      "declaration": [
+        24,
+        50
+      ]
+    },
+    {
+      "lines": [
+        32,
+        41
+      ],
+      "label": null,
+      "declaration": [
+        24,
+        50
+      ]
+    },
+    {
+      "lines": [
+        42,
+        51
+      ],
+      "label": null,
+      "declaration": [
+        24,
+        51
+      ]
+    },
+    {
+      "lines": [
+        52,
+        64
+      ],
+      "label": "var:report"
+    }
+  ]
+}

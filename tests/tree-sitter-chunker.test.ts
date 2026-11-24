@@ -12,9 +12,9 @@ import type { SourceSnapshot } from '../src/source/snapshot.ts';
 import { parseTreeSitterBoundaries } from '../src/source/tree-sitter-boundaries.ts';
 
 /**
- * Go and Rust syntax chunking from vendored Tree-sitter grammars: fragments stay exact
- * snapshot slices covering every non-blank line, and a tree with errors falls back to
- * line windows with a reported reason.
+ * Go and Rust syntax chunking from vendored Tree-sitter grammars, planned by the shared
+ * recursive planner: fragments stay exact snapshot slices covering every non-blank line,
+ * and a tree with errors keeps the structure of its undamaged items (LS-8).
  */
 
 function snapshotOf(path: string, text: string): SourceSnapshot {
@@ -35,7 +35,7 @@ function assertExact(snapshot: SourceSnapshot, fragments: readonly PreparedFragm
   assert.deepEqual(uncoveredNonBlankLines(snapshot, fragments), []);
 }
 
-const SMALL = { ...DEFAULT_WINDOW_LIMITS, targetTokens: 20, maxTokens: 400 };
+const SMALL = { ...DEFAULT_WINDOW_LIMITS, targetTokens: 20, maxTokens: 60 };
 
 const GO_MODULE = `package accounts
 
@@ -256,22 +256,16 @@ test('oversized Go and Rust functions are split inside their own ranges under th
   }
 });
 
-test('windows cut from one oversized unit remember that unit as their declaration', () => {
+test('fragments cut from one oversized statement record the function holding it', () => {
   const literal = Array.from({ length: 80 }, (_, n) => `\t\t${String(n)},`).join('\n');
   const limits = { ...DEFAULT_WINDOW_LIMITS, targetTokens: 90, maxTokens: 150, maxBytes: 900 };
   const snapshot = snapshotOf('pkg/literal.go', `package large\n\nfunc large() {\n\tvalues := []int{\n${literal}\n\t}\n\tuse(values)\n}\n`);
   const fragments = syntaxFragments(chunkSnapshot(snapshot, limits));
-  const windows = fragments.filter((fragment) => fragment.declaration != null);
-  assert.ok(windows.length > 1, 'the literal is cut into several windows');
-  const declaration = windows[0]!.declaration!;
-  assert.equal(declaration.startLine, windows[0]!.startLine);
-  assert.equal(declaration.endLine, windows.at(-1)!.endLine);
-  for (const window of windows) {
-    assert.deepEqual(window.declaration, declaration);
-    assert.ok(window.startLine >= declaration.startLine && window.endLine <= declaration.endLine);
-  }
+  assert.ok(fragments.length > 1, 'the literal is cut along its elements');
   for (const fragment of fragments) {
-    if (fragment.declaration == null) assert.ok(fragment.endLine < declaration.startLine || fragment.startLine > declaration.endLine);
+    // The first fragment also holds the package clause carried into the function.
+    assert.deepEqual(fragment.declaration, { startLine: Math.min(fragment.startLine, 3), endLine: 87 });
+    assert.ok(fragment.tokenCount <= limits.maxTokens);
   }
   assertExact(snapshot, fragments);
 });
@@ -301,7 +295,7 @@ test('a Rust continuation is not labelled with a nested function it happens to c
   const fragments = syntaxFragments(chunkSnapshot(snapshotOf('src/long.rs', text), limits));
   const containing = fragments.find((f) => f.text.includes('fn helper'))!;
   assert.ok(!containing.text.trimStart().startsWith('fn helper'), 'the nested function is inside a continuation');
-  assert.equal(containing.label, null);
+  assert.notEqual(containing.label, 'function:helper');
   assert.ok(fragments.every((f) => f.label !== 'function:helper'));
 });
 
@@ -317,9 +311,81 @@ test('BOM, CRLF and non-ASCII text keep exact offsets in Go and Rust', () => {
   }
 });
 
-test('malformed Go and Rust fall back to line windows with a reported reason', () => {
+test('a Go or Rust syntax error windows only the damaged item; the rest stays structural (LS-8)', () => {
+  const go = (name: string): string => `func ${name}() int {\n\tvalue := compute()\n\treturn value\n}\n`;
+  const rust = (name: string): string => `fn ${name}() -> i32 {\n    let value = compute();\n    value\n}\n`;
+  for (const [path, text, damaged, label] of [
+    ['pkg/partial.go', `package partial\n\n${go('first')}\nfunc broken( {\n\treturn\n}\n\n${go('second')}\n${go('third')}`, 8, 'function:second'],
+    ['src/partial.rs', `${rust('first')}\nfn broken( {\n    let s = 1;\n}\n\n${rust('second')}\n${rust('third')}`, 6, 'function:second'],
+  ] as const) {
+    const snapshot = snapshotOf(path, text);
+    const result = chunkSnapshot(snapshot, SMALL);
+    assert.ok(result.kind === 'fragments');
+    assert.equal(result.strategy, 'syntax', path);
+    assert.equal(result.fallback, 'parse_failure', path);
+    assertExact(snapshot, result.fragments);
+    const window = result.fragments.find((f) => f.startLine <= damaged && f.endLine >= damaged)!;
+    assert.equal(window.classification, 'syntax-range');
+    assert.equal(window.label, null, `${path}: the damaged item has no structural label`);
+    assert.ok(result.fragments.some((f) => f.label === label), `${path} keeps ${label}`);
+  }
+});
+
+test('an unfinished last Rust function or a missing final Go brace windows only that item (LS-8)', () => {
+  const rows = (count: number, row: (index: number) => string): string => Array.from({ length: count }, (_, index) => row(index)).join('\n');
+  for (const [path, text, intact, damagedFrom] of [
+    ['src/unfinished.rs', `pub fn total(values: &[i64]) -> i64 {\n${rows(70, (i) => `    let v${String(i)} = ${String(i)} + values.len() as i64;`)}\n    0\n}\n\npub fn broken() -> i64 {\n    let x = 1;\n`, 'function:total', 75],
+    ['pkg/unclosed.go', `package unclosed\n\nfunc Total(values []int) int {\n${rows(20, (i) => `\tv${String(i)} := ${String(i)} + len(values)`)}\n\treturn 0\n}\n\nfunc Broken(values []int) int {\n${rows(10, (i) => `\tv${String(i)} := ${String(i)} + len(values)`)}\n\treturn 0\n`, 'function:Total', 27],
+  ] as const) {
+    const snapshot = snapshotOf(path, text);
+    const result = chunkSnapshot(snapshot);
+    assert.ok(result.kind === 'fragments');
+    assert.equal(result.strategy, 'syntax', path);
+    assert.equal(result.fallback, 'parse_failure', path);
+    assertExact(snapshot, result.fragments);
+    assert.equal(result.fragments[0]!.label, intact, `${path} keeps its intact first function`);
+    for (const fragment of result.fragments.filter((f) => f.endLine >= damagedFrom)) {
+      assert.equal(fragment.label, null, `${path}: the damaged function is windows`);
+    }
+  }
+});
+
+test('a helper nested in an unfinished Rust function is windowed with it (LS-8)', () => {
+  const rows = Array.from({ length: 70 }, (_, index) => `    let v${String(index)} = ${String(index)} + values.len() as i64;`).join('\n');
+  const text = `pub fn total(values: &[i64]) -> i64 {\n${rows}\n    0\n}\n\npub fn outer() -> i64 {\n    fn helper() -> i64 {\n        1\n    }\n    let x = 1;\n`;
+  const snapshot = snapshotOf('src/nested.rs', text);
+  const result = chunkSnapshot(snapshot);
+  assert.ok(result.kind === 'fragments');
+  assert.equal(result.fallback, 'parse_failure');
+  assertExact(snapshot, result.fragments);
+  assert.deepEqual(result.fragments.map((f) => f.label).filter((label) => label !== null), ['function:total']);
+});
+
+test('a Go statement that fits stays whole after a signature it cannot join', () => {
+  const raw = Array.from({ length: 117 }, (_, index) => `line ${String(index)} of the raw string`).join('\n');
+  const snapshot = snapshotOf('pkg/raw.go', `package raw\n\nfunc Doc() string {\n    return \`\n${raw}\n\`\n}\n`);
+  const fragments = syntaxFragments(chunkSnapshot(snapshot));
+  assertExact(snapshot, fragments);
+  assert.ok(fragments.some((f) => f.startLine <= 4 && f.endLine >= 122), 'the raw-string return is one fragment');
+});
+
+test('a Rust function that fits stays whole, and its attributes stay on it when it is split', () => {
+  const rows = (count: number): string => Array.from({ length: count }, (_, index) => `    let v${String(index)} = ${String(index)};`).join('\n');
+  const fitting = snapshotOf('src/fitting.rs', `pub fn long() -> i64 {\n${rows(95)}\n    0\n}\n`);
+  const whole = syntaxFragments(chunkSnapshot(fitting));
+  assert.deepEqual(whole.map((f) => [f.startLine, f.endLine, f.label]), [[1, fitting.lineCount, 'function:long']]);
+
+  const attributed = snapshotOf('src/attributed.rs', `#[inline]\n#[must_use]\npub fn long() -> i64 {\n${rows(116)}\n    0\n}\n`);
+  const split = syntaxFragments(chunkSnapshot(attributed));
+  assertExact(attributed, split);
+  assert.ok(split.length > 1);
+  assert.equal(split[0]!.label, 'function:long');
+  assert.ok(split[0]!.endLine > 3, 'the attributes open the fragment holding the signature');
+});
+
+test('malformed Go and Rust fall back to line windows when most of the file is damaged', () => {
   for (const [path, text] of [
-    ['pkg/broken.go', 'package broken\n\nfunc broken( {\n\treturn\n'],
+    ['pkg/broken.go', 'func broken( {\n\treturn\n'],
     ['src/broken.rs', 'fn broken( {\n    let s = "unterminated;\n'],
   ] as const) {
     const snapshot = snapshotOf(path, text);
