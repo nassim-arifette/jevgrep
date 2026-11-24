@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "kind": "language-structure",
-  "createdAt": "2026-11-24T16:27:51.180Z",
+  "createdAt": "2026-11-24T16:31:47.610Z",
   "environment": {
     "node": "v24.15.0",
     "platform": "linux",
@@ -9,10 +9,10 @@
     "cpu": "Intel(R) Xeon(R) Processor",
     "logicalCpus": 8,
     "totalMemoryBytes": 33655369728,
-    "revision": "629e813a4c88cdac2ac4aa57a86e2b8a4c9f5319",
+    "revision": "f8c078c45b8309ed2e66cce41d73a15a1c6568c2",
     "workingTree": "",
     "sourceHash": "6676ac2f1f1eb8809ae1861d581db0ac30a1d0b4c1e753b6e89e9c50ea2d6d08",
-    "harnessHash": "3fad1bdb3221202dbcb07c069b0e14bc7a4b2a852fb26ababd317d405524514e",
+    "harnessHash": "13e6ddfc9974ab2fca1316da96963540eeaf0604b4c8a859488ef9621440ac6f",
     "packageLockHash": "165438e27843ab5d14c233169e2b9f978ee877ea447a96a0a7be6aa4efcae087"
   },
   "chunkers": {
@@ -121,7 +121,7 @@
       "parseFallbackFiles": 0,
       "parseFallbackFileShare": 0,
       "parseFallbackLineShare": 0,
-      "chunkingMsPer1000Lines": 14.64,
+      "chunkingMsPer1000Lines": 14.19,
       "uncoveredNonBlankLines": 0
     },
     "javascript": {
@@ -143,7 +143,7 @@
       "parseFallbackFiles": 2,
       "parseFallbackFileShare": 0.008264462809917356,
       "parseFallbackLineShare": 0.00332859932540387,
-      "chunkingMsPer1000Lines": 15.73,
+      "chunkingMsPer1000Lines": 15.36,
       "uncoveredNonBlankLines": 0
     },
     "python": {
@@ -165,7 +165,7 @@
       "parseFallbackFiles": 0,
       "parseFallbackFileShare": 0,
       "parseFallbackLineShare": 0,
-      "chunkingMsPer1000Lines": 13.84,
+      "chunkingMsPer1000Lines": 12.97,
       "uncoveredNonBlankLines": 0
     },
     "java": {
@@ -187,7 +187,7 @@
       "parseFallbackFiles": 0,
       "parseFallbackFileShare": 0,
       "parseFallbackLineShare": 0,
-      "chunkingMsPer1000Lines": 12.89,
+      "chunkingMsPer1000Lines": 12.95,
       "uncoveredNonBlankLines": 0
     },
     "go": {
@@ -209,7 +209,7 @@
       "parseFallbackFiles": 0,
       "parseFallbackFileShare": 0,
       "parseFallbackLineShare": 0,
-      "chunkingMsPer1000Lines": 16.71,
+      "chunkingMsPer1000Lines": 16.72,
       "uncoveredNonBlankLines": 0
     },
     "rust": {
@@ -231,7 +231,7 @@
       "parseFallbackFiles": 0,
       "parseFallbackFileShare": 0,
       "parseFallbackLineShare": 0,
-      "chunkingMsPer1000Lines": 16.49,
+      "chunkingMsPer1000Lines": 15.93,
       "uncoveredNonBlankLines": 0
     },
     "c": {
@@ -243,9 +243,9 @@
       "smallFragmentShare": 0.0005747126436781609,
       "midBlockShare": 0.5952107279693487,
       "detachedAttributeFragments": 0,
-      "declarations": 11606,
+      "declarations": 11595,
       "declarationsHiddenShare": 1,
-      "callables": 10277,
+      "callables": 10257,
       "splitCallables": 1448,
       "splitCallablesWithDeclarationShare": 0,
       "continuations": 2163,
@@ -253,7 +253,7 @@
       "parseFallbackFiles": 0,
       "parseFallbackFileShare": 0,
       "parseFallbackLineShare": 0,
-      "chunkingMsPer1000Lines": 17.52,
+      "chunkingMsPer1000Lines": 18.66,
       "uncoveredNonBlankLines": 0
     },
     "cpp": {
@@ -265,9 +265,9 @@
       "smallFragmentShare": 0,
       "midBlockShare": 0.5995423340961098,
       "detachedAttributeFragments": 0,
-      "declarations": 3281,
+      "declarations": 3280,
       "declarationsHiddenShare": 1,
-      "callables": 2972,
+      "callables": 2971,
       "splitCallables": 127,
       "splitCallablesWithDeclarationShare": 0,
       "continuations": 134,
@@ -275,7 +275,7 @@
       "parseFallbackFiles": 0,
       "parseFallbackFileShare": 0,
       "parseFallbackLineShare": 0,
-      "chunkingMsPer1000Lines": 15.26,
+      "chunkingMsPer1000Lines": 16.25,
       "uncoveredNonBlankLines": 0
     },
     "csharp": {
@@ -297,7 +297,7 @@
       "parseFallbackFiles": 0,
       "parseFallbackFileShare": 0,
       "parseFallbackLineShare": 0,
-      "chunkingMsPer1000Lines": 15.58,
+      "chunkingMsPer1000Lines": 15.35,
       "uncoveredNonBlankLines": 0
     },
     "php": {
@@ -319,7 +319,7 @@
       "parseFallbackFiles": 0,
       "parseFallbackFileShare": 0,
       "parseFallbackLineShare": 0,
-      "chunkingMsPer1000Lines": 13.3,
+      "chunkingMsPer1000Lines": 14.67,
       "uncoveredNonBlankLines": 0
     },
     "kotlin": {
@@ -341,7 +341,7 @@
       "parseFallbackFiles": 0,
       "parseFallbackFileShare": 0,
       "parseFallbackLineShare": 0,
-      "chunkingMsPer1000Lines": 12.81,
+      "chunkingMsPer1000Lines": 12.78,
       "uncoveredNonBlankLines": 0
     },
     "swift": {
@@ -363,7 +363,7 @@
       "parseFallbackFiles": 0,
       "parseFallbackFileShare": 0,
       "parseFallbackLineShare": 0,
-      "chunkingMsPer1000Lines": 15.51,
+      "chunkingMsPer1000Lines": 16.02,
       "uncoveredNonBlankLines": 0
     },
     "ruby": {
@@ -385,7 +385,7 @@
       "parseFallbackFiles": 0,
       "parseFallbackFileShare": 0,
       "parseFallbackLineShare": 0,
-      "chunkingMsPer1000Lines": 12.26,
+      "chunkingMsPer1000Lines": 12.24,
       "uncoveredNonBlankLines": 0
     },
     "shell": {
@@ -407,7 +407,7 @@
       "parseFallbackFiles": 0,
       "parseFallbackFileShare": 0,
       "parseFallbackLineShare": 0,
-      "chunkingMsPer1000Lines": 15.45,
+      "chunkingMsPer1000Lines": 15.31,
       "uncoveredNonBlankLines": 0
     },
     "html": {
@@ -429,7 +429,7 @@
       "parseFallbackFiles": 0,
       "parseFallbackFileShare": 0,
       "parseFallbackLineShare": 0,
-      "chunkingMsPer1000Lines": 22.79,
+      "chunkingMsPer1000Lines": 23.13,
       "uncoveredNonBlankLines": 0
     },
     "css": {
@@ -451,7 +451,7 @@
       "parseFallbackFiles": 0,
       "parseFallbackFileShare": 0,
       "parseFallbackLineShare": 0,
-      "chunkingMsPer1000Lines": 11.52,
+      "chunkingMsPer1000Lines": 11.6,
       "uncoveredNonBlankLines": 0
     },
     "yaml": {
@@ -473,7 +473,7 @@
       "parseFallbackFiles": 0,
       "parseFallbackFileShare": 0,
       "parseFallbackLineShare": 0,
-      "chunkingMsPer1000Lines": 15.53,
+      "chunkingMsPer1000Lines": 15.54,
       "uncoveredNonBlankLines": 0
     },
     "json": {
@@ -495,7 +495,7 @@
       "parseFallbackFiles": 0,
       "parseFallbackFileShare": 0,
       "parseFallbackLineShare": 0,
-      "chunkingMsPer1000Lines": 12.13,
+      "chunkingMsPer1000Lines": 15.98,
       "uncoveredNonBlankLines": 0
     },
     "markdown": {
@@ -517,7 +517,7 @@
       "parseFallbackFiles": 0,
       "parseFallbackFileShare": 0,
       "parseFallbackLineShare": 0,
-      "chunkingMsPer1000Lines": 25.69,
+      "chunkingMsPer1000Lines": 25.91,
       "uncoveredNonBlankLines": 0
     },
     "sql": {
@@ -539,7 +539,7 @@
       "parseFallbackFiles": 0,
       "parseFallbackFileShare": 0,
       "parseFallbackLineShare": 0,
-      "chunkingMsPer1000Lines": 20.65,
+      "chunkingMsPer1000Lines": 21.24,
       "uncoveredNonBlankLines": 0
     },
     "toml": {
@@ -561,7 +561,7 @@
       "parseFallbackFiles": 0,
       "parseFallbackFileShare": 0,
       "parseFallbackLineShare": 0,
-      "chunkingMsPer1000Lines": 12.54,
+      "chunkingMsPer1000Lines": 12.59,
       "uncoveredNonBlankLines": 0
     },
     "vue": {
@@ -583,7 +583,7 @@
       "parseFallbackFiles": 0,
       "parseFallbackFileShare": 0,
       "parseFallbackLineShare": 0,
-      "chunkingMsPer1000Lines": 12.7,
+      "chunkingMsPer1000Lines": 12.69,
       "uncoveredNonBlankLines": 0
     }
   },
