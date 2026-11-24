@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "kind": "language-structure",
-  "createdAt": "2026-11-24T16:18:31.789Z",
+  "createdAt": "2026-11-24T16:27:51.180Z",
   "environment": {
     "node": "v24.15.0",
     "platform": "linux",
@@ -9,10 +9,10 @@
     "cpu": "Intel(R) Xeon(R) Processor",
     "logicalCpus": 8,
     "totalMemoryBytes": 33655369728,
-    "revision": "b2ad5a09f9339b0fdc642e0352bc04fd5913d878",
+    "revision": "629e813a4c88cdac2ac4aa57a86e2b8a4c9f5319",
     "workingTree": "",
     "sourceHash": "6676ac2f1f1eb8809ae1861d581db0ac30a1d0b4c1e753b6e89e9c50ea2d6d08",
-    "harnessHash": "3a868345be264d4303de66e57a6f56bdda1e0f4b64508254f4f6beef2911e375",
+    "harnessHash": "3fad1bdb3221202dbcb07c069b0e14bc7a4b2a852fb26ababd317d405524514e",
     "packageLockHash": "165438e27843ab5d14c233169e2b9f978ee877ea447a96a0a7be6aa4efcae087"
   },
   "chunkers": {
@@ -107,21 +107,21 @@
       "lines": 169047,
       "fragments": 2204,
       "profiled": true,
-      "labelledShare": 0.9342,
-      "smallFragmentShare": 0.0032,
-      "midBlockShare": 0.1411,
+      "labelledShare": 0.9342105263157895,
+      "smallFragmentShare": 0.003176043557168784,
+      "midBlockShare": 0.1411070780399274,
       "detachedAttributeFragments": 0,
       "declarations": 11239,
-      "declarationsHiddenShare": 0.7397,
+      "declarationsHiddenShare": 0.7396565530741169,
       "callables": 10285,
       "splitCallables": 123,
       "splitCallablesWithDeclarationShare": 0,
       "continuations": 347,
-      "continuationsUnlabelledShare": 0.1499,
+      "continuationsUnlabelledShare": 0.14985590778097982,
       "parseFallbackFiles": 0,
       "parseFallbackFileShare": 0,
       "parseFallbackLineShare": 0,
-      "chunkingMsPer1000Lines": 14.4,
+      "chunkingMsPer1000Lines": 14.64,
       "uncoveredNonBlankLines": 0
     },
     "javascript": {
@@ -129,21 +129,21 @@
       "lines": 45064,
       "fragments": 716,
       "profiled": true,
-      "labelledShare": 0.845,
-      "smallFragmentShare": 0.0517,
-      "midBlockShare": 0.162,
+      "labelledShare": 0.8449720670391061,
+      "smallFragmentShare": 0.051675977653631286,
+      "midBlockShare": 0.16201117318435754,
       "detachedAttributeFragments": 0,
       "declarations": 2277,
-      "declarationsHiddenShare": 0.7756,
+      "declarationsHiddenShare": 0.7755819060166886,
       "callables": 2275,
       "splitCallables": 49,
       "splitCallablesWithDeclarationShare": 0,
       "continuations": 90,
-      "continuationsUnlabelledShare": 0.1333,
+      "continuationsUnlabelledShare": 0.13333333333333333,
       "parseFallbackFiles": 2,
-      "parseFallbackFileShare": 0.0083,
-      "parseFallbackLineShare": 0,
-      "chunkingMsPer1000Lines": 17.73,
+      "parseFallbackFileShare": 0.008264462809917356,
+      "parseFallbackLineShare": 0.00332859932540387,
+      "chunkingMsPer1000Lines": 15.73,
       "uncoveredNonBlankLines": 0
     },
     "python": {
@@ -151,21 +151,21 @@
       "lines": 546837,
       "fragments": 8643,
       "profiled": true,
-      "labelledShare": 0.8738,
-      "smallFragmentShare": 0.0126,
-      "midBlockShare": 0.0117,
+      "labelledShare": 0.8737706814763392,
+      "smallFragmentShare": 0.012611361795672798,
+      "midBlockShare": 0.011685757260210575,
       "detachedAttributeFragments": 1,
       "declarations": 45281,
-      "declarationsHiddenShare": 0.8332,
+      "declarationsHiddenShare": 0.8331750623881982,
       "callables": 33965,
       "splitCallables": 104,
       "splitCallablesWithDeclarationShare": 0,
       "continuations": 195,
-      "continuationsUnlabelledShare": 0.8359,
+      "continuationsUnlabelledShare": 0.8358974358974359,
       "parseFallbackFiles": 0,
       "parseFallbackFileShare": 0,
       "parseFallbackLineShare": 0,
-      "chunkingMsPer1000Lines": 14,
+      "chunkingMsPer1000Lines": 13.84,
       "uncoveredNonBlankLines": 0
     },
     "java": {
@@ -173,12 +173,12 @@
       "lines": 65649,
       "fragments": 998,
       "profiled": true,
-      "labelledShare": 0.7675,
-      "smallFragmentShare": 0.001,
-      "midBlockShare": 0.1423,
+      "labelledShare": 0.7675350701402806,
+      "smallFragmentShare": 0.001002004008016032,
+      "midBlockShare": 0.14228456913827656,
       "detachedAttributeFragments": 0,
       "declarations": 5485,
-      "declarationsHiddenShare": 0.8321,
+      "declarationsHiddenShare": 0.8320875113947128,
       "callables": 4622,
       "splitCallables": 5,
       "splitCallablesWithDeclarationShare": 0,
@@ -187,7 +187,7 @@
       "parseFallbackFiles": 0,
       "parseFallbackFileShare": 0,
       "parseFallbackLineShare": 0,
-      "chunkingMsPer1000Lines": 15.39,
+      "chunkingMsPer1000Lines": 12.89,
       "uncoveredNonBlankLines": 0
     },
     "go": {
@@ -195,21 +195,21 @@
       "lines": 138087,
       "fragments": 2107,
       "profiled": true,
-      "labelledShare": 0.7869,
-      "smallFragmentShare": 0.0237,
-      "midBlockShare": 0.103,
+      "labelledShare": 0.7869008068343617,
+      "smallFragmentShare": 0.023730422401518746,
+      "midBlockShare": 0.10299003322259136,
       "detachedAttributeFragments": 0,
       "declarations": 4513,
-      "declarationsHiddenShare": 0.6308,
+      "declarationsHiddenShare": 0.6308442277863948,
       "callables": 3849,
       "splitCallables": 113,
       "splitCallablesWithDeclarationShare": 0,
       "continuations": 307,
-      "continuationsUnlabelledShare": 0.9772,
+      "continuationsUnlabelledShare": 0.9771986970684039,
       "parseFallbackFiles": 0,
       "parseFallbackFileShare": 0,
       "parseFallbackLineShare": 0,
-      "chunkingMsPer1000Lines": 16.84,
+      "chunkingMsPer1000Lines": 16.71,
       "uncoveredNonBlankLines": 0
     },
     "rust": {
@@ -217,12 +217,12 @@
       "lines": 61617,
       "fragments": 941,
       "profiled": true,
-      "labelledShare": 0.8916,
-      "smallFragmentShare": 0.0085,
-      "midBlockShare": 0.0786,
+      "labelledShare": 0.8916046758767269,
+      "smallFragmentShare": 0.008501594048884165,
+      "midBlockShare": 0.07863974495217853,
       "detachedAttributeFragments": 215,
       "declarations": 5062,
-      "declarationsHiddenShare": 0.7859,
+      "declarationsHiddenShare": 0.785855393125247,
       "callables": 2976,
       "splitCallables": 12,
       "splitCallablesWithDeclarationShare": 0,
@@ -231,7 +231,7 @@
       "parseFallbackFiles": 0,
       "parseFallbackFileShare": 0,
       "parseFallbackLineShare": 0,
-      "chunkingMsPer1000Lines": 16.08,
+      "chunkingMsPer1000Lines": 16.49,
       "uncoveredNonBlankLines": 0
     },
     "c": {
@@ -240,20 +240,20 @@
       "fragments": 5220,
       "profiled": false,
       "labelledShare": 0,
-      "smallFragmentShare": 0.0006,
-      "midBlockShare": 0.5952,
+      "smallFragmentShare": 0.0005747126436781609,
+      "midBlockShare": 0.5952107279693487,
       "detachedAttributeFragments": 0,
       "declarations": 11606,
       "declarationsHiddenShare": 1,
-      "callables": 10245,
-      "splitCallables": 1445,
+      "callables": 10277,
+      "splitCallables": 1448,
       "splitCallablesWithDeclarationShare": 0,
-      "continuations": 2159,
+      "continuations": 2163,
       "continuationsUnlabelledShare": 1,
       "parseFallbackFiles": 0,
       "parseFallbackFileShare": 0,
       "parseFallbackLineShare": 0,
-      "chunkingMsPer1000Lines": 18.27,
+      "chunkingMsPer1000Lines": 17.52,
       "uncoveredNonBlankLines": 0
     },
     "cpp": {
@@ -263,7 +263,7 @@
       "profiled": false,
       "labelledShare": 0,
       "smallFragmentShare": 0,
-      "midBlockShare": 0.5995,
+      "midBlockShare": 0.5995423340961098,
       "detachedAttributeFragments": 0,
       "declarations": 3281,
       "declarationsHiddenShare": 1,
@@ -275,7 +275,7 @@
       "parseFallbackFiles": 0,
       "parseFallbackFileShare": 0,
       "parseFallbackLineShare": 0,
-      "chunkingMsPer1000Lines": 19.58,
+      "chunkingMsPer1000Lines": 15.26,
       "uncoveredNonBlankLines": 0
     },
     "csharp": {
@@ -297,7 +297,7 @@
       "parseFallbackFiles": 0,
       "parseFallbackFileShare": 0,
       "parseFallbackLineShare": 0,
-      "chunkingMsPer1000Lines": 15.65,
+      "chunkingMsPer1000Lines": 15.58,
       "uncoveredNonBlankLines": 0
     },
     "php": {
@@ -306,8 +306,8 @@
       "fragments": 10003,
       "profiled": false,
       "labelledShare": 0,
-      "smallFragmentShare": 0.0075,
-      "midBlockShare": 0.5301,
+      "smallFragmentShare": 0.007497750674797561,
+      "midBlockShare": 0.5301409577126862,
       "detachedAttributeFragments": 12,
       "declarations": 37845,
       "declarationsHiddenShare": 1,
@@ -319,7 +319,7 @@
       "parseFallbackFiles": 0,
       "parseFallbackFileShare": 0,
       "parseFallbackLineShare": 0,
-      "chunkingMsPer1000Lines": 14.12,
+      "chunkingMsPer1000Lines": 13.3,
       "uncoveredNonBlankLines": 0
     },
     "kotlin": {
@@ -329,7 +329,7 @@
       "profiled": false,
       "labelledShare": 0,
       "smallFragmentShare": 0,
-      "midBlockShare": 0.5076,
+      "midBlockShare": 0.50764192139738,
       "detachedAttributeFragments": 20,
       "declarations": 3809,
       "declarationsHiddenShare": 1,
@@ -341,7 +341,7 @@
       "parseFallbackFiles": 0,
       "parseFallbackFileShare": 0,
       "parseFallbackLineShare": 0,
-      "chunkingMsPer1000Lines": 14.52,
+      "chunkingMsPer1000Lines": 12.81,
       "uncoveredNonBlankLines": 0
     },
     "swift": {
@@ -351,7 +351,7 @@
       "profiled": false,
       "labelledShare": 0,
       "smallFragmentShare": 0,
-      "midBlockShare": 0.6682,
+      "midBlockShare": 0.6681681681681682,
       "detachedAttributeFragments": 7,
       "declarations": 2251,
       "declarationsHiddenShare": 1,
@@ -363,7 +363,7 @@
       "parseFallbackFiles": 0,
       "parseFallbackFileShare": 0,
       "parseFallbackLineShare": 0,
-      "chunkingMsPer1000Lines": 17.3,
+      "chunkingMsPer1000Lines": 15.51,
       "uncoveredNonBlankLines": 0
     },
     "ruby": {
@@ -372,8 +372,8 @@
       "fragments": 420,
       "profiled": false,
       "labelledShare": 0,
-      "smallFragmentShare": 0.0071,
-      "midBlockShare": 0.4952,
+      "smallFragmentShare": 0.007142857142857143,
+      "midBlockShare": 0.49523809523809526,
       "detachedAttributeFragments": 0,
       "declarations": 1013,
       "declarationsHiddenShare": 1,
@@ -385,7 +385,7 @@
       "parseFallbackFiles": 0,
       "parseFallbackFileShare": 0,
       "parseFallbackLineShare": 0,
-      "chunkingMsPer1000Lines": 13.07,
+      "chunkingMsPer1000Lines": 12.26,
       "uncoveredNonBlankLines": 0
     },
     "shell": {
@@ -394,8 +394,8 @@
       "fragments": 73,
       "profiled": false,
       "labelledShare": 0,
-      "smallFragmentShare": 0.0137,
-      "midBlockShare": 0.2466,
+      "smallFragmentShare": 0.0136986301369863,
+      "midBlockShare": 0.2465753424657534,
       "detachedAttributeFragments": 0,
       "declarations": 0,
       "declarationsHiddenShare": null,
@@ -407,7 +407,7 @@
       "parseFallbackFiles": 0,
       "parseFallbackFileShare": 0,
       "parseFallbackLineShare": 0,
-      "chunkingMsPer1000Lines": 15.82,
+      "chunkingMsPer1000Lines": 15.45,
       "uncoveredNonBlankLines": 0
     },
     "html": {
@@ -416,8 +416,8 @@
       "fragments": 6457,
       "profiled": false,
       "labelledShare": 0,
-      "smallFragmentShare": 0.0392,
-      "midBlockShare": 0.6724,
+      "smallFragmentShare": 0.039182282793867124,
+      "midBlockShare": 0.6724485054979092,
       "detachedAttributeFragments": 0,
       "declarations": 0,
       "declarationsHiddenShare": null,
@@ -429,7 +429,7 @@
       "parseFallbackFiles": 0,
       "parseFallbackFileShare": 0,
       "parseFallbackLineShare": 0,
-      "chunkingMsPer1000Lines": 25.31,
+      "chunkingMsPer1000Lines": 22.79,
       "uncoveredNonBlankLines": 0
     },
     "css": {
@@ -438,8 +438,8 @@
       "fragments": 330,
       "profiled": false,
       "labelledShare": 0,
-      "smallFragmentShare": 0.0758,
-      "midBlockShare": 0.497,
+      "smallFragmentShare": 0.07575757575757576,
+      "midBlockShare": 0.49696969696969695,
       "detachedAttributeFragments": 0,
       "declarations": 0,
       "declarationsHiddenShare": null,
@@ -451,7 +451,7 @@
       "parseFallbackFiles": 0,
       "parseFallbackFileShare": 0,
       "parseFallbackLineShare": 0,
-      "chunkingMsPer1000Lines": 11.64,
+      "chunkingMsPer1000Lines": 11.52,
       "uncoveredNonBlankLines": 0
     },
     "yaml": {
@@ -460,8 +460,8 @@
       "fragments": 355,
       "profiled": false,
       "labelledShare": 0,
-      "smallFragmentShare": 0.0282,
-      "midBlockShare": 0.3099,
+      "smallFragmentShare": 0.028169014084507043,
+      "midBlockShare": 0.30985915492957744,
       "detachedAttributeFragments": 0,
       "declarations": 0,
       "declarationsHiddenShare": null,
@@ -473,7 +473,7 @@
       "parseFallbackFiles": 0,
       "parseFallbackFileShare": 0,
       "parseFallbackLineShare": 0,
-      "chunkingMsPer1000Lines": 16.43,
+      "chunkingMsPer1000Lines": 15.53,
       "uncoveredNonBlankLines": 0
     },
     "json": {
@@ -482,8 +482,8 @@
       "fragments": 895,
       "profiled": false,
       "labelledShare": 0,
-      "smallFragmentShare": 0.0168,
-      "midBlockShare": 0.2279,
+      "smallFragmentShare": 0.01675977653631285,
+      "midBlockShare": 0.22793296089385476,
       "detachedAttributeFragments": 0,
       "declarations": 0,
       "declarationsHiddenShare": null,
@@ -495,7 +495,7 @@
       "parseFallbackFiles": 0,
       "parseFallbackFileShare": 0,
       "parseFallbackLineShare": 0,
-      "chunkingMsPer1000Lines": 12.48,
+      "chunkingMsPer1000Lines": 12.13,
       "uncoveredNonBlankLines": 0
     },
     "markdown": {
@@ -504,8 +504,8 @@
       "fragments": 2042,
       "profiled": false,
       "labelledShare": 0,
-      "smallFragmentShare": 0.0088,
-      "midBlockShare": 0.1665,
+      "smallFragmentShare": 0.00881488736532811,
+      "midBlockShare": 0.1665034280117532,
       "detachedAttributeFragments": 0,
       "declarations": 0,
       "declarationsHiddenShare": null,
@@ -517,7 +517,7 @@
       "parseFallbackFiles": 0,
       "parseFallbackFileShare": 0,
       "parseFallbackLineShare": 0,
-      "chunkingMsPer1000Lines": 26.44,
+      "chunkingMsPer1000Lines": 25.69,
       "uncoveredNonBlankLines": 0
     },
     "sql": {
@@ -539,7 +539,7 @@
       "parseFallbackFiles": 0,
       "parseFallbackFileShare": 0,
       "parseFallbackLineShare": 0,
-      "chunkingMsPer1000Lines": 21.67,
+      "chunkingMsPer1000Lines": 20.65,
       "uncoveredNonBlankLines": 0
     },
     "toml": {
@@ -548,8 +548,8 @@
       "fragments": 127,
       "profiled": false,
       "labelledShare": 0,
-      "smallFragmentShare": 0.2913,
-      "midBlockShare": 0.0157,
+      "smallFragmentShare": 0.29133858267716534,
+      "midBlockShare": 0.015748031496062992,
       "detachedAttributeFragments": 0,
       "declarations": 0,
       "declarationsHiddenShare": null,
@@ -561,7 +561,7 @@
       "parseFallbackFiles": 0,
       "parseFallbackFileShare": 0,
       "parseFallbackLineShare": 0,
-      "chunkingMsPer1000Lines": 12.95,
+      "chunkingMsPer1000Lines": 12.54,
       "uncoveredNonBlankLines": 0
     },
     "vue": {
@@ -570,8 +570,8 @@
       "fragments": 21,
       "profiled": false,
       "labelledShare": 0,
-      "smallFragmentShare": 0.0476,
-      "midBlockShare": 0.3333,
+      "smallFragmentShare": 0.047619047619047616,
+      "midBlockShare": 0.3333333333333333,
       "detachedAttributeFragments": 0,
       "declarations": 0,
       "declarationsHiddenShare": null,
@@ -583,7 +583,7 @@
       "parseFallbackFiles": 0,
       "parseFallbackFileShare": 0,
       "parseFallbackLineShare": 0,
-      "chunkingMsPer1000Lines": 12.77,
+      "chunkingMsPer1000Lines": 12.7,
       "uncoveredNonBlankLines": 0
     }
   },
@@ -609,19 +609,19 @@
       },
       {
         "gate": "midBlockShare",
-        "value": 0.1411,
+        "value": 0.1411070780399274,
         "limit": "<= 0.15",
         "passed": true
       },
       {
         "gate": "continuationsUnlabelledShare",
-        "value": 0.1499,
+        "value": 0.14985590778097982,
         "limit": "= 0",
         "passed": false
       },
       {
         "gate": "smallFragmentShare",
-        "value": 0.0032,
+        "value": 0.003176043557168784,
         "limit": "<= 0.03",
         "passed": true
       },
@@ -653,25 +653,25 @@
       },
       {
         "gate": "midBlockShare",
-        "value": 0.162,
+        "value": 0.16201117318435754,
         "limit": "<= 0.15",
         "passed": false
       },
       {
         "gate": "continuationsUnlabelledShare",
-        "value": 0.1333,
+        "value": 0.13333333333333333,
         "limit": "= 0",
         "passed": false
       },
       {
         "gate": "smallFragmentShare",
-        "value": 0.0517,
+        "value": 0.051675977653631286,
         "limit": "<= 0.03",
         "passed": false
       },
       {
         "gate": "parseFallbackFileShare",
-        "value": 0.0083,
+        "value": 0.008264462809917356,
         "limit": "<= 0.01",
         "passed": true
       }
@@ -697,19 +697,19 @@
       },
       {
         "gate": "midBlockShare",
-        "value": 0.0117,
+        "value": 0.011685757260210575,
         "limit": "<= 0.15",
         "passed": true
       },
       {
         "gate": "continuationsUnlabelledShare",
-        "value": 0.8359,
+        "value": 0.8358974358974359,
         "limit": "= 0",
         "passed": false
       },
       {
         "gate": "smallFragmentShare",
-        "value": 0.0126,
+        "value": 0.012611361795672798,
         "limit": "<= 0.03",
         "passed": true
       },
@@ -741,7 +741,7 @@
       },
       {
         "gate": "midBlockShare",
-        "value": 0.1423,
+        "value": 0.14228456913827656,
         "limit": "<= 0.15",
         "passed": true
       },
@@ -753,7 +753,7 @@
       },
       {
         "gate": "smallFragmentShare",
-        "value": 0.001,
+        "value": 0.001002004008016032,
         "limit": "<= 0.03",
         "passed": true
       },
@@ -785,19 +785,19 @@
       },
       {
         "gate": "midBlockShare",
-        "value": 0.103,
+        "value": 0.10299003322259136,
         "limit": "<= 0.15",
         "passed": true
       },
       {
         "gate": "continuationsUnlabelledShare",
-        "value": 0.9772,
+        "value": 0.9771986970684039,
         "limit": "= 0",
         "passed": false
       },
       {
         "gate": "smallFragmentShare",
-        "value": 0.0237,
+        "value": 0.023730422401518746,
         "limit": "<= 0.03",
         "passed": true
       },
@@ -829,7 +829,7 @@
       },
       {
         "gate": "midBlockShare",
-        "value": 0.0786,
+        "value": 0.07863974495217853,
         "limit": "<= 0.15",
         "passed": true
       },
@@ -841,7 +841,7 @@
       },
       {
         "gate": "smallFragmentShare",
-        "value": 0.0085,
+        "value": 0.008501594048884165,
         "limit": "<= 0.03",
         "passed": true
       },
