@@ -36,7 +36,7 @@ export type SyntaxLanguage = 'javascript' | 'python' | 'java' | 'go' | 'rust';
 export const SYNTAX_CHUNKER_VERSIONS: Readonly<Record<SyntaxLanguage, string>> = {
   javascript: 'jevgrep-typescript-6.0.2-3',
   python: 'jevgrep-python-scan-1',
-  java: 'jevgrep-java-scan-1',
+  java: 'jevgrep-java-scan-2',
   go: `jevgrep-${TREE_SITTER_GRAMMARS.go}-2`,
   rust: `jevgrep-${TREE_SITTER_GRAMMARS.rust}-2`,
 };
@@ -356,8 +356,11 @@ export function chunkSnapshot(
   if (!scan.ok) {
     return parseFailure(snapshot, limits);
   }
-  return chunkWithBoundaries(snapshot, scan.boundaries, limits, chunker);
+  return chunkWithBoundaries(snapshot, scan.boundaries, limits, chunker, language === 'java' ? JAVA_PACKING : {});
 }
+
+/** Java nests members in nested types at any depth, and a type or member header never stands alone. */
+const JAVA_PACKING: BoundaryPacking = { maxRefineDepth: 'deepest', carryHeaders: true };
 
 function parseFailure(snapshot: SourceSnapshot, limits: WindowLimits): ChunkResult {
   const windows = fallbackWindows(snapshot, limits);
@@ -387,6 +390,16 @@ function chunkJavaScript(snapshot: SourceSnapshot, limits: WindowLimits, context
   return { kind: 'fragments', strategy: 'syntax', fallback: plan.recovered ? 'parse_failure' : null, fragments };
 }
 
+export type BoundaryPacking = {
+  /** Deepest boundary depth used to refine an oversized unit: 2 by default, or every depth present. */
+  readonly maxRefineDepth?: number | 'deepest';
+  /**
+   * Carry the head of a refined unit (`class Inner {`, a method signature) into the unit
+   * that follows it, so a header is never a fragment of its own.
+   */
+  readonly carryHeaders?: boolean;
+};
+
 /**
  * Depth-indexed boundary packing, used by the Python and Java scanners and kept as the
  * previous JS/TS policy for the E1 comparison.
@@ -396,13 +409,20 @@ export function chunkWithBoundaries(
   boundaries: readonly Boundary[],
   limits: WindowLimits,
   chunker: string,
+  packing: BoundaryPacking = {},
 ): ChunkResult {
-  const maxRefineDepth = 2;
+  const maxRefineDepth = packing.maxRefineDepth === 'deepest'
+    ? boundaries.reduce((deepest, boundary) => Math.max(deepest, boundary.depth), 0)
+    : packing.maxRefineDepth ?? 2;
   const refineAt = (depth: number) => (unit: LineRange): PreparedFragment[] | UnsupportedLongLine | null => {
     if (depth > maxRefineDepth) {
       return null;
     }
-    const inner = unitsFromBoundaries(boundaries, depth, unit.startLine, unit.endLine);
+    let inner = unitsFromBoundaries(boundaries, depth, unit.startLine, unit.endLine);
+    if (packing.carryHeaders === true && inner.length > 1) {
+      const [head, next, ...rest] = inner as [LineRange, LineRange, ...LineRange[]];
+      inner = [{ startLine: head.startLine, endLine: next.endLine, label: head.label ?? next.label }, ...rest];
+    }
     if (inner.length <= 1) {
       return refineAt(depth + 1)(unit);
     }
