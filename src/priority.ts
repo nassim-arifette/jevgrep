@@ -22,8 +22,8 @@ const STOP_WORDS = new Set(('the a an and or of to in is it be for on with as by
   + 'they we you your our i me my so no yes all any some such only also more most other just use used using here these those '
   + 'been being get set').split(' '));
 
-/** snake_case and camelCase boundaries, including after uncased letters and marks: `数据Cache`, `OAuthToken`. */
-const WORD_PARTS = /_|(?<=[\p{Ll}\p{Lo}\p{Lt}\p{M}\p{N}])(?=\p{Lu})/u;
+/** snake_case, camelCase and cased/uncased script boundaries: `数据Cache`, `OAuthToken`, `HTTP服务器`. */
+const WORD_PARTS = /_|(?<=[\p{Ll}\p{Lo}\p{Lt}\p{M}\p{N}])(?=\p{Lu})|(?<=[\p{Lu}\p{Ll}\p{Lt}])(?=\p{Lo})|(?<=\p{Lo})(?=\p{Ll})/u;
 /** Acronym runs inside a camelCase part: `HTTPServer` gives http, server. */
 const ACRONYM_PARTS = /(?<=\p{Lu})(?=\p{Lu}\p{Ll})/u;
 
