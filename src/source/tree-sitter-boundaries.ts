@@ -178,11 +178,9 @@ function parserFor(language: TreeSitterLanguage): Parser {
   return parser;
 }
 
-/** Go wraps block statements in a `statement_list` node; its children are the statements. */
+/** Go wraps block statements in a `statement_list` node, next to any comment that opens the block. */
 function statementsOf(body: Node): readonly (Node | null)[] {
-  const children = body.namedChildren;
-  const only = children.length === 1 ? children[0] : null;
-  return only !== null && only !== undefined && only.type === 'statement_list' ? only.namedChildren : children;
+  return body.namedChildren.flatMap((child) => (child?.type === 'statement_list' ? child.namedChildren : [child]));
 }
 
 function collect(nodes: readonly (Node | null)[], depth: number, rules: LanguageRules, out: Boundary[]): void {
