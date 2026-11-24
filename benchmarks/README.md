@@ -316,7 +316,7 @@ Vue. A group is *profiled* when most of its files were chunked by a syntax chunk
 | split | Callables (functions, methods) spread over more than one fragment. |
 | splitWithDecl | Share of split callables whose every fragment carries a `declaration` back-reference covering the callable's start. |
 | contUnlabelled | Share of continuation fragments (fragments of a split callable that start after its first line) without a label. |
-| fallback | Files whose chunk result reports a parse fallback. The JSON also has the file share and, for the C/C++ gate, the share of lines on line windows. |
+| fallback | Files whose chunk result reports a parse fallback. The JSON also has the file share and, for the C/C++ gate, the share of lines in those files (a partially recovered file counts whole, since its result does not mark the recovered windows). |
 | ms/kLOC | Chunking milliseconds per 1,000 lines, chunker call only, after warming every grammar. Machine-dependent; compare runs on one host. |
 | uncovered | Non-blank lines in no fragment. |
 

@@ -460,8 +460,8 @@ export function measureFile(group: LanguageGroup, snapshot: SourceSnapshot, resu
   if (result.strategy === 'syntax' || result.fallback !== null) counters.syntaxFiles += 1;
   if (result.fallback !== null) {
     counters.parseFallbackFiles += 1;
-    counters.parseFallbackLines += result.strategy === 'line-window' ? snapshot.lineCount
-      : fragments.filter((fragment) => fragment.classification === 'line-window').reduce((sum, fragment) => sum + fragment.endLine - fragment.startLine + 1, 0);
+    // A partially recovered file does not say which of its windows are recovered, so count the whole file.
+    counters.parseFallbackLines += snapshot.lineCount;
   }
   counters.uncoveredNonBlankLines += uncoveredNonBlankLines(snapshot, fragments).length;
   for (const fragment of fragments) {
