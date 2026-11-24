@@ -103,3 +103,10 @@ test('a C function returning a struct pointer is a function, not a struct', () =
   assert.deepEqual(heuristicDeclarations(group('a.c'), 'struct node *make_node(int v) {\n  return 0;\n}\nstruct node {\n  int v;\n};\n')
     .map((declaration) => `${declaration.kind}:${declaration.name}`), ['function:make_node', 'struct:node']);
 });
+
+test('a rate just over a gate limit fails instead of rounding down to it', () => {
+  const counters = { ...emptyCounters(), files: 1, syntaxFiles: 1, fragments: 100_000, midBlock: 15_001, splitCallables: 100_000, splitCallablesWithDeclaration: 99_999 };
+  const failed = gatesFor('go', summarize(counters)).filter((gate) => !gate.passed).map((gate) => gate.gate);
+  assert.ok(failed.includes('midBlockShare'));
+  assert.ok(failed.includes('splitCallablesWithDeclarationShare'));
+});

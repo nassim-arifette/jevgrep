@@ -508,7 +508,8 @@ export function measureDeclarations(declarations: readonly Declaration[], fragme
   }
 }
 
-const ratio = (part: number, whole: number): number | null => whole === 0 ? null : Number((part / whole).toFixed(4));
+// Unrounded, so a rate just over a gate limit never rounds down to it.
+const ratio = (part: number, whole: number): number | null => whole === 0 ? null : part / whole;
 
 /** The per-group row of the report. Shares are fractions in [0, 1], null when undefined. */
 export function summarize(counters: GroupCounters) {
