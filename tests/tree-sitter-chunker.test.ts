@@ -350,6 +350,25 @@ test('an unfinished last Rust function or a missing final Go brace windows only 
   }
 });
 
+test('a helper nested in an unfinished Rust function is windowed with it (LS-8)', () => {
+  const rows = Array.from({ length: 70 }, (_, index) => `    let v${String(index)} = ${String(index)} + values.len() as i64;`).join('\n');
+  const text = `pub fn total(values: &[i64]) -> i64 {\n${rows}\n    0\n}\n\npub fn outer() -> i64 {\n    fn helper() -> i64 {\n        1\n    }\n    let x = 1;\n`;
+  const snapshot = snapshotOf('src/nested.rs', text);
+  const result = chunkSnapshot(snapshot);
+  assert.ok(result.kind === 'fragments');
+  assert.equal(result.fallback, 'parse_failure');
+  assertExact(snapshot, result.fragments);
+  assert.deepEqual(result.fragments.map((f) => f.label).filter((label) => label !== null), ['function:total']);
+});
+
+test('a Go statement that fits stays whole after a signature it cannot join', () => {
+  const raw = Array.from({ length: 117 }, (_, index) => `line ${String(index)} of the raw string`).join('\n');
+  const snapshot = snapshotOf('pkg/raw.go', `package raw\n\nfunc Doc() string {\n    return \`\n${raw}\n\`\n}\n`);
+  const fragments = syntaxFragments(chunkSnapshot(snapshot));
+  assertExact(snapshot, fragments);
+  assert.ok(fragments.some((f) => f.startLine <= 4 && f.endLine >= 122), 'the raw-string return is one fragment');
+});
+
 test('a Rust function that fits stays whole, and its attributes stay on it when it is split', () => {
   const rows = (count: number): string => Array.from({ length: count }, (_, index) => `    let v${String(index)} = ${String(index)};`).join('\n');
   const fitting = snapshotOf('src/fitting.rs', `pub fn long() -> i64 {\n${rows(95)}\n    0\n}\n`);

@@ -47,7 +47,7 @@ class TreeSitterTree implements SyntaxTree<Item> {
   children(item: Item): readonly Item[] {
     const cached = this.#children.get(item);
     if (cached !== undefined) return cached;
-    const items = item.leading.length > 0 ? this.#triviaChildren(item) : this.#nodeChildren(item.node);
+    const items = item.leading.length > 0 ? this.#triviaChildren(item) : this.#nodeChildren(item.node, item.tail === true ? item.startLine : null);
     this.#children.set(item, items);
     return items;
   }
@@ -57,8 +57,20 @@ class TreeSitterTree implements SyntaxTree<Item> {
    * its last attribute group is a child, then that group stays with the node it precedes.
    */
   #triviaChildren(item: Item): Item[] {
+    const tail = this.#tailIndex(item);
+    const items: Item[] = item.leading.slice(0, tail).map((node) => ({ node, startLine: node.startPosition.row + 1, leading: [] }));
+    items.push({ node: item.node, startLine: this.#openLine(item), leading: [], tail: true });
+    return items;
+  }
+
+  /** The first line of the node with its last attribute group. */
+  #openLine(item: Item): number {
+    return (item.leading[this.#tailIndex(item)] ?? item.node).startPosition.row + 1;
+  }
+
+  /** Index of the leading trivia kept with the node: the last attribute group and the comments below it. */
+  #tailIndex(item: Item): number {
     const { attributes } = this.#profile.leading;
-    // The last attribute group and the comments below it stay with the node.
     let tail = item.leading.length;
     let attributed = false;
     for (let index = item.leading.length - 1; index >= 0; index -= 1) {
@@ -67,12 +79,14 @@ class TreeSitterTree implements SyntaxTree<Item> {
       attributed ||= isAttribute;
       if (attributed) tail = index;
     }
-    const items: Item[] = item.leading.slice(0, tail).map((node) => ({ node, startLine: node.startPosition.row + 1, leading: [] }));
-    items.push({ node: item.node, startLine: (item.leading[tail] ?? item.node).startPosition.row + 1, leading: [], tail: true });
-    return items;
+    return tail;
   }
 
-  #nodeChildren(parent: Node): Item[] {
+  /**
+   * `openLine` is where a node with attributes starts: its children on the node's first
+   * row start there, so the attributes open the range holding its signature.
+   */
+  #nodeChildren(parent: Node, openLine: number | null): Item[] {
     const { comments, attributes } = this.#profile.leading;
     const items: Item[] = [];
     let run: Node[] = [];
@@ -97,7 +111,8 @@ class TreeSitterTree implements SyntaxTree<Item> {
         continue;
       }
       const leading = run.length > 0 && (pinned || startRow <= lastEnd + 1) ? run : [];
-      items.push({ node, startLine: (leading[0] ?? node).startPosition.row + 1, leading });
+      const opens = openLine !== null && leading.length === 0 && startRow === parent.startPosition.row;
+      items.push({ node, startLine: opens ? openLine : (leading[0] ?? node).startPosition.row + 1, leading });
       run = [];
       pinned = false;
       lastEnd = lastItemEnd = endRow(node);
@@ -123,7 +138,8 @@ class TreeSitterTree implements SyntaxTree<Item> {
 /**
  * Lines holding an error or missing node; empty for a clean tree. Inside an error node
  * (the root itself when a function is unfinished), a clean item the profile labels is
- * intact and only the loose tokens around it are damaged.
+ * intact until the first loose token; from there on everything belongs to the broken
+ * construct, nested items included.
  */
 function damagedLinesOf(root: Node, profile: TreeSitterProfile, lineCount: number): number[] {
   const lines = new Set<number>();
@@ -146,7 +162,7 @@ function damagedLinesOf(root: Node, profile: TreeSitterProfile, lineCount: numbe
         if (child.hasError || child.isMissing) {
           stack.push(child);
           marked = true;
-        } else if (!child.isNamed || profile.label(child) === null) {
+        } else if (marked || !child.isNamed || profile.label(child) === null) {
           mark(child);
           marked = true;
         }
@@ -173,7 +189,7 @@ export function planTreeSitterRanges(snapshot: SourceSnapshot, limits: WindowLim
     const root = tree.rootNode;
     return planSyntaxRanges(snapshot, new TreeSitterTree(root, profile), limits, {
       policy: 'local', declarationKinds: profile.declarations, damagedLines: damagedLinesOf(root, profile, snapshot.lineCount),
-      firstUnitLabels: true, mergeWithinDeclarations: true, keepHeaders: true,
+      firstUnitLabels: true, mergeWithinDeclarations: true, keepFittingNodes: true,
     });
   } finally {
     tree.delete();

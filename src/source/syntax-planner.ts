@@ -65,12 +65,8 @@ export type PlanOptions = {
    * split declaration never absorbs the next declaration and its label.
    */
   readonly mergeWithinDeclarations?: boolean;
-  /**
-   * A node that fits the hard limits stays whole even when every child starts on its
-   * first line, and the lines above a node's first child (its attributes) open the
-   * child after them, which is split rather than left without them.
-   */
-  readonly keepHeaders?: boolean;
+  /** A node that fits the hard limits stays whole even when every child starts on its first line. */
+  readonly keepFittingNodes?: boolean;
 };
 
 export type PlannedRange = {
@@ -126,7 +122,7 @@ class Planner<N> {
   readonly #declarationKinds: ReadonlySet<string>;
   readonly #firstUnitLabels: boolean;
   readonly #mergeWithinDeclarations: boolean;
-  readonly #keepHeaders: boolean;
+  readonly #keepFittingNodes: boolean;
 
   constructor(snapshot: SourceSnapshot, tree: SyntaxTree<N>, limits: WindowLimits, options: PlanOptions) {
     this.#snapshot = snapshot;
@@ -135,7 +131,7 @@ class Planner<N> {
     this.#declarationKinds = options.declarationKinds;
     this.#firstUnitLabels = options.firstUnitLabels === true;
     this.#mergeWithinDeclarations = options.mergeWithinDeclarations === true;
-    this.#keepHeaders = options.keepHeaders === true;
+    this.#keepFittingNodes = options.keepFittingNodes === true;
   }
 
   oversized(startLine: number, endLine: number): boolean {
@@ -214,7 +210,7 @@ class Planner<N> {
       return [{ startLine, endLine, ancestry: [], own: null, declarations: [], windows: true, damaged: true }];
     }
     if (units.length === 1) {
-      if (this.#keepHeaders && depth > 0 && !this.oversized(startLine, endLine)) {
+      if (this.#keepFittingNodes && depth > 0 && !this.oversized(startLine, endLine)) {
         return [{ startLine, endLine, ancestry: context, own: this.ownSymbol(units[0]!), declarations: declared, windows: false }];
       }
       // Every child starts on the first line: descend through the wrapper that holds the rest.
@@ -225,15 +221,11 @@ class Planner<N> {
     const firstUnitOwn = this.#firstUnitLabels && depth > 0;
     const chunks: Chunk[] = [];
     let pending: Chunk | null = null;
-    // `pending` holds only the lines above the first child, which never stand alone.
-    let pendingOpens = false;
     const flush = (): void => {
       if (pending !== null) chunks.push(pending);
       pending = null;
     };
-    for (const [index, unit] of units.entries()) {
-      const opens = pendingOpens && pending !== null;
-      pendingOpens = false;
+    for (const unit of units) {
       if (damaged?.(unit.startLine, unit.endLine) === true) {
         flush();
         chunks.push({
@@ -241,7 +233,7 @@ class Planner<N> {
         });
         continue;
       }
-      if (this.oversized(opens ? pending!.startLine : unit.startLine, unit.endLine)) {
+      if (this.oversized(unit.startLine, unit.endLine)) {
         let start = unit.startLine;
         const header: Chunk | null = pending;
         if (header !== null && header.own === null && this.tokens(header.startLine, header.endLine) <= HEADER_TOKENS) {
@@ -267,8 +259,6 @@ class Planner<N> {
         startLine: unit.startLine, endLine: unit.endLine, ancestry: context, own: this.ownSymbol(unit), declarations: declared,
         windows: false, ...(firstUnitOwn ? { firstUnitOwn: true as const } : {}),
       };
-      pendingOpens = this.#keepHeaders && depth > 0 && index === 0 && unit.nodes.length === 0
-        && this.tokens(unit.startLine, unit.endLine) <= HEADER_TOKENS;
     }
     flush();
     return chunks;
