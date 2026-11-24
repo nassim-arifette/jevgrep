@@ -18,8 +18,11 @@ test('identifier terms split camelCase and snake_case', () => {
 });
 
 test('identifier terms split acronym runs and keep non-ASCII letters', () => {
-  assert.deepEqual(lexicalTerms('HTTPServer parseXMLFile'), ['httpserver', 'http', 'server', 'parsexmlfile', 'parse', 'xml', 'file']);
+  assert.deepEqual(lexicalTerms('HTTPServer parseXMLFile'), ['httpserver', 'http', 'server', 'parsexmlfile', 'parse', 'xmlfile', 'xml', 'file']);
   assert.deepEqual(lexicalTerms('données $scope'), ['données', 'scope']);
+  assert.deepEqual(lexicalTerms('OAuthToken'), ['oauthtoken', 'oauth', 'auth', 'token']);
+  assert.deepEqual(lexicalTerms('数据Cache cafe\u0301Cache'), ['数据cache', '数据', 'cache', 'cafécache', 'café', 'cache']);
+  assert.deepEqual(lexicalTerms('donne\u0301es'), lexicalTerms('données'));
 });
 
 test('path order sorts by path and offsets, like the batch builder', () => {
