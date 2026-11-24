@@ -336,7 +336,8 @@ coverage, and with `--baseline` to half its baseline mid-block share. `npm run v
 does not run it.
 
 The [2026-11-24 baseline](baselines/2026-11-24-languages.md) records `main` at
-`09b0669`; on it every profiled language misses at least one gate.
+`c222427` (D1 to D7 fixed); every profiled language still misses the unlabelled
+continuation gate (LS-4), and JS also the mid-block and small-fragment gates.
 
 ## Additional criteria on ambiguous candidates (E8)
 
