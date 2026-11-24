@@ -331,6 +331,39 @@ test('a Go or Rust syntax error windows only the damaged item; the rest stays st
   }
 });
 
+test('an unfinished last Rust function or a missing final Go brace windows only that item (LS-8)', () => {
+  const rows = (count: number, row: (index: number) => string): string => Array.from({ length: count }, (_, index) => row(index)).join('\n');
+  for (const [path, text, intact, damagedFrom] of [
+    ['src/unfinished.rs', `pub fn total(values: &[i64]) -> i64 {\n${rows(70, (i) => `    let v${String(i)} = ${String(i)} + values.len() as i64;`)}\n    0\n}\n\npub fn broken() -> i64 {\n    let x = 1;\n`, 'function:total', 75],
+    ['pkg/unclosed.go', `package unclosed\n\nfunc Total(values []int) int {\n${rows(20, (i) => `\tv${String(i)} := ${String(i)} + len(values)`)}\n\treturn 0\n}\n\nfunc Broken(values []int) int {\n${rows(10, (i) => `\tv${String(i)} := ${String(i)} + len(values)`)}\n\treturn 0\n`, 'function:Total', 27],
+  ] as const) {
+    const snapshot = snapshotOf(path, text);
+    const result = chunkSnapshot(snapshot);
+    assert.ok(result.kind === 'fragments');
+    assert.equal(result.strategy, 'syntax', path);
+    assert.equal(result.fallback, 'parse_failure', path);
+    assertExact(snapshot, result.fragments);
+    assert.equal(result.fragments[0]!.label, intact, `${path} keeps its intact first function`);
+    for (const fragment of result.fragments.filter((f) => f.endLine >= damagedFrom)) {
+      assert.equal(fragment.label, null, `${path}: the damaged function is windows`);
+    }
+  }
+});
+
+test('a Rust function that fits stays whole, and its attributes stay on it when it is split', () => {
+  const rows = (count: number): string => Array.from({ length: count }, (_, index) => `    let v${String(index)} = ${String(index)};`).join('\n');
+  const fitting = snapshotOf('src/fitting.rs', `pub fn long() -> i64 {\n${rows(95)}\n    0\n}\n`);
+  const whole = syntaxFragments(chunkSnapshot(fitting));
+  assert.deepEqual(whole.map((f) => [f.startLine, f.endLine, f.label]), [[1, fitting.lineCount, 'function:long']]);
+
+  const attributed = snapshotOf('src/attributed.rs', `#[inline]\n#[must_use]\npub fn long() -> i64 {\n${rows(116)}\n    0\n}\n`);
+  const split = syntaxFragments(chunkSnapshot(attributed));
+  assertExact(attributed, split);
+  assert.ok(split.length > 1);
+  assert.equal(split[0]!.label, 'function:long');
+  assert.ok(split[0]!.endLine > 3, 'the attributes open the fragment holding the signature');
+});
+
 test('malformed Go and Rust fall back to line windows when most of the file is damaged', () => {
   for (const [path, text] of [
     ['pkg/broken.go', 'func broken( {\n\treturn\n'],

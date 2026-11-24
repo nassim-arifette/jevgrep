@@ -120,15 +120,38 @@ class TreeSitterTree implements SyntaxTree<Item> {
   }
 }
 
-/** Lines holding an error or missing node; empty for a clean tree. */
-function damagedLinesOf(root: Node): number[] {
+/**
+ * Lines holding an error or missing node; empty for a clean tree. Inside an error node
+ * (the root itself when a function is unfinished), a clean item the profile labels is
+ * intact and only the loose tokens around it are damaged.
+ */
+function damagedLinesOf(root: Node, profile: TreeSitterProfile, lineCount: number): number[] {
   const lines = new Set<number>();
+  // A missing token at the end of a file sits on the row after its last newline.
+  const mark = (node: Node): void => {
+    lines.add(Math.min(node.startPosition.row + 1, lineCount));
+    lines.add(Math.min(endRow(node) + 1, lineCount));
+  };
   const stack: Node[] = [root];
   while (stack.length > 0) {
     const node = stack.pop()!;
-    if (node.isError || node.isMissing) {
-      lines.add(node.startPosition.row + 1);
-      lines.add(node.endPosition.row + 1);
+    if (node.isMissing) {
+      mark(node);
+      continue;
+    }
+    if (node.isError) {
+      let marked = false;
+      for (const child of node.children) {
+        if (child === null) continue;
+        if (child.hasError || child.isMissing) {
+          stack.push(child);
+          marked = true;
+        } else if (!child.isNamed || profile.label(child) === null) {
+          mark(child);
+          marked = true;
+        }
+      }
+      if (!marked) mark(node);
       continue;
     }
     if (!node.hasError) continue;
@@ -149,8 +172,8 @@ export function planTreeSitterRanges(snapshot: SourceSnapshot, limits: WindowLim
   try {
     const root = tree.rootNode;
     return planSyntaxRanges(snapshot, new TreeSitterTree(root, profile), limits, {
-      policy: 'local', declarationKinds: profile.declarations, damagedLines: damagedLinesOf(root), firstUnitLabels: true,
-      mergeWithinDeclarations: true,
+      policy: 'local', declarationKinds: profile.declarations, damagedLines: damagedLinesOf(root, profile, snapshot.lineCount),
+      firstUnitLabels: true, mergeWithinDeclarations: true, keepHeaders: true,
     });
   } finally {
     tree.delete();
