@@ -34,11 +34,11 @@ export type SyntaxLanguage = 'javascript' | 'python' | 'java' | 'go' | 'rust';
 
 /** Bumped per language when its syntax boundaries change; part of evaluation identity (JG-018). */
 export const SYNTAX_CHUNKER_VERSIONS: Readonly<Record<SyntaxLanguage, string>> = {
-  javascript: 'jevgrep-typescript-6.0.2-3',
-  python: 'jevgrep-python-scan-1',
-  java: 'jevgrep-java-scan-2',
-  go: `jevgrep-${TREE_SITTER_GRAMMARS.go}-2`,
-  rust: `jevgrep-${TREE_SITTER_GRAMMARS.rust}-2`,
+  javascript: 'jevgrep-typescript-6.0.2-4',
+  python: 'jevgrep-python-scan-2',
+  java: 'jevgrep-java-scan-3',
+  go: `jevgrep-${TREE_SITTER_GRAMMARS.go}-3`,
+  rust: `jevgrep-${TREE_SITTER_GRAMMARS.rust}-3`,
 };
 
 export const SYNTAX_CHUNKER_VERSION = SYNTAX_CHUNKER_VERSIONS.javascript;
@@ -53,9 +53,11 @@ export const SYNTAX_CHUNKER_VERSION = SYNTAX_CHUNKER_VERSIONS.javascript;
 export type PreparedFragment = Omit<FragmentWindow, 'classification'> & {
   readonly classification: 'line-window' | 'syntax-range';
   readonly label?: string | null;
-  /** The declaration this window was cut from, when one declaration became several windows. */
-  readonly declaration?: { readonly startLine: number; readonly endLine: number } | null;
+  /** The innermost declaration this fragment was cut from, when a declaration became several fragments. */
+  readonly declaration?: DeclarationRange | null;
 };
+
+export type DeclarationRange = { readonly startLine: number; readonly endLine: number };
 
 export type ChunkFallback = 'parse_failure';
 
@@ -120,7 +122,13 @@ export function chunkerIdentityFor(path: string): string {
     : `${extension}|${SYNTAX_CHUNKER_VERSIONS[language]}|${LINE_WINDOW_CHUNKER_VERSION}`;
 }
 
-type LineRange = { readonly startLine: number; readonly endLine: number; readonly label: string | null };
+type LineRange = {
+  readonly startLine: number;
+  readonly endLine: number;
+  readonly label: string | null;
+  /** The range starts at a labelled boundary of its own depth, so it is a declaration. */
+  readonly declares?: boolean;
+};
 
 function fragmentOf(snapshot: SourceSnapshot, range: LineRange, chunker: string): PreparedFragment {
   const slice = snapshot.sliceLines(range.startLine, range.endLine);
@@ -144,6 +152,14 @@ function fragmentOf(snapshot: SourceSnapshot, range: LineRange, chunker: string)
   };
 }
 
+/** Record the declaration a fragment was cut from; a fragment holding the whole declaration was not cut from it. */
+function cutFrom(fragment: PreparedFragment, declaration: DeclarationRange | null): PreparedFragment {
+  if (declaration === null || (fragment.startLine <= declaration.startLine && fragment.endLine >= declaration.endLine)) {
+    return fragment;
+  }
+  return { ...fragment, declaration: { startLine: declaration.startLine, endLine: declaration.endLine } };
+}
+
 function isBlankRange(snapshot: SourceSnapshot, startLine: number, endLine: number): boolean {
   for (let line = startLine; line <= endLine; line += 1) {
     if (!snapshot.isBlankLine(line)) {
@@ -159,7 +175,8 @@ function isBlankRange(snapshot: SourceSnapshot, startLine: number, endLine: numb
  * JG-012 owns whole-file windowing; this range-level variant exists because an
  * oversized declaration must be split *inside* its own line range while keeping the
  * file's real line numbers and byte offsets. Limits and overlap semantics are the
- * ones JG-012 defines.
+ * ones JG-012 defines. Windows record `declaration`, the declaration enclosing the
+ * range, or the range itself when it has none and is split.
  */
 function windowsOfRange(
   snapshot: SourceSnapshot,
@@ -167,6 +184,7 @@ function windowsOfRange(
   limits: WindowLimits,
   chunker: string,
   labelEveryWindow = false,
+  declaration: DeclarationRange | null = null,
 ): PreparedFragment[] | UnsupportedLongLine {
   const fragments: PreparedFragment[] = [];
   let cursor = range.startLine;
@@ -189,13 +207,9 @@ function windowsOfRange(
       end += 1;
     }
     if (!isBlankRange(snapshot, cursor, end)) {
-      const split = cursor > range.startLine || end < range.endLine;
-      fragments.push({
-        ...fragmentOf(snapshot, {
-          startLine: cursor, endLine: end, label: labelEveryWindow || cursor === range.startLine ? range.label : null,
-        }, chunker),
-        ...(split ? { declaration: { startLine: range.startLine, endLine: range.endLine } } : {}),
-      });
+      fragments.push(cutFrom(fragmentOf(snapshot, {
+        startLine: cursor, endLine: end, label: labelEveryWindow || cursor === range.startLine ? range.label : null,
+      }, chunker), declaration ?? range));
     }
     if (end >= range.endLine) {
       break;
@@ -219,15 +233,19 @@ function unitsFromBoundaries(
 
   const units: LineRange[] = [];
   let current = startLine;
+  // The first unit inherits the label of an enclosing boundary on the same line, but only
+  // a boundary of this depth makes it a declaration of its own.
   let label = boundaries.find((boundary) => boundary.line === startLine)?.label ?? null;
+  let declares = boundaries.some((boundary) => boundary.line === startLine && boundary.depth === depth && boundary.label !== null);
   for (const start of starts) {
     if (start.line > current) {
-      units.push({ startLine: current, endLine: start.line - 1, label });
+      units.push({ startLine: current, endLine: start.line - 1, label, declares });
       current = start.line;
       label = start.label;
+      declares = start.label !== null;
     }
   }
-  units.push({ startLine: current, endLine, label });
+  units.push({ startLine: current, endLine, label, declares });
   return units;
 }
 
@@ -237,20 +255,26 @@ function unitsFromBoundaries(
  * Neighbouring small units (imports, one-line exports, a short constant) are grouped
  * up to the target size; a unit already larger than the hard limits is refined by
  * deeper syntax boundaries when they exist, and by line windows otherwise.
+ *
+ * `enclosing` is the declaration being split, recorded on every fragment. Units that
+ * refine an oversized unit form continuations: with `firstUnitLabels`, a group is
+ * labelled by its first unit only, never by a nested symbol it happens to contain.
  */
 function packUnits(
   snapshot: SourceSnapshot,
   units: readonly LineRange[],
   limits: WindowLimits,
   chunker: string,
-  refine: (unit: LineRange) => PreparedFragment[] | UnsupportedLongLine | null,
+  refine: (unit: LineRange, declaration: DeclarationRange | null) => PreparedFragment[] | UnsupportedLongLine | null,
+  enclosing: DeclarationRange | null,
+  firstUnitLabels: boolean,
 ): PreparedFragment[] | UnsupportedLongLine {
   const fragments: PreparedFragment[] = [];
   let pending: LineRange | null = null;
 
   const flush = (): void => {
     if (pending !== null && !isBlankRange(snapshot, pending.startLine, pending.endLine)) {
-      fragments.push(fragmentOf(snapshot, pending, chunker));
+      fragments.push(cutFrom(fragmentOf(snapshot, pending, chunker), enclosing));
     }
     pending = null;
   };
@@ -262,7 +286,8 @@ function packUnits(
 
     if (tokens > limits.maxTokens || bytes > limits.maxBytes || lines > limits.maxLines) {
       flush();
-      const refined = refine(unit) ?? windowsOfRange(snapshot, unit, limits, chunker);
+      const declaration = unit.declares === true ? unit : enclosing;
+      const refined = refine(unit, declaration) ?? windowsOfRange(snapshot, unit, limits, chunker, false, declaration);
       if (!Array.isArray(refined)) {
         return refined as UnsupportedLongLine;
       }
@@ -277,7 +302,9 @@ function packUnits(
     const mergedBytes = snapshot.rangeBytes(pending.startLine, unit.endLine);
     const mergedLines = unit.endLine - pending.startLine + 1;
     if (mergedTokens <= limits.targetTokens && mergedBytes <= limits.maxBytes && mergedLines <= limits.maxLines) {
-      pending = { startLine: pending.startLine, endLine: unit.endLine, label: pending.label ?? unit.label };
+      pending = {
+        startLine: pending.startLine, endLine: unit.endLine, label: firstUnitLabels ? pending.label : pending.label ?? unit.label,
+      };
       continue;
     }
     flush();
@@ -378,13 +405,13 @@ function chunkJavaScript(snapshot: SourceSnapshot, limits: WindowLimits, context
     if (range.windows || snapshot.rangeTokens(range.startLine, range.endLine) > limits.maxTokens
       || snapshot.rangeBytes(range.startLine, range.endLine) > limits.maxBytes
       || range.endLine - range.startLine + 1 > limits.maxLines) {
-      const windows = windowsOfRange(snapshot, range, limits, chunker, range.labelEveryWindow);
+      const windows = windowsOfRange(snapshot, range, limits, chunker, range.labelEveryWindow, range.declaration);
       if (!Array.isArray(windows)) {
         return windows;
       }
       fragments.push(...windows);
     } else if (!isBlankRange(snapshot, range.startLine, range.endLine)) {
-      fragments.push(fragmentOf(snapshot, range, chunker));
+      fragments.push(cutFrom(fragmentOf(snapshot, range, chunker), range.declaration));
     }
   }
   return { kind: 'fragments', strategy: 'syntax', fallback: plan.recovered ? 'parse_failure' : null, fragments };
@@ -398,11 +425,13 @@ export type BoundaryPacking = {
    * that follows it, so a header is never a fragment of its own.
    */
   readonly carryHeaders?: boolean;
+  /** Label a continuation with a nested symbol it contains, the policy of `jevgrep-typescript-6.0.2-2`. */
+  readonly nestedContinuationLabels?: boolean;
 };
 
 /**
- * Depth-indexed boundary packing, used by the Python and Java scanners and kept as the
- * previous JS/TS policy for the E1 comparison.
+ * Depth-indexed boundary packing, used by the Python, Java, Go and Rust parsers and kept
+ * as the previous JS/TS policy for the E1 comparison.
  */
 export function chunkWithBoundaries(
   snapshot: SourceSnapshot,
@@ -414,9 +443,11 @@ export function chunkWithBoundaries(
   const maxRefineDepth = packing.maxRefineDepth === 'deepest'
     ? boundaries.reduce((deepest, boundary) => Math.max(deepest, boundary.depth), 0)
     : packing.maxRefineDepth ?? 2;
+  const nestedLabels = packing.nestedContinuationLabels === true;
   const fits = (startLine: number, endLine: number): boolean => snapshot.rangeTokens(startLine, endLine) <= limits.maxTokens
     && snapshot.rangeBytes(startLine, endLine) <= limits.maxBytes && endLine - startLine + 1 <= limits.maxLines;
-  const refineAt = (depth: number) => (unit: LineRange): PreparedFragment[] | UnsupportedLongLine | null => {
+  type Refine = (unit: LineRange, declaration: DeclarationRange | null) => PreparedFragment[] | UnsupportedLongLine | null;
+  const refineAt = (depth: number): Refine => (unit, declaration) => {
     if (depth > maxRefineDepth) {
       return null;
     }
@@ -425,17 +456,20 @@ export function chunkWithBoundaries(
       const [head, next, ...rest] = inner as [LineRange, LineRange, ...LineRange[]];
       // A unit that fits on its own is never split just to take the header along.
       if (fits(head.startLine, next.endLine) || !fits(next.startLine, next.endLine)) {
-        inner = [{ startLine: head.startLine, endLine: next.endLine, label: head.label ?? next.label }, ...rest];
+        inner = [{
+          startLine: head.startLine, endLine: next.endLine, label: head.label ?? next.label,
+          declares: head.declares === true || next.declares === true,
+        }, ...rest];
       }
     }
     if (inner.length <= 1) {
-      return refineAt(depth + 1)(unit);
+      return refineAt(depth + 1)(unit, declaration);
     }
-    return packUnits(snapshot, inner, limits, chunker, refineAt(depth + 1));
+    return packUnits(snapshot, inner, limits, chunker, refineAt(depth + 1), declaration, !nestedLabels);
   };
 
   const units = unitsFromBoundaries(boundaries, 0, 1, snapshot.lineCount);
-  const packed = packUnits(snapshot, units, limits, chunker, refineAt(1));
+  const packed = packUnits(snapshot, units, limits, chunker, refineAt(1), null, false);
   if (!Array.isArray(packed)) {
     return packed as UnsupportedLongLine;
   }

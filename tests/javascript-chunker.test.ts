@@ -86,6 +86,16 @@ test('the default local policy keeps the same boundaries and labels only symbol 
   assert.ok(local.filter((fragment) => fragment.label != null).length < enclosing.filter((fragment) => fragment.label != null).length);
 });
 
+test('every fragment cut from a declaration along its statements records the whole declaration (D1)', () => {
+  const snapshot = snapshotOf('src/ledger.ts', LARGE_FUNCTION);
+  const fragments = fragmentsOf(chunkSnapshot(snapshot, SMALL));
+  const declaration = { startLine: 3, endLine: LARGE_FUNCTION.split('\n').lastIndexOf('}') + 1 };
+  assert.ok(fragments.length >= 3, 'the function is split along its statements');
+  for (const fragment of fragments) {
+    assert.deepEqual(fragment.declaration, declaration, `${String(fragment.startLine)}-${String(fragment.endLine)}`);
+  }
+});
+
 test('methods of a large class carry the class and the method, with decorators and comments attached', () => {
   const methods = Array.from({ length: 4 }, (_, index) => `  /** Applies step ${String(index)}. */
   @trace('step${String(index)}')
@@ -192,6 +202,6 @@ test('a file that is mostly broken falls back to plain line windows', () => {
 test('recursive output is deterministic and the boundary change is versioned', () => {
   const snapshot = snapshotOf('src/ledger.ts', LARGE_FUNCTION);
   assert.deepEqual(chunkSnapshot(snapshot, SMALL), chunkSnapshot(snapshotOf('src/ledger.ts', LARGE_FUNCTION), SMALL));
-  assert.equal(SYNTAX_CHUNKER_VERSIONS.javascript, 'jevgrep-typescript-6.0.2-3');
+  assert.equal(SYNTAX_CHUNKER_VERSIONS.javascript, 'jevgrep-typescript-6.0.2-4');
   assert.ok(chunkerIdentityFor('src/ledger.ts').includes(SYNTAX_CHUNKER_VERSIONS.javascript));
 });

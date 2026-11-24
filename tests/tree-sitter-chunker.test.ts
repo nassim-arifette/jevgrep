@@ -275,6 +275,35 @@ test('windows cut from one oversized unit remember that unit as their declaratio
   assertExact(snapshot, fragments);
 });
 
+test('every fragment cut from a Go or Rust function along its statements records the whole function (D1)', () => {
+  const goBody = Array.from({ length: 80 }, (_, n) => `\tvalue${String(n)} := compute(${String(n)})`).join('\n');
+  const rustBody = Array.from({ length: 80 }, (_, n) => `    let value${String(n)} = compute(${String(n)});`).join('\n');
+  const limits = { ...DEFAULT_WINDOW_LIMITS, targetTokens: 90, maxTokens: 150, maxBytes: 900 };
+  for (const [path, text, declaration] of [
+    ['pkg/large.go', `package large\n\nfunc large() {\n${goBody}\n}\n`, { startLine: 3, endLine: 84 }],
+    ['src/large.rs', `fn large() {\n${rustBody}\n}\n`, { startLine: 1, endLine: 82 }],
+  ] as const) {
+    const fragments = syntaxFragments(chunkSnapshot(snapshotOf(path, text), limits));
+    const inside = fragments.filter((f) => f.startLine >= declaration.startLine);
+    assert.ok(inside.length > 1, `${path} is split along its statements`);
+    for (const fragment of inside) {
+      assert.deepEqual(fragment.declaration, declaration, `${path}:${String(fragment.startLine)}`);
+    }
+  }
+});
+
+test('a Rust continuation is not labelled with a nested function it happens to contain (D7)', () => {
+  const lines = (prefix: string, count: number): string =>
+    Array.from({ length: count }, (_, n) => `    let ${prefix}${String(n)} = compute(${String(n)});`).join('\n');
+  const limits = { ...DEFAULT_WINDOW_LIMITS, targetTokens: 60, maxTokens: 120, maxBytes: 900 };
+  const text = `fn long() {\n${lines('a', 8)}\n    fn helper() -> i32 {\n        1\n    }\n${lines('b', 12)}\n}\n`;
+  const fragments = syntaxFragments(chunkSnapshot(snapshotOf('src/long.rs', text), limits));
+  const containing = fragments.find((f) => f.text.includes('fn helper'))!;
+  assert.ok(!containing.text.trimStart().startsWith('fn helper'), 'the nested function is inside a continuation');
+  assert.equal(containing.label, null);
+  assert.ok(fragments.every((f) => f.label !== 'function:helper'));
+});
+
 test('BOM, CRLF and non-ASCII text keep exact offsets in Go and Rust', () => {
   for (const [path, text, label] of [
     ['pkg/café.go', '\uFEFFpackage café\r\n\r\n// état\r\nfunc Émoji() string {\r\n\treturn "😀"\r\n}\r\n', 'function:Émoji'],

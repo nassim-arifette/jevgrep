@@ -48,7 +48,7 @@ if (values.help) {
       seen.set(key, fragments);
       return fragments;
     };
-    const units: { contained: boolean; tokens: number | null; labeled: boolean; fragments: number }[] = [];
+    const units: { contained: boolean; recoverable: boolean; tokens: number | null; labeled: boolean; fragments: number }[] = [];
     for (const task of manifest.tasks) {
       const files = snapshots.get(task.id)!;
       for (const [path, text] of Object.entries(files)) {
@@ -60,8 +60,11 @@ if (values.help) {
           const fragments = fragmentsOf(task.repository, unit.path, files[unit.path]!);
           const overlapping = fragments.filter((fragment) => fragment.startLine <= unit.endLine && fragment.endLine >= unit.startLine);
           const whole = overlapping.find((fragment) => fragment.startLine <= unit.startLine && fragment.endLine >= unit.endLine);
+          // Whole-declaration selection can return a unit split across fragments when one of them records a declaration holding it.
+          const declared = overlapping.some((fragment) => fragment.declaration != null
+            && fragment.declaration.startLine <= unit.startLine && fragment.declaration.endLine >= unit.endLine);
           units.push({
-            contained: whole !== undefined, tokens: whole?.tokenCount ?? null,
+            contained: whole !== undefined, recoverable: whole !== undefined || declared, tokens: whole?.tokenCount ?? null,
             labeled: overlapping.length > 0 && overlapping.every((fragment) => fragment.label != null), fragments: overlapping.length,
           });
         }
@@ -74,8 +77,10 @@ if (values.help) {
       fragmentTokens: { mean: mean(tokens), p50: percentile(tokens, 0.5), p95: percentile(tokens, 0.95), max: tokens.at(-1) ?? null },
       labeledFragments: mean(all.map((fragment) => fragment.label == null ? 0 : 1)),
       smallFragments: mean(all.map((fragment) => fragment.endLine - fragment.startLine + 1 <= 3 ? 1 : 0)),
+      declaredFragments: mean(all.map((fragment) => fragment.declaration == null ? 0 : 1)),
       evidence: {
         units: units.length, containedInOneFragment: mean(units.map((unit) => unit.contained ? 1 : 0)),
+        containedInFragmentOrDeclaration: mean(units.map((unit) => unit.recoverable ? 1 : 0)),
         containingFragmentTokens: mean(units.flatMap((unit) => unit.tokens === null ? [] : [unit.tokens])),
         labeled: mean(units.map((unit) => unit.labeled ? 1 : 0)),
       },
@@ -85,7 +90,8 @@ if (values.help) {
   console.table(Object.fromEntries(Object.entries(arms).map(([arm, row]) => [arm, {
     files: row.files, fragments: row.fragments, fallbacks: row.parseFallbacks, ms: row.chunkingMs,
     meanTok: Math.round(row.fragmentTokens.mean ?? 0), p95Tok: row.fragmentTokens.p95, labeled: row.labeledFragments?.toFixed(3),
-    small: row.smallFragments?.toFixed(3), evContained: row.evidence.containedInOneFragment?.toFixed(3),
+    small: row.smallFragments?.toFixed(3), declared: row.declaredFragments?.toFixed(3),
+    evContained: row.evidence.containedInOneFragment?.toFixed(3), evWhole: row.evidence.containedInFragmentOrDeclaration?.toFixed(3),
     evFragTok: Math.round(row.evidence.containingFragmentTokens ?? 0), evLabeled: row.evidence.labeled?.toFixed(3),
   }])));
   console.log(`-> ${writeReport(values.output ?? 'benchmark-results/chunking.json', report)}`);

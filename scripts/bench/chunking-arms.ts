@@ -30,7 +30,7 @@ function previousTypeScript(snapshot: SourceSnapshot, limits: WindowLimits): Chu
     const windows = fallbackWindows(snapshot, limits);
     return windows.kind === 'fragments' ? { ...windows, fallback: 'parse_failure' } : windows;
   }
-  return chunkWithBoundaries(snapshot, scan.boundaries, limits, PREVIOUS_TYPESCRIPT_CHUNKER);
+  return chunkWithBoundaries(snapshot, scan.boundaries, limits, PREVIOUS_TYPESCRIPT_CHUNKER, { nestedContinuationLabels: true });
 }
 
 function forLanguages(

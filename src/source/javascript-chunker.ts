@@ -34,6 +34,8 @@ export type PlannedRange = {
   readonly windows: boolean;
   /** Label every window of a split range, not only the first. */
   readonly labelEveryWindow: boolean;
+  /** The innermost declaration the range was cut from, when that declaration was split. */
+  readonly declaration: { readonly startLine: number; readonly endLine: number } | null;
 };
 
 export type JavaScriptPlan =
@@ -53,6 +55,8 @@ type Chunk = {
   endLine: number;
   ancestry: readonly SymbolInfo[];
   own: SymbolInfo | null;
+  /** Enclosing declarations being split, outermost first. */
+  declarations: readonly SymbolInfo[];
   windows: boolean;
   /** A top-level statement containing a parse diagnostic. */
   damaged?: true;
@@ -68,6 +72,11 @@ const MAX_DEPTH = 400;
 const MAX_LABEL_CHARACTERS = 400;
 const MAX_NAME_CHARACTERS = 80;
 const MAX_SIGNATURE_CHARACTERS = 120;
+/** Symbol kinds that are declarations: a fragment cut from one records its range. */
+const DECLARATION_KINDS: ReadonlySet<string> = new Set([
+  'function', 'component', 'method', 'getter', 'setter', 'class', 'interface', 'type', 'enum', 'namespace', 'object',
+  'variable', 'callback',
+]);
 /** Above this share of damaged lines, structural recovery is not trusted. */
 const MAX_RECOVERED_SHARE = 0.5;
 
@@ -320,21 +329,22 @@ class Planner {
   }
 
   /** Split `node`, whose lines are `[startLine, endLine]`, into chunks under the limits. */
-  plan(node: ts.Node, startLine: number, endLine: number, ancestry: readonly SymbolInfo[], depth: number,
-    damaged?: (startLine: number, endLine: number) => boolean): Chunk[] {
+  plan(node: ts.Node, startLine: number, endLine: number, ancestry: readonly SymbolInfo[], declarations: readonly SymbolInfo[],
+    depth: number, damaged?: (startLine: number, endLine: number) => boolean): Chunk[] {
     const symbol = node.kind === ts.SyntaxKind.SourceFile ? null : this.symbolOf(node);
     const context = symbol === null ? ancestry : [...ancestry, symbol];
-    const leaf = (): Chunk[] => [{ startLine, endLine, ancestry: context, own: null, windows: true }];
+    const declared = symbol !== null && DECLARATION_KINDS.has(symbol.kind) ? [...declarations, symbol] : declarations;
+    const leaf = (): Chunk[] => [{ startLine, endLine, ancestry: context, own: null, declarations: declared, windows: true }];
     if (depth > MAX_DEPTH) return leaf();
 
     const units = this.units(node, startLine, endLine);
     if (damaged !== undefined && units.length === 1 && damaged(startLine, endLine)) {
-      return [{ startLine, endLine, ancestry: [], own: null, windows: true, damaged: true }];
+      return [{ startLine, endLine, ancestry: [], own: null, declarations: [], windows: true, damaged: true }];
     }
     if (units.length === 1) {
       // Every child starts on the first line: descend through the wrapper that holds the rest.
       const inner = this.widest(units[0]!.nodes);
-      return inner === null ? leaf() : this.plan(inner, startLine, endLine, context, depth + 1);
+      return inner === null ? leaf() : this.plan(inner, startLine, endLine, context, declared, depth + 1);
     }
 
     const chunks: Chunk[] = [];
@@ -346,7 +356,9 @@ class Planner {
     for (const unit of units) {
       if (damaged?.(unit.startLine, unit.endLine) === true) {
         flush();
-        chunks.push({ startLine: unit.startLine, endLine: unit.endLine, ancestry: [], own: null, windows: true, damaged: true });
+        chunks.push({
+          startLine: unit.startLine, endLine: unit.endLine, ancestry: [], own: null, declarations: [], windows: true, damaged: true,
+        });
         continue;
       }
       if (this.oversized(unit.startLine, unit.endLine)) {
@@ -360,8 +372,8 @@ class Planner {
         }
         const inner = this.widest(unit.nodes);
         chunks.push(...(inner === null
-          ? [{ startLine: start, endLine: unit.endLine, ancestry: context, own: null, windows: true }]
-          : this.plan(inner, start, unit.endLine, context, depth + 1)));
+          ? [{ startLine: start, endLine: unit.endLine, ancestry: context, own: null, declarations: declared, windows: true }]
+          : this.plan(inner, start, unit.endLine, context, declared, depth + 1)));
         continue;
       }
       const current: Chunk | null = pending;
@@ -371,7 +383,10 @@ class Planner {
         continue;
       }
       flush();
-      pending = { startLine: unit.startLine, endLine: unit.endLine, ancestry: context, own: this.ownSymbol(unit), windows: false };
+      pending = {
+        startLine: unit.startLine, endLine: unit.endLine, ancestry: context, own: this.ownSymbol(unit), declarations: declared,
+        windows: false,
+      };
     }
     flush();
     return chunks;
@@ -387,7 +402,7 @@ class Planner {
         && this.fitsHard(previous.startLine, chunk.endLine)) {
         result[result.length - 1] = {
           startLine: previous.startLine, endLine: chunk.endLine, ancestry: commonAncestry(previous.ancestry, chunk.ancestry),
-          own: previous.own ?? chunk.own, windows: false,
+          own: previous.own ?? chunk.own, declarations: mergedDeclarations(previous.declarations, chunk.declarations), windows: false,
         };
         continue;
       }
@@ -401,6 +416,17 @@ function commonAncestry(left: readonly SymbolInfo[], right: readonly SymbolInfo[
   let length = 0;
   while (length < left.length && length < right.length && left[length] === right[length]) length += 1;
   return left.slice(0, length);
+}
+
+/**
+ * The declarations a merged range was cut from: those both parts were cut from, or the
+ * outermost one a part was cut from when they share none.
+ */
+function mergedDeclarations(left: readonly SymbolInfo[], right: readonly SymbolInfo[]): readonly SymbolInfo[] {
+  const common = commonAncestry(left, right);
+  if (common.length > 0) return common;
+  const outermost = left[0] ?? right[0];
+  return outermost === undefined ? [] : [outermost];
 }
 
 function render(symbol: SymbolInfo, withSignature: boolean): string {
@@ -465,7 +491,7 @@ export function planJavaScriptRanges(
     const damaged = damagedLines.length === 0 ? undefined
       : (startLine: number, endLine: number): boolean => damagedLines.some((line) => line >= startLine && line <= endLine);
 
-    const chunks = planner.mergeTiny(planner.plan(source, 1, snapshot.lineCount, [], 0, damaged));
+    const chunks = planner.mergeTiny(planner.plan(source, 1, snapshot.lineCount, [], [], 0, damaged));
     if (damaged !== undefined) {
       const lines = chunks.filter((chunk) => chunk.damaged === true)
         .reduce((sum, chunk) => sum + chunk.endLine - chunk.startLine + 1, 0);
@@ -475,10 +501,14 @@ export function planJavaScriptRanges(
     return {
       ok: true,
       recovered: damaged !== undefined,
-      ranges: chunks.map((chunk) => ({
-        startLine: chunk.startLine, endLine: chunk.endLine, windows: chunk.windows,
-        label: labelOf(chunk), labelEveryWindow: policy !== 'local',
-      })),
+      ranges: chunks.map((chunk) => {
+        const declaration = chunk.declarations.at(-1);
+        return {
+          startLine: chunk.startLine, endLine: chunk.endLine, windows: chunk.windows,
+          label: labelOf(chunk), labelEveryWindow: policy !== 'local',
+          declaration: declaration === undefined ? null : { startLine: declaration.startLine, endLine: declaration.endLine },
+        };
+      }),
     };
   } catch {
     // Excessively nested or otherwise unparseable input stays searchable through windows.

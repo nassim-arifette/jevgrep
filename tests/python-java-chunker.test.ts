@@ -189,6 +189,41 @@ test('oversized Python and Java declarations are split inside their own ranges u
   }
 });
 
+test('every fragment cut from a Python or Java callable along its statements records the whole callable (D1)', () => {
+  const pyBody = Array.from({ length: 80 }, (_, n) => `    value${String(n)} = compute(${String(n)})`).join('\n');
+  const javaBody = Array.from({ length: 80 }, (_, n) => `        int value${String(n)} = compute(${String(n)});`).join('\n');
+  const limits = { ...DEFAULT_WINDOW_LIMITS, targetTokens: 90, maxTokens: 150, maxBytes: 900 };
+  for (const [path, text, declaration] of [
+    ['src/large.py', `def large():\n${pyBody}\n\ntail = 1\n`, { startLine: 1, endLine: 82 }],
+    ['src/Large.java', `class Large {\n    void large() {\n${javaBody}\n    }\n}\n`, { startLine: 2, endLine: 84 }],
+  ] as const) {
+    const fragments = syntaxFragments(chunkSnapshot(snapshotOf(path, text), limits));
+    const inside = fragments.filter((f) => f.startLine >= declaration.startLine && f.endLine <= declaration.endLine);
+    assert.ok(inside.length > 1, `${path} is split along its statements`);
+    for (const fragment of inside) {
+      assert.deepEqual(fragment.declaration, declaration, `${path}:${String(fragment.startLine)}`);
+    }
+  }
+});
+
+test('a continuation fragment is not labelled with a nested symbol it happens to contain (D7)', () => {
+  const lines = (prefix: string, indent: string, end: string): string =>
+    Array.from({ length: 12 }, (_, n) => `${indent}${prefix}${String(n)} = compute(${String(n)})${end}`).join('\n');
+  const limits = { ...DEFAULT_WINDOW_LIMITS, targetTokens: 60, maxTokens: 120, maxBytes: 900 };
+  for (const [path, text, nested] of [
+    ['src/model.py', `class Model:\n    def long(self):\n${lines('a', '        ', '')}\n        def helper():\n            return 1\n${lines('b', '        ', '')}\n`,
+      'function:helper'],
+    ['src/Model.java', `class Model {\n    void run() {\n${lines('int a', '        ', ';')}\n        class Local {\n        }\n${lines('int b', '        ', ';')}\n    }\n}\n`,
+      'class:Local'],
+  ] as const) {
+    const fragments = syntaxFragments(chunkSnapshot(snapshotOf(path, text), limits));
+    const containing = fragments.find((f) => f.text.includes(nested.slice(nested.indexOf(':') + 1)) && f.startLine > 2);
+    assert.ok(containing !== undefined && !/^\s*(def|class) /.test(containing.text), `${path}: the nested symbol is inside a continuation`);
+    assert.equal(containing.label, null, path);
+    assert.ok(fragments.every((f) => f.label !== nested || /^\s*(def|class) /.test(f.text)), path);
+  }
+});
+
 test('BOM, CRLF and non-ASCII text keep exact offsets in Python and Java', () => {
   const python = '\uFEFF# état\r\nclass Café:\r\n    def méthode(self):\r\n        return "😀"\r\n\r\nvaleur = 1\r\n';
   const pySnapshot = snapshotOf('src/café.py', python);
