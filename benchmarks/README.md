@@ -276,6 +276,68 @@ line windows had a higher dev R@1 (0.649 against 0.573) driven by four queries. 
 chunking stays the default. See the
 [2026-11-04 results](baselines/2026-11-04-go-rust-chunking.md).
 
+## Language structure (`bench:languages`)
+
+An offline structural benchmark per language group (language search spec 9.1). No
+provider call: it measures how the production chunker cuts real code, not retrieval.
+
+```sh
+npm run bench:languages                                    # all groups, table + benchmark-results/languages.json
+npm run bench:languages -- --languages rust,go --check     # exit 1 when Rust or Go misses a 9.1 gate
+npm run bench:languages -- --check --baseline benchmarks/baselines/languages-2026-11-24.json
+```
+
+The corpus is pinned in [languages.ts](../scripts/bench/languages.ts): the 14
+repositories of spec 9.1 plus `App-vNext/Polly@ad7d87b` for C#. Like `bench:real`,
+each repository is a bare mirror under the ignored `benchmark-results/mirrors/`
+(`--mirrors` to move it), created with a shallow fetch of the pinned commit when
+missing and reused when `bench:real` already made it; nothing is vendored. Files are
+read from the pinned tree (so `export-ignore` attributes do not drop tests), kept only
+when their extension is in a group, and filtered like a search would: inventory
+eligibility, then encoding, blank, credential-pattern and long-line refusals (the
+report counts them under `excluded`). Two prefixes are dropped: `sharkdp/bat`
+`tests/syntax-tests/` (parser stress fixtures) and `redis/redis` `deps/` (vendored
+jemalloc, Lua, hiredis).
+
+Groups follow the spec tables: TS (`.ts .tsx .mts .cts`), JS (`.js .jsx .mjs .cjs`),
+Python, Java, Go, Rust, C (`.c .h`), C++ (`.cc .cpp .cxx .hh .hpp ...`), C#, PHP,
+Kotlin, Swift, Ruby, and shell, HTML, CSS/SCSS, YAML, JSON, Markdown, SQL, TOML and
+Vue. A group is *profiled* when most of its files were chunked by a syntax chunker.
+
+| Column | Definition |
+| --- | --- |
+| files, lines | Measured files and their lines. |
+| fragments | Fragments produced at `DEFAULT_WINDOW_LIMITS`. |
+| labelled | Share of fragments with a model-visible label. |
+| <=3 lines | Share of fragments spanning 3 lines or fewer. |
+| midBlock | Share of fragments whose first non-blank line is indented deeper than the fragment's least-indented line, so it opens inside a block that closes later in the same fragment (tabs count as 4 columns). |
+| detachedAttr | Fragments, other than the file's last, whose last non-blank line is an attribute, annotation or decorator (`#[..]` Rust and PHP, `[..]` C#, `@..` Java, Kotlin, Swift, Python, JS/TS), cut from the item after it. Multi-line attributes count from their opening line. |
+| hidden | Share of declarations (function, method, class, struct, enum, trait, impl, interface, type, record, mod) whose keyword line lies in no fragment labelled with that symbol's name. |
+| split | Callables (functions, methods) spread over more than one fragment. |
+| splitWithDecl | Share of split callables whose every fragment carries a `declaration` back-reference covering the callable's start. |
+| contUnlabelled | Share of continuation fragments (fragments of a split callable that start after its first line) without a label. |
+| fallback | Files whose chunk result reports a parse fallback. The JSON also has the file share and, for the C/C++ gate, the share of lines on line windows. |
+| ms/kLOC | Chunking milliseconds per 1,000 lines, chunker call only, after warming every grammar. Machine-dependent; compare runs on one host. |
+| uncovered | Non-blank lines in no fragment. |
+
+Declarations come from per-language line patterns and brace, indentation or `end`
+matching, not from the chunker's own parsers, so the same estimate applies to
+languages on line windows and stays comparable across chunker versions. Like the
+spec's own columns, *midBlock*, *hidden*, *split* and *contUnlabelled* are heuristics
+for comparing languages and versions, not exact counts; groups without declaration
+patterns (structured text) report `-` there.
+
+`--check` evaluates the 9.1 gates for every profiled group, or for every group
+named by `--languages`, and exits 1 on any miss: 0 uncovered lines, 0 detached
+attributes, 100 % `splitWithDecl`, mid-block 15 % or less, 0 % unlabelled
+continuations, 3 % or less of small fragments, and parse fallback on 1 % or less of
+files (10 % or less of lines for C and C++). A group still on line windows is held to
+coverage, and with `--baseline` to half its baseline mid-block share. `npm run verify`
+does not run it.
+
+The [2026-11-24 baseline](baselines/2026-11-24-languages.md) records `main` at
+`09b0669`; on it every profiled language misses at least one gate.
+
 ## Additional criteria on ambiguous candidates (E8)
 
 Focused Jev judgments are compared with the single relevance judgment on a bounded

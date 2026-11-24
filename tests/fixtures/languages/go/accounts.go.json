@@ -1,0 +1,53 @@
+{
+  "description": "Package clause and import block, a struct, an interface and two functions with doc comments; fragments are packed up to a small token target, so no declaration is split.",
+  "limits": {
+    "targetTokens": 20,
+    "maxTokens": 400
+  },
+  "strategy": "syntax",
+  "fallback": null,
+  "fragments": [
+    {
+      "lines": [
+        1,
+        2
+      ],
+      "label": null
+    },
+    {
+      "lines": [
+        3,
+        8
+      ],
+      "label": null
+    },
+    {
+      "lines": [
+        9,
+        14
+      ],
+      "label": "type:Account"
+    },
+    {
+      "lines": [
+        15,
+        20
+      ],
+      "label": "type:Store"
+    },
+    {
+      "lines": [
+        21,
+        26
+      ],
+      "label": "function:AccountID"
+    },
+    {
+      "lines": [
+        27,
+        29
+      ],
+      "label": "function:newAccount"
+    }
+  ]
+}

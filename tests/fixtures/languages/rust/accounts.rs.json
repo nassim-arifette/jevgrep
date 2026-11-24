@@ -1,0 +1,53 @@
+{
+  "description": "A use declaration, a struct and a trait with doc comments, a struct with an inherent impl and a free function; fragments are packed up to a small token target, so no declaration is split.",
+  "limits": {
+    "targetTokens": 20,
+    "maxTokens": 400
+  },
+  "strategy": "syntax",
+  "fallback": null,
+  "fragments": [
+    {
+      "lines": [
+        1,
+        2
+      ],
+      "label": null
+    },
+    {
+      "lines": [
+        3,
+        8
+      ],
+      "label": "struct:Account"
+    },
+    {
+      "lines": [
+        9,
+        13
+      ],
+      "label": "trait:Store"
+    },
+    {
+      "lines": [
+        14,
+        17
+      ],
+      "label": "struct:MemoryStore"
+    },
+    {
+      "lines": [
+        18,
+        27
+      ],
+      "label": "impl:MemoryStore"
+    },
+    {
+      "lines": [
+        28,
+        30
+      ],
+      "label": "function:account_id"
+    }
+  ]
+}

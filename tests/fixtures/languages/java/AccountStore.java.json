@@ -1,0 +1,32 @@
+{
+  "description": "Package and imports, a Javadoc'd top-level class with a field and three methods; fragments are packed up to a small token target, so no declaration is split.",
+  "limits": {
+    "targetTokens": 20,
+    "maxTokens": 400
+  },
+  "strategy": "syntax",
+  "fallback": null,
+  "fragments": [
+    {
+      "lines": [
+        1,
+        4
+      ],
+      "label": null
+    },
+    {
+      "lines": [
+        5,
+        6
+      ],
+      "label": null
+    },
+    {
+      "lines": [
+        7,
+        24
+      ],
+      "label": "class:AccountStore"
+    }
+  ]
+}

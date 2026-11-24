@@ -1,0 +1,39 @@
+{
+  "description": "Module docstring and imports, a decorated dataclass, a function with a docstring and a class with three methods; fragments are packed up to a small token target, so no declaration is split.",
+  "limits": {
+    "targetTokens": 20,
+    "maxTokens": 400
+  },
+  "strategy": "syntax",
+  "fallback": null,
+  "fragments": [
+    {
+      "lines": [
+        1,
+        6
+      ],
+      "label": null
+    },
+    {
+      "lines": [
+        7,
+        12
+      ],
+      "label": "class:Account"
+    },
+    {
+      "lines": [
+        13,
+        17
+      ],
+      "label": "function:account_id"
+    },
+    {
+      "lines": [
+        18,
+        28
+      ],
+      "label": "class:AccountStore"
+    }
+  ]
+}

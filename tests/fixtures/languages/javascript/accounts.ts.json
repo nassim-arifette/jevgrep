@@ -1,0 +1,25 @@
+{
+  "description": "TypeScript module with an interface, a type alias, a function with a leading comment, a class with methods and an arrow-function const; fragments are packed up to a small token target, so no declaration is split.",
+  "limits": {
+    "targetTokens": 20,
+    "maxTokens": 400
+  },
+  "strategy": "syntax",
+  "fallback": null,
+  "fragments": [
+    {
+      "lines": [
+        1,
+        15
+      ],
+      "label": "interface:Account"
+    },
+    {
+      "lines": [
+        16,
+        30
+      ],
+      "label": "class:AccountStore"
+    }
+  ]
+}
