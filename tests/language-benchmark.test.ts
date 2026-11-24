@@ -101,6 +101,14 @@ test('declaration metrics: hidden, split, back-reference and unlabelled continua
   measureDeclarations(declarations.slice(0, 1), [fragment(1, 15, 'function:big', [1, 30]), fragment(16, 30, 'function:big', [1, 30])], referenced);
   assert.equal(referenced.splitCallablesWithDeclaration, 1);
   assert.equal(referenced.continuationsUnlabelled, 0);
+
+  // Fragments of a split nested declaration record it, the innermost, instead.
+  const nested = emptyCounters();
+  measureDeclarations(declarations.slice(0, 1), [fragment(1, 15, 'function:big', [1, 30]), fragment(16, 30, null, [12, 30])], nested);
+  assert.equal(nested.splitCallablesWithDeclaration, 1);
+  const outside = emptyCounters();
+  measureDeclarations(declarations.slice(0, 1), [fragment(1, 15, 'function:big', [1, 30]), fragment(16, 30, null, [31, 40])], outside);
+  assert.equal(outside.splitCallablesWithDeclaration, 0);
   assert.equal(labelledSymbol('method:Server.ServeHTTP'), 'ServeHTTP');
   assert.equal(labelledSymbol(null), null);
 });

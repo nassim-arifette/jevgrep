@@ -532,8 +532,10 @@ export function measureDeclarations(declarations: readonly Declaration[], fragme
     const whole = overlapping.some((fragment) => fragment.startLine <= declaration.startLine && fragment.endLine >= declaration.endLine);
     if (whole || overlapping.length < 2) continue;
     counters.splitCallables += 1;
+    // A fragment records one range, the innermost declaration it was cut from: the callable's,
+    // one enclosing it (covers its start), or one nested in it (starts inside it).
     if (overlapping.every((fragment) => fragment.declaration != null
-      && fragment.declaration.startLine <= declaration.startLine && fragment.declaration.endLine >= declaration.startLine)) {
+      && fragment.declaration.startLine <= declaration.endLine && fragment.declaration.endLine >= declaration.startLine)) {
       counters.splitCallablesWithDeclaration += 1;
     }
     for (const fragment of overlapping) {
