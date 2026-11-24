@@ -48,6 +48,24 @@ test('detached attributes are trailing attribute lines of a fragment that is not
   assert.equal(endsOnDetachedAttribute(group('a.go'), '// @Override\n', 10, 1), false);
 });
 
+test('brackets and newlines inside attribute strings do not extend the attribute', () => {
+  const rust = group('a.rs');
+  assert.equal(endsOnDetachedAttribute(rust, '#[should_panic(expected = "\\\n    a (b\\\n")]\nfn x() {}\n', 10, 4), false);
+  assert.equal(endsOnDetachedAttribute(rust, '#[should_panic(expected = "\\\n    a (b\\\n")]\n', 10, 3), true);
+  const python = group('a.py');
+  assert.equal(endsOnDetachedAttribute(python, '@setup({"a": """\n{% ( [\n"""})\ndef f():\n    pass\n', 10, 5), false);
+  assert.equal(endsOnDetachedAttribute(python, '@setup({"a": "{% (\\n"})\ndef f():\n    pass\n', 10, 3), false);
+  assert.equal(endsOnDetachedAttribute(python, 'x = 1\n\n@setup({"a": """\n(\n"""})\n', 10, 5), true);
+});
+
+test('braces inside multi-line raw strings do not extend a Go function', () => {
+  assert.deepEqual(
+    heuristicDeclarations(group('a.go'), 'func A() {\n\ts := `x {\n\ty`\n}\n\nfunc B() {}\n')
+      .map((declaration) => `${declaration.name}:${String(declaration.startLine)}-${String(declaration.endLine)}`),
+    ['A:1-4', 'B:6-6'],
+  );
+});
+
 test('heuristic declarations find names and extents per delimiting style', () => {
   assert.deepEqual(heuristicDeclarations(group('a.go'), 'package a\n\nfunc (s *S) Run() {\n\tgo func() {}()\n}\n\ntype S struct{}\n'), [
     { kind: 'method', name: 'Run', startLine: 3, endLine: 5 },
