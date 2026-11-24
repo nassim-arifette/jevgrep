@@ -37,8 +37,8 @@ export const SYNTAX_CHUNKER_VERSIONS: Readonly<Record<SyntaxLanguage, string>> =
   javascript: 'jevgrep-typescript-6.0.2-3',
   python: 'jevgrep-python-scan-1',
   java: 'jevgrep-java-scan-1',
-  go: `jevgrep-${TREE_SITTER_GRAMMARS.go}-1`,
-  rust: `jevgrep-${TREE_SITTER_GRAMMARS.rust}-1`,
+  go: `jevgrep-${TREE_SITTER_GRAMMARS.go}-2`,
+  rust: `jevgrep-${TREE_SITTER_GRAMMARS.rust}-2`,
 };
 
 export const SYNTAX_CHUNKER_VERSION = SYNTAX_CHUNKER_VERSIONS.javascript;

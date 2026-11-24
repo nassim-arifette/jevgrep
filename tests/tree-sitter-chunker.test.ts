@@ -91,7 +91,7 @@ test('Go boundaries cover declarations and function statements, with leading com
   const outcome = parseTreeSitterBoundaries('go', GO_MODULE);
   assert.ok(outcome.ok);
   const top = outcome.boundaries.filter((b) => b.depth === 0).map((b) => [b.line, b.label]);
-  assert.deepEqual(top, [[1, null], [3, null], [5, 'type:Account'], [9, 'method:Deposit'], [16, 'function:Describe']]);
+  assert.deepEqual(top, [[1, null], [3, null], [5, 'type:Account'], [9, 'method:Account.Deposit'], [16, 'function:Describe']]);
   assert.deepEqual(outcome.boundaries.filter((b) => b.depth === 1 && b.line < 16).map((b) => b.line), [10, 13]);
 });
 
@@ -100,14 +100,122 @@ test('Rust boundaries cover items, impl members and member statements, with doc 
   assert.ok(outcome.ok);
   const at = (depth: number): (string | number | null)[][] => outcome.boundaries
     .filter((b) => b.depth === depth).map((b) => [b.line, b.label]);
-  assert.deepEqual(at(0), [[1, null], [3, 'struct:Point'], [6, 'impl:Point'], [16, 'impl:Point']]);
+  assert.deepEqual(at(0), [[1, null], [3, 'struct:Point'], [6, 'impl:Point'], [16, 'impl:Display for Point']]);
   assert.deepEqual(at(1), [[7, 'function:origin'], [10, 'function:norm'], [17, 'function:fmt']]);
   assert.deepEqual(at(2).map(([line]) => line), [8, 11, 12, 17]);
 });
 
+const labelsAt = (language: 'go' | 'rust', text: string, depth = 0): (string | number | null)[][] => {
+  const outcome = parseTreeSitterBoundaries(language, text);
+  assert.ok(outcome.ok);
+  return outcome.boundaries.filter((b) => b.depth === depth).map((b) => [b.line, b.label]);
+};
+
+test('Rust attributes attach to the next item with the doc comments above them', () => {
+  const text = `#![allow(dead_code)]
+use std::fmt;
+
+fn before() {}
+/// A configuration.
+#[derive(Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct Config;
+
+#[cfg(test)]
+
+// Unit tests.
+mod tests {
+    #[test]
+    fn works() {}
+}
+`;
+  assert.deepEqual(labelsAt('rust', text), [[1, null], [4, 'function:before'], [5, 'struct:Config'], [10, 'mod:tests']]);
+  assert.deepEqual(labelsAt('rust', text, 1), [[14, 'function:works']]);
+  const snapshot = snapshotOf('src/config.rs', text);
+  const fragments = syntaxFragments(chunkSnapshot(snapshot, { ...DEFAULT_WINDOW_LIMITS, targetTokens: 1, maxTokens: 400 }));
+  for (const fragment of fragments) {
+    assert.doesNotMatch(fragment.text.trimEnd().split('\n').at(-1)!, /^\s*#!?\[/, `${fragment.id} ends on an attribute`);
+  }
+  assertExact(snapshot, fragments);
+});
+
+test('Rust labels name trait impls, constants, statics, unions and item macros', () => {
+  const text = `impl fmt::Display for Config {}
+impl<T> From<T> for crate::Wrapper<T> {}
+impl config::Config {}
+const LIMIT: usize = 8;
+static NAME: &str = "jevgrep";
+union Bits { i: u32, f: f32 }
+macro_rules! square { ($x:expr) => { $x * $x }; }
+lazy_static! { static ref CACHE: u8 = 0; }
+std::thread_local! { static DEPTH: u8 = 0; }
+fn main() { println!("{}", square!(2)); }
+`;
+  assert.deepEqual(labelsAt('rust', text), [
+    [1, 'impl:Display for Config'], [2, 'impl:From<T> for Wrapper<T>'], [3, 'impl:Config'], [4, 'const:LIMIT'],
+    [5, 'static:NAME'], [6, 'union:Bits'], [7, 'macro:square'], [8, 'macro:lazy_static'], [9, 'macro:thread_local'],
+    [10, 'function:main'],
+  ]);
+  assert.deepEqual(labelsAt('rust', text, 1).map(([, label]) => label), [null]);
+});
+
+test('Go methods carry their receiver type, and const and var declarations their first name', () => {
+  const text = `package server
+
+const A, B = 1, 2
+const (
+\tC = iota
+\tD
+)
+var (
+\tdefaultServer = &Server{}
+)
+func (s *Server) ServeHTTP() {}
+func (c *Client) ServeHTTP() {}
+func (l List[T]) Len() int { return 0 }
+func (*Tree[K, V]) Walk() {}
+func (Value) String() string { return "" }
+`;
+  assert.deepEqual(labelsAt('go', text), [
+    [1, null], [3, 'const:A'], [4, 'const:C'], [8, 'var:defaultServer'], [11, 'method:Server.ServeHTTP'],
+    [12, 'method:Client.ServeHTTP'], [13, 'method:List.Len'], [14, 'method:Tree.Walk'], [15, 'method:Value.String'],
+  ]);
+});
+
+test('oversized Go function literals held by var, go and defer are split along their statements', () => {
+  const body = (indent: string): string => Array.from({ length: 60 }, (_, n) => `${indent}value${String(n)} := compute(${String(n)})`).join('\n');
+  const text = `package large
+
+var handler = func() {
+${body('\t')}
+}
+
+func serve() {
+\tgo func() {
+${body('\t\t')}
+\t}()
+\tdefer func() {
+${body('\t\t')}
+\t}()
+}
+`;
+  const outcome = parseTreeSitterBoundaries('go', text);
+  assert.ok(outcome.ok);
+  const lines = (depth: number): number[] => outcome.boundaries.filter((b) => b.depth === depth).map((b) => b.line);
+  assert.deepEqual(lines(0), [1, 3, 66]);
+  assert.equal(lines(1).filter((line) => line > 3 && line < 66).length, 60);
+  assert.deepEqual(lines(1).filter((line) => line > 66), [67, 129]);
+  assert.equal(lines(2).length, 120);
+  const limits = { ...DEFAULT_WINDOW_LIMITS, targetTokens: 90, maxTokens: 150, maxBytes: 900 };
+  const snapshot = snapshotOf('pkg/large.go', text);
+  const fragments = syntaxFragments(chunkSnapshot(snapshot, limits));
+  assert.equal(fragments.filter((fragment) => fragment.declaration != null).length, 0, 'no line windows were needed');
+  assertExact(snapshot, fragments);
+});
+
 test('small Go and Rust files pack into exact fragments with structural labels', () => {
   for (const [path, text, label] of [
-    ['pkg/accounts.go', GO_MODULE, /^method:Deposit$/], ['src/point.rs', RUST_MODULE, /Point$/],
+    ['pkg/accounts.go', GO_MODULE, /^method:Account\.Deposit$/], ['src/point.rs', RUST_MODULE, /Point$/],
   ] as const) {
     const snapshot = snapshotOf(path, text);
     const fragments = syntaxFragments(chunkSnapshot(snapshot, SMALL));
