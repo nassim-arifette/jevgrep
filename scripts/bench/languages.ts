@@ -78,19 +78,17 @@ export const LANGUAGE_GROUPS: readonly LanguageGroup[] = [
 const GROUP_BY_EXTENSION = new Map(LANGUAGE_GROUPS.flatMap((group) => group.extensions.map((extension) => [extension, group] as const)));
 export const languageGroupOf = (path: string): LanguageGroup | null => GROUP_BY_EXTENSION.get(extensionOf(path)) ?? null;
 
-/** A shallow bare mirror holding the pinned commit, shared with `bench:real` mirrors when one exists. */
+/** A bare mirror holding the pinned commit, cloned like `bench:real` mirrors so either runner can reuse it. */
 export async function ensureCorpusMirror(root: string, repository: CorpusRepository): Promise<string> {
   const git = (...args: string[]) => promisify(execFile)('git', args, { maxBuffer: 64 * 1024 * 1024 });
   const path = join(root, `${repository.name.replace('/', '__')}.git`);
-  let created = false;
+  const url = `https://github.com/${repository.name}.git`;
   try { lstatSync(path); } catch {
     mkdirSync(root, { recursive: true });
-    await git('init', '--quiet', '--bare', path);
-    created = true;
+    await git('clone', '--quiet', '--bare', url, path);
   }
   try { await git('-C', path, 'cat-file', '-e', `${repository.commit}^{commit}`); } catch {
-    // A mirror this runner created holds only pinned commits; a full `bench:real` mirror is not made shallow.
-    await git('-C', path, 'fetch', '--quiet', ...(created ? ['--depth', '1'] : []), `https://github.com/${repository.name}.git`, repository.commit);
+    await git('-C', path, 'fetch', '--quiet', url, repository.commit);
   }
   return path;
 }
