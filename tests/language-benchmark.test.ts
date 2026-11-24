@@ -116,6 +116,9 @@ test('declaration metrics: hidden, split, back-reference and unlabelled continua
   const outside = emptyCounters();
   measureDeclarations(declarations.slice(0, 1), [fragment(1, 15, 'function:big', [1, 30]), fragment(16, 30, null, [31, 40])], outside);
   assert.equal(outside.splitCallablesWithDeclaration, 0);
+  const sibling = emptyCounters();
+  measureDeclarations(declarations.slice(0, 1), [fragment(1, 15, 'function:big', [1, 30]), fragment(16, 40, null, [30, 40])], sibling);
+  assert.equal(sibling.splitCallablesWithDeclaration, 0);
   assert.equal(labelledSymbol('method:Server.ServeHTTP'), 'ServeHTTP');
   assert.equal(labelledSymbol(null), null);
 });

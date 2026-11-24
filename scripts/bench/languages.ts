@@ -541,9 +541,12 @@ export function measureDeclarations(declarations: readonly Declaration[], fragme
     if (whole || overlapping.length < 2) continue;
     counters.splitCallables += 1;
     // A fragment records one range, the innermost declaration it was cut from: the callable's,
-    // one enclosing it (covers its start), or one nested in it (starts inside it).
-    if (overlapping.every((fragment) => fragment.declaration != null
-      && fragment.declaration.startLine <= declaration.endLine && fragment.declaration.endLine >= declaration.startLine)) {
+    // one enclosing it (covers its start), or one nested in it (starts inside it, before its
+    // last line, where a sibling may start). A nested range may end past the heuristic end.
+    if (overlapping.every(({ declaration: range }) => range != null
+      && (range.startLine <= declaration.startLine
+        ? range.endLine >= declaration.startLine
+        : range.startLine < declaration.endLine))) {
       counters.splitCallablesWithDeclaration += 1;
     }
     for (const fragment of overlapping) {
