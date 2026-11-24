@@ -218,6 +218,12 @@ test('a comment opening a Go block does not hide the statements after it', () =>
   assert.deepEqual(labelsAt('go', text, 1).map(([line]) => line), [4, 6]);
 });
 
+test('a function literal alone in a grouped Go var declaration is refined like a top-level one', () => {
+  const text = 'package x\n\nvar (\n\thandler = func() {\n\t\ta()\n\t\tb()\n\t}\n)\n';
+  assert.deepEqual(labelsAt('go', text), [[1, null], [3, 'var:handler']]);
+  assert.deepEqual(labelsAt('go', text, 1).map(([line]) => line), [5, 6]);
+});
+
 test('small Go and Rust files pack into exact fragments with structural labels', () => {
   for (const [path, text, label] of [
     ['pkg/accounts.go', GO_MODULE, /^method:Account\.Deposit$/], ['src/point.rs', RUST_MODULE, /Point$/],

@@ -66,10 +66,11 @@ function goFirstSpec(declaration: Node, spec: string): Node | null {
   return null;
 }
 
-/** The function literal of `var h = func…`, `go func(){…}()` or `defer func(){…}()`. */
+/** The function literal of `var h = func…` (grouped or not), `go func(){…}()` or `defer func(){…}()`. */
 function goFuncLiteral(node: Node): Node | null {
   if (node.type === 'var_declaration') {
-    const specs = node.namedChildren.filter((child) => child?.type === 'var_spec');
+    const specs = node.namedChildren.flatMap((child) => (child?.type === 'var_spec_list' ? child.namedChildren : [child]))
+      .filter((child) => child?.type === 'var_spec');
     const values = specs.length === 1 ? specs[0]!.childForFieldName('value')?.namedChildren ?? [] : [];
     return values.length === 1 && values[0]?.type === 'func_literal' ? values[0] : null;
   }
