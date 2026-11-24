@@ -17,6 +17,11 @@ test('identifier terms split camelCase and snake_case', () => {
   assert.deepEqual(lexicalTerms('invalidateSession max_redirects'), ['invalidatesession', 'invalidate', 'session', 'max_redirects', 'max', 'redirects']);
 });
 
+test('identifier terms split acronym runs and keep non-ASCII letters', () => {
+  assert.deepEqual(lexicalTerms('HTTPServer parseXMLFile'), ['httpserver', 'http', 'server', 'parsexmlfile', 'parse', 'xml', 'file']);
+  assert.deepEqual(lexicalTerms('données $scope'), ['données', 'scope']);
+});
+
 test('path order sorts by path and offsets, like the batch builder', () => {
   assert.deepEqual(prioritizeFragments(FRAGMENTS, 'where is the session invalidated', PATH_ORDER).map((f) => f.path),
     ['src/a.ts', 'src/b.ts', 'src/c.ts', 'src/d.ts', 'src/session/cache.ts']);

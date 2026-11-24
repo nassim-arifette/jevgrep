@@ -9,7 +9,7 @@
  */
 
 /** Bumped when the ranking signals or the reserve rule change. */
-export const PRIORITY_VERSION = 'lexical-priority-1';
+export const PRIORITY_VERSION = 'lexical-priority-2';
 
 export type CandidateOrder =
   | { readonly kind: 'path' }
@@ -22,13 +22,16 @@ const STOP_WORDS = new Set(('the a an and or of to in is it be for on with as by
   + 'they we you your our i me my so no yes all any some such only also more most other just use used using here these those '
   + 'been being get set').split(' '));
 
-/** Identifier-like terms, lowercased, with camelCase and snake_case parts. */
+/** Splits snake_case, camelCase and acronym runs: `parseHTTPRequest` gives parse, http, request. */
+const WORD_PARTS = /_|(?<=[\p{Ll}\p{N}])(?=\p{Lu})|(?<=\p{Lu})(?=\p{Lu}\p{Ll})/u;
+
+/** Identifier-like terms in any script, lowercased, with camelCase, acronym and snake_case parts. */
 export function lexicalTerms(text: string): string[] {
   const out: string[] = [];
-  for (const word of text.match(/[A-Za-z_][A-Za-z0-9_]*/g) ?? []) {
+  for (const word of text.match(/[\p{L}_][\p{L}\p{M}\p{N}_]*/gu) ?? []) {
     const lower = word.toLowerCase();
     out.push(lower);
-    for (const part of word.split(/_|(?<=[a-z0-9])(?=[A-Z])/)) {
+    for (const part of word.split(WORD_PARTS)) {
       const piece = part.toLowerCase();
       if (piece.length > 1 && piece !== lower) out.push(piece);
     }
