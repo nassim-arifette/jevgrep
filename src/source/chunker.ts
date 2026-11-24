@@ -414,6 +414,8 @@ export function chunkWithBoundaries(
   const maxRefineDepth = packing.maxRefineDepth === 'deepest'
     ? boundaries.reduce((deepest, boundary) => Math.max(deepest, boundary.depth), 0)
     : packing.maxRefineDepth ?? 2;
+  const fits = (startLine: number, endLine: number): boolean => snapshot.rangeTokens(startLine, endLine) <= limits.maxTokens
+    && snapshot.rangeBytes(startLine, endLine) <= limits.maxBytes && endLine - startLine + 1 <= limits.maxLines;
   const refineAt = (depth: number) => (unit: LineRange): PreparedFragment[] | UnsupportedLongLine | null => {
     if (depth > maxRefineDepth) {
       return null;
@@ -421,7 +423,10 @@ export function chunkWithBoundaries(
     let inner = unitsFromBoundaries(boundaries, depth, unit.startLine, unit.endLine);
     if (packing.carryHeaders === true && inner.length > 1) {
       const [head, next, ...rest] = inner as [LineRange, LineRange, ...LineRange[]];
-      inner = [{ startLine: head.startLine, endLine: next.endLine, label: head.label ?? next.label }, ...rest];
+      // A unit that fits on its own is never split just to take the header along.
+      if (fits(head.startLine, next.endLine) || !fits(next.startLine, next.endLine)) {
+        inner = [{ startLine: head.startLine, endLine: next.endLine, label: head.label ?? next.label }, ...rest];
+      }
     }
     if (inner.length <= 1) {
       return refineAt(depth + 1)(unit);

@@ -299,3 +299,16 @@ test('a nested type header is carried into the first fragment of its body', () =
   assert.ok(header?.text.includes('void step0() {'));
   assert.ok(fragments.some((f) => f.label === 'method:step1' && f.text.trimStart().startsWith('void step1()')));
 });
+
+test('a Java header is not carried when that would split a statement that fits on its own', () => {
+  const doc = Array.from({ length: 6 }, (_, n) => `     * Documentation line ${String(n)} for the run method.`).join('\n');
+  const statement = `        int total = add(\n${Array.from({ length: 6 }, (_, n) => `            value${String(n)},`).join('\n')}\n            last);`;
+  const text = `class Big {\n    /**\n${doc}\n     */\n    void run() {\n${statement}\n        done();\n    }\n}\n`;
+  const snapshot = snapshotOf('src/Big.java', text);
+  const fragments = syntaxFragments(chunkSnapshot(snapshot, { ...DEFAULT_WINDOW_LIMITS, targetTokens: 40, maxTokens: 90 }));
+  assertExact(snapshot, fragments);
+  const first = text.split('\n').indexOf('        int total = add(') + 1;
+  const last = first + statement.split('\n').length - 1;
+  const cut = fragments.filter((f) => f.startLine <= last && f.endLine >= first && !(f.startLine <= first && f.endLine >= last));
+  assert.deepEqual(cut.map((f) => f.id), []);
+});
