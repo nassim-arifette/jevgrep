@@ -209,8 +209,9 @@ const RULES: Readonly<Record<string, readonly Rule[]>> = {
     { pattern: /^(?:unsafe\s+)?impl\b(?:\s*<[^>]*(?:<[^>]*>[^>]*)*>)?\s+(?:[^{]*?\bfor\s+)?([A-Za-z_][\w:]*)/, kind: 'impl' },
   ],
   c: [
-    typeRule('struct|union|enum', '(?:typedef\\s+)?'),
+    // Functions first: `struct tag *make(void) {` is a function returning a struct pointer.
     { pattern: new RegExp(`^(?:(?:static|inline|extern|const|unsigned|signed|struct|enum|volatile|__inline|[A-Z_]+)\\s+)*[\\w*]+[\\s*]+\\**(${ID})\\s*\\([^;]*$`), kind: (match) => NOT_METHODS.has(match[1]!) ? null : 'function' },
+    typeRule('struct|union|enum', '(?:typedef\\s+)?'),
   ],
   cpp: [
     typeRule('class|struct|union|enum|namespace', '(?:template\\s*<.*>\\s*)?(?:typedef\\s+)?(?:enum\\s+)?'),

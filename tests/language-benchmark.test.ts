@@ -98,3 +98,8 @@ test('gates apply per language: full set when profiled, coverage and half mid-bl
   assert.equal(gatesFor('html', windows, { ...windows, midBlockShare: 0.66 }).at(-1)?.passed, false);
   assert.equal(gatesFor('html', windows, { ...windows, midBlockShare: 0.9 }).at(-1)?.passed, true);
 });
+
+test('a C function returning a struct pointer is a function, not a struct', () => {
+  assert.deepEqual(heuristicDeclarations(group('a.c'), 'struct node *make_node(int v) {\n  return 0;\n}\nstruct node {\n  int v;\n};\n')
+    .map((declaration) => `${declaration.kind}:${declaration.name}`), ['function:make_node', 'struct:node']);
+});
