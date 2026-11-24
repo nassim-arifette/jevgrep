@@ -92,8 +92,11 @@ test('every fragment cut from a declaration along its statements records the who
   const declaration = { startLine: 3, endLine: LARGE_FUNCTION.split('\n').lastIndexOf('}') + 1 };
   assert.ok(fragments.length >= 3, 'the function is split along its statements');
   for (const fragment of fragments) {
-    assert.deepEqual(fragment.declaration, declaration, `${String(fragment.startLine)}-${String(fragment.endLine)}`);
+    // The import merged into the first fragment stays inside the range selection may return whole.
+    const expected = { startLine: Math.min(fragment.startLine, declaration.startLine), endLine: declaration.endLine };
+    assert.deepEqual(fragment.declaration, expected, `${String(fragment.startLine)}-${String(fragment.endLine)}`);
   }
+  assert.equal(fragments[0]!.startLine, 1, 'the import is merged into the first fragment');
 });
 
 test('methods of a large class carry the class and the method, with decorators and comments attached', () => {

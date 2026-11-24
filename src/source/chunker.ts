@@ -152,12 +152,20 @@ function fragmentOf(snapshot: SourceSnapshot, range: LineRange, chunker: string)
   };
 }
 
-/** Record the declaration a fragment was cut from; a fragment holding the whole declaration was not cut from it. */
+/**
+ * Record the declaration a fragment was cut from; a fragment holding the whole declaration was not cut from it.
+ * The recorded range also covers the fragment, so returning it whole never drops lines the fragment had.
+ */
 function cutFrom(fragment: PreparedFragment, declaration: DeclarationRange | null): PreparedFragment {
   if (declaration === null || (fragment.startLine <= declaration.startLine && fragment.endLine >= declaration.endLine)) {
     return fragment;
   }
-  return { ...fragment, declaration: { startLine: declaration.startLine, endLine: declaration.endLine } };
+  return {
+    ...fragment,
+    declaration: {
+      startLine: Math.min(fragment.startLine, declaration.startLine), endLine: Math.max(fragment.endLine, declaration.endLine),
+    },
+  };
 }
 
 function isBlankRange(snapshot: SourceSnapshot, startLine: number, endLine: number): boolean {
