@@ -1,0 +1,76 @@
+{
+  "description": "An inner attribute, attributes and doc comments attached to the items they precede, an impl whose oversized method is split along its statements and match, a macro_rules! definition and a #[cfg(test)] mod with one #[test] function per fragment.",
+  "limits": {
+    "targetTokens": 60,
+    "maxTokens": 120
+  },
+  "strategy": "syntax",
+  "fallback": null,
+  "fragments": [
+    {
+      "lines": [
+        1,
+        18
+      ],
+      "label": "struct:Ledger"
+    },
+    {
+      "lines": [
+        19,
+        24
+      ],
+      "label": "impl:Ledger",
+      "declaration": [
+        19,
+        42
+      ]
+    },
+    {
+      "lines": [
+        25,
+        33
+      ],
+      "label": null,
+      "declaration": [
+        20,
+        42
+      ]
+    },
+    {
+      "lines": [
+        34,
+        43
+      ],
+      "label": null,
+      "declaration": [
+        20,
+        43
+      ]
+    },
+    {
+      "lines": [
+        44,
+        49
+      ],
+      "label": "function:close",
+      "declaration": [
+        19,
+        49
+      ]
+    },
+    {
+      "lines": [
+        50,
+        55
+      ],
+      "label": "macro:posting"
+    },
+    {
+      "lines": [
+        56,
+        72
+      ],
+      "label": "mod:tests"
+    }
+  ]
+}

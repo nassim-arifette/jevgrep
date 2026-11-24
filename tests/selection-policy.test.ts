@@ -106,9 +106,9 @@ class FixedScores implements ProviderClient {
 
   evaluateBatch(batch: EvaluationBatch): Promise<BatchEvaluation> {
     this.calls += 1;
-    // Only the first window of the long Go literal qualifies, so a whole-declaration return is visible.
+    // Only the first fragment of the long Go literal qualifies, so a whole-declaration return is visible.
     const scores = new Map(batch.items.map((item) => [item.id, item.path === 'src/billing.ts' ? 0.6
-      : item.path === 'src/admin_table.go' ? (item.startLine === 4 ? 0.9 : 0.4) : 0.9]));
+      : item.path === 'src/admin_table.go' ? (item.startLine <= 4 ? 0.9 : 0.4) : 0.9]));
     return Promise.resolve({
       scores, invalid: [], usage: { inputTokens: 1_000, outputTokens: 0 }, requestedModel: this.model,
       returnedModel: this.model, transmittedBytes: 4_096, requestId: 'req-test',

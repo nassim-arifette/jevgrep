@@ -48,5 +48,8 @@ The seeds, one per current syntax language, record `main` as of `09b0669` on
 plain declarations. Spec 9.2 asks each profile to grow to cover leading trivia,
 nested containers, an oversized callable, an oversized statement, one local syntax
 error and the constructs of its section 4 entry; a defect fix adds its case here.
+Phase 1 (shared planner, LS-1 to LS-3 and LS-8) added `go/nested.go`, `rust/nested.rs`
+(leading trivia, carried headers, an oversized callable split recursively, declaration
+ranges) and `go/recovery.go`, `rust/recovery.rs` (one local syntax error).
 Files are indented with spaces (the repository's format check rejects tab
 indentation, including in the Go fixture).

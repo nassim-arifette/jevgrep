@@ -3,7 +3,7 @@ import { parseArgs } from 'node:util';
 import { countReferenceTokens } from '../src/response/token-counter.ts';
 import { DEFAULT_WINDOW_LIMITS, syntaxLanguageOf, type PreparedFragment, type SyntaxLanguage } from '../src/source/chunker.ts';
 import { createSnapshot } from '../src/source/snapshot.ts';
-import { CHUNKING_ARMS, chunkingArm } from './bench/chunking-arms.ts';
+import { CHUNKING_ARMS, GO_RUST_ARMS, chunkingArm } from './bench/chunking-arms.ts';
 import { projectRoot, writeReport } from './bench/common.ts';
 import { javascriptManifestPath, loadManifest, systemsManifestPath } from './bench/real-tasks.ts';
 import { mean } from './bench/report.ts';
@@ -11,7 +11,8 @@ import { loadSnapshots } from './bench/snapshots.ts';
 
 /**
  * Offline structural comparison of the chunking arms: the E1 arms on the pinned JS/TS
- * tasks, or with `--go-rust` line windows against Tree-sitter on the Go/Rust tasks.
+ * tasks, or with `--go-rust` line windows, the previous boundary packing and the recursive
+ * planner on the Go/Rust tasks.
  * No provider call: it measures fragment shape and how required evidence lands in
  * fragments, which explains (but never replaces) the live retrieval comparison.
  */
@@ -27,7 +28,7 @@ if (values.help) {
   const manifest = loadManifest(goRust ? systemsManifestPath : javascriptManifestPath, {});
   const languages: readonly (SyntaxLanguage | null)[] = goRust ? ['go', 'rust'] : ['javascript'];
   const measured = (path: string): boolean => languages.includes(syntaxLanguageOf(path));
-  const armsUnderTest = goRust ? (['go-rust-line-windows', 'recursive'] as const) : CHUNKING_ARMS.filter((arm) => arm !== 'go-rust-line-windows');
+  const armsUnderTest = goRust ? GO_RUST_ARMS : CHUNKING_ARMS.filter((arm) => arm === 'recursive' || !GO_RUST_ARMS.includes(arm));
   const snapshots = await loadSnapshots(manifest.tasks, values.mirrors ?? join(projectRoot, 'benchmark-results/mirrors'));
   const arms = Object.fromEntries(armsUnderTest.map((arm) => {
     const chunker = chunkingArm(arm);

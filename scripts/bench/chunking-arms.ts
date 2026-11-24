@@ -4,6 +4,7 @@ import {
 } from '../../src/source/chunker.ts';
 import { parseJavaScriptBoundaries } from '../../src/source/javascript-boundaries.ts';
 import type { WindowLimits } from '../../src/source/line-windows.ts';
+import { TREE_SITTER_GRAMMARS, parseTreeSitterBoundaries } from '../../src/source/tree-sitter-boundaries.ts';
 import type { SourceSnapshot } from '../../src/source/snapshot.ts';
 
 /**
@@ -17,12 +18,18 @@ import type { SourceSnapshot } from '../../src/source/snapshot.ts';
  * - `recursive-enclosing`: recursive boundaries, enclosing symbols with signatures and spans.
  *
  * `go-rust-line-windows` is the Go/Rust counterpart of `line-windows`: Go and Rust files use
- * JG-012 windows instead of Tree-sitter boundaries, everything else is production.
+ * JG-012 windows instead of Tree-sitter, everything else is production. `go-rust-boundaries`
+ * is the previous Go/Rust policy (`jevgrep-tree-sitter-*-3`): depth-indexed Tree-sitter
+ * boundaries packed by `chunkWithBoundaries`, whole-file windows on any syntax error.
  */
-export const CHUNKING_ARMS = ['line-windows', 'typescript-v2', 'recursive', 'recursive-compact', 'recursive-enclosing', 'go-rust-line-windows'] as const;
+export const CHUNKING_ARMS = [
+  'line-windows', 'typescript-v2', 'recursive', 'recursive-compact', 'recursive-enclosing', 'go-rust-line-windows', 'go-rust-boundaries',
+] as const;
+export const GO_RUST_ARMS: readonly ChunkingArm[] = ['go-rust-line-windows', 'go-rust-boundaries', 'recursive'];
 export type ChunkingArm = typeof CHUNKING_ARMS[number];
 
 const PREVIOUS_TYPESCRIPT_CHUNKER = 'jevgrep-typescript-6.0.2-2';
+const previousTreeSitterChunker = (language: 'go' | 'rust'): string => `jevgrep-${TREE_SITTER_GRAMMARS[language]}-3`;
 
 function previousTypeScript(snapshot: SourceSnapshot, limits: WindowLimits): ChunkResult {
   const scan = parseJavaScriptBoundaries(snapshot.text, (offset) => snapshot.lineOfUtf16(offset), snapshot.relativePath);
@@ -31,6 +38,16 @@ function previousTypeScript(snapshot: SourceSnapshot, limits: WindowLimits): Chu
     return windows.kind === 'fragments' ? { ...windows, fallback: 'parse_failure' } : windows;
   }
   return chunkWithBoundaries(snapshot, scan.boundaries, limits, PREVIOUS_TYPESCRIPT_CHUNKER, { nestedContinuationLabels: true });
+}
+
+function previousTreeSitter(snapshot: SourceSnapshot, limits: WindowLimits): ChunkResult {
+  const language = syntaxLanguageOf(snapshot.relativePath) === 'go' ? 'go' : 'rust';
+  const scan = parseTreeSitterBoundaries(language, snapshot.text);
+  if (!scan.ok) {
+    const windows = fallbackWindows(snapshot, limits);
+    return windows.kind === 'fragments' ? { ...windows, fallback: 'parse_failure' } : windows;
+  }
+  return chunkWithBoundaries(snapshot, scan.boundaries, limits, previousTreeSitterChunker(language));
 }
 
 function forLanguages(
@@ -54,6 +71,7 @@ export function chunkingArm(arm: string): SnapshotChunker {
     case 'typescript-v2': return forJavaScript(arm, previousTypeScript);
     case 'line-windows': return forJavaScript(arm, fallbackWindows);
     case 'go-rust-line-windows': return forLanguages(arm, ['go', 'rust'], fallbackWindows);
+    case 'go-rust-boundaries': return forLanguages(arm, ['go', 'rust'], previousTreeSitter);
     default: throw new Error(`--chunker must be one of ${CHUNKING_ARMS.join(', ')}`);
   }
 }
@@ -66,4 +84,5 @@ export const armChunkerVersion: Readonly<Record<ChunkingArm, string>> = {
   'recursive-compact': SYNTAX_CHUNKER_VERSIONS.javascript,
   'recursive-enclosing': SYNTAX_CHUNKER_VERSIONS.javascript,
   'go-rust-line-windows': LINE_WINDOW_CHUNKER_VERSION,
+  'go-rust-boundaries': previousTreeSitterChunker('go'),
 };

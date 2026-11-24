@@ -20,26 +20,25 @@ import { parseJavaBoundaries } from './java-boundaries.ts';
 import { planJavaScriptRanges } from './javascript-chunker.ts';
 import type { JavaScriptContextPolicy } from './javascript-chunker.ts';
 import type { ParseOutcome } from './javascript-boundaries.ts';
+import { LANGUAGE_PROFILES } from './language-profiles.ts';
+import type { SyntaxLanguage, TreeSitterProfile } from './language-profiles.ts';
 import { parsePythonBoundaries } from './python-boundaries.ts';
 import type { Boundary } from './javascript-boundaries.ts';
 import { DEFAULT_WINDOW_LIMITS, LINE_WINDOW_CHUNKER_VERSION, lineWindowsOf } from './line-windows.ts';
 import type { FragmentWindow, UnsupportedLongLine, WindowLimits } from './line-windows.ts';
 import type { SourceSnapshot } from './snapshot.ts';
-import { TREE_SITTER_GRAMMARS, parseTreeSitterBoundaries } from './tree-sitter-boundaries.ts';
+import type { SyntaxPlan } from './syntax-planner.ts';
+import { planTreeSitterRanges } from './tree-sitter-chunker.ts';
 
 export { DEFAULT_WINDOW_LIMITS, LINE_WINDOW_CHUNKER_VERSION };
-export type { WindowLimits };
+export type { SyntaxLanguage, WindowLimits };
 
-export type SyntaxLanguage = 'javascript' | 'python' | 'java' | 'go' | 'rust';
+const SYNTAX_LANGUAGE_IDS = Object.keys(LANGUAGE_PROFILES) as SyntaxLanguage[];
 
 /** Bumped per language when its syntax boundaries change; part of evaluation identity (JG-018). */
-export const SYNTAX_CHUNKER_VERSIONS: Readonly<Record<SyntaxLanguage, string>> = {
-  javascript: 'jevgrep-typescript-6.0.2-4',
-  python: 'jevgrep-python-scan-2',
-  java: 'jevgrep-java-scan-3',
-  go: `jevgrep-${TREE_SITTER_GRAMMARS.go}-3`,
-  rust: `jevgrep-${TREE_SITTER_GRAMMARS.rust}-3`,
-};
+export const SYNTAX_CHUNKER_VERSIONS: Readonly<Record<SyntaxLanguage, string>> = Object.fromEntries(
+  SYNTAX_LANGUAGE_IDS.map((language) => [language, LANGUAGE_PROFILES[language].version]),
+) as Record<SyntaxLanguage, string>;
 
 export const SYNTAX_CHUNKER_VERSION = SYNTAX_CHUNKER_VERSIONS.javascript;
 
@@ -71,14 +70,9 @@ export type ChunkResult =
   }
   | UnsupportedLongLine;
 
-const SYNTAX_LANGUAGES: ReadonlyMap<string, SyntaxLanguage> = new Map([
-  ...['.js', '.jsx', '.ts', '.tsx', '.mjs', '.cjs', '.mts', '.cts'].map((extension) => [extension, 'javascript'] as const),
-  ['.py', 'python'],
-  ['.pyi', 'python'],
-  ['.java', 'java'],
-  ['.go', 'go'],
-  ['.rs', 'rust'],
-]);
+const SYNTAX_LANGUAGES: ReadonlyMap<string, SyntaxLanguage> = new Map(
+  SYNTAX_LANGUAGE_IDS.flatMap((language) => LANGUAGE_PROFILES[language].detect.extensions.map((extension) => [extension, language] as const)),
+);
 
 export function extensionOf(path: string): string {
   const name = path.slice(path.lastIndexOf('/') + 1);
@@ -96,17 +90,9 @@ export function usesSyntaxChunking(path: string): boolean {
   return syntaxLanguageOf(path) !== null;
 }
 
-function parseBoundaries(language: Exclude<SyntaxLanguage, 'javascript'>, snapshot: SourceSnapshot): ParseOutcome {
+function parseBoundaries(language: 'python' | 'java', snapshot: SourceSnapshot): ParseOutcome {
   const lineOfOffset = (offset: number): number => snapshot.lineOfUtf16(offset);
-  switch (language) {
-    case 'python':
-      return parsePythonBoundaries(snapshot.text, lineOfOffset);
-    case 'java':
-      return parseJavaBoundaries(snapshot.text, lineOfOffset);
-    case 'go':
-    case 'rust':
-      return parseTreeSitterBoundaries(language, snapshot.text);
-  }
+  return language === 'python' ? parsePythonBoundaries(snapshot.text, lineOfOffset) : parseJavaBoundaries(snapshot.text, lineOfOffset);
 }
 
 /**
@@ -385,7 +371,12 @@ export function chunkSnapshot(
     return fallbackWindows(snapshot, limits);
   }
   if (language === 'javascript') {
-    return chunkJavaScript(snapshot, limits, options.javascriptContext ?? 'local');
+    const context = options.javascriptContext ?? 'local';
+    return chunkPlanned(snapshot, limits, SYNTAX_CHUNKER_VERSIONS.javascript, () => planJavaScriptRanges(snapshot, limits, context));
+  }
+  if (language === 'go' || language === 'rust') {
+    const profile = LANGUAGE_PROFILES[language] as TreeSitterProfile;
+    return chunkPlanned(snapshot, limits, profile.version, () => planTreeSitterRanges(snapshot, limits, profile));
   }
 
   const chunker = SYNTAX_CHUNKER_VERSIONS[language];
@@ -404,9 +395,9 @@ function parseFailure(snapshot: SourceSnapshot, limits: WindowLimits): ChunkResu
   return windows.kind === 'unsupported-long-line' ? windows : { ...windows, fallback: 'parse_failure' };
 }
 
-function chunkJavaScript(snapshot: SourceSnapshot, limits: WindowLimits, context: JavaScriptContextPolicy): ChunkResult {
-  const chunker = SYNTAX_CHUNKER_VERSIONS.javascript;
-  const plan = measureSync('parsing', () => planJavaScriptRanges(snapshot, limits, context));
+/** Fragments of a shared-planner plan (JS/TS, Go, Rust); ranges that are windows or still oversized become line windows. */
+function chunkPlanned(snapshot: SourceSnapshot, limits: WindowLimits, chunker: string, planOf: () => SyntaxPlan): ChunkResult {
+  const plan = measureSync('parsing', planOf);
   if (!plan.ok) {
     return parseFailure(snapshot, limits);
   }
