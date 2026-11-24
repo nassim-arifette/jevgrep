@@ -475,7 +475,10 @@ export function chunkWithBoundaries(
       }
     }
     if (inner.length <= 1) {
-      return refineAt(depth + 1)(unit, inner[0]?.holds ?? declaration);
+      const held = inner[0]?.holds ?? declaration;
+      // When no deeper depth splits it, the line windows still record the declaration the header was carried into.
+      return refineAt(depth + 1)(unit, held)
+        ?? (held === declaration ? null : windowsOfRange(snapshot, unit, limits, chunker, false, held));
     }
     return packUnits(snapshot, inner, limits, chunker, refineAt(depth + 1), declaration, !nestedLabels);
   };

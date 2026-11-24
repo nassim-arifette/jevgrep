@@ -192,6 +192,7 @@ test('oversized Python and Java declarations are split inside their own ranges u
 test('every fragment cut from a Python or Java callable along its statements records the whole callable (D1)', () => {
   const pyBody = Array.from({ length: 80 }, (_, n) => `    value${String(n)} = compute(${String(n)})`).join('\n');
   const javaBody = Array.from({ length: 80 }, (_, n) => `        int value${String(n)} = compute(${String(n)});`).join('\n');
+  const javaExpression = Array.from({ length: 80 }, (_, n) => `            + compute(${String(n)})`).join('\n');
   const limits = { ...DEFAULT_WINDOW_LIMITS, targetTokens: 90, maxTokens: 150, maxBytes: 900 };
   for (const [path, text, declaration] of [
     ['src/large.py', `def large():\n${pyBody}\n\ntail = 1\n`, { startLine: 1, endLine: 82 }],
@@ -199,6 +200,10 @@ test('every fragment cut from a Python or Java callable along its statements rec
     // A method of a nested type, refined at depth 2 with the type headers carried into its first fragment.
     ['src/Outer.java', `class Outer {\n    static class Inner {\n        void large() {\n${javaBody}\n        }\n    }\n}\n`,
       { startLine: 3, endLine: 86 }],
+    // The same method made of one statement, so no depth splits it and line windows cut it.
+    ['src/Single.java',
+      `class Outer {\n    static class Inner {\n        void large() {\n        int total = 0\n${javaExpression};\n        }\n    }\n}\n`,
+      { startLine: 3, endLine: 87 }],
   ] as const) {
     const fragments = syntaxFragments(chunkSnapshot(snapshotOf(path, text), limits));
     const inside = fragments.filter((f) => f.startLine >= declaration.startLine && f.endLine <= declaration.endLine);
