@@ -171,7 +171,7 @@ type Rule = {
 };
 
 const ID = '[A-Za-z_$][\\w$]*';
-const NOT_METHODS = new Set(['if', 'for', 'while', 'switch', 'catch', 'return', 'function', 'else', 'do', 'try', 'with', 'new', 'typeof', 'await', 'super', 'this', 'foreach', 'using', 'lock', 'fixed', 'sizeof', 'elseif', 'match', 'when', 'guard', 'defer', 'select', 'synchronized', 'constructor']);
+const NOT_METHODS = new Set(['if', 'for', 'while', 'switch', 'catch', 'return', 'function', 'else', 'do', 'try', 'with', 'new', 'typeof', 'await', 'super', 'this', 'foreach', 'using', 'lock', 'fixed', 'sizeof', 'elseif', 'match', 'when', 'guard', 'defer', 'select', 'synchronized', 'constructor', '__attribute__']);
 const method = (indexOfName: number) => (match: RegExpExecArray): DeclarationKind | null => NOT_METHODS.has(match[indexOfName]!) ? null : 'method';
 const typeRule = (keywords: string, prefix: string): Rule => ({
   pattern: new RegExp(`^${prefix}(${keywords})\\s+(${ID})`), kind: (match) => match[1] as DeclarationKind,
@@ -211,7 +211,7 @@ const RULES: Readonly<Record<string, readonly Rule[]>> = {
   c: [
     // Functions first: `struct tag *make(void) {` is a function returning a struct pointer.
     { pattern: new RegExp(`^(?:(?:static|inline|extern|const|unsigned|signed|struct|enum|volatile|__inline|[A-Z_]+)\\s+)*[\\w*]+[\\s*]+\\**(${ID})\\s*\\([^;]*$`), kind: (match) => NOT_METHODS.has(match[1]!) ? null : 'function' },
-    typeRule('struct|union|enum', '(?:typedef\\s+)?'),
+    { pattern: new RegExp(`^(?:typedef\\s+)?(struct|union|enum)\\s+(?:__attribute__\\s*\\(\\(.*?\\)\\)\\s*)?(${ID})`), kind: (match) => match[1] as DeclarationKind },
   ],
   cpp: [
     typeRule('class|struct|union|enum|namespace', '(?:template\\s*<.*>\\s*)?(?:typedef\\s+)?(?:enum\\s+)?'),

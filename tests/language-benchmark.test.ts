@@ -100,8 +100,8 @@ test('gates apply per language: full set when profiled, coverage and half mid-bl
 });
 
 test('a C function returning a struct pointer is a function, not a struct', () => {
-  assert.deepEqual(heuristicDeclarations(group('a.c'), 'struct node *make_node(int v) {\n  return 0;\n}\nstruct node {\n  int v;\n};\n')
-    .map((declaration) => `${declaration.kind}:${declaration.name}`), ['function:make_node', 'struct:node']);
+  assert.deepEqual(heuristicDeclarations(group('a.c'), 'struct node *make_node(int v) {\n  return 0;\n}\nstruct node {\n  int v;\n};\nstruct __attribute__ ((__packed__)) hdr8 {\n  int len;\n};\n')
+    .map((declaration) => `${declaration.kind}:${declaration.name}`), ['function:make_node', 'struct:node', 'struct:hdr8']);
 });
 
 test('a rate just over a gate limit fails instead of rounding down to it', () => {
